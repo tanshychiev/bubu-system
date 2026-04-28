@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+a{text-decoration:none!important}
+
+.user-hero{
+    display:grid;
+    grid-template-columns:1fr 760px;
+    gap:24px;
+    align-items:center;
+    background:linear-gradient(135deg,#fbf5ff,#fff3f7);
+    border-radius:28px;
+    padding:34px;
+    margin-bottom:26px;
+}
+
+.user-title h1{font-size:42px;margin:0;color:#17152f;font-weight:900}
+.user-title p{color:#7b7288;font-size:18px;font-weight:800;line-height:1.6}
+.hero-img{width:100%;height:320px;object-fit:contain}
+
+.hero-features{
+    display:flex;
+    gap:14px;
+    margin-top:26px;
+    flex-wrap:wrap;
+}
+
+.feature-card{
+    background:white;
+    border:1px solid #eaddec;
+    border-radius:18px;
+    padding:14px 18px;
+    min-width:150px;
+    box-shadow:0 10px 24px rgba(130,91,60,.06);
+    transition:.2s;
+}
+
+.feature-card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 14px 28px rgba(130,91,60,.12);
+}
+
+.feature-card b{display:block;color:#17152f;font-weight:900}
+.feature-card span{color:#7b7288;font-weight:800;font-size:13px}
+
+.search-card{
+    background:white;
+    border:1px solid #f5e8df;
+    border-radius:28px;
+    padding:14px 18px;
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    gap:14px;
+    align-items:center;
+    box-shadow:0 16px 40px rgba(130,91,60,.08);
+    margin-bottom:22px;
+}
+
+.search-box{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    height:52px;
+    border-radius:999px;
+    padding:0 14px;
+}
+
+.search-box span{
+    font-size:24px;
+    line-height:1;
+    display:flex;
+    align-items:center;
+}
+
+.search-box input{
+    width:100%;
+    height:100%;
+    border:none;
+    outline:none;
+    font-weight:900;
+    font-size:15px;
+    padding:0;
+}
+
+.btn-search,
+.btn-clear{
+    height:44px;
+    min-width:92px;
+    border:none;
+    border-radius:999px;
+    padding:0 30px;
+    font-weight:900;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    line-height:1;
+}
+
+.btn-search{
+    color:white;
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+    box-shadow:0 12px 26px rgba(155,124,246,.25);
+}
+
+.btn-clear{
+    background:white;
+    color:#8e63ff;
+    border:1px solid #eaddec;
+}
+
+.panel-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
+}
+
+.panel-head h2{margin:0;color:#17152f;font-size:26px}
+.sort-pill{
+    border:1px solid #eaddec;
+    background:white;
+    border-radius:999px;
+    padding:12px 22px;
+    color:#6b6178;
+    font-weight:900;
+}
+
+.user-grid{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:18px;
+}
+
+.user-card{
+    background:white;
+    border:1px solid #eaddec;
+    border-radius:24px;
+    padding:18px;
+    box-shadow:0 12px 28px rgba(130,91,60,.06);
+    transition:.22s;
+}
+
+.user-card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 18px 34px rgba(130,91,60,.12);
+}
+
+.user-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:14px;
+}
+
+.initial{
+    width:58px;
+    height:58px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    font-weight:900;
+    background:#efe5ff;
+    color:#8e63ff;
+}
+
+.dots{font-weight:900;color:#7b7288;font-size:24px}
+.username{font-size:18px;color:#17152f;font-weight:900;margin-bottom:4px}
+.email{color:#7b7288;font-weight:800;font-size:14px;min-height:34px}
+
+.role,.status{
+    display:inline-flex;
+    margin-top:12px;
+    padding:8px 14px;
+    border-radius:999px;
+    font-weight:900;
+}
+
+.role.admin{background:#efe5ff;color:#8e63ff}
+.role.manager{background:#fff0df;color:#ff8b3d}
+.role.staff{background:#e8f2ff;color:#3a86ff}
+.status.active{background:#ddf8ea;color:#20b86b}
+.status.inactive{background:#ffe7ec;color:#ff4d6d}
+
+.edit-btn{
+    margin-top:16px;
+    width:100%;
+    border-radius:18px;
+    padding:13px;
+    text-align:center;
+    display:block;
+    background:#f5f1ff;
+    color:#8e63ff;
+    border:1px solid #e3d5ff;
+    font-weight:900;
+}
+
+.empty-box{
+    grid-column:1/-1;
+    min-height:330px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+}
+
+.empty-box h3{font-size:24px;margin:8px 0}
+
+@media(max-width:1400px){
+    .user-grid{grid-template-columns:repeat(3,1fr)}
+    .user-hero{grid-template-columns:1fr}
+}
+
+@media(max-width:800px){
+    .user-grid{grid-template-columns:1fr}
+    .search-card{grid-template-columns:1fr}
+    .hero-img{height:220px}
+}
+</style>
+
+<div class="user-hero">
+    <div class="user-title">
+        <h1>Users 👤</h1>
+        <p>Manage staff accounts, roles<br>and permissions. 💗</p>
+
+        <div class="hero-features">
+            <a href="{% url 'user_create' %}" class="feature-card">
+                <b>👥 Create</b>
+                <span>Staff accounts</span>
+            </a>
+
+            <a href="{% url 'permission_list' %}" class="feature-card">
+                <b>🔐 Control</b>
+                <span>Permissions</span>
+            </a>
+
+            <a href="{% url 'role_list' %}" class="feature-card">
+                <b>🛡 Secure</b>
+                <span>Role based access</span>
+            </a>
+        </div>
+    </div>
+
+    <img src="{% static 'img/users-hero.png' %}" class="hero-img">
+</div>
+
+<form method="get" class="search-card">
+    <div class="search-box">
+        <span>⌕</span>
+        <input type="text" name="q" placeholder="Search username, email or role..." value="{{ q }}">
+    </div>
+
+    <button type="submit" class="btn-search">Search</button>
+    <a href="{% url 'user_list' %}" class="btn-clear">Clear</a>
+</form>
+
+<div class="panel-head">
+    <h2>All Users ({{ users|length }})</h2>
+    <div class="sort-pill">Newest First⌄</div>
+</div>
+
+<div class="user-grid">
+    {% for u in users %}
+    <div class="user-card">
+        <div class="user-top">
+            <div class="initial">{{ u.username|slice:":1"|upper }}</div>
+            <div class="dots">...</div>
+        </div>
+
+        <div class="username">{{ u.username }}</div>
+        <div class="email">{{ u.email }}</div>
+
+        {% if u.is_superuser %}
+            <div class="role admin">Administrator</div>
+        {% elif u.is_staff %}
+            <div class="role manager">Manager</div>
+        {% else %}
+            <div class="role staff">Staff</div>
+        {% endif %}
+
+        <br>
+
+        {% if u.is_active %}
+            <div class="status active">● Active</div>
+        {% else %}
+            <div class="status inactive">● Inactive</div>
+        {% endif %}
+
+        <a href="{% url 'user_edit' u.id %}" class="edit-btn">✎ Edit</a>
+    </div>
+
+    {% empty %}
+    <div class="empty-box">
+        <div>
+            <div style="font-size:90px;">👤✨</div>
+            <h3>No users found</h3>
+            <p>No staff account matched your search.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

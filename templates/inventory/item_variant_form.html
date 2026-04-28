@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.form-page{max-width:1000px;margin:auto;}
+.back-btn{display:inline-flex;padding:13px 24px;border-radius:999px;background:white;border:1px solid #eaddec;color:#6b6178;font-weight:900;text-decoration:none;margin-bottom:18px;}
+.form-card,.history-card{background:white;border:1px solid #f5e8df;border-radius:30px;padding:28px;box-shadow:0 20px 50px rgba(130,91,60,.10);margin-bottom:22px;}
+h1{font-size:38px;color:#17152f;margin:0 0 8px;font-weight:900;}
+h2{font-size:26px;color:#17152f;margin:0 0 16px;font-weight:900;}
+p{color:#7b7288;font-weight:800;margin-bottom:22px;}
+.help{background:#fff8fb;border-radius:20px;padding:16px;color:#7b7288;font-weight:800;margin-bottom:20px;line-height:1.6;}
+.example-box{background:#f8f6ff;border-radius:18px;padding:14px;margin-bottom:20px;font-weight:900;color:#17152f;}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.left-stack{display:grid;gap:18px;}
+.form-box label{display:block;font-weight:900;color:#080634;margin-bottom:8px;}
+.form-box input,.form-box select{width:100%;height:58px;border-radius:20px;border:1px solid #eaddec;padding:0 15px;font-size:17px;font-weight:800;background:white;}
+.full{grid-column:1 / -1;}
+.error{background:#fff3f1;color:#ff4d4d;padding:10px 14px;border-radius:14px;font-weight:800;margin-top:8px;}
+
+.btn-row{display:flex;justify-content:center;margin-top:12px;}
+.btn-save{border:none;border-radius:999px;padding:16px 44px;color:white;font-size:17px;font-weight:900;background:linear-gradient(135deg,#9b7cf6,#ff8c6b);box-shadow:0 12px 26px rgba(155,124,246,.25);cursor:pointer;}
+
+.drop-zone{min-height:150px;border:2px dashed #d9c6ec;border-radius:22px;background:#fff8fb;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:.2s;color:#7b5cff;font-size:15px;font-weight:900;text-align:center;padding:18px;position:relative;}
+.drop-zone:hover,.drop-zone.dragover{background:#f7efff;border-color:#9b7cf6;transform:translateY(-2px);}
+.drop-icon{font-size:42px;}
+.drop-zone span{color:#7b7288;font-size:13px;font-weight:800;}
+.preview-box{position:relative;}
+.preview-box img{margin-top:10px;max-height:115px;max-width:200px;border-radius:16px;object-fit:contain;}
+.remove-img-x{position:absolute;top:2px;right:-10px;width:30px;height:30px;border:none;border-radius:50%;background:#ff4d4d;color:white;font-size:18px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(255,77,77,.25);}
+
+.status-toggle{width:100%;max-width:430px;display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#f8f6ff;border:1px solid #eaddec;border-radius:999px;padding:6px;height:58px;align-items:center;cursor:pointer;}
+.status-toggle input{display:none;}
+.status-btn{height:34px;display:flex;align-items:center;justify-content:center;border-radius:999px;font-weight:900;font-size:14px;transition:.2s;color:#7b7288;}
+.status-toggle.is-active .active-btn{background:linear-gradient(135deg,#19a974,#7be0b2);color:white;}
+.status-toggle:not(.is-active) .inactive-btn{background:linear-gradient(135deg,#ff4d4d,#ff8c6b);color:white;}
+
+.history-table{width:100%;border-collapse:separate;border-spacing:0 10px;}
+.history-table th{text-align:left;color:#7b7288;font-size:13px;font-weight:900;padding:8px;}
+.history-table td{background:#fff8fb;padding:12px 8px;font-weight:800;color:#514a5f;}
+.history-table td:first-child{border-radius:14px 0 0 14px;}
+.history-table td:last-child{border-radius:0 14px 14px 0;}
+.old{color:#ff4d4d;font-weight:900;}
+.new{color:#19a974;font-weight:900;}
+.empty-history{background:#fff8fb;border-radius:18px;padding:18px;color:#7b7288;font-weight:900;text-align:center;}
+
+@media(max-width:700px){
+    .form-grid{grid-template-columns:1fr;}
+    .form-card,.history-card{padding:22px;}
+    h1{font-size:30px;}
+    .btn-row{justify-content:stretch;}
+    .btn-save{width:100%;}
+}
+</style>
+
+<div class="form-page">
+    <a href="{% url 'item_detail' item.id %}" class="back-btn">← Back</a>
+
+    <div class="form-card">
+        <h1>{{ title }} 🎨</h1>
+        <p>Main item: <strong>{{ item.name }}</strong></p>
+
+        <div class="help">
+            Create or update each real sellable variant. Each variant can have different size, color, image, cost price, sale price, and stock.
+        </div>
+
+        <div class="example-box">
+            Size M + Red + $10 + Stock 5<br>
+            Size M + Blue + $10 + Stock 3<br>
+            Size S + Red + $5 + Stock 6
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-grid">
+
+                <div class="left-stack">
+                    {% if form.sku %}
+                    <div class="form-box">
+                        <label>SKU / Barcode</label>
+                        {{ form.sku }}
+                        {% for e in form.sku.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="form-box">
+                        <label>Stock Quantity</label>
+                        {{ form.quantity }}
+                        {% for e in form.quantity.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                    </div>
+                </div>
+
+                {% if form.image %}
+                <div class="form-box">
+                    <label>Variant Image</label>
+
+                    <div class="drop-zone" id="variantDropZone">
+                        <div class="drop-icon">📸</div>
+                        <strong>Tap, drag, or paste image here</strong>
+                        <span>Each variant can have its own picture</span>
+
+                        <div id="variantPreviewBox" class="preview-box">
+                            {% if form.instance.image %}
+                                <img src="{{ form.instance.image.url }}">
+                                <button type="button" id="removeVariantImageBtn" class="remove-img-x">×</button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div style="display:none;">
+                        {{ form.image }}
+                    </div>
+
+                    <input type="hidden" name="remove_image" id="removeVariantImageInput" value="0">
+
+                    {% for e in form.image.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="form-box">
+                    <label>Size</label>
+                    {{ form.size }}
+                    {% for e in form.size.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="form-box">
+                    <label>Color</label>
+                    {{ form.color }}
+                    {% for e in form.color.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="form-box full">
+                    <label>Label / Style</label>
+                    {{ form.label }}
+                    {% for e in form.label.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                </div>
+
+                {% if form.sale_price %}
+                <div class="form-box">
+                    <label>Sale Price</label>
+                    {{ form.sale_price }}
+                    {% for e in form.sale_price.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                </div>
+                {% endif %}
+
+                {% if form.cost_price %}
+                <div class="form-box">
+                    <label>Cost Price</label>
+                    {{ form.cost_price }}
+                    {% for e in form.cost_price.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="form-box">
+                    <label>Status</label>
+
+                    <div class="status-toggle" id="statusToggle">
+                        <span class="status-btn active-btn">Active</span>
+                        <span class="status-btn inactive-btn">Inactive</span>
+                        {{ form.is_active }}
+                    </div>
+
+                    {% for e in form.is_active.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="full btn-row">
+                    <button class="btn-save" type="submit">Save Variant</button>
+                </div>
+
+            </div>
+        </form>
+    </div>
+
+    {% if histories %}
+    <div class="history-card">
+        <h2>Edit History 🕘</h2>
+
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Field</th>
+                    <th>Old</th>
+                    <th>New</th>
+                    <th>Edited By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in histories %}
+                <tr>
+                    <td>{{ h.created_at|date:"d/m/Y H:i" }}</td>
+                    <td>{{ h.field_name }}</td>
+                    <td><span class="old">{{ h.old_value|default:"-" }}</span></td>
+                    <td><span class="new">{{ h.new_value|default:"-" }}</span></td>
+                    <td>
+                        {% if h.edited_by %}
+                            {{ h.edited_by.get_full_name|default:h.edited_by.username }}
+                        {% else %}
+                            System
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% elif variant %}
+    <div class="history-card">
+        <h2>Edit History 🕘</h2>
+        <div class="empty-history">No edit history yet.</div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+const variantDropZone = document.getElementById("variantDropZone");
+const variantImageInput = document.querySelector('input[type="file"][name="image"]');
+const variantPreviewBox = document.getElementById("variantPreviewBox");
+const removeVariantImageInput = document.getElementById("removeVariantImageInput");
+
+function addRemoveButton(){
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.id = "removeVariantImageBtn";
+    btn.className = "remove-img-x";
+    btn.innerText = "×";
+
+    btn.addEventListener("click", function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        removeVariantImage();
+    });
+
+    return btn;
+}
+
+function removeVariantImage(){
+    if(variantPreviewBox){
+        variantPreviewBox.innerHTML = "";
+    }
+
+    if(variantImageInput){
+        variantImageInput.value = "";
+    }
+
+    if(removeVariantImageInput){
+        removeVariantImageInput.value = "1";
+    }
+}
+
+function setVariantImageFile(file){
+    if(!file || !file.type.startsWith("image/")) return;
+
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    variantImageInput.files = dt.files;
+
+    if(removeVariantImageInput){
+        removeVariantImageInput.value = "0";
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e){
+        variantPreviewBox.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+        variantPreviewBox.appendChild(addRemoveButton());
+    };
+    reader.readAsDataURL(file);
+}
+
+if(variantDropZone && variantImageInput){
+    const existingRemoveBtn = document.getElementById("removeVariantImageBtn");
+
+    if(existingRemoveBtn){
+        existingRemoveBtn.addEventListener("click", function(e){
+            e.preventDefault();
+            e.stopPropagation();
+            removeVariantImage();
+        });
+    }
+
+    variantDropZone.addEventListener("click", function(){
+        variantImageInput.click();
+    });
+
+    variantDropZone.addEventListener("dragover", function(e){
+        e.preventDefault();
+        variantDropZone.classList.add("dragover");
+    });
+
+    variantDropZone.addEventListener("dragleave", function(){
+        variantDropZone.classList.remove("dragover");
+    });
+
+    variantDropZone.addEventListener("drop", function(e){
+        e.preventDefault();
+        variantDropZone.classList.remove("dragover");
+        setVariantImageFile(e.dataTransfer.files[0]);
+    });
+
+    document.addEventListener("paste", function(e){
+        const items = e.clipboardData.items;
+
+        for(let i = 0; i < items.length; i++){
+            if(items[i].type.startsWith("image/")){
+                setVariantImageFile(items[i].getAsFile());
+                break;
+            }
+        }
+    });
+}
+
+const statusToggle = document.getElementById("statusToggle");
+const statusInput = document.querySelector('input[name="is_active"]');
+
+function updateStatusUI(){
+    if(!statusToggle || !statusInput) return;
+
+    if(statusInput.checked){
+        statusToggle.classList.add("is-active");
+    }else{
+        statusToggle.classList.remove("is-active");
+    }
+}
+
+if(statusToggle && statusInput){
+    updateStatusUI();
+
+    statusToggle.addEventListener("click", function(){
+        statusInput.checked = !statusInput.checked;
+        updateStatusUI();
+    });
+}
+</script>
+
+{% endblock %}

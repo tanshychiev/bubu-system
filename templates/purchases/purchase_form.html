@@ -1,0 +1,611 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.purchase-wrap{max-width:1200px;margin:auto;padding:20px}
+.page-title{font-size:32px;font-weight:900;color:#17152f;margin-bottom:18px}
+.form-card{background:#fff;border:1px solid #f3dfd4;border-radius:26px;padding:24px;margin-bottom:22px;box-shadow:0 18px 45px rgba(130,91,60,.08)}
+.form-card h3{margin:0 0 18px;color:#17152f;font-weight:900}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.field-box label,.item-label{font-weight:900;color:#4a405c;margin-bottom:8px;display:block}
+.field-box input,.field-box textarea,.field-box select,.item-row input,.item-row select{width:100%;border:1px solid #eaddec;border-radius:16px;padding:13px 15px;font-weight:800;background:white}
+.error-box{background:#fff1f1;color:#b42318;border:1px solid #ffcccc;border-radius:16px;padding:12px;margin-bottom:15px;font-weight:800}
+.summary-box{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.summary-pill{background:#f1e8ff;color:#6d45d8;padding:12px 18px;border-radius:999px;font-weight:1000}
+.item-row{border:1px solid #f1ddd1;border-radius:22px;padding:16px;margin-bottom:12px;background:#fffaf7}
+.item-grid{display:grid;grid-template-columns:1.7fr 110px 130px 1fr 70px;gap:12px;align-items:stretch}
+.item-grid>div{display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.hidden-select,.delete-hidden{display:none}
+.item-grid input{height:58px;min-height:58px;border-radius:18px;font-weight:900;box-shadow:0 4px 10px rgba(0,0,0,.03)}
+.variant-picker{width:100%;height:58px;min-height:58px;border:1px solid #eaddec;border-radius:18px;padding:10px;background:white;text-align:left;font-weight:900;color:#17152f;display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.03)}
+.variant-picker.empty{color:#9a90a8}
+.picker-img{width:46px;height:46px;border-radius:14px;object-fit:cover;background:#f7f1ff;flex:0 0 auto}
+.picker-fallback{width:46px;height:46px;border-radius:14px;background:#f7f1ff;display:flex;align-items:center;justify-content:center;font-size:22px;flex:0 0 auto}
+.delete-box{display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.remove-btn{width:58px;height:58px;border:0;border-radius:18px;background:#ffe3ee;color:#ff4d7d;font-weight:1000;cursor:pointer;font-size:18px;box-shadow:0 4px 10px rgba(255,77,125,.12)}
+.plan-box{margin-top:14px;border:1px dashed #eaddec;border-radius:20px;background:white;padding:12px}
+.plan-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.plan-title{font-weight:1000;color:#17152f}
+.plan-summary{font-weight:1000;color:#8e63ff;font-size:12px}
+.plan-list{display:grid;gap:8px}
+.plan-row{display:grid;grid-template-columns:1fr 120px 46px;gap:8px;align-items:center}
+.plan-shop{border:1px solid #eaddec;border-radius:16px;padding:12px;font-weight:1000;background:#fffaf7}
+.plan-qty{min-height:48px}
+.plan-remove{border:0;border-radius:14px;background:#ffe3ee;color:#ff4d7d;font-weight:1000;height:46px}
+.add-plan-btn,.add-row-btn,.save-btn{border:0;border-radius:999px;padding:14px 26px;font-weight:900;color:white;background:linear-gradient(135deg,#8e63ff,#ff8c6b);cursor:pointer}
+.add-plan-btn{padding:10px 16px;font-size:12px}
+.cancel-btn{margin-left:10px;font-weight:900;color:#7b7288}
+.history-table{width:100%;border-collapse:separate;border-spacing:0 8px}
+.history-table th{text-align:left;color:#7b7288;padding:8px;font-size:12px;font-weight:1000}
+.history-table td{background:#fffaf7;border-top:1px solid #f1ddd1;border-bottom:1px solid #f1ddd1;padding:10px;font-weight:900}
+.history-table td:first-child{border-left:1px solid #f1ddd1;border-radius:14px 0 0 14px}
+.history-table td:last-child{border-right:1px solid #f1ddd1;border-radius:0 14px 14px 0}
+.old-value{color:#ff4d4d}
+.new-value{color:#20b86b}
+.empty-history{padding:16px;background:#fffaf7;border-radius:18px;font-weight:900;color:#7b7288}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:9999;align-items:center;justify-content:center;padding:18px}
+.modal-box{background:white;border-radius:28px;width:100%;max-width:760px;max-height:86vh;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.25)}
+.modal-head{padding:18px;border-bottom:1px solid #f1ddd1;display:flex;gap:10px}
+.modal-head input{flex:1;border:1px solid #eaddec;border-radius:16px;padding:14px;font-weight:900}
+.modal-close{border:0;background:#fff1f1;color:#ff4d7d;border-radius:14px;padding:0 16px;font-weight:900}
+.type-tabs{display:flex;gap:10px;overflow:auto;padding:14px 14px 0}
+.type-tab{border:1px solid #eaddec;background:#fff;border-radius:999px;padding:10px 16px;font-weight:900;color:#6b6178;white-space:nowrap;cursor:pointer}
+.type-tab.active{background:linear-gradient(135deg,#8e63ff,#b985ff);color:#fff}
+.variant-list{max-height:58vh;overflow:auto;padding:14px}
+.variant-option{display:flex;align-items:center;gap:14px;padding:14px;border:1px solid #f1ddd1;border-radius:18px;margin-bottom:10px;font-weight:900;cursor:pointer;background:#fffaf7}
+.variant-img,.variant-fallback{width:66px;height:66px;border-radius:18px;background:#f7f1ff;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:30px}
+.variant-info{flex:1}
+.variant-type{display:inline-flex;margin-bottom:5px;padding:4px 9px;border-radius:999px;background:#efe5ff;color:#8e63ff;font-size:11px;font-weight:900}
+.variant-name{font-size:15px;color:#17152f}
+.variant-sub{font-size:13px;color:#7b7288;margin-top:4px}
+.variant-price{font-size:16px;color:#20b86b;font-weight:900}
+@media(max-width:900px){
+    .info-grid{grid-template-columns:1fr}
+    .item-grid,.plan-row{grid-template-columns:1fr}
+    .purchase-wrap{padding:12px}
+    .form-card{padding:16px}
+    .item-grid input,.variant-picker,.remove-btn{height:58px;min-height:58px}
+    .delete-box{align-items:stretch}
+    .remove-btn{width:100%}
+    .history-table{display:block;overflow-x:auto;white-space:nowrap}
+}
+</style>
+
+<div class="purchase-wrap">
+    <h1 class="page-title">{{ title|default:"Purchase Form" }}</h1>
+
+    <form method="post" id="purchaseForm">
+        {% csrf_token %}
+
+        {% if form.errors or formset.errors or formset.non_form_errors %}
+        <div class="error-box">
+            Please check the item rows.
+            {{ form.non_field_errors }}
+            {{ formset.non_form_errors }}
+        </div>
+        {% endif %}
+
+        <div class="form-card">
+            <h3>📦 Purchase Info</h3>
+            <div class="info-grid">
+                <div class="field-box"><label>Supplier</label>{{ form.supplier }}{{ form.supplier.errors }}</div>
+                <div class="field-box"><label>Total Amount</label>{{ form.total_amount }}{{ form.total_amount.errors }}</div>
+                <div class="field-box"><label>Shipping Note</label>{{ form.shipping_note }}{{ form.shipping_note.errors }}</div>
+                <div class="field-box"><label>Note</label>{{ form.note }}{{ form.note.errors }}</div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h3>🛒 Purchase Items</h3>
+            {{ formset.management_form }}
+
+            <div class="summary-box">
+                <div class="summary-pill">📦 Total Variant: <span id="totalItems">0</span></div>
+                <div class="summary-pill">🔢 Total Quantity: <span id="totalQty">0</span></div>
+            </div>
+
+            <div id="itemsBox">
+                {% for item_form in formset %}
+                <div class="item-row" data-prefix="{{ item_form.prefix }}">
+                    {% for hidden in item_form.hidden_fields %}{{ hidden }}{% endfor %}
+
+                    <div class="item-grid">
+                        <div>
+                            <div class="item-label">Variant</div>
+                            <select name="{{ item_form.variant.html_name }}" id="{{ item_form.variant.id_for_label }}" class="hidden-select variant-select">
+                                <option value="">Choose Variant</option>
+                                {% for option in item_form.fields.variant.queryset %}
+                                <option value="{{ option.id }}"
+                                    data-type="{% if option.item.item_type %}{{ option.item.item_type.name }}{% else %}No Type{% endif %}"
+                                    data-label="{{ option.item.name }} - {{ option.display_name }} - ${{ option.display_price }}"
+                                    data-name="{{ option.item.name }}"
+                                    data-sub="{{ option.display_name }}"
+                                    data-price="${{ option.display_price }}"
+                                    {% if option.display_image %}data-image="{{ option.display_image.url }}"{% endif %}
+                                    {% if item_form.initial.variant == option.id or item_form.instance.variant_id == option.id %}selected{% endif %}>
+                                    {{ option.item.name }} - {{ option.display_name }} - ${{ option.display_price }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <button type="button" class="variant-picker empty" onclick="openVariantModal(this)">
+                                <span class="picker-fallback">📦</span>
+                                <span>Choose Variant</span>
+                            </button>
+                            {{ item_form.variant.errors }}
+                        </div>
+
+                        <div>
+                            <div class="item-label">Qty</div>
+                            {{ item_form.ordered_qty }}
+                            {{ item_form.ordered_qty.errors }}
+                        </div>
+
+                        <div>
+                            <div class="item-label">Cost</div>
+                            {{ item_form.cost_price }}
+                            {{ item_form.cost_price.errors }}
+                        </div>
+
+                        <div>
+                            <div class="item-label">Note</div>
+                            {{ item_form.note }}
+                            {{ item_form.note.errors }}
+                        </div>
+
+                        <div class="delete-box">
+                            <div class="item-label">Delete</div>
+                            <div class="delete-hidden">
+                                {% if item_form.instance.pk %}{{ item_form.DELETE }}{% endif %}
+                            </div>
+                            <button type="button" class="remove-btn" onclick="removeRow(this)">✕</button>
+                        </div>
+                    </div>
+
+                    <div class="plan-box">
+                        <div class="plan-head">
+                            <div>
+                                <div class="plan-title">🏪 Shop Plan</div>
+                                <div class="plan-summary">
+                                    Planned: <span class="planned-total">0</span> / Qty: <span class="item-qty-show">0</span>
+                                </div>
+                            </div>
+                            <button type="button" class="add-plan-btn" onclick="openShopModal(this)">+ Add Shop</button>
+                        </div>
+
+                        <div class="plan-list">
+                            {% if item_form.instance.pk %}
+                                {% for plan in item_form.instance.branch_plans.all %}
+                                <div class="plan-row">
+                                    <input type="hidden" name="{{ item_form.prefix }}-plan_branch[]" value="{{ plan.branch.id }}">
+                                    <div class="plan-shop">🏪 {{ plan.branch.name }}</div>
+                                    <input class="plan-qty" type="number" name="{{ item_form.prefix }}-plan_qty[]" min="1" value="{{ plan.qty }}" oninput="updatePurchaseTotals()">
+                                    <button type="button" class="plan-remove" onclick="removePlan(this)">✕</button>
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="button" class="add-row-btn" onclick="addRow()">+ Add Item</button>
+        </div>
+
+        <button type="submit" class="save-btn" id="saveBtn">💾 Save Purchase</button>
+        <a href="{% url 'purchase_list' %}" class="cancel-btn">Cancel</a>
+    </form>
+
+    {% if purchase %}
+    <div class="form-card">
+        <h3>📜 Edit History</h3>
+
+        {% if purchase.edit_logs.all %}
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Action</th>
+                    <th>Field</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in purchase.edit_logs.all %}
+                <tr>
+                    <td>{{ log.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ log.action }}</td>
+                    <td>{{ log.field_name|default:"-" }}</td>
+                    <td class="old-value">{{ log.old_value|default:"-" }}</td>
+                    <td class="new-value">{{ log.new_value|default:"-" }}</td>
+                    <td>{{ log.user|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <div class="empty-history">No edit history yet.</div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<div id="emptyFormTemplate" style="display:none;">
+    <div class="item-row" data-prefix="items-__prefix__">
+        {% for hidden in formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+
+        <div class="item-grid">
+            <div>
+                <div class="item-label">Variant</div>
+                <select name="{{ formset.empty_form.variant.html_name }}" id="{{ formset.empty_form.variant.id_for_label }}" class="hidden-select variant-select">
+                    <option value="">Choose Variant</option>
+                    {% for option in formset.empty_form.fields.variant.queryset %}
+                    <option value="{{ option.id }}"
+                        data-type="{% if option.item.item_type %}{{ option.item.item_type.name }}{% else %}No Type{% endif %}"
+                        data-label="{{ option.item.name }} - {{ option.display_name }} - ${{ option.display_price }}"
+                        data-name="{{ option.item.name }}"
+                        data-sub="{{ option.display_name }}"
+                        data-price="${{ option.display_price }}"
+                        {% if option.display_image %}data-image="{{ option.display_image.url }}"{% endif %}>
+                        {{ option.item.name }} - {{ option.display_name }} - ${{ option.display_price }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="button" class="variant-picker empty" onclick="openVariantModal(this)">
+                    <span class="picker-fallback">📦</span>
+                    <span>Choose Variant</span>
+                </button>
+            </div>
+
+            <div><div class="item-label">Qty</div>{{ formset.empty_form.ordered_qty }}</div>
+            <div><div class="item-label">Cost</div>{{ formset.empty_form.cost_price }}</div>
+            <div><div class="item-label">Note</div>{{ formset.empty_form.note }}</div>
+
+            <div class="delete-box">
+                <div class="item-label">Delete</div>
+                <button type="button" class="remove-btn" onclick="removeRow(this)">✕</button>
+            </div>
+        </div>
+
+        <div class="plan-box">
+            <div class="plan-head">
+                <div>
+                    <div class="plan-title">🏪 Shop Plan</div>
+                    <div class="plan-summary">
+                        Planned: <span class="planned-total">0</span> / Qty: <span class="item-qty-show">0</span>
+                    </div>
+                </div>
+                <button type="button" class="add-plan-btn" onclick="openShopModal(this)">+ Add Shop</button>
+            </div>
+            <div class="plan-list"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-bg" id="variantModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <input type="text" id="variantSearch" placeholder="Search type, item, size, color..." onkeyup="filterVariants()">
+            <button type="button" class="modal-close" onclick="closeVariantModal()">✕</button>
+        </div>
+        <div class="type-tabs" id="typeTabs"></div>
+        <div class="variant-list" id="variantList"></div>
+    </div>
+</div>
+
+<div class="modal-bg" id="shopModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <input type="text" id="shopSearch" placeholder="Search shop..." onkeyup="filterShops()">
+            <button type="button" class="modal-close" onclick="closeShopModal()">✕</button>
+        </div>
+        <div class="variant-list" id="shopList">
+            {% for b in branches %}
+            <div class="variant-option shop-option" data-id="{{ b.id }}" data-name="{{ b.name }}" data-search="{{ b.name|lower }}">
+                <div class="variant-fallback">🏪</div>
+                <div class="variant-info">
+                    <div class="variant-name">{{ b.name }}</div>
+                    <div class="variant-sub">Add planned quantity</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+let activeSelect = null;
+let activeButton = null;
+let activeType = "ALL";
+let activePlanBox = null;
+let isSaving = false;
+
+function safeText(value){ return (value || "").toString(); }
+
+function updatePurchaseTotals(){
+    let totalItems = 0;
+    let totalQty = 0;
+
+    document.querySelectorAll("#itemsBox .item-row").forEach(row => {
+        if(row.style.display === "none"){return;}
+
+        const variant = row.querySelector(".variant-select");
+        const qtyInput = row.querySelector('input[name$="-ordered_qty"]');
+        const qty = parseInt(qtyInput?.value || "0");
+
+        if(variant && variant.value){
+            totalItems += 1;
+            totalQty += qty || 0;
+        }
+
+        let planTotal = 0;
+        row.querySelectorAll('input[name$="-plan_qty[]"]').forEach(input => {
+            planTotal += parseInt(input.value || "0") || 0;
+        });
+
+        const plannedTotal = row.querySelector(".planned-total");
+        const itemQtyShow = row.querySelector(".item-qty-show");
+
+        if(plannedTotal){plannedTotal.innerText = planTotal;}
+        if(itemQtyShow){itemQtyShow.innerText = qty || 0;}
+    });
+
+    document.getElementById("totalItems").innerText = totalItems;
+    document.getElementById("totalQty").innerText = totalQty;
+}
+
+function updatePicker(button, select){
+    const option = select.options[select.selectedIndex];
+
+    if(!option || !option.value){
+        button.classList.add("empty");
+        button.innerHTML = `<span class="picker-fallback">📦</span><span>Choose Variant</span>`;
+        updatePurchaseTotals();
+        return;
+    }
+
+    const label = option.dataset.label || option.text;
+    const type = option.dataset.type || "No Type";
+    const img = option.dataset.image || "";
+
+    button.classList.remove("empty");
+
+    if(img){
+        button.innerHTML = `<img src="${img}" class="picker-img"><span><b>${type}</b><br>${label}</span>`;
+    }else{
+        button.innerHTML = `<span class="picker-fallback">📦</span><span><b>${type}</b><br>${label}</span>`;
+    }
+
+    updatePurchaseTotals();
+}
+
+function openVariantModal(button){
+    activeButton = button;
+    activeSelect = button.parentElement.querySelector(".variant-select");
+    activeType = "ALL";
+
+    const list = document.getElementById("variantList");
+    const tabs = document.getElementById("typeTabs");
+    list.innerHTML = "";
+    tabs.innerHTML = "";
+
+    const options = Array.from(activeSelect.options).filter(opt => opt.value);
+    let types = ["ALL"];
+
+    options.forEach(option => {
+        const type = option.dataset.type || "No Type";
+        if(!types.includes(type)){types.push(type);}
+    });
+
+    types.forEach(type => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "type-tab";
+        btn.innerHTML = type === "ALL" ? "▣ All Items" : `🧸 ${safeText(type)}`;
+        if(type === "ALL"){btn.classList.add("active");}
+
+        btn.onclick = function(){
+            activeType = type;
+            document.querySelectorAll(".type-tab").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            filterVariants();
+        };
+
+        tabs.appendChild(btn);
+    });
+
+    options.forEach(option => {
+        const img = option.dataset.image || "";
+        const type = option.dataset.type || "No Type";
+        const name = option.dataset.name || option.text;
+        const sub = option.dataset.sub || "";
+        const price = option.dataset.price || "";
+
+        const div = document.createElement("div");
+        div.className = "variant-option";
+        div.dataset.type = type;
+        div.dataset.search = (type + " " + name + " " + sub + " " + price).toLowerCase();
+
+        div.innerHTML = `
+            ${img ? `<img src="${img}" class="variant-img">` : `<div class="variant-fallback">📦</div>`}
+            <div class="variant-info">
+                <div class="variant-type">${safeText(type)}</div>
+                <div class="variant-name">${safeText(name)}</div>
+                <div class="variant-sub">${safeText(sub)}</div>
+            </div>
+            <div class="variant-price">${safeText(price)}</div>
+        `;
+
+        div.onclick = function(){
+            activeSelect.value = option.value;
+            updatePicker(activeButton, activeSelect);
+            closeVariantModal();
+        };
+
+        list.appendChild(div);
+    });
+
+    document.getElementById("variantSearch").value = "";
+    document.getElementById("variantModal").style.display = "flex";
+    document.getElementById("variantSearch").focus();
+    filterVariants();
+}
+
+function closeVariantModal(){
+    document.getElementById("variantModal").style.display = "none";
+}
+
+function filterVariants(){
+    const keyword = document.getElementById("variantSearch").value.toLowerCase();
+
+    document.querySelectorAll("#variantList .variant-option").forEach(option => {
+        const matchType = activeType === "ALL" || option.dataset.type === activeType;
+        const matchSearch = option.dataset.search.includes(keyword);
+        option.style.display = (matchType && matchSearch) ? "flex" : "none";
+    });
+}
+
+function openShopModal(btn){
+    activePlanBox = btn.closest(".item-row").querySelector(".plan-list");
+    document.getElementById("shopSearch").value = "";
+    document.getElementById("shopModal").style.display = "flex";
+    document.getElementById("shopSearch").focus();
+
+    document.querySelectorAll("#shopList .shop-option").forEach(option => {
+        option.style.display = "flex";
+    });
+}
+
+function closeShopModal(){
+    document.getElementById("shopModal").style.display = "none";
+}
+
+function filterShops(){
+    const keyword = document.getElementById("shopSearch").value.toLowerCase();
+
+    document.querySelectorAll("#shopList .shop-option").forEach(option => {
+        option.style.display = option.dataset.search.includes(keyword) ? "flex" : "none";
+    });
+}
+
+function addPlanRow(branchId, branchName){
+    if(!activePlanBox){return;}
+
+    const itemRow = activePlanBox.closest(".item-row");
+    const prefix = itemRow.dataset.prefix;
+
+    const div = document.createElement("div");
+    div.className = "plan-row";
+    div.innerHTML = `
+        <input type="hidden" name="${prefix}-plan_branch[]" value="${branchId}">
+        <div class="plan-shop">🏪 ${safeText(branchName)}</div>
+        <input class="plan-qty" type="number" name="${prefix}-plan_qty[]" min="1" placeholder="Qty" oninput="updatePurchaseTotals()">
+        <button type="button" class="plan-remove" onclick="removePlan(this)">✕</button>
+    `;
+
+    activePlanBox.appendChild(div);
+    closeShopModal();
+    updatePurchaseTotals();
+
+    const qtyInput = div.querySelector(".plan-qty");
+    if(qtyInput){qtyInput.focus();}
+}
+
+function removePlan(btn){
+    btn.closest(".plan-row").remove();
+    updatePurchaseTotals();
+}
+
+document.addEventListener("click", function(e){
+    const option = e.target.closest(".shop-option");
+    if(option){
+        addPlanRow(option.dataset.id, option.dataset.name);
+    }
+});
+
+function addRow(){
+    const totalForms = document.getElementById("id_items-TOTAL_FORMS");
+    const formIndex = parseInt(totalForms.value || "0");
+
+    let template = document.getElementById("emptyFormTemplate").innerHTML;
+    template = template.replaceAll("__prefix__", formIndex);
+
+    document.getElementById("itemsBox").insertAdjacentHTML("beforeend", template);
+    totalForms.value = formIndex + 1;
+
+    const newRow = document.querySelector("#itemsBox .item-row:last-child");
+    newRow.dataset.prefix = `items-${formIndex}`;
+
+    const select = newRow.querySelector(".variant-select");
+    const picker = newRow.querySelector(".variant-picker");
+
+    if(select){select.value = "";}
+    if(picker){
+        picker.classList.add("empty");
+        picker.innerHTML = `<span class="picker-fallback">📦</span><span>Choose Variant</span>`;
+    }
+
+    updatePurchaseTotals();
+}
+
+function removeRow(btn){
+    const row = btn.closest(".item-row");
+    const deleteInput = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+
+    if(deleteInput){
+        deleteInput.checked = true;
+        row.style.display = "none";
+    }else{
+        row.remove();
+    }
+
+    updatePurchaseTotals();
+}
+
+function cleanBlankRowsBeforeSubmit(){
+    document.querySelectorAll("#itemsBox .item-row").forEach(row => {
+        const select = row.querySelector(".variant-select");
+        const qty = row.querySelector('input[name$="-ordered_qty"]');
+        const cost = row.querySelector('input[name$="-cost_price"]');
+        const note = row.querySelector('input[name$="-note"]');
+        const deleteInput = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+
+        const hasVariant = select && select.value;
+        const hasQty = qty && qty.value;
+        const hasCost = cost && cost.value;
+        const hasNote = note && note.value.trim();
+
+        if(!hasVariant && !hasQty && !hasCost && !hasNote && deleteInput){
+            deleteInput.checked = true;
+        }
+    });
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+    document.querySelectorAll(".variant-picker").forEach(button => {
+        const select = button.parentElement.querySelector(".variant-select");
+        if(select){updatePicker(button, select);}
+    });
+
+    document.addEventListener("input", updatePurchaseTotals);
+    document.addEventListener("change", updatePurchaseTotals);
+    updatePurchaseTotals();
+
+    document.getElementById("purchaseForm").addEventListener("submit", function(e){
+        cleanBlankRowsBeforeSubmit();
+
+        if(isSaving){
+            e.preventDefault();
+            return false;
+        }
+
+        isSaving = true;
+        document.getElementById("saveBtn").innerText = "Saving...";
+        document.getElementById("saveBtn").disabled = true;
+    });
+});
+</script>
+
+{% endblock %}

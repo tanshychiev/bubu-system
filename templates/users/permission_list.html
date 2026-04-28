@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1>Permissions 🛡️</h1>
+        <div class="page-subtitle">System permissions from Django apps.</div>
+    </div>
+    <a href="{% url 'role_list' %}" class="btn btn-add">Manage Roles</a>
+</div>
+
+<form method="get" class="tool-row">
+    <input class="search-input" type="text" name="q" value="{{ q }}" placeholder="Search permission...">
+    <button class="btn btn-search" type="submit">Search</button>
+    <a href="{% url 'permission_list' %}" class="btn btn-reset">Clear</a>
+</form>
+
+<div class="table-card">
+    <table>
+        <thead>
+            <tr>
+                <th>App</th>
+                <th>Model</th>
+                <th>Name</th>
+                <th>Codename</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for p in permissions %}
+            <tr>
+                <td>{{ p.content_type.app_label }}</td>
+                <td>{{ p.content_type.model }}</td>
+                <td><b>{{ p.name }}</b></td>
+                <td>{{ p.codename }}</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="4">No permissions found.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

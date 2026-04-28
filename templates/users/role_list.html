@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1>Roles 🔐</h1>
+        <div class="page-subtitle">Total Roles: <b>{{ total_roles }}</b></div>
+    </div>
+    <a href="{% url 'role_create' %}" class="btn btn-add">Add Role</a>
+</div>
+
+<form method="get" class="tool-row">
+    <input class="search-input" type="text" name="q" value="{{ q }}" placeholder="Search role...">
+    <button class="btn btn-search" type="submit">Search</button>
+    <a href="{% url 'role_list' %}" class="btn btn-reset">Clear</a>
+</form>
+
+<div class="table-card">
+    <table>
+        <thead>
+            <tr>
+                <th>Role Name</th>
+                <th>Total Permissions</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for role in roles %}
+            <tr>
+                <td><b>{{ role.name }}</b></td>
+                <td>{{ role.permissions.count }}</td>
+                <td>
+                    <a href="{% url 'role_edit' role.id %}" class="mini-btn btn-edit">✎ Edit</a>
+                    <a href="{% url 'role_delete' role.id %}" class="mini-btn btn-delete">🗑 Delete</a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="3">No roles found.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

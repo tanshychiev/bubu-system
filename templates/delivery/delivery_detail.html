@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Delivery Detail</h1>
+
+<p><strong>Order:</strong> {{ delivery.order }}</p>
+<p><strong>Customer:</strong> {{ delivery.customer_name }}</p>
+<p><strong>Phone:</strong> {{ delivery.phone }}</p>
+<p><strong>Address:</strong> {{ delivery.address }}</p>
+<p><strong>Delivery Fee:</strong> {{ delivery.delivery_fee }}</p>
+<p><strong>Status:</strong> {{ delivery.status }}</p>
+<p><strong>Note:</strong> {{ delivery.note }}</p>
+<p><strong>Created:</strong> {{ delivery.created_at }}</p>
+<p><strong>Delivered:</strong> {{ delivery.delivered_at }}</p>
+
+<a href="{% url 'delivery_update' delivery.id %}">Edit</a>
+|
+<a href="{% url 'delivery_list' %}">Back</a>
+
+<hr>
+
+<h2>Status Logs</h2>
+
+<table border="1" cellpadding="8">
+    <thead>
+        <tr>
+            <th>Old</th>
+            <th>New</th>
+            <th>Changed By</th>
+            <th>Note</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log.old_status }}</td>
+            <td>{{ log.new_status }}</td>
+            <td>{{ log.changed_by }}</td>
+            <td>{{ log.note }}</td>
+            <td>{{ log.created_at }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No logs.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

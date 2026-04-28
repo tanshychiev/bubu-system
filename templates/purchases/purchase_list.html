@@ -1,0 +1,433 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+a{text-decoration:none!important}
+
+.purchase-hero{
+    display:grid;
+    grid-template-columns:1fr 520px;
+    gap:24px;
+    align-items:center;
+    margin-bottom:24px;
+}
+.purchase-title h1{
+    font-size:42px;
+    margin:0;
+    color:#17152f;
+    font-weight:900;
+}
+.purchase-title p{
+    color:#7b7288;
+    font-weight:800;
+    font-size:16px;
+    line-height:1.6;
+}
+.hero-img{
+    width:100%;
+    height:230px;
+    object-fit:contain;
+}
+.btn-add{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    margin-top:18px;
+    padding:14px 28px;
+    border-radius:999px;
+    color:white;
+    font-weight:900;
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+}
+
+.summary-card{
+    background:white;
+    border:1px solid #f5e8df;
+    border-radius:28px;
+    padding:22px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:18px;
+    box-shadow:0 20px 50px rgba(130,91,60,.10);
+    margin-bottom:28px;
+}
+.summary-item{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    border-right:1px solid #f1ddd1;
+}
+.summary-item:last-child{border-right:none}
+.summary-icon{
+    width:58px;
+    height:58px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:27px;
+}
+.summary-icon.purple{background:#efe5ff;color:#8e63ff}
+.summary-icon.green{background:#ddf8ea;color:#20b86b}
+.summary-icon.orange{background:#fff0df;color:#ff8b3d}
+.summary-icon.blue{background:#e8f2ff;color:#3a86ff}
+.summary-label{color:#7b7288;font-weight:900}
+.summary-value{font-size:25px;color:#17152f;font-weight:900;margin:4px 0}
+.summary-value.green{color:#20b86b}
+.summary-value.orange{color:#ff8b3d}
+.summary-value.blue{color:#3a86ff}
+.summary-sub{color:#7b7288;font-weight:800}
+
+.purchase-panel{
+    background:white;
+    border:1px solid #f5e8df;
+    border-radius:28px;
+    padding:24px;
+    box-shadow:0 20px 50px rgba(130,91,60,.10);
+}
+.panel-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:22px;
+}
+.panel-head h2{
+    margin:0;
+    color:#17152f;
+    font-size:28px;
+}
+.sort-pill{
+    border:1px solid #eaddec;
+    background:white;
+    border-radius:999px;
+    padding:12px 22px;
+    color:#6b6178;
+    font-weight:900;
+}
+
+.purchase-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:18px;
+}
+.purchase-card{
+    border:1px solid #eaddec;
+    border-radius:24px;
+    padding:18px;
+    background:linear-gradient(180deg,#ffffff,#fffaf7);
+    box-shadow:0 12px 28px rgba(130,91,60,.06);
+}
+.purchase-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:14px;
+}
+.code{
+    padding:8px 13px;
+    border-radius:999px;
+    font-weight:900;
+    font-size:13px;
+    background:#efe5ff;
+    color:#8e63ff;
+}
+.date{
+    color:#8b819b;
+    font-size:12px;
+    font-weight:900;
+}
+.supplier{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:10px;
+}
+.avatar{
+    width:50px;
+    height:50px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+    font-size:19px;
+    background:#efe5ff;
+    color:#8e63ff;
+}
+.supplier-name{font-weight:900;color:#17152f}
+.supplier-type{color:#7b7288;font-weight:800;font-size:13px}
+
+.status{
+    display:inline-flex;
+    align-items:center;
+    padding:8px 14px;
+    border-radius:999px;
+    font-weight:900;
+    margin:6px 0 14px;
+}
+.status.ordered{background:#fff1c9;color:#f59f00}
+.status.partial{background:#e8f2ff;color:#3a86ff}
+.status.received{background:#ddf8ea;color:#20b86b}
+.status.cancelled{background:#ffe3ee;color:#ff4d7d}
+
+.qty-row{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+    margin:10px 0 14px;
+}
+.qty-box{
+    background:#fff;
+    border:1px solid #f1ddd1;
+    border-radius:16px;
+    padding:10px;
+    text-align:center;
+}
+.qty-label{
+    font-size:12px;
+    color:#7b7288;
+    font-weight:900;
+}
+.qty-value{
+    font-size:20px;
+    color:#17152f;
+    font-weight:900;
+    margin-top:4px;
+}
+.qty-value.received{color:#20b86b}
+.qty-value.pending{color:#ff8b3d}
+
+.stock-status{
+    border:1px dashed #eaddec;
+    border-radius:18px;
+    background:white;
+    padding:12px;
+    margin-top:12px;
+}
+.stock-title{
+    color:#17152f;
+    font-weight:1000;
+    margin-bottom:8px;
+    font-size:13px;
+}
+.pill-wrap{
+    display:flex;
+    gap:7px;
+    flex-wrap:wrap;
+}
+.pill{
+    display:inline-flex;
+    align-items:center;
+    border-radius:999px;
+    padding:8px 11px;
+    font-size:12px;
+    font-weight:1000;
+}
+.pill.plan{background:#f1e8ff;color:#6d45d8}
+.pill.none{background:#fff1db;color:#d77a00}
+.pill.ok{background:#ddf8ea;color:#20b86b}
+.pill.wait{background:#ffe3ee;color:#ff4d7d}
+
+.amount-label{
+    color:#7b7288;
+    font-weight:800;
+    font-size:13px;
+    margin-top:12px;
+}
+.amount{
+    font-size:24px;
+    font-weight:900;
+    margin:3px 0 18px;
+    color:#8e63ff;
+}
+.card-actions{
+    display:grid;
+    grid-template-columns:1fr 46px;
+    gap:10px;
+}
+.view-btn{
+    border-radius:16px;
+    padding:12px;
+    text-align:center;
+    font-weight:900;
+    background:#f7f1ff;
+    color:#8e63ff;
+    border:1px solid #e3d5ff;
+}
+.edit-btn{
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+    background:#fff6f2;
+    color:#ff8b3d;
+    border:1px solid #ffd9c8;
+}
+.empty-box{
+    grid-column:1/-1;
+    min-height:330px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+}
+.empty-box h3{
+    font-size:24px;
+    margin:8px 0;
+}
+
+@media(max-width:1350px){
+    .purchase-grid{grid-template-columns:repeat(3,1fr)}
+    .purchase-hero{grid-template-columns:1fr}
+}
+@media(max-width:1000px){
+    .purchase-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:700px){
+    .summary-card{grid-template-columns:1fr}
+    .summary-item{border-right:none;border-bottom:1px solid #f1ddd1;padding-bottom:16px}
+    .purchase-grid{grid-template-columns:1fr}
+    .hero-img{height:200px}
+}
+</style>
+
+<div class="purchase-hero">
+    <div class="purchase-title">
+        <h1>Purchases ✨</h1>
+        <p>
+            Simple view: received, missing, plan status,<br>
+            and whether stock is allocated to shop.
+        </p>
+        <a href="{% url 'purchase_create' %}" class="btn-add">Add Purchase</a>
+    </div>
+
+    <img src="{% static 'img/purchase-hero.png' %}" class="hero-img">
+</div>
+
+<div class="summary-card">
+    <div class="summary-item">
+        <div class="summary-icon purple">🛒</div>
+        <div>
+            <div class="summary-label">Total Purchases</div>
+            <div class="summary-value">{{ total_purchases|default:"0" }}</div>
+            <div class="summary-sub">All time</div>
+        </div>
+    </div>
+
+    <div class="summary-item">
+        <div class="summary-icon green">💵</div>
+        <div>
+            <div class="summary-label">Total Spent</div>
+            <div class="summary-value green">${{ total_spent|default:"0.00" }}</div>
+            <div class="summary-sub">Batch cost only</div>
+        </div>
+    </div>
+
+    <div class="summary-item">
+        <div class="summary-icon orange">📦</div>
+        <div>
+            <div class="summary-label">Pending Orders</div>
+            <div class="summary-value orange">{{ pending_orders|default:"0" }}</div>
+            <div class="summary-sub">Not fully received</div>
+        </div>
+    </div>
+
+    <div class="summary-item">
+        <div class="summary-icon blue">🗓️</div>
+        <div>
+            <div class="summary-label">This Month</div>
+            <div class="summary-value blue">${{ this_month|default:"0.00" }}</div>
+            <div class="summary-sub">Current month</div>
+        </div>
+    </div>
+</div>
+
+<div class="purchase-panel">
+    <div class="panel-head">
+        <h2>All Purchases</h2>
+        <div class="sort-pill">Newest First⌄</div>
+    </div>
+
+    <div class="purchase-grid">
+        {% for purchase in purchases %}
+        <div class="purchase-card">
+            <div class="purchase-top">
+                <span class="code">#PUR-{{ purchase.id|stringformat:"05d" }}</span>
+                <span class="date">{{ purchase.created_at|date:"M d, Y" }} 🗓️</span>
+            </div>
+
+            <div class="supplier">
+                <div class="avatar">{{ purchase.supplier|slice:":2"|upper }}</div>
+                <div>
+                    <div class="supplier-name">{{ purchase.supplier }}</div>
+                    <div class="supplier-type">Supplier Order</div>
+                </div>
+            </div>
+
+            {% if purchase.status == "received" %}
+                <div class="status received">✓ Fully Received</div>
+            {% elif purchase.status == "partial" %}
+                <div class="status partial">📦 Partial Received</div>
+            {% elif purchase.status == "cancelled" %}
+                <div class="status cancelled">✕ Cancelled</div>
+            {% else %}
+                <div class="status ordered">⏳ Ordered</div>
+            {% endif %}
+
+            <div class="qty-row">
+                <div class="qty-box">
+                    <div class="qty-label">Ordered</div>
+                    <div class="qty-value">{{ purchase.total_ordered_qty }}</div>
+                </div>
+                <div class="qty-box">
+                    <div class="qty-label">Received</div>
+                    <div class="qty-value received">{{ purchase.total_received_qty }}</div>
+                </div>
+                <div class="qty-box">
+                    <div class="qty-label">Missing</div>
+                    <div class="qty-value pending">{{ purchase.total_pending_qty }}</div>
+                </div>
+            </div>
+
+            <div class="stock-status">
+                <div class="stock-title">📋 Stock Status</div>
+                <div class="pill-wrap">
+                    {% if purchase.has_plan %}
+                        <span class="pill plan">✅ Plan Set</span>
+                    {% else %}
+                        <span class="pill none">⚠️ No Plan</span>
+                    {% endif %}
+
+                    {% if purchase.is_allocated %}
+                        <span class="pill ok">✅ Allocated</span>
+                    {% else %}
+                        <span class="pill wait">⏳ Not Allocated</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="amount-label">Total Batch Cost</div>
+            <div class="amount">${{ purchase.total_amount|floatformat:2 }}</div>
+
+            <div class="card-actions">
+                <a href="{% url 'purchase_detail' purchase.id %}" class="view-btn">👁 Check / Receive</a>
+                <a href="{% url 'purchase_update' purchase.id %}" class="edit-btn">✏️</a>
+            </div>
+        </div>
+
+        {% empty %}
+        <div class="empty-box">
+            <div>
+                <div style="font-size:90px;">📦✨</div>
+                <h3>No purchases found</h3>
+                <p>Create your first purchase order.</p>
+                <a href="{% url 'purchase_create' %}" class="btn-add">Add Purchase</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

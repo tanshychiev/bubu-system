@@ -1,0 +1,461 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<style>
+.detail-page{
+    max-width:1200px;
+    margin:auto;
+}
+
+.back-btn{
+    display:inline-flex;
+    padding:13px 24px;
+    border-radius:999px;
+    background:white;
+    border:1px solid #eaddec;
+    color:#6b6178;
+    font-weight:900;
+    text-decoration:none;
+    margin-bottom:18px;
+}
+
+.detail-card,
+.variant-card{
+    background:white;
+    border:1px solid #f5e8df;
+    border-radius:30px;
+    padding:24px;
+    box-shadow:0 20px 50px rgba(130,91,60,.10);
+    margin-bottom:22px;
+}
+
+.detail-grid{
+    display:grid;
+    grid-template-columns:420px 1fr;
+    gap:28px;
+    align-items:center;
+}
+
+.item-img{
+    height:360px;
+    border-radius:26px;
+    background:#fff6ef;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+}
+
+.item-img img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+
+.placeholder{
+    font-size:110px;
+}
+
+h1{
+    font-size:40px;
+    color:#17152f;
+    margin:0 0 8px;
+    font-weight:900;
+}
+
+h2{
+    color:#17152f;
+    margin:0 0 16px;
+    font-weight:900;
+}
+
+.brand{
+    color:#7b7288;
+    font-weight:800;
+    margin-bottom:16px;
+}
+
+.badge{
+    display:inline-flex;
+    padding:8px 14px;
+    border-radius:999px;
+    background:#eee4ff;
+    color:#7b5cff;
+    font-weight:900;
+    margin-bottom:14px;
+}
+
+.info-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:14px;
+    margin-top:18px;
+}
+
+.info-box{
+    background:#fff8fb;
+    border-radius:18px;
+    padding:16px;
+}
+
+.info-box small{
+    color:#7b7288;
+    font-weight:900;
+}
+
+.info-box h3{
+    margin:6px 0 0;
+    color:#17152f;
+}
+
+.action-row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:22px;
+}
+
+.btn-main{
+    padding:14px 26px;
+    border-radius:999px;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    font-weight:900;
+    text-decoration:none;
+}
+
+.btn-soft{
+    padding:14px 26px;
+    border-radius:999px;
+    background:#fbf8ff;
+    border:1px solid #eaddec;
+    color:#7b5cff;
+    font-weight:900;
+    text-decoration:none;
+}
+
+.btn-danger{
+    padding:14px 26px;
+    border-radius:999px;
+    background:#fff3f1;
+    border:1px solid #ffd8d1;
+    color:#ff4d4d;
+    font-weight:900;
+    text-decoration:none;
+}
+
+.variant-head-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+}
+
+.variant-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+}
+
+.variant-box{
+    background:linear-gradient(180deg,#fff,#fffaf7);
+    border:1px solid #f1ddd1;
+    border-radius:24px;
+    padding:16px;
+}
+
+.variant-img{
+    height:130px;
+    border-radius:18px;
+    background:#fff6ef;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    margin-bottom:12px;
+}
+
+.variant-img img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+
+.variant-img-placeholder{
+    font-size:52px;
+}
+
+.variant-title{
+    font-weight:900;
+    color:#17152f;
+    font-size:17px;
+    margin-bottom:10px;
+}
+
+.variant-meta{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+}
+
+.chip{
+    background:#fff8fb;
+    border:1px solid #f0e5ee;
+    color:#514a5f;
+    border-radius:999px;
+    padding:5px 10px;
+    font-size:12px;
+    font-weight:900;
+}
+
+.stock-good{
+    color:#19a974;
+    font-weight:900;
+}
+
+.stock-low{
+    color:#ff4d4d;
+    font-weight:900;
+}
+
+.price-row{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    font-weight:900;
+    margin-top:10px;
+}
+
+.cost{
+    color:#6b6178;
+}
+
+.price{
+    color:#7b5cff;
+}
+
+.variant-action{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:14px;
+}
+
+.variant-stock-btn{
+    display:inline-flex;
+    padding:10px 16px;
+    border-radius:999px;
+    background:linear-gradient(135deg,#19a974,#7be0b2);
+    color:white;
+    font-weight:900;
+    text-decoration:none;
+    font-size:13px;
+}
+
+.barcode-btn{
+    background:linear-gradient(135deg,#7b5cff,#b07cff);
+}
+
+.empty-variant{
+    text-align:center;
+    padding:50px 10px;
+    color:#7b7288;
+    font-weight:800;
+    grid-column:1 / -1;
+}
+
+@media(max-width:1000px){
+    .detail-grid{
+        grid-template-columns:1fr;
+    }
+
+    .item-img{
+        height:260px;
+    }
+
+    .info-grid{
+        grid-template-columns:1fr;
+    }
+
+    .variant-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+}
+
+@media(max-width:650px){
+    .variant-grid{
+        grid-template-columns:1fr;
+    }
+
+    h1{
+        font-size:32px;
+    }
+}
+</style>
+
+<div class="detail-page">
+
+    <a href="{% url 'item_list' %}" class="back-btn">← Back to Inventory</a>
+
+    <div class="detail-card">
+        <div class="detail-grid">
+
+            <div class="item-img">
+                {% if item.image %}
+                    <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                {% else %}
+                    <div class="placeholder">📦</div>
+                {% endif %}
+            </div>
+
+            <div>
+                <span class="badge">
+                    {% if item.item_type %}
+                        {{ item.item_type.emoji }} {{ item.item_type.name }}
+                    {% else %}
+                        📦 No Type
+                    {% endif %}
+                </span>
+
+                <h1>{{ item.name }}</h1>
+                <div class="brand">{{ item.brand|default:"No brand" }}</div>
+
+                <div class="info-grid">
+                    <div class="info-box">
+                        <small>Total Stock From Variants</small>
+                        <h3>{{ item.total_stock }} {{ item.get_unit_display }}</h3>
+                    </div>
+
+                    <div class="info-box">
+                        <small>Unit</small>
+                        <h3>{{ item.get_unit_display }}</h3>
+                    </div>
+
+                    {% if can_manage_inventory %}
+                    <div class="info-box">
+                        <small>Default Cost</small>
+                        <h3>${{ item.cost_price|floatformat:2 }}</h3>
+                    </div>
+
+                    <div class="info-box">
+                        <small>Default Sale Price</small>
+                        <h3>${{ item.sale_price|floatformat:2 }}</h3>
+                    </div>
+                    {% endif %}
+
+                    <div class="info-box">
+                        <small>Status</small>
+                        <h3>{% if item.is_active %}Active{% else %}Inactive{% endif %}</h3>
+                    </div>
+                </div>
+
+                {% if can_manage_inventory %}
+                <div class="action-row">
+                    <a href="{% url 'item_variant_create' item.id %}" class="btn-main">+ Add Variant Size / Color / Price</a>
+                    <a href="{% url 'item_edit' item.id %}" class="btn-soft">Edit Item</a>
+                    <a href="{% url 'item_delete' item.id %}" class="btn-danger">Delete</a>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+    <div class="variant-card">
+        <div class="variant-head-row">
+            <h2>Sellable Variants 🎨</h2>
+
+            {% if can_manage_inventory %}
+                <a href="{% url 'item_variant_create' item.id %}" class="btn-main">+ Add Variant</a>
+            {% endif %}
+        </div>
+
+        <div class="variant-grid">
+            {% for variant in item.variants.all %}
+            <div class="variant-box">
+
+                <div class="variant-img">
+                    {% if variant.image %}
+                        <img src="{{ variant.image.url }}" alt="{{ variant.display_name }}">
+                    {% elif item.image %}
+                        <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                    {% else %}
+                        <div class="variant-img-placeholder">📦</div>
+                    {% endif %}
+                </div>
+
+                <div class="variant-title">
+                    {{ item.name }} / {{ variant.display_name }}
+                </div>
+
+                <div class="variant-meta">
+                    {% if variant.sku %}
+                        <span class="chip">SKU: {{ variant.sku }}</span>
+                    {% endif %}
+
+                    {% if variant.size %}
+                        <span class="chip">Size: {{ variant.size }}</span>
+                    {% endif %}
+
+                    {% if variant.color %}
+                        <span class="chip">Color: {{ variant.color }}</span>
+                    {% endif %}
+
+                    {% if variant.label %}
+                        <span class="chip">Label: {{ variant.label }}</span>
+                    {% endif %}
+
+                    {% if not variant.is_active %}
+                        <span class="chip">Inactive</span>
+                    {% endif %}
+                </div>
+
+                {% if variant.quantity <= 3 %}
+                    <div class="stock-low">Low Stock: {{ variant.quantity }} {{ item.get_unit_display }}</div>
+                {% else %}
+                    <div class="stock-good">Stock: {{ variant.quantity }} {{ item.get_unit_display }}</div>
+                {% endif %}
+
+                {% if can_manage_inventory %}
+                <div class="price-row">
+                    <span class="cost">Cost: ${{ variant.cost_price|floatformat:2 }}</span>
+                    <span class="price">Sale: ${{ variant.sale_price|floatformat:2 }}</span>
+                </div>
+
+                <div class="variant-action">
+    <a href="{% url 'variant_stock_movement' variant.id %}" class="variant-stock-btn">
+        Stock In / Out
+    </a>
+
+    <a href="{% url 'variant_barcode_label' variant.id %}" class="variant-stock-btn barcode-btn">
+        Print Barcode
+    </a>
+
+    <a href="{% url 'item_variant_edit' item.id variant.id %}" class="variant-stock-btn barcode-btn">
+        Edit
+    </a>
+</div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="empty-variant">
+                <div style="font-size:70px;">📦✨</div>
+                <h3>No variant yet</h3>
+                <p>Add each real sellable size/color/price row here.</p>
+
+                {% if can_manage_inventory %}
+                    <a href="{% url 'item_variant_create' item.id %}" class="btn-main">+ Add First Variant</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

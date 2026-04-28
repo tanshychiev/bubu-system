@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+.role-wrap{max-width:1200px;margin:0 auto;}
+.role-card{
+    background:white;border:1px solid #f5e8df;border-radius:32px;
+    padding:32px;box-shadow:0 20px 50px rgba(130,91,60,.10);
+}
+.role-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
+.role-head h1{margin:0;font-size:34px;font-weight:900;}
+.role-sub{color:#7b7288;font-weight:800;margin-top:6px;}
+
+.form-control{
+    width:100%;height:52px;border:1px solid #eaddec;border-radius:20px;
+    padding:12px 16px;font-weight:800;
+}
+
+.count-row{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0;}
+.count-pill{
+    background:#fffaf6;border:1px solid #eaddec;border-radius:999px;
+    padding:10px 18px;font-weight:900;
+}
+
+.type-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin:24px 0 12px;
+    background:linear-gradient(135deg,#f3eaff,#fff0f6);
+    border:1px solid #eaddec;
+    border-radius:18px;
+    padding:13px 18px;
+    font-weight:900;
+    font-size:17px;
+}
+
+.select-btn{
+    background:#e8f8f0;
+    color:#20b86b;
+    border:none;
+    border-radius:999px;
+    padding:8px 16px;
+    font-weight:900;
+    cursor:pointer;
+}
+
+.permission-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+}
+
+.permission-item{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+    background:#fffaf6;
+    border:1px solid #eaddec;
+    border-radius:18px;
+    padding:16px;
+    font-weight:900;
+    font-size:14px;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.permission-item.active{
+    background:#e8f8f0;
+    border-color:#20b86b;
+}
+
+.permission-item input{
+    width:26px;
+    height:26px;
+    accent-color:#20b86b;
+    cursor:pointer;
+}
+
+.action-row{margin-top:28px;display:flex;gap:14px;}
+.btn-save{
+    color:white;background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    border-radius:999px;padding:14px 30px;font-weight:900;
+}
+.btn-back{
+    background:white;color:#8e63ff;border:1px solid #eaddec;
+    border-radius:999px;padding:14px 30px;font-weight:900;
+}
+
+@media(max-width:900px){
+    .permission-grid{grid-template-columns:1fr}
+}
+</style>
+
+<div class="role-wrap">
+<div class="role-card">
+
+<div class="role-head">
+    <div>
+        <h1>{{ title }} 🔐</h1>
+        <div class="role-sub">Choose permission by type.</div>
+    </div>
+</div>
+
+<form method="post">
+{% csrf_token %}
+
+<label><b>Role Name</b></label>
+{{ form.name }}
+
+<div class="count-row">
+    <div class="count-pill">✅ Selected: <span id="selectedCount">0</span></div>
+    <div class="count-pill">⭕ Not Selected: <span id="unselectedCount">0</span></div>
+    <div class="count-pill">📌 Total: <span id="totalCount">0</span></div>
+</div>
+
+{% regroup form.permissions by choice_label|slice:":20" as grouped_permissions %}
+
+{% for group in grouped_permissions %}
+
+<div class="type-title">
+    <span>📦 {{ group.grouper|truncatewords:2 }}</span>
+    <button type="button" class="select-btn" onclick="toggleGroup(this)">
+        Select All
+    </button>
+</div>
+
+<div class="permission-grid">
+    {% for checkbox in group.list %}
+        <label class="permission-item">
+            {{ checkbox.tag }}
+            <span>{{ checkbox.choice_label }}</span>
+        </label>
+    {% endfor %}
+</div>
+
+{% endfor %}
+
+<div class="action-row">
+    <button type="submit" class="btn-save">💜 Save Role</button>
+    <a href="{% url 'role_list' %}" class="btn-back">Back</a>
+</div>
+
+</form>
+</div>
+</div>
+
+<script>
+function updateUI(){
+    const items = document.querySelectorAll(".permission-item");
+    let selected = 0;
+
+    items.forEach(item=>{
+        const cb = item.querySelector("input");
+        if(cb.checked){
+            item.classList.add("active");
+            selected++;
+        }else{
+            item.classList.remove("active");
+        }
+    });
+
+    document.getElementById("selectedCount").innerText = selected;
+    document.getElementById("unselectedCount").innerText = items.length - selected;
+    document.getElementById("totalCount").innerText = items.length;
+}
+
+function toggleGroup(btn){
+    const grid = btn.parentElement.nextElementSibling;
+    const checkboxes = grid.querySelectorAll("input");
+
+    let allChecked = true;
+    checkboxes.forEach(cb=>{
+        if(!cb.checked) allChecked = false;
+    });
+
+    checkboxes.forEach(cb=>{
+        cb.checked = !allChecked;
+    });
+
+    updateUI();
+}
+
+document.addEventListener("DOMContentLoaded", ()=>{
+    document.querySelectorAll("input[type=checkbox]").forEach(cb=>{
+        cb.addEventListener("change", updateUI);
+    });
+
+    updateUI();
+});
+</script>
+
+{% endblock %}

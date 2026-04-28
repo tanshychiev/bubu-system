@@ -1,0 +1,268 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - BUBU Pet Store</title>
+
+    <style>
+        *{box-sizing:border-box;font-family:Arial,sans-serif;}
+
+        body{
+            margin:0;
+            min-height:100vh;
+            background:linear-gradient(135deg,#fff3e8,#fff8fb);
+            overflow:hidden;
+            color:#4b2f3f;
+        }
+
+        .page{
+            min-height:100vh;
+            display:grid;
+            grid-template-columns:1fr 460px;
+            gap:36px;
+            align-items:center;
+            justify-content:center;
+            max-width:1450px;
+            margin:0 auto;
+            padding:30px 40px;
+            position:relative;
+        }
+
+        .hero{
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:38px;
+        }
+
+        .hero img{
+            width:100%;
+            max-height:760px;
+            object-fit:contain;
+        }
+
+        .side{
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:38px;
+        }
+
+        .card{
+            width:100%;
+            max-width:460px;
+            background:rgba(255,255,255,.94);
+            border:1px solid #f2dacb;
+            border-radius:34px;
+            padding:38px;
+            text-align:center;
+            box-shadow:0 28px 70px rgba(120,76,45,.16);
+            position:relative;
+            z-index:2;
+        }
+
+        .logo{
+            width:92px;
+            height:92px;
+            object-fit:contain;
+            margin-bottom:14px;
+            animation:bounce 2.5s infinite;
+        }
+
+        h1{
+            margin:0;
+            font-size:34px;
+            font-weight:900;
+        }
+
+        .subtitle{
+            margin:10px 0 26px;
+            color:#8b7b8d;
+            font-weight:700;
+        }
+
+        .error{
+            background:#fff0f0;
+            color:#ff4d4d;
+            border-radius:16px;
+            padding:12px;
+            font-weight:800;
+            margin-bottom:16px;
+        }
+
+        .input-box{
+            height:58px;
+            border:1.5px solid #f0d7c8;
+            border-radius:16px;
+            background:white;
+            display:flex;
+            align-items:center;
+            gap:12px;
+            padding:0 16px;
+            margin-bottom:14px;
+        }
+
+        .input-box input{
+            width:100%;
+            border:none;
+            outline:none;
+            font-size:15px;
+            font-weight:800;
+            background:transparent;
+        }
+
+        .show-btn{
+            border:none;
+            background:transparent;
+            color:#a46cf5;
+            font-weight:900;
+            cursor:pointer;
+            white-space:nowrap;
+        }
+
+        .login-btn{
+            width:100%;
+            height:60px;
+            border:none;
+            border-radius:999px;
+            color:white;
+            font-size:18px;
+            font-weight:900;
+            cursor:pointer;
+            background:linear-gradient(135deg,#ff9b72,#ff7f6e);
+            box-shadow:0 16px 35px rgba(255,127,110,.28);
+        }
+
+        .note{
+            margin-top:26px;
+            background:#fff5ed;
+            border-radius:26px;
+            padding:18px;
+            display:flex;
+            gap:14px;
+            text-align:left;
+            font-weight:800;
+            color:#7a5f6f;
+        }
+
+        .footer{
+            position:fixed;
+            bottom:14px;
+            left:0;
+            right:0;
+            text-align:center;
+            color:#9b8a9c;
+            font-weight:800;
+            font-size:13px;
+            z-index:3;
+        }
+
+        .float{
+            position:absolute;
+            font-size:24px;
+            opacity:.75;
+            animation:floatUp 6s infinite ease-in-out;
+            z-index:1;
+        }
+
+        .f1{left:8%;bottom:10%;animation-delay:0s;}
+        .f2{left:38%;bottom:18%;animation-delay:1s;}
+        .f3{right:10%;bottom:15%;animation-delay:2s;}
+        .f4{right:32%;bottom:5%;animation-delay:3s;}
+        .f5{left:20%;bottom:35%;animation-delay:1.8s;}
+
+        @keyframes floatUp{
+            0%{transform:translateY(0) scale(1);opacity:.2;}
+            40%{opacity:1;}
+            100%{transform:translateY(-140px) scale(1.3);opacity:0;}
+        }
+
+        @keyframes bounce{
+            0%,100%{transform:translateY(0);}
+            50%{transform:translateY(-8px);}
+        }
+
+        @media(max-width:900px){
+            .page{grid-template-columns:1fr;}
+            .hero{display:none;}
+            .side{min-height:100vh;padding:24px;}
+            .card{padding:30px;}
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <div class="float f1">💕</div>
+    <div class="float f2">✨</div>
+    <div class="float f3">💜</div>
+    <div class="float f4">⭐</div>
+    <div class="float f5">🐾</div>
+
+    <div class="hero">
+        <img src="{% static 'img/bubu-login-hero.png' %}" alt="BUBU Pet Store">
+    </div>
+
+    <div class="side">
+        <div class="card">
+
+            <img src="{% static 'img/bubu-logo.png' %}" class="logo" alt="BUBU Logo">
+
+            <h1>Welcome back! 💕</h1>
+            <div class="subtitle">Sign in to continue to BUBU Pet Store POS</div>
+
+            {% if form.errors %}
+                <div class="error">Invalid username or password</div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="input-box">
+                    <span>👤</span>
+                    <input type="text" name="username" placeholder="Username" required>
+                </div>
+
+                <div class="input-box">
+                    <span>🔒</span>
+                    <input id="passwordInput" type="password" name="password" placeholder="Password" required>
+                    <button class="show-btn" type="button" onclick="togglePassword()">Show</button>
+                </div>
+
+                <button type="submit" class="login-btn">🐾 Login</button>
+            </form>
+
+            <div class="note">
+                <div style="font-size:34px;">🎁</div>
+                <div>Manage your store,<br>love your pets, grow together! 💜</div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="footer">
+    © 2026 BUBU Pet Store POS • Made with 💜
+</div>
+
+<script>
+function togglePassword(){
+    const input = document.getElementById("passwordInput");
+    const btn = document.querySelector(".show-btn");
+
+    if(input.type === "password"){
+        input.type = "text";
+        btn.innerText = "Hide";
+    }else{
+        input.type = "password";
+        btn.innerText = "Show";
+    }
+}
+</script>
+
+</body>
+</html>

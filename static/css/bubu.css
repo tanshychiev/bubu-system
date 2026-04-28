@@ -1,0 +1,318 @@
+:root {
+  --cream: #f8f1e8;
+  --cream2: #fffaf3;
+  --orange: #d99a63;
+  --orange-dark: #b97845;
+  --peach: #f3d7c2;
+  --brown: #6f4b32;
+  --text: #3b2a22;
+  --white: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: var(--cream);
+  color: var(--text);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* TOP NAV */
+.bubu-nav {
+  height: 70px;
+  background: rgba(255, 250, 243, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 34px;
+  border-bottom: 1px solid #ead8c8;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--brown);
+}
+
+.logo span {
+  color: var(--orange);
+}
+
+.nav-links {
+  display: flex;
+  gap: 22px;
+  font-size: 14px;
+  color: var(--brown);
+}
+
+.nav-btn {
+  background: var(--orange);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+/* HERO */
+.hero {
+  min-height: 360px;
+  background:
+    linear-gradient(rgba(248,241,232,0.25), rgba(248,241,232,0.65)),
+    url("/static/img/pet-hero.jpg");
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-bottom: 8px solid var(--peach);
+}
+
+.hero h1 {
+  font-size: 58px;
+  letter-spacing: 6px;
+  color: white;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  margin: 0;
+}
+
+.hero .script {
+  display: block;
+  font-size: 72px;
+  font-family: cursive;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+/* MAIN */
+.page {
+  padding: 34px;
+}
+
+.section-title {
+  text-align: center;
+  color: var(--orange-dark);
+  margin-bottom: 28px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 22px;
+}
+
+.card {
+  background: var(--white);
+  border-radius: 28px;
+  padding: 24px;
+  box-shadow: 0 12px 30px rgba(111,75,50,0.1);
+  border: 1px solid #f0ddcc;
+}
+
+.card-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--peach);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin-bottom: 14px;
+}
+
+.card h3 {
+  margin: 0 0 8px;
+  color: var(--brown);
+}
+
+.card p {
+  margin: 0;
+  color: #8a6b56;
+  font-size: 14px;
+}
+
+/* POS */
+.pos-layout {
+  display: grid;
+  grid-template-columns: 1fr 390px;
+  gap: 24px;
+}
+
+.product-area,
+.cart-area {
+  background: var(--cream2);
+  border-radius: 30px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(111,75,50,0.08);
+}
+
+.search-box {
+  width: 100%;
+  border: none;
+  padding: 16px 20px;
+  border-radius: 999px;
+  background: white;
+  font-size: 15px;
+  outline: none;
+}
+
+.category-row {
+  display: flex;
+  gap: 12px;
+  margin: 18px 0;
+  flex-wrap: wrap;
+}
+
+.category-pill {
+  background: white;
+  color: var(--brown);
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid #efd9c7;
+  cursor: pointer;
+}
+
+.category-pill.active {
+  background: var(--orange);
+  color: white;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.product-card {
+  background: white;
+  border-radius: 24px;
+  padding: 14px;
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(111,75,50,0.08);
+  cursor: pointer;
+}
+
+.product-img {
+  height: 120px;
+  border-radius: 18px;
+  background: #f4dfcd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  margin-bottom: 10px;
+}
+
+.product-card strong {
+  display: block;
+  color: var(--brown);
+}
+
+.price {
+  color: var(--orange-dark);
+  font-weight: 700;
+}
+
+/* CART */
+.cart-item {
+  background: white;
+  border-radius: 18px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.total-box {
+  background: var(--peach);
+  border-radius: 22px;
+  padding: 18px;
+  margin-top: 18px;
+}
+
+.pay-input {
+  width: 100%;
+  padding: 13px;
+  border-radius: 14px;
+  border: 1px solid #e7cbb7;
+  margin-top: 10px;
+}
+
+.primary-btn {
+  width: 100%;
+  border: none;
+  background: var(--orange);
+  color: white;
+  padding: 15px;
+  border-radius: 999px;
+  font-weight: 800;
+  margin-top: 14px;
+  cursor: pointer;
+}
+
+/* LOGIN */
+.login-page {
+  min-height: 100vh;
+  background: var(--cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-box {
+  width: 390px;
+  background: white;
+  border-radius: 34px;
+  padding: 34px;
+  box-shadow: 0 14px 40px rgba(111,75,50,0.12);
+  text-align: center;
+}
+
+.login-box h1 {
+  color: var(--brown);
+}
+
+.login-box input {
+  width: 100%;
+  border: 1px solid #ead1bd;
+  border-radius: 999px;
+  padding: 14px 18px;
+  margin: 10px 0;
+}
+
+/* MOBILE */
+@media (max-width: 900px) {
+  .nav-links {
+    display: none;
+  }
+
+  .hero h1 {
+    font-size: 34px;
+  }
+
+  .hero .script {
+    font-size: 48px;
+  }
+
+  .card-grid,
+  .product-grid,
+  .pos-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .page {
+    padding: 18px;
+  }
+}

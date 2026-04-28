@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1>Delivery ✨</h1>
+        <div class="page-subtitle">Manage your delivery orders 💗</div>
+
+        <form method="get" class="tool-row">
+            <input
+                type="text"
+                name="q"
+                value="{{ request.GET.q }}"
+                placeholder="Search customer..."
+                class="search-input"
+            >
+
+            <select name="status" class="search-input">
+                <option value="">All Status</option>
+                <option value="pending" {% if request.GET.status == "pending" %}selected{% endif %}>Pending</option>
+                <option value="confirmed" {% if request.GET.status == "confirmed" %}selected{% endif %}>Confirmed</option>
+                <option value="on_the_way" {% if request.GET.status == "on_the_way" %}selected{% endif %}>On the way</option>
+                <option value="delivered" {% if request.GET.status == "delivered" %}selected{% endif %}>Delivered</option>
+                <option value="cancelled" {% if request.GET.status == "cancelled" %}selected{% endif %}>Cancelled</option>
+            </select>
+
+            <button type="submit" class="btn btn-search">🔍 Search</button>
+            <a href="{% url 'delivery_list' %}" class="btn btn-reset">↻ Reset</a>
+        </form>
+    </div>
+
+    <img
+        src="{% static 'img/delivery-hero.png' %}"
+        class="pet-hero-img"
+        alt="Delivery pets"
+    >
+</div>
+
+<div style="margin-bottom:18px;">
+    <a href="{% url 'delivery_create' %}" class="btn btn-primary">＋ Create Delivery</a>
+</div>
+
+<div class="table-card">
+    <table>
+        <thead>
+            <tr>
+                <th>ID ↕</th>
+                <th>Order ↕</th>
+                <th>Customer ↕</th>
+                <th>Phone ↕</th>
+                <th>Fee ↕</th>
+                <th>Status ↕</th>
+                <th>Created ↕</th>
+                <th>Action ↕</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for delivery in deliveries %}
+            <tr>
+                <td>
+                    <strong style="color:#9b7cf6;">#DLV-{{ delivery.id|stringformat:"04d" }}</strong>
+                </td>
+
+                <td>
+                    <strong>
+                        {% if delivery.order %}
+                            #ORD-{{ delivery.order.id }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </strong>
+                </td>
+
+                <td>
+                    <div style="display:flex;align-items:center;gap:10px;justify-content:center;">
+                        <div style="width:42px;height:42px;border-radius:50%;background:#fff1e7;display:flex;align-items:center;justify-content:center;font-size:22px;">
+                            🐶
+                        </div>
+                        <div style="text-align:left;">
+                            <strong>{{ delivery.customer.name|default:"-" }}</strong><br>
+                            <small style="color:#7b7288;">{{ delivery.customer.email|default:"" }}</small>
+                        </div>
+                    </div>
+                </td>
+
+                <td>📞 {{ delivery.phone|default:"-" }}</td>
+
+                <td>${{ delivery.fee|default:"0.00" }}</td>
+
+                <td>
+                    {% if delivery.status == "delivered" %}
+                        <span class="badge badge-green">Delivered</span>
+                    {% elif delivery.status == "on_the_way" %}
+                        <span class="badge badge-blue">On the way</span>
+                    {% elif delivery.status == "confirmed" %}
+                        <span class="badge badge-purple">Confirmed</span>
+                    {% elif delivery.status == "cancelled" %}
+                        <span class="badge badge-red">Cancelled</span>
+                    {% else %}
+                        <span class="badge badge-orange">Pending</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    📅 {{ delivery.created_at|date:"M d, Y" }}<br>
+                    🕘 {{ delivery.created_at|time:"h:i A" }}
+                </td>
+
+                <td>
+                    <a href="{% url 'delivery_detail' delivery.id %}" class="mini-btn btn-view">👁</a>
+                    <a href="{% url 'delivery_update' delivery.id %}" class="mini-btn btn-edit">✏️</a>
+                    <a href="{% url 'delivery_delete' delivery.id %}" class="mini-btn btn-delete">🚚</a>
+                </td>
+            </tr>
+
+        {% empty %}
+            <tr>
+                <td colspan="8">
+                    <div class="empty-box">
+                        <div class="empty-icon">🚚✨</div>
+                        <h3>No delivery found</h3>
+                        <p>
+                            Looks like you do not have delivery orders yet.<br>
+                            Create your first delivery to get started!
+                        </p>
+                        <a href="{% url 'delivery_create' %}" class="btn btn-add">＋ Create Delivery</a>
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

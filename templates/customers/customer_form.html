@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="customer-form-page">
+    <div class="form-head">
+        <h1>{{ title|default:"Customer Form" }} 👥✨</h1>
+        <p>Add or edit customer 💗</p>
+    </div>
+
+    <div class="form-card">
+        <form method="post" class="customer-form">
+            {% csrf_token %}
+
+            <div class="form-grid">
+                <label>
+                    Name
+                    <input name="name" value="{{ customer.name|default:'' }}" placeholder="Customer name">
+                </label>
+
+                <label>
+                    Phone
+                    <input name="phone" value="{{ customer.phone|default:'' }}" placeholder="Phone number">
+                </label>
+
+                <label>
+                    Pet Name
+                    <input name="pet_name" value="{{ customer.pet_name|default:'' }}" placeholder="Pet name">
+                </label>
+
+                <label>
+                    Pet Type
+                    <input name="pet_type" value="{{ customer.pet_type|default:'' }}" placeholder="Dog, cat...">
+                </label>
+            </div>
+
+            <label>
+                Address
+                <textarea name="address" rows="3" placeholder="Address">{{ customer.address|default:'' }}</textarea>
+            </label>
+
+            {% if customer %}
+            <div class="info-card">
+                <h3>Customer Info</h3>
+                <div><strong>Created:</strong> {{ customer.created_at|date:"d/m/Y H:i" }}</div>
+                <div><strong>Created by:</strong> {{ customer.created_by|default:"-" }}</div>
+                <div><strong>Last edit:</strong> {{ customer.updated_at|date:"d/m/Y H:i" }}</div>
+                <div><strong>Edit by:</strong> {{ customer.updated_by|default:"-" }}</div>
+                <div><strong>Points:</strong> {{ customer.points }}</div>
+                <div><strong>Total spent:</strong> ${{ customer.total_spent }}</div>
+            </div>
+
+            <div class="history-card">
+                <h3>Edit History</h3>
+                {% for h in customer.histories.all|dictsortreversed:"changed_at" %}
+                    <div class="history-row">
+                        <strong>{{ h.field_name|title }}</strong>
+                        <div>
+                            <span class="old">{{ h.old_value|default:"-" }}</span>
+                            →
+                            <span class="new">{{ h.new_value|default:"-" }}</span>
+                        </div>
+                        <small>{{ h.changed_by|default:"-" }} · {{ h.changed_at|date:"d/m/Y H:i" }}</small>
+                    </div>
+                {% empty %}
+                    <div class="empty-history">No edit history yet</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <button type="submit">💾 Save</button>
+                <a href="{% url 'customer_list' %}">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.customer-form-page{
+    max-width:980px;
+    margin:0 auto;
+    padding:34px 20px;
+}
+
+.form-head{
+    text-align:center;
+    margin-bottom:26px;
+}
+
+.form-head h1{
+    margin:0;
+    font-size:38px;
+    font-weight:1000;
+    color:#17152f;
+}
+
+.form-head p{
+    color:#7b7288;
+    font-weight:900;
+}
+
+.form-card{
+    background:white;
+    border:1px solid #f1ddd1;
+    border-radius:28px;
+    padding:28px;
+    box-shadow:0 18px 40px rgba(130,91,60,.08);
+}
+
+.customer-form{
+    display:grid;
+    gap:18px;
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+}
+
+.customer-form label{
+    display:grid;
+    gap:8px;
+    font-weight:1000;
+    color:#17152f;
+}
+
+.customer-form input,
+.customer-form textarea{
+    width:100%;
+    border:1px solid #eaddec;
+    border-radius:18px;
+    padding:16px 18px;
+    font-size:16px;
+    font-weight:800;
+    outline:none;
+}
+
+.customer-form input:focus,
+.customer-form textarea:focus{
+    border-color:#8e63ff;
+    box-shadow:0 0 0 5px rgba(142,99,255,.12);
+}
+
+.info-card,
+.history-card{
+    padding:18px;
+    border-radius:22px;
+    display:grid;
+    gap:8px;
+    font-weight:800;
+}
+
+.info-card{
+    background:#fff8f4;
+    border:1px solid #f1ddd1;
+}
+
+.history-card{
+    background:#f9f7ff;
+    border:1px solid #e6ddff;
+}
+
+.info-card h3,
+.history-card h3{
+    margin:0 0 8px;
+    font-size:20px;
+    font-weight:1000;
+}
+
+.history-row{
+    background:white;
+    border:1px dashed #ddd5f5;
+    border-radius:16px;
+    padding:12px;
+    display:grid;
+    gap:6px;
+}
+
+.old{
+    color:#ff4d4d;
+    background:#fff0f0;
+    padding:5px 8px;
+    border-radius:10px;
+}
+
+.new{
+    color:#20a864;
+    background:#effff5;
+    padding:5px 8px;
+    border-radius:10px;
+}
+
+.history-row small,
+.empty-history{
+    color:#7b7288;
+    font-weight:800;
+}
+
+.form-actions{
+    display:flex;
+    justify-content:center;
+    gap:14px;
+    margin-top:8px;
+}
+
+.form-actions button,
+.form-actions a{
+    min-width:150px;
+    padding:15px 28px;
+    border-radius:999px;
+    border:none;
+    font-weight:1000;
+    text-align:center;
+    text-decoration:none;
+}
+
+.form-actions button{
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+    color:white;
+    cursor:pointer;
+}
+
+.form-actions a{
+    background:white;
+    border:1px solid #eaddec;
+    color:#6b6178;
+}
+
+@media(max-width:700px){
+    .form-grid{
+        grid-template-columns:1fr;
+    }
+
+    .form-actions{
+        flex-direction:column;
+    }
+}
+</style>
+
+{% endblock %}

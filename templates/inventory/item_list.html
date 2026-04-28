@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<style>
+a { text-decoration:none !important; }
+
+.inventory-hero {
+    display:grid;
+    grid-template-columns:1fr 620px;
+    align-items:center;
+    gap:25px;
+    margin-bottom:10px;
+}
+
+.inventory-title h1 {
+    font-size:42px;
+    margin:0;
+    color:#17152f;
+    font-weight:900;
+}
+
+.inventory-title p {
+    color:#7b7288;
+    font-weight:800;
+}
+
+.hero-img {
+    width:100%;
+    height:285px;
+    object-fit:contain;
+}
+
+.tool-row {
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-top:22px;
+}
+
+.search-pill {
+    width:280px;
+    height:54px;
+    border-radius:999px;
+    border:1px solid #eaddec;
+    padding:0 18px;
+    background:white;
+    font-weight:800;
+}
+
+.btn-search {
+    height:54px;
+    border-radius:999px;
+    padding:0 32px;
+    border:none;
+    color:white;
+    font-weight:900;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    box-shadow:0 12px 26px rgba(155,124,246,.25);
+}
+
+.btn-reset {
+    height:54px;
+    border-radius:999px;
+    padding:0 30px;
+    background:white;
+    border:1px solid #eaddec;
+    font-weight:900;
+    color:#6b6178;
+    display:inline-flex;
+    align-items:center;
+}
+
+.add-btn {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    height:54px;
+    padding:0 28px;
+    border-radius:999px;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    font-weight:900;
+    box-shadow:0 12px 26px rgba(155,124,246,.25);
+}
+
+.type-btn {
+    background:linear-gradient(135deg,#7b5cff,#b07cff);
+}
+
+.stock-batch-btn {
+    background:linear-gradient(135deg,#19a974,#7be0b2);
+}
+
+.inventory-panel {
+    background:white;
+    border:1px solid #f5e8df;
+    border-radius:28px;
+    padding:22px;
+    box-shadow:0 20px 50px rgba(130,91,60,.10);
+}
+
+.category-tabs {
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:22px;
+}
+
+.tab {
+    padding:14px 28px;
+    border-radius:999px;
+    background:white;
+    border:1px solid #f0e5ee;
+    color:#514a5f;
+    font-weight:900;
+    box-shadow:0 8px 18px rgba(130,91,60,.05);
+}
+
+.tab.active {
+    color:white;
+    background:linear-gradient(135deg,#9b7cf6,#b07cff);
+    box-shadow:0 12px 26px rgba(155,124,246,.25);
+}
+
+.product-grid {
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:18px;
+}
+
+.product-card {
+    background:linear-gradient(180deg,#fff,#fffaf7);
+    border:1px solid #f1ddd1;
+    border-radius:22px;
+    padding:14px;
+    box-shadow:0 10px 24px rgba(130,91,60,.06);
+    transition:.22s;
+}
+
+.product-card:hover {
+    transform:translateY(-4px);
+    box-shadow:0 18px 34px rgba(130,91,60,.12);
+}
+
+.product-img {
+    height:170px;
+    border-radius:18px;
+    background:#fff6ef;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+}
+
+.product-img img {
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+
+.placeholder { font-size:72px; }
+
+.badge {
+    display:inline-flex;
+    padding:7px 12px;
+    border-radius:999px;
+    font-weight:900;
+    font-size:13px;
+    margin-bottom:8px;
+    background:#eee4ff;
+    color:#7b5cff;
+}
+
+.product-name {
+    font-size:16px;
+    font-weight:900;
+    margin:12px 0 4px;
+}
+
+.product-name a {
+    color:#17152f;
+}
+
+.brand {
+    color:#7b7288;
+    font-weight:800;
+    margin-bottom:8px;
+}
+
+.stock {
+    display:inline-flex;
+    padding:6px 10px;
+    border-radius:999px;
+    background:#dff8ed;
+    color:#19a974;
+    font-weight:900;
+    font-size:13px;
+}
+
+.stock.low {
+    background:#ffe6e6;
+    color:#ff4d4d;
+}
+
+.variant-list {
+    margin-top:10px;
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+}
+
+.variant-chip {
+    background:#fff8fb;
+    border:1px solid #f0e5ee;
+    color:#514a5f;
+    border-radius:999px;
+    padding:5px 9px;
+    font-size:12px;
+    font-weight:900;
+}
+
+.price-row {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:10px;
+    font-weight:900;
+}
+
+.cost { color:#6b6178; }
+.price { color:#7b5cff; }
+
+.action-row {
+    display:flex;
+    gap:8px;
+    margin-top:12px;
+    justify-content:flex-end;
+    flex-wrap:wrap;
+}
+
+.icon-btn {
+    min-width:38px;
+    height:38px;
+    padding:0 10px;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+    border:1px solid #eaddec;
+    background:#fbf8ff;
+}
+
+.view-btn { color:#7b5cff; }
+.edit-btn { color:#7b5cff; }
+.stock-btn { color:#19a974; background:#f0fff8; }
+.delete-btn { color:#ff4d4d; background:#fff3f1; }
+
+.empty-box {
+    min-height:350px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    grid-column:1 / -1;
+}
+
+.empty-box h3 {
+    font-size:24px;
+    color:#17152f;
+    margin:8px 0;
+}
+
+@media(max-width:1300px){
+    .product-grid{grid-template-columns:repeat(4,1fr);}
+}
+
+@media(max-width:1000px){
+    .inventory-hero{grid-template-columns:1fr;}
+    .hero-img{height:220px;}
+    .product-grid{grid-template-columns:repeat(2,1fr);}
+}
+
+@media(max-width:600px){
+    .product-grid{grid-template-columns:1fr;}
+}
+</style>
+
+<div class="inventory-hero">
+    <div class="inventory-title">
+        <h1>Pet Inventory 🐾</h1>
+        <p>First create type/category, then create item, then add size/color/style.</p>
+
+        <form method="get" class="tool-row">
+            <input class="search-pill" type="text" name="q" placeholder="🔍 Search pet product..." value="{{ request.GET.q }}">
+            <button class="btn-search" type="submit">Search</button>
+            <a href="{% url 'item_list' %}" class="btn-reset">Reset</a>
+
+            {% if can_manage_inventory %}
+                <a href="{% url 'item_type_create' %}" class="add-btn type-btn">+ Create Type</a>
+                <a href="{% url 'item_create' %}" class="add-btn">+ Add Item</a>
+                <a href="{% url 'stock_batch_in' %}" class="add-btn stock-batch-btn">+ Batch Stock In</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <img src="{% static 'img/inventory-hero.png' %}" class="hero-img">
+</div>
+
+<div class="inventory-panel">
+
+    <div class="category-tabs">
+        <a class="tab {% if not selected_type %}active{% endif %}" href="{% url 'item_list' %}">▦ All Items</a>
+
+        {% for type in item_types %}
+            <a class="tab {% if selected_type == type.id|stringformat:'s' %}active{% endif %}" href="?type={{ type.id }}">
+                {{ type.emoji }} {{ type.name }}
+            </a>
+        {% endfor %}
+    </div>
+
+    <div class="product-grid">
+
+        {% for item in items %}
+        <div class="product-card">
+
+            <span class="badge">
+                {% if item.item_type %}
+                    {{ item.item_type.emoji }} {{ item.item_type.name }}
+                {% else %}
+                    📦 No Type
+                {% endif %}
+            </span>
+
+            <a href="{% url 'item_detail' item.id %}">
+                <div class="product-img">
+                    {% if item.image %}
+                        <img src="{{ item.image.url }}">
+                    {% else %}
+                        <div class="placeholder">📦</div>
+                    {% endif %}
+                </div>
+            </a>
+
+            <div class="product-name">
+                <a href="?q={{ item.name }}">{{ item.name }}</a>
+            </div>
+
+            <div class="brand">{{ item.brand|default:"No brand" }}</div>
+
+            {% if item.total_stock <= 3 %}
+                <div class="stock low">Low Stock: {{ item.total_stock }} {{ item.get_unit_display }}</div>
+            {% else %}
+                <div class="stock">Stock: {{ item.total_stock }} {{ item.get_unit_display }}</div>
+            {% endif %}
+
+            <div class="variant-list">
+                {% for variant in item.variants.all|slice:":3" %}
+                    <span class="variant-chip">
+                        {{ variant.display_name }}: {{ variant.quantity }}
+                    </span>
+                {% empty %}
+                    <span class="variant-chip">No variant yet</span>
+                {% endfor %}
+            </div>
+
+            {% if can_manage_inventory %}
+            <div class="price-row">
+                <span class="cost">Cost: ${{ item.cost_price|floatformat:2 }}</span>
+                <span class="price">${{ item.sale_price|floatformat:2 }}</span>
+            </div>
+            {% endif %}
+
+            <div class="action-row">
+                <a href="{% url 'item_detail' item.id %}" class="icon-btn view-btn">👁</a>
+
+                {% if can_manage_inventory %}
+                    <a href="{% url 'item_variant_create' item.id %}" class="icon-btn stock-btn">+ Size</a>
+                   
+                    <a href="{% url 'item_edit' item.id %}" class="icon-btn edit-btn">✎</a>
+                    <a href="{% url 'item_delete' item.id %}" class="icon-btn delete-btn">🗑</a>
+                {% endif %}
+            </div>
+
+        </div>
+
+        {% empty %}
+        <div class="empty-box">
+            <div>
+                <div style="font-size:90px;">📦✨</div>
+                <h3>No items found</h3>
+                <p>Looks like your inventory is empty.</p>
+
+                {% if can_manage_inventory %}
+                    <a href="{% url 'item_type_create' %}" class="add-btn type-btn">+ Create Type</a>
+                    <a href="{% url 'item_create' %}" class="add-btn">+ Add Item</a>
+                    <a href="{% url 'stock_batch_in' %}" class="add-btn stock-batch-btn">+ Batch Stock In</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+
+{% endblock %}

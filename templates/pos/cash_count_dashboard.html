@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.cash-page {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.cash-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.cash-head h1 {
+    font-size: 38px;
+    margin: 0;
+    color: #1c143a;
+}
+
+.cash-head p {
+    color: #7b6f92;
+    font-weight: 700;
+}
+
+.btn-main {
+    background: linear-gradient(135deg, #7b5cff, #b07cff);
+    color: white;
+    padding: 13px 24px;
+    border-radius: 999px;
+    font-weight: 900;
+    border: none;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-soft {
+    background: #f8f6ff;
+    color: #7b5cff;
+    padding: 13px 24px;
+    border-radius: 999px;
+    font-weight: 900;
+    border: 1.5px solid #e2dbff;
+    text-decoration: none;
+}
+
+.date-card,
+.summary-grid,
+.count-card,
+.sales-card {
+    background: white;
+    border: 1px solid #f0dcd0;
+    border-radius: 24px;
+    box-shadow: 0 12px 30px rgba(111,75,50,0.06);
+    padding: 22px;
+    margin-bottom: 22px;
+}
+
+.date-form {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.date-form input {
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1.5px solid #eadbd4;
+    font-weight: 800;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.summary-box {
+    background: #fff8fb;
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.summary-box .label {
+    color: #7b6f92;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.summary-box .value {
+    font-size: 28px;
+    font-weight: 900;
+    color: #1c143a;
+}
+
+.count-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 18px;
+}
+
+.count-box {
+    background: #fff8fb;
+    border-radius: 20px;
+    padding: 18px;
+}
+
+.count-box label {
+    display: block;
+    font-weight: 900;
+    color: #1c143a;
+    margin-bottom: 10px;
+}
+
+.count-box input {
+    width: 100%;
+    padding: 16px;
+    border-radius: 16px;
+    border: 1.5px solid #eadbd4;
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.diff {
+    margin-top: 12px;
+    font-weight: 900;
+    padding: 10px 14px;
+    border-radius: 14px;
+}
+
+.diff.good {
+    background: #eaffef;
+    color: #168a3a;
+}
+
+.diff.bad {
+    background: #fff0f0;
+    color: #d62828;
+}
+
+.diff.zero {
+    background: #f4f1ff;
+    color: #7b5cff;
+}
+
+.note-box {
+    margin-top: 18px;
+}
+
+.note-box textarea {
+    width: 100%;
+    min-height: 90px;
+    padding: 16px;
+    border-radius: 18px;
+    border: 1.5px solid #eadbd4;
+    font-weight: 700;
+}
+
+.sales-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.sales-table th {
+    background: #fff8fb;
+    padding: 14px;
+    text-align: left;
+    color: #1c143a;
+}
+
+.sales-table td {
+    padding: 14px;
+    border-top: 1px solid #f4e3d8;
+    font-weight: 700;
+}
+
+@media (max-width: 900px) {
+    .cash-head,
+    .date-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .summary-grid,
+    .count-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<div class="cash-page">
+
+    <div class="cash-head">
+        <div>
+            <h1>Daily Cash Count 💵</h1>
+            <p>Check system money vs staff counted money.</p>
+        </div>
+
+        <div>
+            <a href="{% url 'sale_list' %}" class="btn-soft">← Back Sales</a>
+            <a href="{% url 'pos' %}" class="btn-main">New Sale</a>
+        </div>
+    </div>
+
+    <div class="date-card">
+        <form method="get" class="date-form">
+            <strong>Count Date:</strong>
+            <input type="date" name="date" value="{{ count_date|date:'Y-m-d' }}">
+            <button class="btn-main" type="submit">View</button>
+        </form>
+    </div>
+
+    <div class="summary-grid">
+        <div class="summary-box">
+            <div class="label">Total Sales</div>
+            <div class="value">${{ total_sales|floatformat:2 }}</div>
+        </div>
+
+        <div class="summary-box">
+            <div class="label">Total Paid</div>
+            <div class="value">${{ total_paid|floatformat:2 }}</div>
+        </div>
+
+        <div class="summary-box">
+            <div class="label">Cash USD Should Have</div>
+            <div class="value">${{ system_cash_usd|floatformat:2 }}</div>
+        </div>
+
+        <div class="summary-box">
+            <div class="label">Cash KHR Should Have</div>
+            <div class="value">{{ system_cash_khr|floatformat:0 }}៛</div>
+        </div>
+
+        <div class="summary-box">
+            <div class="label">ABA Should Have</div>
+            <div class="value">${{ system_aba_usd|floatformat:2 }}</div>
+        </div>
+    </div>
+
+    <form method="post" class="count-card">
+        {% csrf_token %}
+
+        <h2>Staff Count Money</h2>
+
+        <div class="count-grid">
+
+            <div class="count-box">
+                <label>Cash USD Counted</label>
+                <input type="number" step="0.01" name="counted_cash_usd"
+                       value="{{ cash_count.counted_cash_usd|floatformat:2 }}">
+
+                {% if diff_usd > 0 %}
+                    <div class="diff good">Over: ${{ diff_usd|floatformat:2 }}</div>
+                {% elif diff_usd < 0 %}
+                    <div class="diff bad">Missing: ${{ diff_usd|floatformat:2 }}</div>
+                {% else %}
+                    <div class="diff zero">Correct</div>
+                {% endif %}
+            </div>
+
+            <div class="count-box">
+                <label>Cash KHR Counted</label>
+                <input type="number" step="1" name="counted_cash_khr"
+                       value="{{ cash_count.counted_cash_khr|floatformat:0 }}">
+
+                {% if diff_khr > 0 %}
+                    <div class="diff good">Over: {{ diff_khr|floatformat:0 }}៛</div>
+                {% elif diff_khr < 0 %}
+                    <div class="diff bad">Missing: {{ diff_khr|floatformat:0 }}៛</div>
+                {% else %}
+                    <div class="diff zero">Correct</div>
+                {% endif %}
+            </div>
+
+            <div class="count-box">
+                <label>ABA Counted</label>
+                <input type="number" step="0.01" name="counted_aba_usd"
+                       value="{{ cash_count.counted_aba_usd|floatformat:2 }}">
+
+                {% if diff_aba > 0 %}
+                    <div class="diff good">Over: ${{ diff_aba|floatformat:2 }}</div>
+                {% elif diff_aba < 0 %}
+                    <div class="diff bad">Missing: ${{ diff_aba|floatformat:2 }}</div>
+                {% else %}
+                    <div class="diff zero">Correct</div>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <div class="note-box">
+            <label><strong>Note</strong></label>
+            <textarea name="note" placeholder="Write reason if money missing or over...">{{ cash_count.note }}</textarea>
+        </div>
+
+        <br>
+        <button type="submit" class="btn-main">Save Cash Count</button>
+    </form>
+
+    <div class="sales-card">
+        <h2>Sales Today</h2>
+
+        <table class="sales-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Total</th>
+                    <th>Paid</th>
+                    <th>Cash USD</th>
+                    <th>Cash KHR</th>
+                    <th>ABA</th>
+                    <th>View</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for sale in sales %}
+                <tr>
+                    <td>#{{ sale.id }}</td>
+
+                    <td>
+                        {% if sale.customer %}
+                            {{ sale.customer }}
+                        {% else %}
+                            Walk-in
+                        {% endif %}
+                    </td>
+
+                    <td>${{ sale.total_amount|floatformat:2 }}</td>
+                    <td>${{ sale.paid_amount|floatformat:2 }}</td>
+                    <td>${{ sale.cash_usd|floatformat:2 }}</td>
+                    <td>{{ sale.cash_khr|floatformat:0 }}៛</td>
+                    <td>${{ sale.aba_usd|floatformat:2 }}</td>
+
+                    <td>
+                        <a href="{% url 'sale_detail' sale.id %}" class="btn-soft">View</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align:center;padding:40px;">
+                        No sales found for this day.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<style>
+a{text-decoration:none!important}
+
+.service-hero{
+    display:grid;
+    grid-template-columns:1fr 760px;
+    gap:24px;
+    align-items:center;
+    background:linear-gradient(135deg,#fbf5ff,#fff3f7);
+    border-radius:28px;
+    padding:28px 34px;
+    margin-bottom:18px;
+}
+
+.service-title h1{
+    font-size:42px;
+    margin:0;
+    color:#17152f;
+    font-weight:900;
+}
+
+.service-title p{
+    color:#7b7288;
+    font-weight:800;
+    font-size:17px;
+    line-height:1.7;
+}
+
+.hero-img{
+    width:100%;
+    height:270px;
+    object-fit:contain;
+}
+
+.btn-add{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    margin-top:18px;
+    padding:15px 30px;
+    border-radius:999px;
+    color:white;
+    font-weight:900;
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+    box-shadow:0 14px 28px rgba(155,124,246,.28);
+}
+
+.summary-card{
+    background:white;
+    border:1px solid #f5e8df;
+    border-radius:28px;
+    padding:24px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:22px;
+    box-shadow:0 20px 50px rgba(130,91,60,.10);
+    margin-bottom:18px;
+}
+
+.summary-item{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    border-right:1px solid #f1ddd1;
+}
+
+.summary-item:last-child{border-right:none}
+
+.summary-icon{
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:34px;
+}
+
+.summary-icon.purple{background:#efe5ff;color:#8e63ff}
+.summary-icon.green{background:#ddf8ea;color:#20b86b}
+.summary-icon.orange{background:#fff0df;color:#ff8b3d}
+.summary-icon.blue{background:#e8f2ff;color:#3a86ff}
+
+.summary-label{color:#7b7288;font-weight:900}
+.summary-value{font-size:28px;color:#17152f;font-weight:900;margin:4px 0}
+.summary-value.green{color:#20b86b}
+.summary-value.orange{color:#ff8b3d}
+.summary-value.blue{color:#3a86ff}
+.summary-sub{color:#7b7288;font-weight:800}
+
+.service-panel{
+    background:white;
+    border:1px solid #f5e8df;
+    border-radius:28px;
+    padding:26px;
+    box-shadow:0 20px 50px rgba(130,91,60,.10);
+}
+
+.panel-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:22px;
+}
+
+.panel-head h2{
+    margin:0;
+    color:#17152f;
+    font-size:28px;
+}
+
+.status-filter{
+    border:1px solid #eaddec;
+    background:white;
+    border-radius:999px;
+    padding:12px 22px;
+    color:#6b6178;
+    font-weight:900;
+}
+
+.service-grid{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:16px;
+}
+
+.service-card{
+    border:1px solid #eaddec;
+    border-radius:24px;
+    padding:18px;
+    background:linear-gradient(180deg,#ffffff,#fffaf7);
+    box-shadow:0 12px 28px rgba(130,91,60,.06);
+    transition:.22s;
+}
+
+.service-card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 18px 34px rgba(130,91,60,.12);
+}
+
+.service-img{
+    height:150px;
+    border-radius:50%;
+    background:#fff6ef;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    margin-bottom:12px;
+}
+
+.service-img img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+
+.placeholder{font-size:80px}
+
+.service-name{
+    color:#17152f;
+    font-size:17px;
+    font-weight:900;
+    margin-bottom:6px;
+}
+
+.service-desc{
+    color:#7b7288;
+    font-weight:800;
+    min-height:38px;
+}
+
+.time{
+    color:#7b7288;
+    font-weight:900;
+    margin:12px 0;
+}
+
+.price-status{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
+}
+
+.price{
+    font-size:22px;
+    color:#17152f;
+    font-weight:900;
+}
+
+.badge{
+    padding:8px 14px;
+    border-radius:999px;
+    font-weight:900;
+    font-size:13px;
+}
+
+.badge.active{background:#ddf8ea;color:#20b86b}
+.badge.inactive{background:#f2f0f5;color:#8a819b}
+
+.actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+.edit-btn,.delete-btn{
+    border-radius:16px;
+    padding:12px;
+    text-align:center;
+    font-weight:900;
+}
+
+.edit-btn{
+    background:#f5f1ff;
+    color:#8e63ff;
+    border:1px solid #e3d5ff;
+}
+
+.delete-btn{
+    background:#fff3f1;
+    color:#ff4d4d;
+    border:1px solid #ffd9c8;
+}
+
+.empty-box{
+    grid-column:1/-1;
+    min-height:330px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+}
+
+.empty-box h3{
+    font-size:24px;
+    margin:8px 0;
+}
+
+@media(max-width:1400px){
+    .service-grid{grid-template-columns:repeat(3,1fr)}
+    .service-hero{grid-template-columns:1fr}
+}
+
+@media(max-width:900px){
+    .summary-card{grid-template-columns:1fr}
+    .summary-item{border-right:none;border-bottom:1px solid #f1ddd1;padding-bottom:16px}
+    .service-grid{grid-template-columns:1fr}
+    .hero-img{height:220px}
+}
+</style>
+
+<div class="service-hero">
+    <div class="service-title">
+        <h1>Services ✂️</h1>
+        <p>Manage grooming, showering<br>and pet care services. 💗</p>
+
+        <a href="#" class="btn-add">Add Service</a>
+    </div>
+
+    <img src="{% static 'img/service-hero.png' %}" class="hero-img">
+</div>
+
+<div class="summary-card">
+    <div class="summary-item">
+        <div class="summary-icon purple">✂️</div>
+        <div>
+            <div class="summary-label">Total Services</div>
+            <div class="summary-value">{{ total_services|default:"0" }}</div>
+            <div class="summary-sub">All time</div>
+        </div>
+    </div>
+
+    <div class="summary-item">
+        <div class="summary-icon green">✅</div>
+        <div>
+            <div class="summary-label">Completed Today</div>
+            <div class="summary-value green">{{ completed_today|default:"0" }}</div>
+            <div class="summary-sub">Today</div>
+        </div>
+    </div>
+
+    <div class="summary-item">
+        <div class="summary-icon orange">🕘</div>
+        <div>
+            <div class="summary-label">Upcoming Appointments</div>
+            <div class="summary-value orange">{{ upcoming|default:"0" }}</div>
+            <div class="summary-sub">Next 7 days</div>
+        </div>
+    </div>
+
+    <div class="summary-item">
+        <div class="summary-icon blue">💲</div>
+        <div>
+            <div class="summary-label">Total Revenue</div>
+            <div class="summary-value blue">${{ total_revenue|default:"0.00" }}</div>
+            <div class="summary-sub">This month</div>
+        </div>
+    </div>
+</div>
+
+<div class="service-panel">
+    <div class="panel-head">
+        <h2>All Services</h2>
+        <div class="status-filter">All Status⌄</div>
+    </div>
+
+    <div class="service-grid">
+        {% for service in services %}
+        <div class="service-card">
+
+            <div class="service-img">
+                {% if service.image %}
+                    <img src="{{ service.image.url }}">
+                {% else %}
+                    <div class="placeholder">🐶</div>
+                {% endif %}
+            </div>
+
+            <div class="service-name">{{ service.name|default:service.service_type }}</div>
+            <div class="service-desc">{{ service.description|default:"Pet care service" }}</div>
+
+            <div class="time">🕘 {{ service.duration|default:"30" }} min</div>
+
+            <div class="price-status">
+                <div class="price">${{ service.price }}</div>
+
+                {% if service.status == "inactive" %}
+                    <span class="badge inactive">Inactive</span>
+                {% else %}
+                    <span class="badge active">Active</span>
+                {% endif %}
+            </div>
+
+            <div class="actions">
+                <a href="#" class="edit-btn">✎ Edit</a>
+                <a href="#" class="delete-btn">🗑 Delete</a>
+            </div>
+        </div>
+
+        {% empty %}
+        <div class="empty-box">
+            <div>
+                <div style="font-size:90px;">✂️🐶</div>
+                <h3>No services found</h3>
+                <p>Create grooming, showering or pet care services.</p>
+                <a href="#" class="btn-add">Add Service</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

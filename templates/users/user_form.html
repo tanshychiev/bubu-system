@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+.user-form-wrap{max-width:980px;margin:0 auto}
+.user-form-card{background:white;border:1px solid #f5e8df;border-radius:34px;padding:34px;box-shadow:0 22px 55px rgba(130,91,60,.10)}
+.form-head{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:26px}
+.form-head h1{margin:0;font-size:36px;font-weight:1000;color:#080634}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.form-field label{display:block;font-weight:1000;margin-bottom:8px;color:#17152f}
+.form-control{width:100%;height:56px;border:2px solid #eaddec;border-radius:20px;padding:12px 18px;font-weight:900;background:white;outline:none}
+.form-control:focus{border-color:#9b7cf6;box-shadow:0 0 0 5px rgba(155,124,246,.12)}
+
+.real-select{display:none}
+.fake-select-btn{width:100%;height:56px;border:2px solid #eaddec;border-radius:20px;background:white;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font-weight:1000;color:#17152f}
+.fake-select-btn span{color:#7b7288}
+.fake-select-btn strong{color:#17152f}
+.fake-select-btn:active{transform:scale(.98)}
+
+.access-box{margin-top:20px;padding:22px;border-radius:26px;background:linear-gradient(135deg,#f7f0ff,#fff5f1);border:1px solid #eaddec}
+.access-title{font-size:18px;font-weight:1000;color:#17152f;margin-bottom:14px}
+.access-grid{display:grid;grid-template-columns:1fr;gap:18px}
+
+.toggle-row{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.toggle-card{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px;border-radius:22px;background:#fffaf6;border:1px solid #eaddec;font-weight:1000}
+.toggle-card small{display:block;color:#7b7288;font-weight:800;margin-top:3px}
+.modern-switch input{display:none}
+.switch-ui{width:68px;height:36px;border-radius:999px;background:#ffb4b4;position:relative;display:block}
+.switch-ui:before{content:"";position:absolute;width:28px;height:28px;border-radius:50%;background:white;left:4px;top:4px;box-shadow:0 4px 12px rgba(0,0,0,.18);transition:.2s}
+.modern-switch input:checked + .switch-ui{background:linear-gradient(135deg,#8d4df8,#19d27b)}
+.modern-switch input:checked + .switch-ui:before{transform:translateX(32px)}
+
+.action-row{margin-top:28px;display:flex;gap:14px;flex-wrap:wrap}
+.btn-save,.btn-back{min-height:56px;border-radius:999px;padding:0 32px;font-weight:1000;border:0;display:inline-flex;align-items:center;justify-content:center}
+.btn-save{color:white;background:linear-gradient(135deg,#9b7cf6,#ff8c6b);box-shadow:0 15px 30px rgba(155,124,246,.25)}
+.btn-back{background:white;color:#8e63ff;border:1px solid #eaddec}
+.error-box{margin-top:18px;padding:14px 18px;border-radius:18px;background:#ffe7ec;color:#ff4d6d;font-weight:900}
+
+.pick-modal{display:none;position:fixed;inset:0;background:rgba(25,20,45,.38);z-index:9999;align-items:center;justify-content:center;padding:18px}
+.pick-box{width:100%;max-width:420px;background:white;border-radius:28px;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.22)}
+.pick-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.pick-head h3{margin:0;font-size:22px;font-weight:1000}
+.pick-close{width:40px;height:40px;border:0;border-radius:50%;background:#f5efff;color:#8d4df8;font-size:22px;font-weight:1000}
+.pick-list{display:grid;gap:10px;max-height:55vh;overflow:auto}
+.pick-option{width:100%;min-height:58px;border:1px solid #eaddec;border-radius:18px;background:#fffaf6;padding:0 16px;text-align:left;font-weight:1000;color:#17152f;display:flex;justify-content:space-between;align-items:center}
+.pick-option.active{background:linear-gradient(135deg,#f1e8ff,#fff2ee);border-color:#9b7cf6;color:#8d4df8}
+.pick-option:active{transform:scale(.98)}
+
+@media(max-width:800px){
+    .user-form-card{padding:22px;border-radius:26px}
+    .form-grid,.toggle-row{grid-template-columns:1fr}
+    .form-head img{display:none}
+    .form-head h1{font-size:30px}
+    .btn-save,.btn-back{width:100%}
+}
+</style>
+
+<div class="user-form-wrap">
+    <div class="user-form-card">
+        <div class="form-head">
+            <div>
+                <h1>{{ title }} 👤</h1>
+                <p class="page-subtitle">Create staff login, role, shop branch and access control.</p>
+            </div>
+            <img src="{% static 'img/users-hero.png' %}" style="width:210px;max-width:40%;object-fit:contain;">
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-grid">
+                <div class="form-field"><label>Username</label>{{ form.username }}</div>
+                <div class="form-field"><label>Email</label>{{ form.email }}</div>
+                <div class="form-field"><label>First Name</label>{{ form.first_name }}</div>
+                <div class="form-field"><label>Last Name</label>{{ form.last_name }}</div>
+                <div class="form-field"><label>Password</label>{{ form.password }}</div>
+
+                <div class="form-field">
+                    <label>Role</label>
+                    <div class="real-select">{{ form.role }}</div>
+                    <button type="button" class="fake-select-btn" onclick="openPicker('role')">
+                        <strong id="roleText">Select role</strong><span>⌄</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="access-box">
+                <div class="access-title">🏪 POS Access Setup</div>
+
+                <div class="access-grid">
+                    <div class="form-field">
+                        <label>Shop / Branch</label>
+                        <div class="real-select">{{ form.branch }}</div>
+                        <button type="button" class="fake-select-btn" onclick="openPicker('branch')">
+                            <strong id="branchText">Select shop / branch</strong><span>⌄</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="toggle-row">
+                    <label class="toggle-card">
+                        <div><div>✅ Active User</div><small>Allow this user to login</small></div>
+                        <span class="modern-switch">{{ form.is_active }}<span class="switch-ui"></span></span>
+                    </label>
+
+                    <label class="toggle-card">
+                        <div><div>🔐 Staff Access</div><small>Can access staff pages</small></div>
+                        <span class="modern-switch">{{ form.is_staff }}<span class="switch-ui"></span></span>
+                    </label>
+                </div>
+            </div>
+
+            {% if form.errors %}
+                <div class="error-box">{{ form.errors }}</div>
+            {% endif %}
+
+            <div class="action-row">
+                <button type="submit" class="btn-save">💜 Save User</button>
+                <a href="{% url 'user_list' %}" class="btn-back">Back</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="pick-modal" id="roleModal">
+    <div class="pick-box">
+        <div class="pick-head">
+            <h3>Choose Role</h3>
+            <button type="button" class="pick-close" onclick="closePicker()">×</button>
+        </div>
+        <div class="pick-list" id="roleList"></div>
+    </div>
+</div>
+
+<div class="pick-modal" id="branchModal">
+    <div class="pick-box">
+        <div class="pick-head">
+            <h3>Choose Shop / Branch</h3>
+            <button type="button" class="pick-close" onclick="closePicker()">×</button>
+        </div>
+        <div class="pick-list" id="branchList"></div>
+    </div>
+</div>
+
+<script>
+function getSelect(name){
+    return document.querySelector(`select[name="${name}"]`);
+}
+
+function buildPicker(name, listId, textId){
+    const select = getSelect(name);
+    const list = document.getElementById(listId);
+    const text = document.getElementById(textId);
+
+    if(!select || !list || !text) return;
+
+    list.innerHTML = "";
+
+    Array.from(select.options).forEach(opt => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "pick-option" + (opt.selected ? " active" : "");
+        btn.innerHTML = `<span>${opt.text}</span>${opt.selected ? "<b>✓</b>" : ""}`;
+
+        btn.onclick = function(){
+            select.value = opt.value;
+            text.innerText = opt.text;
+            closePicker();
+        };
+
+        list.appendChild(btn);
+
+        if(opt.selected){
+            text.innerText = opt.text;
+        }
+    });
+}
+
+function openPicker(type){
+    buildPicker("role", "roleList", "roleText");
+    buildPicker("branch", "branchList", "branchText");
+
+    if(type === "role"){
+        document.getElementById("roleModal").style.display = "flex";
+    }else{
+        document.getElementById("branchModal").style.display = "flex";
+    }
+}
+
+function closePicker(){
+    document.getElementById("roleModal").style.display = "none";
+    document.getElementById("branchModal").style.display = "none";
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+    buildPicker("role", "roleList", "roleText");
+    buildPicker("branch", "branchList", "branchText");
+});
+
+window.addEventListener("click", function(e){
+    if(e.target.classList.contains("pick-modal")){
+        closePicker();
+    }
+});
+</script>
+
+{% endblock %}

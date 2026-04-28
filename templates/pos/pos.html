@@ -1,0 +1,1830 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="pos-page">
+
+    <div class="pos-top">
+        <div>
+            <h1>BUBU Cashier POS 🐾</h1>
+            <p>Scan barcode or tap product to add to cart</p>
+
+            <form method="get" id="posSearchForm" class="scan-box">
+                <input
+                    type="text"
+                    name="q"
+                    id="posSearch"
+                    value="{{ request.GET.q }}"
+                    placeholder="Scan barcode or type product name..."
+                    autocomplete="off"
+                    autofocus
+                >
+
+                {% if selected_type %}
+                    <input type="hidden" name="type" value="{{ selected_type }}">
+                {% endif %}
+            </form>
+
+            <div class="type-row">
+                <a href="{% url 'pos' %}" class="type-chip {% if not selected_type %}active{% endif %}">
+                    🛍️ All
+                </a>
+
+                {% for type in item_types %}
+                    <a href="?type={{ type.id }}" class="type-chip {% if selected_type|stringformat:'s' == type.id|stringformat:'s' %}active{% endif %}">
+                        {{ type.emoji|default:"📦" }} {{ type.name }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <img src="{% static 'img/pos-hero.png' %}" class="pos-hero-img" alt="POS">
+    </div>
+
+    <div class="pos-layout">
+
+        <div class="product-area">
+            <h2>Products</h2>
+
+            <div class="product-grid">
+                {% for item in items %}
+                    <button
+                        type="button"
+                        class="product-card"
+                        {% if item.variants.all %}
+                            onclick="openVariantModal('variantModal{{ item.id }}')"
+                        {% else %}
+                            onclick="window.location.href='{% url 'pos_add_cart' item.id %}'"
+                        {% endif %}
+                    >
+                        <div class="product-img-box">
+                            {% if item.image %}
+                                <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                            {% else %}
+                                <div class="no-img">🐾</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="product-info">
+                            <h3>{{ item.name }}</h3>
+
+                            {% if item.item_type %}
+                                <div class="item-type">{{ item.item_type.name }}</div>
+                            {% endif %}
+
+                            <div class="product-bottom">
+                                <strong>${{ item.sale_price }}</strong>
+
+                                {% if item.is_grooming or item.is_service %}
+                                    <span class="stock service">Service</span>
+                                {% elif item.branch_stock_total > 0 %}
+                                    <span class="stock good">Stock: {{ item.branch_stock_total }}</span>
+                                {% elif item.branch_stock_total < 0 %}
+                                    <span class="stock bad">Stock: {{ item.branch_stock_total }}</span>
+                                {% elif item.is_coming_soon %}
+                                    <span class="stock coming">Coming Soon</span>
+                                {% else %}
+                                    <span class="stock good">Stock: 0</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </button>
+
+                    {% if item.variants.all %}
+                    <div class="variant-modal" id="variantModal{{ item.id }}">
+                        <div class="variant-box">
+                            <div class="variant-head">
+                                <h2>Select Variant</h2>
+                                <button type="button" onclick="closeVariantModal('variantModal{{ item.id }}')">×</button>
+                            </div>
+
+                            <div class="variant-product">
+                                {% if item.image %}
+                                    <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                                {% else %}
+                                    <div class="variant-no-img">🐾</div>
+                                {% endif %}
+
+                                <div>
+                                    <h3>{{ item.name }}</h3>
+                                    <strong>${{ item.sale_price }}</strong>
+                                </div>
+                            </div>
+
+                            <div class="variant-list">
+                                {% for variant in item.variants.all|dictsort:"sale_price" %}
+                                    <a href="{% url 'pos_add_variant_cart' item.id variant.id %}" class="variant-row">
+                                        <div class="variant-left">
+                                            <strong class="variant-title">
+                                                {{ variant.label|default:item.name }}
+                                            </strong>
+
+                                            <div class="variant-meta">
+                                                {% if variant.size %}
+                                                    <span>Size: {{ variant.size }}</span>
+                                                {% endif %}
+
+                                                {% if variant.color %}
+                                                    <span>Color: {{ variant.color }}</span>
+                                                {% endif %}
+
+                                                {% if variant.sku %}
+                                                    <span>SKU: {{ variant.sku }}</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <div class="variant-price-box">
+                                            <div class="variant-price">
+                                                ${{ variant.sale_price|default:item.sale_price }}
+                                            </div>
+
+                                            {% if variant.branch_stock_qty < 0 %}
+                                                <div class="stock bad variant-coming">
+                                                    Stock: {{ variant.branch_stock_qty }}
+                                                </div>
+                                            {% elif variant.is_coming_soon %}
+                                                <div class="stock coming variant-coming">
+                                                    Coming Soon
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </a>
+                                {% empty %}
+                                    <div class="empty-box">No variants found</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% empty %}
+                    <div class="empty-box">
+                        <h3>No products found</h3>
+                        <p>Add inventory items first.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="cart-card">
+            <div class="cart-head">
+                <h2>🛒 Cart</h2>
+
+                {% if cart_items %}
+                    <a href="{% url 'pos_clear_cart' %}" class="clear-btn">Clear</a>
+                {% endif %}
+            </div>
+
+            <div class="cart-list">
+                {% for cart_item in cart_items %}
+                    <div class="cart-item">
+                        <div class="cart-img">
+                            {% if cart_item.variant and cart_item.variant.image %}
+                                <img src="{{ cart_item.variant.image.url }}" alt="{{ cart_item.variant.label|default:cart_item.item.name }}">
+                            {% elif cart_item.item.image %}
+                                <img src="{{ cart_item.item.image.url }}" alt="{{ cart_item.item.name }}">
+                            {% else %}
+                                <div>🐾</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="cart-main">
+                            <div class="cart-name">
+                                <strong>{{ cart_item.item.name }}</strong>
+
+                                {% if cart_item.variant %}
+                                    <small>
+                                        {{ cart_item.variant.label|default:"Variant" }}
+                                        {% if cart_item.variant.size %} · {{ cart_item.variant.size }}{% endif %}
+                                        {% if cart_item.variant.color %} · {{ cart_item.variant.color }}{% endif %}
+                                    </small>
+                                {% endif %}
+
+                                <small>${{ cart_item.price|default:cart_item.item.sale_price }}</small>
+                            </div>
+
+                            <div class="qty-box">
+                                <a href="{% url 'pos_minus_cart' cart_item.cart_key %}">−</a>
+                                <span>{{ cart_item.quantity }}</span>
+                                <a href="{% url 'pos_plus_cart' cart_item.cart_key %}">＋</a>
+                            </div>
+                        </div>
+
+                        <div class="cart-side">
+                            <strong>${{ cart_item.total }}</strong>
+                            <a href="{% url 'pos_remove_cart' cart_item.cart_key %}" class="remove-btn">Remove</a>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-cart">🛒 Cart is empty</div>
+                {% endfor %}
+            </div>
+
+            <div class="summary">
+                <div><span>Subtotal</span><strong id="cartSubtotalShow">${{ subtotal|default:"0.00" }}</strong></div>
+                <div><span>Discount</span><strong id="cartDiscountShow">-$0.00</strong></div>
+                <div><span>Tax</span><strong id="cartTaxShow">$0.00</strong></div>
+            </div>
+
+            <div class="grand-total">
+                <span>Total</span>
+                <strong id="cartTotalShow">${{ total|default:"0.00" }}</strong>
+            </div>
+
+            <button type="button" class="checkout-btn" onclick="openPaymentModal()">
+                Checkout
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<div class="payment-modal" id="paymentModal">
+    <div class="payment-box">
+        <div class="payment-head">
+            <h2>Payment</h2>
+            <button type="button" onclick="closePaymentModal()">×</button>
+        </div>
+
+        <form method="post" action="{% url 'pos_checkout' %}" id="paymentForm">
+            {% csrf_token %}
+
+            <input type="hidden" name="discount_type" id="discount_type_hidden" value="percent">
+            <input type="hidden" name="discount_value" id="discount_value_hidden" value="0">
+            <input type="hidden" name="tax_type" id="tax_type_hidden" value="percent">
+            <input type="hidden" name="tax_value" id="tax_value_hidden" value="0">
+            <input type="hidden" name="final_total" id="final_total_hidden" value="{{ total|default:'0.00' }}">
+            <input type="hidden" name="checkout_action" id="checkout_action" value="complete">
+
+            <div class="pay-total">
+                <span>Total Amount</span>
+                <strong id="modalTotalShow">${{ total|default:"0.00" }}</strong>
+                <small>Customer pay: 1 USD = 4100 KHR</small>
+                <small>Customer change: 1 USD = 4000 KHR</small>
+            </div>
+
+            <div class="member-box">
+                <label>
+                    Customer / Membership
+                    <input
+                        type="text"
+                        name="customer_search"
+                        id="customerSearch"
+                        list="customerList"
+                        placeholder="Search name or phone..."
+                        autocomplete="off"
+                        oninput="selectCustomerInfo()"
+                    >
+                </label>
+
+                <input type="hidden" name="customer_phone" id="customerPhoneHidden">
+
+                <datalist id="customerList">
+                    {% for customer in customers %}
+                        <option
+                            value="{{ customer.phone }}"
+                            label="{{ customer.name }} · {{ customer.phone }} · {{ customer.points|default:0 }} points"
+                            data-name="{{ customer.name }}"
+                            data-phone="{{ customer.phone }}"
+                            data-points="{{ customer.points|default:0 }}"
+                        ></option>
+                        {% if customer.name %}
+                        <option
+                            value="{{ customer.name }}"
+                            label="{{ customer.name }} · {{ customer.phone }} · {{ customer.points|default:0 }} points"
+                            data-name="{{ customer.name }}"
+                            data-phone="{{ customer.phone }}"
+                            data-points="{{ customer.points|default:0 }}"
+                        ></option>
+                        {% endif %}
+                    {% endfor %}
+                </datalist>
+
+                <div class="customer-info" id="customerInfoBox">
+                    <strong id="customerNameShow">Walk-in customer</strong>
+                    <span id="customerStatusShow" class="customer-badge walkin">Walk-in</span>
+                    <span id="customerPhoneShow">No phone selected</span>
+                    <span id="customerPointsShow">0 points</span>
+                </div>
+
+                <small>Search existing customer or type phone to auto create · $1 = 1 point</small>
+            </div>
+
+            <div class="discount-tax-box">
+                <div class="discount-tax-row">
+                    <label>
+                        Discount
+                        <div class="money-mode-input">
+                            <input type="hidden" id="discount_type" value="percent">
+                            <div class="money-mode-buttons" data-target="discount_type">
+                                <button type="button" class="mode-btn active" data-value="percent" onclick="setMoneyMode(this)">%</button>
+                                <button type="button" class="mode-btn" data-value="amount" onclick="setMoneyMode(this)">$</button>
+                            </div>
+                            <input type="number" step="0.01" id="discount_value" value="0" oninput="calcChange()">
+                        </div>
+                    </label>
+
+                    <label>
+                        Tax
+                        <div class="money-mode-input">
+                            <input type="hidden" id="tax_type" value="percent">
+                            <div class="money-mode-buttons" data-target="tax_type">
+                                <button type="button" class="mode-btn active" data-value="percent" onclick="setMoneyMode(this)">%</button>
+                                <button type="button" class="mode-btn" data-value="amount" onclick="setMoneyMode(this)">$</button>
+                            </div>
+                            <input type="number" step="0.01" id="tax_value" value="0" oninput="calcChange()">
+                        </div>
+                    </label>
+                </div>
+
+                <div class="discount-tax-result">
+                    <div><span>Discount</span><strong id="modalDiscountShow">-$0.00</strong></div>
+                    <div><span>Tax</span><strong id="modalTaxShow">$0.00</strong></div>
+                </div>
+            </div>
+
+            <div class="pay-grid">
+                <label>
+                    Cash USD
+                    <input type="number" step="0.01" name="cash_usd" id="cash_usd" value="0" oninput="calcChange()">
+                </label>
+
+                <label>
+                    Cash KHR
+                    <input type="number" step="1" name="cash_khr" id="cash_khr" value="0" oninput="calcChange()">
+                </label>
+
+                <label>
+                    ABA USD
+                    <input type="number" step="0.01" name="aba_usd" id="aba_usd" value="0" oninput="calcChange()">
+                </label>
+
+                <label>
+                    ABA KHR
+                    <input type="number" step="1" name="aba_khr" id="aba_khr" value="0" oninput="calcChange()">
+                </label>
+            </div>
+
+            <div class="change-box">
+                <div class="paid-card">
+                    <span>Paid</span>
+                    <strong id="paidTotalShow">$0.00</strong>
+                    <small id="paidBreakdownShow">No payment yet</small>
+                </div>
+
+                <div class="change-card" id="changeCard">
+                    <span id="changeTitle">Change</span>
+                    <strong id="changeKhrShow">៛0</strong>
+                    <small id="changeShow">$0.00</small>
+                </div>
+            </div>
+
+            <div class="payment-actions two-actions">
+                <button type="submit" class="complete-btn complete-only-btn" onclick="setCheckoutAction('complete')">
+                    Complete Sale
+                </button>
+
+                <button type="submit" class="complete-print-btn" onclick="completeAndPrint(event)">
+                    Complete + Print Receipt
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="receiptPrintArea">
+    <div class="receipt-paper">
+        <div class="receipt-center">
+            <h2>BUBU PET STORE</h2>
+            <p>Customer Receipt</p>
+            <p id="receiptDate"></p>
+        </div>
+
+        <div class="receipt-line"></div>
+
+        <div class="receipt-items">
+            {% for cart_item in cart_items %}
+                <div class="receipt-item">
+                    <div>
+                        <strong>{{ cart_item.item.name }}</strong>
+                        {% if cart_item.variant %}
+                            <small>
+                                {{ cart_item.variant.label|default:"Variant" }}
+                                {% if cart_item.variant.size %} · {{ cart_item.variant.size }}{% endif %}
+                                {% if cart_item.variant.color %} · {{ cart_item.variant.color }}{% endif %}
+                            </small>
+                        {% endif %}
+                        <small>{{ cart_item.quantity }} x ${{ cart_item.price|default:cart_item.item.sale_price }}</small>
+                    </div>
+                    <strong>${{ cart_item.total }}</strong>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="receipt-line"></div>
+
+        <div class="receipt-row">
+            <span>Subtotal</span>
+            <strong>${{ subtotal|default:"0.00" }}</strong>
+        </div>
+
+        <div class="receipt-row">
+            <span>Discount</span>
+            <strong id="receiptDiscount">-$0.00</strong>
+        </div>
+
+        <div class="receipt-row">
+            <span>Tax</span>
+            <strong id="receiptTax">$0.00</strong>
+        </div>
+
+        <div class="receipt-row receipt-total">
+            <span>Total</span>
+            <strong id="receiptTotal">${{ total|default:"0.00" }}</strong>
+        </div>
+
+        <div class="receipt-line"></div>
+
+        <div class="receipt-row">
+            <span>Customer</span>
+            <strong id="receiptCustomer">Walk-in</strong>
+        </div>
+
+        <div class="receipt-row receipt-paid-breakdown">
+            <span>Paid Detail</span>
+            <strong id="receiptPaidBreakdown">No payment</strong>
+        </div>
+
+        <div class="receipt-row">
+            <span>Paid</span>
+            <strong id="receiptPaid">$0.00</strong>
+        </div>
+
+        <div class="receipt-row">
+            <span id="receiptChangeTitle">Change</span>
+            <strong id="receiptChange">$0.00</strong>
+        </div>
+
+        <div class="receipt-center receipt-thank">
+            <p>Thank you!</p>
+            <p>Please come again 🐾</p>
+        </div>
+    </div>
+</div>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+.pos-page{
+    padding:28px 36px;
+}
+
+.pos-top{
+    display:flex;
+    justify-content:space-between;
+    gap:20px;
+    margin-bottom:34px;
+}
+
+.pos-top h1{
+    margin:0;
+    font-size:34px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.pos-top p{
+    margin:10px 0 22px;
+    font-weight:800;
+    color:#81758f;
+}
+
+.scan-box input{
+    width:520px;
+    max-width:100%;
+    height:62px;
+    border-radius:24px;
+    border:2px solid #eaddec;
+    padding:0 24px;
+    font-size:18px;
+    font-weight:900;
+    outline:none;
+    background:white;
+}
+
+.scan-box input:focus{
+    border-color:#9b7cf6;
+    box-shadow:0 0 0 5px rgba(155,124,246,.12);
+}
+
+.type-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-top:20px;
+}
+
+.type-chip{
+    min-height:54px;
+    padding:0 24px;
+    border-radius:20px;
+    background:#f4f4f7;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    font-size:16px;
+    font-weight:1000;
+    color:#17152f;
+}
+
+.type-chip.active,
+.type-chip:hover{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+}
+
+.pos-hero-img{
+    width:420px;
+    max-width:38%;
+    object-fit:contain;
+}
+
+.pos-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1.6fr) 460px;
+    gap:28px;
+    align-items:start;
+}
+
+.product-area h2{
+    margin:0 0 18px;
+    font-size:26px;
+    font-weight:1000;
+}
+
+.product-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(180px,1fr));
+    gap:22px;
+}
+
+.product-card{
+    width:100%;
+    text-align:left;
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:28px;
+    padding:18px;
+    min-height:260px;
+    color:#080634;
+    box-shadow:0 18px 40px rgba(130,91,60,.08);
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    cursor:pointer;
+    transition:.12s;
+}
+
+.product-card:hover{
+    transform:translateY(-3px);
+    border-color:#c8a8ff;
+}
+
+.product-card:active{
+    transform:scale(.96);
+}
+
+.product-img-box{
+    height:130px;
+    border-radius:22px;
+    background:#fff8f4;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+}
+
+.product-img-box img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+
+.no-img{
+    font-size:60px;
+}
+
+.product-info h3{
+    font-size:20px;
+    margin:14px 0 8px;
+    font-weight:1000;
+}
+
+.item-type{
+    display:inline-flex;
+    padding:7px 12px;
+    border-radius:999px;
+    background:#f2edff;
+    color:#7b5cff;
+    font-size:13px;
+    font-weight:1000;
+    margin-bottom:12px;
+}
+
+.product-bottom{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center;
+}
+
+.product-bottom strong{
+    font-size:20px;
+}
+
+.stock{
+    padding:8px 12px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:1000;
+}
+
+.stock.good{
+    background:#eafff3;
+    color:#16a05d;
+}
+
+.stock.service{
+    background:#fff4df;
+    color:#d27b00;
+}
+
+.stock.coming{
+    background:#fff1db;
+    color:#d77a00;
+}
+
+.stock.bad{
+    background:#ffe5e5;
+    color:#e03131;
+}
+
+.variant-price-box{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:8px;
+}
+
+.variant-coming{
+    text-align:center;
+    width:max-content;
+    max-width:160px;
+}
+
+.cart-card{
+    position:sticky;
+    top:18px;
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:30px;
+    padding:24px;
+    box-shadow:0 22px 50px rgba(130,91,60,.12);
+}
+
+.cart-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
+}
+
+.cart-head h2{
+    margin:0;
+    font-size:24px;
+    font-weight:1000;
+}
+
+.clear-btn{
+    padding:12px 18px;
+    border-radius:18px;
+    background:#fff0f0;
+    color:#ff4d5d;
+    font-weight:1000;
+    text-decoration:none;
+}
+
+.cart-item{
+    padding:16px 0;
+    border-bottom:1px dashed #edd5d5;
+    display:grid;
+    grid-template-columns:74px 1fr auto;
+    gap:14px;
+    align-items:center;
+}
+
+.cart-img{
+    width:74px;
+    height:74px;
+    border-radius:18px;
+    background:#fff8f4;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:30px;
+}
+
+.cart-img img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.cart-name strong{
+    display:block;
+    font-size:16px;
+    font-weight:1000;
+}
+
+.cart-name small{
+    display:block;
+    font-weight:900;
+    color:#7b7288;
+    margin-top:3px;
+}
+
+.qty-box{
+    margin-top:10px;
+    display:grid;
+    grid-template-columns:54px 62px 54px;
+    gap:8px;
+    align-items:center;
+}
+
+.qty-box a{
+    height:52px;
+    border-radius:16px;
+    background:#f4f0ff;
+    color:#7b5cff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    font-size:28px;
+    font-weight:1000;
+}
+
+.qty-box span{
+    height:52px;
+    border-radius:16px;
+    background:#fafafa;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:20px;
+    font-weight:1000;
+}
+
+.cart-side{
+    text-align:right;
+}
+
+.cart-side strong{
+    display:block;
+    font-size:18px;
+    color:#ff5d73;
+    font-weight:1000;
+}
+
+.remove-btn{
+    display:inline-flex;
+    margin-top:10px;
+    padding:9px 12px;
+    border-radius:999px;
+    background:#fff0f0;
+    color:#ff4d5d;
+    text-decoration:none;
+    font-size:12px;
+    font-weight:1000;
+}
+
+.empty-cart{
+    padding:40px 0;
+    text-align:center;
+    color:#7b7288;
+    font-weight:1000;
+}
+
+.summary{
+    padding:18px 0;
+    border-bottom:1px dashed #edd5d5;
+}
+
+.summary div,
+.grand-total{
+    display:flex;
+    justify-content:space-between;
+    margin:12px 0;
+    font-weight:1000;
+}
+
+.grand-total{
+    font-size:26px;
+}
+
+.checkout-btn,
+.complete-btn{
+    width:100%;
+    min-height:66px;
+    border:none;
+    border-radius:999px;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    font-size:20px;
+    font-weight:1000;
+    cursor:pointer;
+    margin-top:18px;
+}
+
+
+.payment-modal,
+.variant-modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(20,18,45,.38);
+    z-index:9999;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+}
+
+.payment-box,
+.variant-box{
+    width:640px;
+    max-width:100%;
+    background:white;
+    border-radius:30px;
+    padding:26px;
+    max-height:90vh;
+    overflow:auto;
+}
+
+.payment-head,
+.variant-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.payment-head h2,
+.variant-head h2{
+    margin:0;
+    font-size:30px;
+    font-weight:1000;
+}
+
+.payment-head button,
+.variant-head button{
+    width:52px;
+    height:52px;
+    border:none;
+    border-radius:50%;
+    background:#fff0f0;
+    color:#ff4d5d;
+    font-size:28px;
+    cursor:pointer;
+}
+
+.pay-total{
+    margin:20px 0;
+    padding:20px;
+    border-radius:22px;
+    background:#fff8fb;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+
+.pay-total strong{
+    font-size:40px;
+}
+
+.pay-total small{
+    font-weight:900;
+    color:#625a74;
+}
+
+.member-box{
+    padding:16px;
+    border-radius:22px;
+    background:#f7fff9;
+    border:2px solid #dcf7e5;
+    margin-bottom:16px;
+}
+
+.member-box label{
+    font-weight:1000;
+}
+
+.member-box input{
+    width:100%;
+    height:58px;
+    border:2px solid #d8f1df;
+    border-radius:18px;
+    padding:0 16px;
+    font-size:18px;
+    font-weight:1000;
+    margin-top:8px;
+}
+
+.member-box small{
+    display:block;
+    margin-top:8px;
+    color:#16a05d;
+    font-weight:900;
+}
+
+.customer-info{
+    margin-top:12px;
+    padding:12px 14px;
+    border-radius:18px;
+    background:white;
+    border:2px solid #dcf7e5;
+    display:grid;
+    gap:4px;
+}
+
+.customer-info strong{
+    font-size:18px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.customer-info span{
+    font-weight:900;
+    color:#625a74;
+}
+
+.customer-badge{
+    display:inline-flex;
+    width:max-content;
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:1000;
+}
+
+.customer-badge.old{
+    background:#dcfce7;
+    color:#16a34a;
+}
+
+.customer-badge.new{
+    background:#fff7ed;
+    color:#ea580c;
+}
+
+.customer-badge.walkin{
+    background:#f1f5f9;
+    color:#475569;
+}
+
+.discount-tax-box{
+    padding:16px;
+    border-radius:22px;
+    background:#fffaf1;
+    border:2px solid #ffe6b7;
+    margin-bottom:16px;
+}
+
+.discount-tax-row{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:14px;
+}
+
+.discount-tax-row label{
+    font-weight:1000;
+}
+
+.money-mode-input{
+    display:flex;
+    gap:12px;
+    margin-top:8px;
+    width:100%;
+    align-items:center;
+}
+
+/* bigger tap area for % / $ */
+.money-mode-buttons{
+    flex:1 1 auto;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    padding:6px;
+    border:2px solid #ffe1a8;
+    border-radius:20px;
+    background:white;
+    height:64px;
+}
+
+.mode-btn{
+    border:none;
+    border-radius:16px;
+    background:#fff7e8;
+    color:#080634;
+    font-size:26px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.mode-btn.active{
+    background:#ffb84d;
+    color:white;
+}
+
+/* smaller fill box, easier to touch selector */
+.money-mode-input input{
+    flex:0 0 150px;
+    max-width:150px;
+    min-width:0;
+    height:64px;
+    border:2px solid #ffe1a8;
+    border-radius:18px;
+    padding:0 14px;
+    font-size:20px;
+    font-weight:1000;
+    background:white;
+}
+
+.discount-tax-result{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:12px;
+}
+
+.discount-tax-result div{
+    background:white;
+    border-radius:16px;
+    padding:12px;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    font-weight:1000;
+}
+
+.discount-tax-result span{
+    color:#7b7288;
+}
+
+.pay-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+}
+
+.pay-grid label{
+    font-weight:1000;
+}
+
+.pay-grid input{
+    width:100%;
+    height:62px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    padding:0 16px;
+    font-size:20px;
+    font-weight:1000;
+    margin-top:8px;
+}
+
+.change-box{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-top:18px;
+}
+
+.change-box div{
+    border-radius:22px;
+    background:#f8f6ff;
+    padding:18px;
+    border:2px solid transparent;
+}
+
+.change-box span,
+.change-box small{
+    display:block;
+    font-weight:1000;
+    color:#7b7288;
+}
+
+.change-box strong{
+    display:block;
+    font-size:38px;
+    color:#7b5cff;
+    margin:6px 0;
+    line-height:1.05;
+}
+
+#paidTotalShow{
+    font-size:42px;
+    color:#7b5cff;
+}
+
+.change-box small{
+    font-size:18px;
+}
+
+.change-card.change-ok{
+    background:#f0fff6;
+    border-color:#bdf3d2;
+}
+
+.change-card.change-ok strong{
+    color:#13a85f;
+}
+
+.change-card.change-lack{
+    background:#fff0f0;
+    border-color:#ffc9c9;
+}
+
+.change-card.change-lack strong{
+    color:#ff3d4f;
+}
+
+.payment-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    align-items:center;
+}
+
+.complete-only-btn,
+.complete-print-btn{
+    min-height:66px;
+    border:none;
+    border-radius:999px;
+    color:white;
+    font-size:17px;
+    font-weight:1000;
+    cursor:pointer;
+    margin-top:18px;
+}
+
+.complete-only-btn{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+}
+
+.complete-print-btn{
+    background:linear-gradient(135deg,#13a85f,#7b5cff);
+}
+
+.variant-product{
+    display:flex;
+    gap:16px;
+    align-items:center;
+    padding:16px;
+    border-radius:22px;
+    background:#fff8f4;
+    margin:18px 0;
+}
+
+.variant-product img,
+.variant-no-img{
+    width:90px;
+    height:90px;
+    border-radius:18px;
+    background:white;
+    object-fit:cover;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:38px;
+}
+
+.variant-product h3{
+    margin:0 0 8px;
+    font-size:22px;
+    font-weight:1000;
+}
+
+.variant-product strong{
+    font-size:22px;
+    color:#ff5d73;
+}
+
+.variant-list{
+    display:grid;
+    gap:12px;
+}
+
+.variant-row{
+    min-height:96px;
+    padding:20px;
+    border-radius:24px;
+    background:#f8f6ff;
+    display:flex;
+    justify-content:space-between;
+    gap:18px;
+    align-items:center;
+    text-decoration:none;
+    color:#080634;
+    font-weight:1000;
+    border:2px solid transparent;
+    transition:.12s;
+}
+
+.variant-row:hover{
+    background:#fff8fb;
+    border-color:#d9c8ff;
+}
+
+.variant-row:active{
+    transform:scale(.97);
+}
+
+.variant-left{
+    min-width:0;
+}
+
+.variant-title{
+    display:block;
+    font-size:24px;
+    line-height:1.15;
+    font-weight:1000;
+}
+
+.variant-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:10px;
+}
+
+.variant-meta span{
+    padding:8px 12px;
+    border-radius:999px;
+    background:white;
+    color:#6f657f;
+    font-size:15px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+
+.variant-price{
+    min-width:116px;
+    min-height:62px;
+    padding:0 18px;
+    border-radius:20px;
+    background:linear-gradient(135deg,#ff8c6b,#ff5d73);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    font-weight:1000;
+    white-space:nowrap;
+    box-shadow:0 12px 28px rgba(255,93,115,.22);
+}
+
+.empty-box{
+    background:white;
+    padding:30px;
+    border-radius:24px;
+    border:2px dashed #eaddec;
+}
+
+#receiptPrintArea{
+    display:none;
+}
+
+@media print{
+    body *{
+        visibility:hidden !important;
+    }
+
+    #receiptPrintArea,
+    #receiptPrintArea *{
+        visibility:visible !important;
+    }
+
+    #receiptPrintArea{
+        display:block !important;
+        position:absolute;
+        left:0;
+        top:0;
+        width:80mm;
+        padding:0;
+        margin:0;
+        background:white;
+    }
+
+    .receipt-paper{
+        width:72mm;
+        padding:8mm 4mm;
+        font-family:Arial, sans-serif;
+        color:#000;
+        font-size:12px;
+    }
+
+    .receipt-center{
+        text-align:center;
+    }
+
+    .receipt-center h2{
+        margin:0 0 4px;
+        font-size:18px;
+        font-weight:900;
+    }
+
+    .receipt-center p{
+        margin:2px 0;
+    }
+
+    .receipt-line{
+        border-top:1px dashed #000;
+        margin:8px 0;
+    }
+
+    .receipt-item{
+        display:flex;
+        justify-content:space-between;
+        gap:8px;
+        margin-bottom:8px;
+    }
+
+    .receipt-item strong{
+        font-size:12px;
+    }
+
+    .receipt-item small{
+        display:block;
+        font-size:11px;
+    }
+
+    .receipt-row{
+        display:flex;
+        justify-content:space-between;
+        margin:5px 0;
+    }
+
+    .receipt-total{
+        font-size:15px;
+        font-weight:900;
+    }
+
+    .receipt-thank{
+        margin-top:10px;
+        font-weight:900;
+    }
+
+    @page{
+        size:80mm auto;
+        margin:0;
+    }
+}
+
+@media(max-width:1200px){
+    .pos-layout{
+        grid-template-columns:1fr;
+    }
+
+    .cart-card{
+        position:relative;
+        top:auto;
+    }
+
+    .product-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .pos-hero-img{
+        display:none;
+    }
+}
+
+@media(max-width:700px){
+    .pos-page{
+        padding:18px;
+    }
+
+    .product-grid{
+        grid-template-columns:1fr;
+    }
+
+    .cart-item{
+        grid-template-columns:64px 1fr;
+    }
+
+    .cart-side{
+        grid-column:1 / 3;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        text-align:left;
+    }
+
+    .pay-grid,
+    .change-box,
+    .discount-tax-row,
+    .discount-tax-result,
+    .payment-actions{
+        grid-template-columns:1fr;
+    }
+
+    .money-mode-input{
+        grid-template-columns:1fr;
+        gap:8px;
+    }
+
+    .money-mode-buttons{
+        width:100%;
+    }
+}
+</style>
+
+<script>
+const baseTotal = parseFloat("{{ total|default:'0.00' }}");
+const subtotalBase = parseFloat("{{ subtotal|default:'0.00' }}");
+let total = baseTotal;
+
+const payRate = 4100;
+const changeRate = 4000;
+
+const searchInput = document.getElementById("posSearch");
+const searchForm = document.getElementById("posSearchForm");
+
+window.addEventListener("load", function(){
+    if(searchInput) searchInput.focus();
+    calcChange();
+});
+
+document.addEventListener("click", function(e){
+    if(
+        e.target.tagName !== "INPUT" &&
+        e.target.tagName !== "BUTTON" &&
+        e.target.tagName !== "A"
+    ){
+        if(searchInput) searchInput.focus();
+    }
+});
+
+let typingTimer = null;
+
+if(searchInput){
+    searchInput.addEventListener("input", function(){
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(function(){
+            searchForm.submit();
+        }, 450);
+    });
+
+    searchInput.addEventListener("keydown", function(e){
+        if(e.key === "Enter"){
+            e.preventDefault();
+            searchForm.submit();
+        }
+    });
+}
+
+function openPaymentModal(){
+    document.getElementById("paymentModal").style.display = "flex";
+    calcChange();
+
+    setTimeout(function(){
+        const cashInput = document.getElementById("cash_usd");
+        if(cashInput){
+            cashInput.focus();
+            cashInput.select();
+        }
+    }, 100);
+}
+
+function closePaymentModal(){
+    document.getElementById("paymentModal").style.display = "none";
+    if(searchInput) searchInput.focus();
+}
+
+function openVariantModal(id){
+    document.getElementById(id).style.display = "flex";
+}
+
+function closeVariantModal(id){
+    document.getElementById(id).style.display = "none";
+    if(searchInput) searchInput.focus();
+}
+
+function num(id){
+    const el = document.getElementById(id);
+    if(!el) return 0;
+    return parseFloat(el.value || 0);
+}
+
+function valueOf(id){
+    const el = document.getElementById(id);
+    if(!el) return "";
+    return el.value || "";
+}
+
+function text(id, value){
+    const el = document.getElementById(id);
+    if(el) el.innerText = value;
+}
+
+function html(id, value){
+    const el = document.getElementById(id);
+    if(el) el.innerHTML = value;
+}
+
+function moneyKHR(value){
+    return "៛" + Math.round(value).toLocaleString();
+}
+
+function moneyUSD(value){
+    return "$" + value.toFixed(2);
+}
+
+function onlyDigits(value){
+    return String(value || "").replace(/\D/g, "");
+}
+
+function setCustomerBadge(type, label){
+    const statusEl = document.getElementById("customerStatusShow");
+    if(!statusEl) return;
+
+    statusEl.innerText = label;
+    statusEl.className = "customer-badge " + type;
+}
+
+function setMoneyMode(btn){
+    const wrap = btn.closest(".money-mode-buttons");
+    if(!wrap) return;
+
+    const targetId = wrap.getAttribute("data-target");
+    const targetInput = document.getElementById(targetId);
+
+    if(targetInput){
+        targetInput.value = btn.getAttribute("data-value") || "percent";
+    }
+
+    wrap.querySelectorAll(".mode-btn").forEach(function(item){
+        item.classList.remove("active");
+    });
+
+    btn.classList.add("active");
+    calcChange();
+}
+
+function calcPercentOrAmount(typeId, valueId, base){
+    const type = valueOf(typeId) || "percent";
+    const value = num(valueId);
+
+    if(type === "amount"){
+        return Math.max(value, 0);
+    }
+
+    return Math.max((base * value) / 100, 0);
+}
+
+function calcFinalTotal(){
+    const discountAmount = Math.min(
+        calcPercentOrAmount("discount_type", "discount_value", subtotalBase),
+        subtotalBase
+    );
+
+    const taxableAmount = Math.max(subtotalBase - discountAmount, 0);
+    const taxAmount = calcPercentOrAmount("tax_type", "tax_value", taxableAmount);
+
+    total = Math.max(taxableAmount + taxAmount, 0);
+
+    text("cartDiscountShow", "-" + moneyUSD(discountAmount));
+    text("modalDiscountShow", "-" + moneyUSD(discountAmount));
+    text("receiptDiscount", "-" + moneyUSD(discountAmount));
+
+    text("cartTaxShow", moneyUSD(taxAmount));
+    text("modalTaxShow", moneyUSD(taxAmount));
+    text("receiptTax", moneyUSD(taxAmount));
+
+    text("cartTotalShow", moneyUSD(total));
+    text("modalTotalShow", moneyUSD(total));
+    text("receiptTotal", moneyUSD(total));
+
+    const finalInput = document.getElementById("final_total_hidden");
+    if(finalInput) finalInput.value = total.toFixed(2);
+
+    const discountTypeHidden = document.getElementById("discount_type_hidden");
+    const discountValueHidden = document.getElementById("discount_value_hidden");
+    const taxTypeHidden = document.getElementById("tax_type_hidden");
+    const taxValueHidden = document.getElementById("tax_value_hidden");
+
+    if(discountTypeHidden) discountTypeHidden.value = valueOf("discount_type") || "percent";
+    if(discountValueHidden) discountValueHidden.value = valueOf("discount_value") || "0";
+    if(taxTypeHidden) taxTypeHidden.value = valueOf("tax_type") || "percent";
+    if(taxValueHidden) taxValueHidden.value = valueOf("tax_value") || "0";
+}
+
+function paymentBreakdown(cashUsd, cashKhrRaw, abaUsd, abaKhrRaw){
+    const parts = [];
+
+    if(cashUsd > 0 || cashKhrRaw > 0){
+        const cashParts = [];
+        if(cashUsd > 0) cashParts.push(moneyUSD(cashUsd));
+        if(cashKhrRaw > 0) cashParts.push(moneyKHR(cashKhrRaw));
+        parts.push("Cash " + cashParts.join(" + "));
+    }
+
+    if(abaUsd > 0 || abaKhrRaw > 0){
+        const abaParts = [];
+        if(abaUsd > 0) abaParts.push(moneyUSD(abaUsd));
+        if(abaKhrRaw > 0) abaParts.push(moneyKHR(abaKhrRaw));
+        parts.push("ABA " + abaParts.join(" + "));
+    }
+
+    return parts.length ? parts.join("<br>") : "No payment yet";
+}
+
+function selectCustomerInfo(){
+    const input = document.getElementById("customerSearch");
+    const phoneHidden = document.getElementById("customerPhoneHidden");
+    if(!input) return;
+
+    const raw = input.value.trim();
+    const rawLower = raw.toLowerCase();
+    const rawDigits = onlyDigits(raw);
+
+    let selected = null;
+
+    document.querySelectorAll("#customerList option").forEach(function(option){
+        const optionValue = (option.value || "").trim();
+        const name = (option.dataset.name || "").trim();
+        const phone = (option.dataset.phone || "").trim();
+
+        const optionDigits = onlyDigits(optionValue);
+        const phoneDigits = onlyDigits(phone);
+
+        if(
+            raw &&
+            (
+                optionValue.toLowerCase() === rawLower ||
+                name.toLowerCase() === rawLower ||
+                phone === raw ||
+                phoneDigits === rawDigits ||
+                optionDigits === rawDigits
+            )
+        ){
+            selected = option;
+        }
+    });
+
+    if(selected){
+        const name = selected.dataset.name || "Customer";
+        const phone = selected.dataset.phone || "";
+        const points = selected.dataset.points || "0";
+
+        text("customerNameShow", name);
+        setCustomerBadge("old", "Old customer");
+        text("customerPhoneShow", phone ? "Phone: " + phone : "No phone");
+        text("customerPointsShow", "Total points: " + points);
+        text("receiptCustomer", name);
+
+        if(phoneHidden) phoneHidden.value = phone;
+        return;
+    }
+
+    if(raw){
+        text("customerNameShow", raw);
+        setCustomerBadge("new", "New customer");
+        text("customerPhoneShow", "Phone: " + raw);
+        text("customerPointsShow", "Total points: 0");
+        text("receiptCustomer", raw);
+
+        if(phoneHidden) phoneHidden.value = raw;
+        return;
+    }
+
+    text("customerNameShow", "Walk-in customer");
+    setCustomerBadge("walkin", "Walk-in");
+    text("customerPhoneShow", "No phone selected");
+    text("customerPointsShow", "Total points: 0");
+    text("receiptCustomer", "Walk-in");
+
+    if(phoneHidden) phoneHidden.value = "";
+}
+
+function calcChange(){
+    calcFinalTotal();
+    selectCustomerInfo();
+
+    const cashUsd = num("cash_usd");
+    const cashKhrRaw = num("cash_khr");
+    const cashKhr = cashKhrRaw / payRate;
+
+    const abaUsd = num("aba_usd");
+    const abaKhrRaw = num("aba_khr");
+    const abaKhr = abaKhrRaw / payRate;
+
+    const paid = cashUsd + cashKhr + abaUsd + abaKhr;
+    const diff = paid - total;
+
+    const changeCard = document.getElementById("changeCard");
+    const changeTitle = document.getElementById("changeTitle");
+
+    const breakdown = paymentBreakdown(cashUsd, cashKhrRaw, abaUsd, abaKhrRaw);
+
+    text("paidTotalShow", moneyUSD(paid));
+    html("paidBreakdownShow", breakdown);
+
+    html("receiptPaidBreakdown", breakdown);
+    text("receiptPaid", moneyUSD(paid));
+
+    if(changeCard){
+        changeCard.classList.remove("change-ok", "change-lack");
+    }
+
+    if(diff >= 0){
+        const changeKhr = diff * changeRate;
+
+        text("changeTitle", "Change");
+        text("changeKhrShow", moneyKHR(changeKhr));
+        text("changeShow", moneyUSD(diff));
+
+        text("receiptChangeTitle", "Change");
+        text("receiptChange", moneyUSD(diff));
+
+        if(changeCard) changeCard.classList.add("change-ok");
+    }else{
+        const lackUsd = Math.abs(diff);
+        const lackKhr = lackUsd * payRate;
+
+        text("changeTitle", "Lack");
+        text("changeKhrShow", moneyKHR(lackKhr));
+        text("changeShow", moneyUSD(lackUsd));
+
+        text("receiptChangeTitle", "Lack");
+        text("receiptChange", moneyUSD(lackUsd));
+
+        if(changeCard) changeCard.classList.add("change-lack");
+    }
+}
+
+function prepareReceipt(){
+    calcChange();
+
+    const now = new Date();
+    const receiptDate = document.getElementById("receiptDate");
+
+    if(receiptDate){
+        receiptDate.innerText = now.toLocaleString();
+    }
+}
+
+function printReceipt(){
+    prepareReceipt();
+    window.print();
+}
+
+function setCheckoutAction(action){
+    calcChange();
+
+    const actionInput = document.getElementById("checkout_action");
+    if(actionInput){
+        actionInput.value = action;
+    }
+}
+
+function completeAndPrint(e){
+    e.preventDefault();
+
+    setCheckoutAction("complete_print");
+    prepareReceipt();
+    window.print();
+
+    setTimeout(function(){
+        const form = document.getElementById("paymentForm");
+        if(form){
+            form.submit();
+        }
+    }, 350);
+}
+
+document.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){
+        closePaymentModal();
+
+        document.querySelectorAll(".variant-modal").forEach(function(modal){
+            modal.style.display = "none";
+        });
+    }
+});
+</script>
+
+{% endblock %}

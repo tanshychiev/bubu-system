@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<style>
+.form-page{
+    max-width:1100px;
+    width:100%;
+    margin:auto;
+}
+
+.back-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:58px;
+    padding:0 32px;
+    border-radius:999px;
+    background:white;
+    border:1px solid #eaddec;
+    color:#6b6178;
+    font-size:17px;
+    font-weight:900;
+    text-decoration:none;
+    margin-bottom:20px;
+    box-shadow:0 8px 20px rgba(130,91,60,.06);
+}
+
+.form-card{
+    background:white;
+    border:1px solid #f5e8df;
+    border-radius:30px;
+    padding:36px;
+    box-shadow:0 20px 50px rgba(130,91,60,.10);
+}
+
+h1{
+    font-size:42px;
+    color:#17152f;
+    margin:0 0 10px;
+    font-weight:900;
+}
+
+p{
+    color:#7b7288;
+    font-size:16px;
+    font-weight:800;
+    line-height:1.6;
+    margin-bottom:22px;
+}
+
+.notice-box{
+    background:#fff8fb;
+    border:1px solid #f0e5ee;
+    border-radius:22px;
+    padding:18px;
+    color:#514a5f;
+    font-weight:900;
+    line-height:1.6;
+    margin-bottom:26px;
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.form-box label{
+    display:block;
+    font-size:16px;
+    font-weight:900;
+    color:#17152f;
+    margin-bottom:10px;
+}
+
+.form-box input,
+.form-box select,
+.form-box textarea{
+    width:100%;
+    min-height:64px;
+    border-radius:22px;
+    border:1px solid #eaddec;
+    padding:0 18px;
+    font-size:18px;
+    font-weight:800;
+    background:white;
+    font-family:'Nunito',sans-serif;
+}
+
+.form-box input:focus,
+.form-box select:focus,
+.form-box textarea:focus{
+    outline:none;
+    border-color:#b99cff;
+    box-shadow:0 0 0 5px rgba(155,124,246,.13);
+}
+
+.form-box input[type="checkbox"]{
+    width:26px;
+    height:26px;
+    min-height:26px;
+    accent-color:#7b5cff;
+}
+
+.full{
+    grid-column:1 / -1;
+}
+
+.btn-save{
+    min-width:220px;
+    min-height:64px;
+    border:none;
+    border-radius:999px;
+    padding:0 38px;
+    color:white;
+    font-size:18px;
+    font-weight:900;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    box-shadow:0 14px 28px rgba(155,124,246,.25);
+    cursor:pointer;
+}
+
+.drop-zone{
+    min-height:300px;
+    border:2px dashed #d9c6ec;
+    border-radius:28px;
+    background:#fff8fb;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    cursor:pointer;
+    transition:.2s;
+    color:#7b5cff;
+    font-size:17px;
+    font-weight:900;
+    text-align:center;
+    padding:24px;
+}
+
+.drop-zone:hover,
+.drop-zone.dragover{
+    background:#f7efff;
+    border-color:#9b7cf6;
+    transform:translateY(-2px);
+}
+
+.drop-icon{
+    font-size:54px;
+}
+
+.drop-zone span{
+    color:#7b7288;
+    font-size:15px;
+    font-weight:800;
+}
+
+.preview-box img{
+    margin-top:14px;
+    max-height:180px;
+    max-width:260px;
+    border-radius:20px;
+    object-fit:contain;
+}
+
+.error{
+    background:#fff3f1;
+    color:#ff4d4d;
+    padding:12px 16px;
+    border-radius:14px;
+    font-weight:800;
+    margin-top:10px;
+}
+
+@media(max-width:1000px){
+    .form-page{
+        max-width:100%;
+    }
+
+    .form-card{
+        padding:28px;
+        border-radius:26px;
+    }
+
+    .form-grid{
+        grid-template-columns:1fr;
+        gap:22px;
+    }
+
+    h1{
+        font-size:34px;
+    }
+
+    .form-box input,
+    .form-box select,
+    .form-box textarea{
+        min-height:68px;
+        font-size:18px;
+    }
+
+    .drop-zone{
+        min-height:340px;
+    }
+
+    .back-btn,
+    .btn-save{
+        width:100%;
+        min-height:68px;
+        font-size:18px;
+    }
+}
+
+@media(max-width:600px){
+    .form-card{
+        padding:22px;
+    }
+
+    h1{
+        font-size:30px;
+    }
+}
+</style>
+
+<div class="form-page">
+
+    <a href="{% url 'item_list' %}" class="back-btn">← Back</a>
+
+    <div class="form-card">
+        <h1>{{ title }} 🐾</h1>
+
+        <p>
+            Create the main product only. After saving, add real sellable variants with size, color, price, and stock.
+        </p>
+
+        <div class="notice-box">
+            Example: create item <strong>Meo</strong> first. Then add variants:
+            Size M / Red / $10, Size M / Blue / $10, Size S / Red / $5.
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-grid">
+
+                <div class="form-box">
+                    <label>Name</label>
+                    {{ form.name }}
+                    {% for e in form.name.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="form-box">
+                    <label>Brand</label>
+                    {{ form.brand }}
+                    {% for e in form.brand.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="form-box">
+                    <label>Type</label>
+                    {{ form.item_type }}
+                    {% for e in form.item_type.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="form-box">
+                    <label>Unit</label>
+                    {{ form.unit }}
+                    {% for e in form.unit.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                </div>
+
+                {% if form.cost_price %}
+                <div class="form-box">
+                    <label>Default Cost Price</label>
+                    {{ form.cost_price }}
+                    {% for e in form.cost_price.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                </div>
+                {% endif %}
+
+                {% if form.sale_price %}
+                <div class="form-box">
+                    <label>Default Sale Price</label>
+                    {{ form.sale_price }}
+                    {% for e in form.sale_price.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="form-box full">
+                    <label>Product Image</label>
+
+                    <div class="drop-zone" id="dropZone">
+                        <div class="drop-icon">📸</div>
+                        <strong>Tap, drag, or paste image here</strong>
+                        <span>Touch screen friendly • Ctrl + V supported</span>
+
+                        <div id="previewBox" class="preview-box">
+                            {% if form.instance.image %}
+                                <img src="{{ form.instance.image.url }}">
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div style="display:none;">
+                        {{ form.image }}
+                    </div>
+
+                    {% for e in form.image.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="form-box">
+                    <label>Active</label>
+                    {{ form.is_active }}
+                    {% for e in form.is_active.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="full">
+                    <button class="btn-save" type="submit">Save Item</button>
+                </div>
+
+            </div>
+        </form>
+    </div>
+
+</div>
+
+<script>
+const dropZone = document.getElementById("dropZone");
+const imageInput = document.querySelector('input[type="file"][name="image"]');
+const previewBox = document.getElementById("previewBox");
+
+function setImageFile(file){
+    if(!file || !file.type.startsWith("image/")) return;
+
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    imageInput.files = dt.files;
+
+    const reader = new FileReader();
+    reader.onload = function(e){
+        previewBox.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+    };
+    reader.readAsDataURL(file);
+}
+
+if(dropZone && imageInput){
+    dropZone.addEventListener("click", function(){
+        imageInput.click();
+    });
+
+    dropZone.addEventListener("dragover", function(e){
+        e.preventDefault();
+        dropZone.classList.add("dragover");
+    });
+
+    dropZone.addEventListener("dragleave", function(){
+        dropZone.classList.remove("dragover");
+    });
+
+    dropZone.addEventListener("drop", function(e){
+        e.preventDefault();
+        dropZone.classList.remove("dragover");
+        setImageFile(e.dataTransfer.files[0]);
+    });
+
+    document.addEventListener("paste", function(e){
+        const items = e.clipboardData.items;
+
+        for(let i = 0; i < items.length; i++){
+            if(items[i].type.startsWith("image/")){
+                setImageFile(items[i].getAsFile());
+                break;
+            }
+        }
+    });
+}
+</script>
+
+{% endblock %}

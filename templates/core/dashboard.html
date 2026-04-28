@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1>Dashboard 🐾</h1>
+        <div class="page-subtitle">
+            Welcome back, BUBU! Here's what's happening in your store today. 💜
+        </div>
+    </div>
+
+    <img src="{% static 'img/dashboard-hero.png' %}" class="dashboard-hero" alt="Dashboard pets">
+</div>
+
+<div class="grid-cards">
+
+    <div class="card stat purple">
+        <div>
+            <small>Total Products</small>
+            <h2>{{ total_products|default:0 }}</h2>
+            <span>Inventory items ↗</span>
+        </div>
+        <div class="icon">🛍️</div>
+    </div>
+
+    <div class="card stat orange">
+        <div>
+            <small>Total Sales</small>
+            <h2>${{ total_sales|default:"0.00" }}</h2>
+            <span>All sales total ↗</span>
+        </div>
+        <div class="icon">💳</div>
+    </div>
+
+    <div class="card stat blue">
+        <div>
+            <small>Total Orders</small>
+            <h2>{{ total_orders|default:0 }}</h2>
+            <span>All orders ↗</span>
+        </div>
+        <div class="icon">📦</div>
+    </div>
+
+    <div class="card stat green">
+        <div>
+            <small>Total Customers</small>
+            <h2>{{ total_customers|default:0 }}</h2>
+            <span>Customer records ↗</span>
+        </div>
+        <div class="icon">👥</div>
+    </div>
+
+</div>
+
+<div class="grid-main">
+
+    <div class="card big">
+        <h3>Sales Overview ✨</h3>
+
+        <div class="fake-chart"></div>
+
+        <div class="chart-footer">
+            <div>This Week: <b>${{ this_week_sales|default:"0.00" }}</b></div>
+            <div>Last Week: <b>${{ last_week_sales|default:"0.00" }}</b></div>
+        </div>
+
+        <img src="{% static 'img/dashboard-cat.png' %}" class="chart-cat" alt="Cute cat">
+    </div>
+
+    <div class="card side">
+        <h3>Recent Orders</h3>
+
+        {% for order in recent_orders %}
+            <div class="order">
+                <span>#{{ order.id }} {{ order.customer.name|default:"Customer" }}</span>
+                <span>${{ order.total|default:"0.00" }}</span>
+            </div>
+        {% empty %}
+            <div class="empty-box" style="min-height:240px;">
+                <div class="empty-icon">📦✨</div>
+                <h3>No recent orders</h3>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="card side">
+        <h3>Low Stock Alert</h3>
+
+        {% for item in low_stock_items %}
+            <div class="stock">
+                <span>{{ item.name }}</span>
+                <span style="color:#ff4d6d;">{{ item.stock }} left</span>
+            </div>
+        {% empty %}
+            <div class="stock">
+                <span>No low stock</span>
+                <span>✅</span>
+            </div>
+        {% endfor %}
+
+        <img src="{% static 'img/dashboard-dog.png' %}" class="alert-dog" alt="Cute dog">
+    </div>
+
+</div>
+
+<div class="card footer-box">
+    <div>
+        <h3>You're doing great today! 🌟</h3>
+        <p>Keep up the pawsome work 💜</p>
+    </div>
+</div>
+
+{% endblock %}

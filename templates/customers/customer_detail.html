@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1>Customer Detail 🐾</h1>
+        <div class="page-subtitle">View full information</div>
+    </div>
+</div>
+
+<div class="card">
+<p>
+<a href="{% url 'customer_list' %}" class="btn btn-reset">← Back</a>
+<a href="{% url 'customer_update' customer.id %}" class="btn">Edit</a>
+</p>
+
+<table>
+<tr><th>Name</th><td>{{ customer.name }}</td></tr>
+<tr><th>Phone</th><td>{{ customer.phone }}</td></tr>
+<tr><th>Email</th><td>{{ customer.email }}</td></tr>
+<tr><th>Address</th><td>{{ customer.address }}</td></tr>
+<tr><th>Created</th><td>{{ customer.created_at }}</td></tr>
+</table>
+</div>
+
+{% endblock %}

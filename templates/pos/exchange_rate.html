@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="rate-page">
+    <div class="rate-card">
+        <div class="rate-head">
+            <div>
+                <h1>Exchange Rate Setting</h1>
+                <p>Set the USD to KHR rate used in POS payment.</p>
+            </div>
+
+            <a href="{% url 'pos' %}" class="back-btn">← Back to POS</a>
+        </div>
+
+        <form method="post" class="rate-form">
+            {% csrf_token %}
+
+            <label>1 USD =</label>
+
+            <div class="rate-input-row">
+                <input
+                    type="number"
+                    name="exchange_rate"
+                    step="1"
+                    min="1"
+                    value="{{ setting.exchange_rate }}"
+                    required
+                >
+                <span>KHR</span>
+            </div>
+
+            <button type="submit" class="save-btn">
+                Save Exchange Rate
+            </button>
+        </form>
+
+        <div class="rate-preview">
+            <h3>Current Rate</h3>
+            <strong>1 USD = {{ setting.exchange_rate }} KHR</strong>
+        </div>
+    </div>
+</div>
+
+<style>
+.rate-page{
+    min-height:80vh;
+    padding:40px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fff8f4;
+}
+
+.rate-card{
+    width:620px;
+    max-width:100%;
+    background:white;
+    border-radius:30px;
+    padding:32px;
+    box-shadow:0 22px 50px rgba(130,91,60,.14);
+    border:2px solid #f5e0d8;
+}
+
+.rate-head{
+    display:flex;
+    justify-content:space-between;
+    gap:16px;
+    align-items:flex-start;
+    margin-bottom:28px;
+}
+
+.rate-head h1{
+    margin:0;
+    font-size:30px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.rate-head p{
+    margin:8px 0 0;
+    color:#81758f;
+    font-weight:800;
+}
+
+.back-btn{
+    padding:13px 18px;
+    border-radius:18px;
+    background:#f3f0ff;
+    color:#7b5cff;
+    text-decoration:none;
+    font-weight:1000;
+    white-space:nowrap;
+}
+
+.rate-form label{
+    display:block;
+    font-size:18px;
+    font-weight:1000;
+    margin-bottom:10px;
+}
+
+.rate-input-row{
+    display:grid;
+    grid-template-columns:1fr 90px;
+    gap:12px;
+    align-items:center;
+}
+
+.rate-input-row input{
+    height:68px;
+    border:2px solid #eaddec;
+    border-radius:22px;
+    padding:0 20px;
+    font-size:28px;
+    font-weight:1000;
+    outline:none;
+}
+
+.rate-input-row input:focus{
+    border-color:#9b7cf6;
+    box-shadow:0 0 0 5px rgba(155,124,246,.12);
+}
+
+.rate-input-row span{
+    height:68px;
+    border-radius:22px;
+    background:#fff0f0;
+    color:#ff5d73;
+    font-weight:1000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.save-btn{
+    width:100%;
+    height:68px;
+    border:none;
+    border-radius:999px;
+    margin-top:24px;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    font-size:20px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.rate-preview{
+    margin-top:24px;
+    padding:20px;
+    border-radius:22px;
+    background:#f8f6ff;
+}
+
+.rate-preview h3{
+    margin:0 0 8px;
+    font-size:18px;
+    font-weight:1000;
+}
+
+.rate-preview strong{
+    font-size:26px;
+    color:#7b5cff;
+}
+
+@media(max-width:700px){
+    .rate-page{
+        padding:18px;
+    }
+
+    .rate-head{
+        flex-direction:column;
+    }
+
+    .rate-input-row{
+        grid-template-columns:1fr;
+    }
+}
+</style>
+
+{% endblock %}

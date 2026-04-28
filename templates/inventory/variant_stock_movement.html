@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.page{max-width:1100px;margin:auto;}
+.back{display:inline-flex;padding:12px 22px;border-radius:999px;background:white;border:1px solid #eaddec;color:#6b6178;font-weight:900;text-decoration:none;margin-bottom:18px;box-shadow:0 8px 20px rgba(130,91,60,.06);}
+.card{background:linear-gradient(135deg,#fff,#fff7fb);border:1px solid #f5e8df;border-radius:34px;padding:28px;box-shadow:0 24px 60px rgba(130,91,60,.10);margin-bottom:22px;}
+.top-grid{display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:center;}
+.photo{width:220px;height:220px;border-radius:28px;background:#fff6ef;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #f1ddd1;}
+.photo img{width:100%;height:100%;object-fit:contain;}
+.placeholder{font-size:80px;}
+h1{color:#17152f;font-size:38px;margin:0 0 8px;font-weight:900;}
+.sub{color:#7b7288;font-weight:800;margin-bottom:18px;}
+.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0;}
+.info-box{background:white;border:1px solid #f0e5ee;border-radius:22px;padding:15px;box-shadow:0 10px 24px rgba(130,91,60,.05);}
+.info-box small{display:block;color:#8a7b99;font-weight:900;margin-bottom:7px;}
+.info-box strong{display:block;color:#17152f;font-size:17px;font-weight:900;}
+.form-card{background:white;border-radius:28px;padding:22px;border:1px solid #f0e5ee;margin-top:18px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.box label{display:block;font-weight:900;margin-bottom:8px;color:#17152f;}
+.box input,.box select{width:100%;height:56px;border-radius:20px;border:1px solid #eaddec;padding:0 16px;font-weight:900;background:#fff;}
+.box input:focus,.box select:focus{outline:none;border-color:#9b7cf6;box-shadow:0 0 0 4px rgba(155,124,246,.12);}
+.btn{border:none;border-radius:999px;padding:16px 38px;color:white;font-weight:900;background:linear-gradient(135deg,#9b7cf6,#ff8c6b);box-shadow:0 14px 28px rgba(155,124,246,.22);cursor:pointer;}
+.history-card{background:white;border:1px solid #f5e8df;border-radius:34px;padding:24px;box-shadow:0 20px 50px rgba(130,91,60,.08);}
+.table{width:100%;border-collapse:collapse;}
+.table th{background:#fff8fb;padding:14px;text-align:left;color:#17152f;}
+.table td{padding:14px;border-top:1px solid #f4e3d8;font-weight:800;}
+@media(max-width:850px){.top-grid,.form-grid,.info-grid{grid-template-columns:1fr;}.photo{width:100%;}}
+</style>
+
+<div class="page">
+
+    <a href="{% url 'item_detail' item.id %}" class="back">← Back</a>
+
+    <div class="card">
+        <div class="top-grid">
+
+            <div class="photo">
+                {% if variant.image %}
+                    <img src="{{ variant.image.url }}">
+                {% elif item.image %}
+                    <img src="{{ item.image.url }}">
+                {% else %}
+                    <div class="placeholder">📦</div>
+                {% endif %}
+            </div>
+
+            <div>
+                <h1>Stock In / Out 📦</h1>
+                <div class="sub">Update stock for this exact variant only.</div>
+
+                <div class="info-grid">
+                    <div class="info-box">
+                        <small>Type</small>
+                        <strong>
+                            {% if item.item_type %}
+                                {{ item.item_type.emoji }} {{ item.item_type.name }}
+                            {% else %}
+                                📦 No Type
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <div class="info-box">
+                        <small>Item</small>
+                        <strong>{{ item.name }}</strong>
+                    </div>
+
+                    <div class="info-box">
+                        <small>Variant</small>
+                        <strong>{{ variant.display_name }}</strong>
+                    </div>
+
+                    <div class="info-box">
+                        <small>Current Stock</small>
+                        <strong>{{ variant.quantity }} {{ item.get_unit_display }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="form-grid">
+                    <div class="box">
+                        <label>Type</label>
+                        <select name="movement_type">
+                            <option value="in">Stock In</option>
+                            <option value="out">Stock Out</option>
+                            <option value="adjust">Adjust Stock</option>
+                        </select>
+                    </div>
+
+                    <div class="box">
+                        <label>Quantity</label>
+                        <input type="number" name="quantity" min="1" required>
+                    </div>
+
+                    <div class="box">
+                        <label>Cost Price</label>
+                        <input type="number" step="0.01" name="cost_price" value="{{ variant.cost_price }}">
+                    </div>
+
+                    <div class="box">
+                        <label>Note</label>
+                        <input type="text" name="note" placeholder="Supplier / reason / sale note">
+                    </div>
+
+                    <div>
+                        <button class="btn" type="submit">Save Stock</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="history-card">
+        <h1 style="font-size:28px;">History</h1>
+
+        <table class="table">
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Qty</th>
+                <th>Cost</th>
+                <th>By</th>
+                <th>Note / Sale</th>
+            </tr>
+
+            {% for m in movements %}
+            <tr>
+                <td>{{ m.created_at|date:"d M Y H:i" }}</td>
+                <td>{{ m.get_movement_type_display }}</td>
+                <td>{{ m.quantity }}</td>
+                <td>${{ m.cost_price|floatformat:2 }}</td>
+                <td>{{ m.created_by|default:"-" }}</td>
+                <td>{{ m.note|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">No history yet.</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

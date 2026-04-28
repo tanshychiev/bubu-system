@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<style>
+a{text-decoration:none!important}
+.customer-hero{display:grid;grid-template-columns:1fr 650px;gap:25px;align-items:center;margin-bottom:20px}
+.customer-title h1{font-size:42px;margin:0;color:#17152f;font-weight:900}
+.customer-title p{color:#7b7288;font-weight:800}
+.hero-img{width:100%;height:300px;object-fit:contain}
+.btn-main{padding:14px 28px;border-radius:999px;font-weight:900;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.btn-purple{background:linear-gradient(135deg,#8e63ff,#b07cff);color:white}
+.btn-orange{background:linear-gradient(135deg,#ff8c6b,#ffb36b);color:white}
+.btn-reset{background:white;border:1px solid #eaddec;color:#6b6178}
+.tool-row{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
+.search-pill{width:260px;height:50px;border-radius:999px;border:1px solid #eaddec;padding:0 18px;font-weight:800}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);background:white;border-radius:28px;padding:22px;border:1px solid #f1ddd1;box-shadow:0 18px 40px rgba(130,91,60,.08);margin:22px 0}
+.summary-item{display:flex;gap:14px;align-items:center;border-right:1px solid #f1ddd1}
+.summary-item:last-child{border-right:none}
+.icon{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px}
+.icon.purple{background:#efe5ff;color:#8e63ff}.icon.green{background:#ddf8ea;color:#20b86b}.icon.orange{background:#fff0df;color:#ff8b3d}.icon.blue{background:#e8f2ff;color:#3a86ff}
+.label{color:#7b7288;font-weight:900}.value{font-size:26px;font-weight:900;color:#17152f}.value.green{color:#20b86b}.value.blue{color:#3a86ff}
+.customer-panel{background:white;border-radius:28px;padding:22px;border:1px solid #f1ddd1;box-shadow:0 18px 40px rgba(130,91,60,.08)}
+.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.panel-head h2{margin:0;font-size:26px;color:#17152f}
+.sort{border:1px solid #eaddec;padding:10px 18px;border-radius:999px;color:#6b6178;font-weight:800}
+.customer-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+.card{border:1px solid #eaddec;border-radius:22px;padding:16px;background:linear-gradient(180deg,#fff,#fffaf7);box-shadow:0 10px 25px rgba(130,91,60,.06);text-align:center}
+.avatar{width:90px;height:90px;border-radius:50%;margin:auto;overflow:hidden;background:#f3f3f3}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.name{font-weight:900;margin-top:10px;color:#17152f;font-size:16px}
+.phone,.pet,.address,.points{font-size:12px;color:#7b7288;font-weight:800;margin-top:3px}
+.points{color:#20b86b}
+.stats{display:flex;justify-content:space-between;margin:12px 0;font-weight:900}
+.actions{display:grid;grid-template-columns:1fr 1fr 44px;gap:8px}
+.btn-view,.btn-edit{padding:10px;border-radius:14px;background:#f5f1ff;color:#8e63ff;border:1px solid #e3d5ff;font-weight:900}
+.btn-edit{background:#fff6e8;color:#ff8b3d;border-color:#ffe1bd}
+.btn-del{width:44px;border-radius:14px;background:#fff3f1;color:#ff4d4d;border:1px solid #ffd9c8;display:flex;align-items:center;justify-content:center;font-weight:900;cursor:pointer}
+.empty-box{text-align:center;padding:50px;border:2px dashed #eaddec;border-radius:24px;color:#7b7288;font-weight:900}
+@media(max-width:1300px){.customer-grid{grid-template-columns:repeat(3,1fr)}.customer-hero{grid-template-columns:1fr}}
+@media(max-width:700px){.customer-grid{grid-template-columns:1fr}.summary{grid-template-columns:1fr;gap:16px}.summary-item{border-right:none;border-bottom:1px solid #f1ddd1;padding-bottom:14px}.summary-item:last-child{border-bottom:none}.tool-row{display:grid}.search-pill,.btn-main{width:100%}.hero-img{height:170px}}
+</style>
+
+<div class="customer-hero">
+    <div class="customer-title">
+        <h1>Customers 👥✨</h1>
+        <p>Manage your pet store customers 💗</p>
+
+        <form method="get" class="tool-row">
+            <input class="search-pill" name="q" value="{{ q }}" placeholder="🔍 Search name, phone, pet...">
+            <button class="btn-main btn-purple" type="submit">Search</button>
+            <a href="{% url 'customer_list' %}" class="btn-main btn-reset">Reset</a>
+            <a href="{% url 'customer_create' %}" class="btn-main btn-orange">Add Customer</a>
+        </form>
+    </div>
+
+    <img src="{% static 'img/customer-hero.png' %}" class="hero-img" alt="Customers">
+</div>
+
+<div class="summary">
+    <div class="summary-item">
+        <div class="icon purple">👥</div>
+        <div>
+            <div class="label">Total Customers</div>
+            <div class="value">{{ total|default:"0" }}</div>
+        </div>
+    </div>
+
+    <div class="summary-item">
+        <div class="icon green">➕</div>
+        <div>
+            <div class="label">New This Month</div>
+            <div class="value green">{{ new_month|default:"0" }}</div>
+        </div>
+    </div>
+
+    <div class="summary-item">
+        <div class="icon orange">🛍</div>
+        <div>
+            <div class="label">Total Orders</div>
+            <div class="value">{{ orders|default:"0" }}</div>
+        </div>
+    </div>
+
+    <div class="summary-item">
+        <div class="icon blue">💰</div>
+        <div>
+            <div class="label">Total Spent</div>
+            <div class="value blue">${{ spent|default:"0.00" }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="customer-panel">
+    <div class="panel-head">
+        <h2>All Customers</h2>
+        <div class="sort">Newest First</div>
+    </div>
+
+    <div class="customer-grid">
+        {% for c in customers %}
+        <div class="card">
+            <div class="avatar">
+                <img src="{% static 'img/pet-hero.png' %}" alt="Customer">
+            </div>
+
+            <div class="name">{{ c.name }}</div>
+            <div class="phone">{{ c.phone|default:"No phone" }}</div>
+
+            {% if c.pet_name or c.pet_type %}
+                <div class="pet">
+                    🐾 {{ c.pet_name|default:"Pet" }}
+                    {% if c.pet_type %} · {{ c.pet_type }}{% endif %}
+                </div>
+            {% endif %}
+
+            {% if c.address %}
+                <div class="address">{{ c.address|truncatechars:35 }}</div>
+            {% endif %}
+
+            <div class="points">{{ c.points|default:0 }} points</div>
+
+            <div class="stats">
+                <span>Spent</span>
+                <span>${{ c.total_spent|default:"0.00" }}</span>
+            </div>
+
+            <div class="actions">
+                <a href="{% url 'customer_detail' c.id %}" class="btn-view">View</a>
+                <a href="{% url 'customer_update' c.id %}" class="btn-edit">Edit</a>
+
+                <form method="post" action="{% url 'customer_delete' c.id %}" onsubmit="return confirm('Delete this customer?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-del">🗑</button>
+                </form>
+            </div>
+        </div>
+        {% empty %}
+            <div class="empty-box">
+                No customers found.
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

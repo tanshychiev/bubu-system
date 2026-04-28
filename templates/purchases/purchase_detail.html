@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.detail-wrap{max-width:1200px;margin:auto;padding:20px}
+.detail-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:20px}
+.title-box h1{margin:0 0 12px;color:#17152f;font-size:34px;font-weight:1000}
+.back-btn{display:inline-flex;padding:12px 18px;border-radius:999px;background:#f3ecff;color:#8e63ff;font-weight:1000;text-decoration:none!important}
+
+.info-card,.item-card{background:white;border:1px solid #f3dfd4;box-shadow:0 12px 30px rgba(130,91,60,.07)}
+.info-card{border-radius:24px;padding:18px;min-width:280px}
+.info-row{font-weight:1000;color:#17152f;margin-bottom:8px}
+.info-row span{color:#7b7288}
+
+.item-card{border-radius:26px;padding:18px;margin-bottom:16px}
+.item-main{display:grid;grid-template-columns:76px 1fr;gap:14px;align-items:center}
+.item-img,.item-fallback{width:76px;height:76px;border-radius:20px;background:#f7f1ff}
+.item-img{object-fit:cover}
+.item-fallback{display:flex;align-items:center;justify-content:center;font-size:34px}
+.item-name{font-size:20px;font-weight:1000;color:#17152f}
+.item-sub{font-size:13px;font-weight:800;color:#7b7288;margin-top:4px}
+
+.flow-box{margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.flow-step{border:1px solid #eaddec;background:linear-gradient(135deg,#fffaf7,#f8f3ff);border-radius:22px;padding:14px}
+.flow-no{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#8e63ff;color:white;font-weight:1000;margin-bottom:8px}
+.flow-title{font-weight:1000;color:#17152f;font-size:13px}
+.flow-text{margin-top:5px;color:#7b7288;font-size:12px;font-weight:800;line-height:1.45}
+
+.plan-box{margin-top:16px;border:2px dashed #d9c8ff;background:#fbf8ff;border-radius:24px;padding:16px}
+.plan-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}
+.plan-title{font-weight:1000;color:#17152f}
+.plan-badge{display:inline-flex;padding:7px 12px;border-radius:999px;background:#fff1db;color:#d77a00;font-size:12px;font-weight:1000}
+.plan-content{color:#5f5870;font-weight:900;line-height:1.6}
+
+.qty-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.qty-box{border:1px solid #f1ddd1;border-radius:20px;padding:14px;text-align:center;background:#fffaf7}
+.qty-label{font-size:12px;color:#7b7288;font-weight:1000}
+.qty-value{font-size:24px;font-weight:1000;color:#17152f}
+.green{color:#20b86b!important}.red{color:#ff4d4d!important}.purple{color:#8e63ff!important}
+
+.progress-wrap{margin-top:14px}
+.progress-label{display:flex;justify-content:space-between;font-size:12px;font-weight:1000;color:#7b7288;margin-bottom:6px}
+.progress-bar{height:13px;border-radius:999px;background:#f1e8ff;overflow:hidden}
+.progress-fill{height:100%;border-radius:999px;background:linear-gradient(135deg,#8e63ff,#20b86b)}
+
+.status-section{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.status-box{background:#fffaf7;border:1px solid #f1ddd1;border-radius:22px;padding:14px}
+.status-title{font-weight:1000;color:#17152f;margin-bottom:10px}
+.alloc-list{display:flex;gap:8px;flex-wrap:wrap}
+.alloc-pill{background:#f1e8ff;color:#6d45d8;border-radius:999px;padding:9px 13px;font-weight:1000;font-size:12px}
+.empty-mini{color:#9a8fa8;font-weight:900;font-size:13px}
+
+.action-box{margin-top:16px;background:linear-gradient(135deg,#f7f0ff,#fff5f1);border:1px solid #eaddec;border-radius:24px;padding:16px}
+.action-title{font-weight:1000;color:#17152f;margin-bottom:12px}
+.action-form{display:grid;grid-template-columns:1.3fr 110px 1fr auto;gap:10px;align-items:end}
+.action-form.receive-only{grid-template-columns:120px 1fr auto}
+.action-form label{font-size:12px;font-weight:1000;color:#7b7288;margin-bottom:6px;display:block}
+.action-field select,.action-field input{width:100%;min-height:54px;border:2px solid #eaddec;border-radius:18px;padding:0 14px;font-weight:1000;background:white;outline:none}
+.action-btn{min-height:54px;border:0;border-radius:18px;padding:0 24px;font-weight:1000;background:linear-gradient(135deg,#8e63ff,#ff8c6b);color:white;cursor:pointer}
+.action-btn.green{background:linear-gradient(135deg,#20b86b,#7bd88f)}
+.done-pill{display:inline-flex;margin-top:14px;padding:12px 18px;border-radius:999px;background:#ddf8ea;color:#20b86b;font-weight:1000}
+
+.history-title{margin:22px 0 10px;color:#17152f;font-size:18px;font-weight:1000}
+.history-table,.transfer-table{width:100%;border-collapse:separate;border-spacing:0 8px;margin-top:10px}
+.history-table th,.transfer-table th{font-size:12px;color:#7b7288;text-align:left;padding:8px;font-weight:1000}
+.history-table td,.transfer-table td{background:#fffaf7;border-top:1px solid #f1ddd1;border-bottom:1px solid #f1ddd1;padding:10px;font-weight:900}
+.history-table td:first-child,.transfer-table td:first-child{border-left:1px solid #f1ddd1;border-radius:14px 0 0 14px}
+.history-table td:last-child,.transfer-table td:last-child{border-right:1px solid #f1ddd1;border-radius:0 14px 14px 0}
+
+.status-pill{display:inline-flex;padding:7px 11px;border-radius:999px;font-size:12px;font-weight:1000}
+.status-pill.pending{background:#fff1db;color:#d77a00}
+.status-pill.done{background:#ddf8ea;color:#20b86b}
+.small-btn{border:0;border-radius:999px;padding:8px 12px;background:#20b86b;color:white;font-weight:1000;cursor:pointer}
+
+@media(max-width:900px){.flow-box,.status-section{grid-template-columns:1fr}}
+@media(max-width:800px){
+    .detail-wrap{padding:12px}
+    .detail-head{display:block}
+    .title-box h1{font-size:28px}
+    .info-card{margin-top:14px;min-width:0}
+    .item-main{grid-template-columns:64px 1fr}
+    .item-img,.item-fallback{width:64px;height:64px}
+    .qty-grid{grid-template-columns:repeat(2,1fr)}
+    .action-form,.action-form.receive-only{grid-template-columns:1fr}
+    .action-btn{width:100%;min-height:58px}
+    .history-table,.transfer-table{display:block;overflow-x:auto;white-space:nowrap}
+}
+</style>
+
+<div class="detail-wrap">
+
+    <div class="detail-head">
+        <div class="title-box">
+            <h1>📦 Purchase #{{ purchase.id }}</h1>
+            <a href="{% url 'purchase_list' %}" class="back-btn">← Back</a>
+        </div>
+
+        <div class="info-card">
+            <div class="info-row">Supplier: <span>{{ purchase.supplier }}</span></div>
+            <div class="info-row">Status: <span>{{ purchase.get_status_display }}</span></div>
+            <div class="info-row">Date: <span>{{ purchase.created_at|date:"Y-m-d H:i" }}</span></div>
+        </div>
+    </div>
+
+    {% for item in purchase.items.all %}
+    <div class="item-card">
+
+        <div class="item-main">
+            {% if item.variant and item.variant.display_image %}
+                <img src="{{ item.variant.display_image.url }}" class="item-img">
+            {% else %}
+                <div class="item-fallback">📦</div>
+            {% endif %}
+
+            <div>
+                <div class="item-name">
+                    {% if item.variant %}{{ item.variant.item.name }}{% else %}No item{% endif %}
+                </div>
+                <div class="item-sub">
+                    {% if item.variant %}{{ item.variant.display_name }}{% else %}-{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-box">
+            <div class="flow-step">
+                <div class="flow-no">1</div>
+                <div class="flow-title">Create Purchase</div>
+                <div class="flow-text">Ordered {{ item.ordered_qty }} pcs. Set shop plan if needed.</div>
+            </div>
+
+            <div class="flow-step">
+                <div class="flow-no">2</div>
+                <div class="flow-title">Count Supplier Stock</div>
+                <div class="flow-text">Can receive many times. Every count is recorded by staff.</div>
+            </div>
+
+            <div class="flow-step">
+                <div class="flow-no">3</div>
+                <div class="flow-title">Add Stock to Branch</div>
+                <div class="flow-text">After adding, stock is already in that branch and ready to sell.</div>
+            </div>
+        </div>
+
+        <div class="plan-box">
+            <div class="plan-head">
+                <div class="plan-title">🧠 Shop Plan</div>
+                {% if not item.branch_plans.all %}
+                    <div class="plan-badge">No plan</div>
+                {% endif %}
+            </div>
+
+            <div class="plan-content">
+                {% if item.branch_plans.all %}
+                    <div class="alloc-list">
+                        {% for plan in item.branch_plans.all %}
+                            <span class="alloc-pill">🏪 {{ plan.branch.name }}: {{ plan.qty }} pcs planned</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    No plan
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="qty-grid">
+            <div class="qty-box">
+                <div class="qty-label">Ordered</div>
+                <div class="qty-value">{{ item.ordered_qty }}</div>
+            </div>
+
+            <div class="qty-box">
+                <div class="qty-label">Supplier Counted Total</div>
+                <div class="qty-value green">{{ item.received_qty }}</div>
+            </div>
+
+            <div class="qty-box">
+                <div class="qty-label">Still Waiting From Supplier</div>
+                <div class="qty-value red">{{ item.pending_qty }}</div>
+            </div>
+
+            <div class="qty-box">
+                <div class="qty-label">Ready to Add Branch</div>
+                <div class="qty-value purple">{{ item.unallocated_qty }}</div>
+            </div>
+        </div>
+
+        <div class="progress-wrap">
+            <div class="progress-label">
+                <span>Supplier Count Progress</span>
+                <span>{{ item.receive_progress_percent }}%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width:{{ item.receive_progress_percent }}%"></div>
+            </div>
+        </div>
+
+        <div class="progress-wrap">
+            <div class="progress-label">
+                <span>Stock Added to Branch Progress</span>
+                <span>{{ item.allocate_progress_percent }}%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width:{{ item.allocate_progress_percent }}%"></div>
+            </div>
+        </div>
+
+        {% if item.pending_qty > 0 %}
+        <div class="action-box">
+            <div class="action-title">📥 Count / Receive Supplier Stock</div>
+
+            <form method="post" action="{% url 'purchase_receive' item.id %}" class="action-form receive-only">
+                {% csrf_token %}
+                <div class="action-field">
+                    <label>Qty Counted</label>
+                    <input type="number" name="qty" min="1" max="{{ item.pending_qty }}" placeholder="Qty" required>
+                </div>
+                <div class="action-field">
+                    <label>Counting Note</label>
+                    <input type="text" name="note" placeholder="Example: first delivery counted 30 pcs">
+                </div>
+                <button type="submit" class="action-btn">Save Count</button>
+            </form>
+        </div>
+        {% else %}
+            <div class="done-pill">✅ Supplier Stock Count Complete</div>
+        {% endif %}
+
+        {% if item.unallocated_qty > 0 %}
+        <div class="action-box">
+            <div class="action-title">🏪 Add Counted Stock to Branch</div>
+
+            <form method="post" action="{% url 'purchase_allocate' item.id %}" class="action-form">
+                {% csrf_token %}
+
+                <div class="action-field">
+                    <label>Add To Branch</label>
+                    <select name="branch" required>
+                        <option value="">Choose branch</option>
+                        {% for b in branches %}
+                            <option value="{{ b.id }}">{{ b.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="action-field">
+                    <label>Qty</label>
+                    <input type="number" name="qty" min="1" max="{{ item.unallocated_qty }}" placeholder="Qty" required>
+                </div>
+
+                <div class="action-field">
+                    <label>Note</label>
+                    <input type="text" name="note" placeholder="Example: add to Sensok stock">
+                </div>
+
+                <button type="submit" class="action-btn green">Add Stock</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <div class="status-section">
+            <div class="status-box">
+                <div class="status-title">🏪 Current Added Stock Summary</div>
+
+                {% if item.branch_allocations.all %}
+                    <div class="alloc-list">
+                        {% for alloc in item.branch_allocations.all %}
+                            <span class="alloc-pill">
+                                ✅ {{ alloc.branch.name }}: {{ alloc.qty }} pcs
+                            </span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-mini">No stock added to branch yet.</div>
+                {% endif %}
+            </div>
+
+            <div class="status-box">
+                <div class="status-title">🚚 Move Stock Summary</div>
+
+                {% if item.branch_transfers.all %}
+                    <div class="alloc-list">
+                        {% for t in item.branch_transfers.all %}
+                            {% if t.status == "pending" %}
+                                <span class="status-pill pending">⏳ {{ t.from_branch.name }} → {{ t.to_branch.name }} {{ t.qty }} pcs waiting</span>
+                            {% else %}
+                                <span class="status-pill done">✅ {{ t.from_branch.name }} → {{ t.to_branch.name }} {{ t.qty }} pcs arrived</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-mini">No movement yet.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="action-box">
+            <div class="action-title">🚚 Move Stock Between Branches</div>
+
+            <form method="post" action="{% url 'purchase_transfer_create' item.id %}" class="action-form">
+                {% csrf_token %}
+
+                <div class="action-field">
+                    <label>From Branch</label>
+                    <select name="from_branch" required>
+                        <option value="">From</option>
+                        {% for b in branches %}
+                            <option value="{{ b.id }}">{{ b.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="action-field">
+                    <label>Qty</label>
+                    <input type="number" name="qty" min="1" placeholder="Qty" required>
+                </div>
+
+                <div class="action-field">
+                    <label>To Branch</label>
+                    <select name="to_branch" required>
+                        <option value="">To</option>
+                        {% for b in branches %}
+                            <option value="{{ b.id }}">{{ b.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="action-btn">Move</button>
+            </form>
+
+            {% if item.branch_transfers.all %}
+            <table class="transfer-table">
+                <thead>
+                    <tr>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Qty</th>
+                        <th>Status</th>
+                        <th>Confirm</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in item.branch_transfers.all %}
+                    <tr>
+                        <td>{{ t.from_branch.name }}</td>
+                        <td>{{ t.to_branch.name }}</td>
+                        <td>{{ t.qty }}</td>
+                        <td>
+                            {% if t.status == "pending" %}
+                                <span class="status-pill pending">⏳ Waiting</span>
+                            {% else %}
+                                <span class="status-pill done">✅ Arrived</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if t.status == "pending" %}
+                            <form method="post" action="{% url 'purchase_transfer_receive' t.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="small-btn">Confirm Arrived</button>
+                            </form>
+                            {% else %}
+                                ✅ Confirmed
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+
+        <div class="status-box" style="margin-top:18px;">
+            <div class="status-title">📜 Full Item History</div>
+
+            <div class="history-title">📥 Supplier Stock Count History</div>
+            {% if item.receive_logs.all %}
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Date / Time</th>
+                        <th>What Item</th>
+                        <th>Qty Counted</th>
+                        <th>Counted By</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in item.receive_logs.all %}
+                    <tr>
+                        <td>{{ log.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>{% if item.variant %}{{ item.variant.display_name }}{% else %}-{% endif %}</td>
+                        <td class="green">+{{ log.qty }}</td>
+                        <td>{{ log.received_by|default:"-" }}</td>
+                        <td>{{ log.note|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <div class="empty-mini">No supplier stock count history yet.</div>
+            {% endif %}
+
+            <div class="history-title">🏪 Branch Stock Added History</div>
+            {% if item.branch_allocations.all %}
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Date / Time</th>
+                        <th>What Item</th>
+                        <th>Added To Branch</th>
+                        <th>Qty Added</th>
+                        <th>Added By</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alloc in item.branch_allocations.all %}
+                    <tr>
+                        <td>{{ alloc.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>{% if item.variant %}{{ item.variant.display_name }}{% else %}-{% endif %}</td>
+                        <td>{{ alloc.branch.name }}</td>
+                        <td class="green">+{{ alloc.qty }}</td>
+                        <td>{{ alloc.allocated_by|default:"-" }}</td>
+                        <td>{{ alloc.note|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <div class="empty-mini">No branch stock added history yet.</div>
+            {% endif %}
+
+            <div class="history-title">🚚 Branch Move Stock History</div>
+            {% if item.branch_transfers.all %}
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Date / Time</th>
+                        <th>What Item</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Qty Moved</th>
+                        <th>Status</th>
+                        <th>Moved By</th>
+                        <th>Arrived Confirmed By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in item.branch_transfers.all %}
+                    <tr>
+                        <td>{{ t.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>{% if item.variant %}{{ item.variant.display_name }}{% else %}-{% endif %}</td>
+                        <td>{{ t.from_branch.name }}</td>
+                        <td>{{ t.to_branch.name }}</td>
+                        <td>{{ t.qty }}</td>
+                        <td>
+                            {% if t.status == "pending" %}
+                                <span class="status-pill pending">⏳ Waiting</span>
+                            {% else %}
+                                <span class="status-pill done">✅ Arrived</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ t.sent_by|default:"-" }}</td>
+                        <td>{{ t.received_by|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <div class="empty-mini">No move stock history yet.</div>
+            {% endif %}
+        </div>
+
+    </div>
+    {% empty %}
+        <div class="item-card">No items</div>
+    {% endfor %}
+
+</div>
+
+{% endblock %}

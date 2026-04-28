@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<style>
+a { text-decoration: none !important; }
+
+.sales-header {
+    display: grid;
+    grid-template-columns: 1fr 600px;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.sales-title h1 {
+    font-size: 40px;
+    margin: 0;
+    color: #1c143a;
+}
+
+.sales-title p {
+    color: #7b6f92;
+    margin-top: 10px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
+.hero-img {
+    width: 100%;
+    height: 240px;
+    object-fit: contain;
+}
+
+.btn-primary,
+.btn-rate,
+.btn-orange,
+.btn-clear {
+    padding: 14px 28px;
+    border-radius: 999px;
+    font-weight: 800;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.22s;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #7b5cff, #b07cff);
+    color: white;
+    box-shadow: 0 12px 26px rgba(123,92,255,0.28);
+}
+
+.btn-rate {
+    background: linear-gradient(135deg, #34c6ff, #7b5cff);
+    color: white;
+    box-shadow: 0 12px 24px rgba(52,198,255,0.24);
+}
+
+.btn-orange {
+    background: linear-gradient(135deg, #ff9966, #ffbd73);
+    color: white;
+    box-shadow: 0 12px 24px rgba(255,153,102,0.26);
+}
+
+.btn-clear {
+    background: #f8f6ff;
+    color: #7b5cff;
+    border: 1.5px solid #e2dbff;
+    box-shadow: 0 8px 18px rgba(123,92,255,0.08);
+}
+
+.btn-primary:hover,
+.btn-rate:hover,
+.btn-orange:hover,
+.btn-clear:hover {
+    transform: translateY(-2px);
+}
+
+.btn-clear:hover { background: #f1edff; }
+
+.filter-row {
+    display: grid;
+    grid-template-columns: 1.2fr 1.6fr 0.8fr auto auto;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.date-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.filter-box {
+    background: white;
+    border: 1.5px solid #f0dcd0;
+    border-radius: 22px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: 0.2s;
+    min-height: 58px;
+}
+
+.filter-box:hover {
+    border-color: #c9a7ff;
+    box-shadow: 0 10px 25px rgba(123,92,255,0.12);
+}
+
+.filter-box input,
+.filter-box select {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-weight: 700;
+    background: transparent;
+    color: #45375f;
+}
+
+.filter-box select { cursor: pointer; }
+
+.sales-table-card {
+    background: white;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 12px 30px rgba(111,75,50,0.06);
+    border: 1px solid #f0dcd0;
+}
+
+.sales-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.sales-table th {
+    background: #fff8fb;
+    padding: 18px;
+    text-align: left;
+    color: #1c143a;
+}
+
+.sales-table td {
+    padding: 16px;
+    border-top: 1px solid #f4e3d8;
+    font-weight: 700;
+    color: #30244f;
+}
+
+.status-paid { color: green; font-weight: 800; }
+.status-unpaid { color: red; font-weight: 800; }
+.status-partial { color: orange; font-weight: 800; }
+
+.empty-sale {
+    padding: 80px 0;
+    text-align: center;
+}
+
+.empty-icon { font-size: 88px; }
+
+.empty-sale h3 {
+    color: #1c143a;
+    font-size: 24px;
+    margin-bottom: 6px;
+}
+
+.empty-sale p {
+    color: #7b6f92;
+    margin-bottom: 22px;
+}
+
+@media (max-width: 900px) {
+    .sales-header,
+    .filter-row {
+        grid-template-columns: 1fr;
+    }
+
+    .date-group {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-img {
+        height: 180px;
+    }
+
+    .header-actions {
+        flex-direction: column;
+    }
+
+    .btn-primary,
+    .btn-rate,
+    .btn-orange,
+    .btn-clear {
+        width: 100%;
+    }
+}
+</style>
+
+<div class="sales-header">
+    <div class="sales-title">
+        <h1>Sales 🐾</h1>
+        <p>View and manage all sales transactions.</p>
+
+        <div class="header-actions">
+            <a href="{% url 'pos' %}" class="btn-primary">🛒 New Sale</a>
+
+            <a href="{% url 'pos_exchange_rate' %}" class="btn-rate">
+                💱 Exchange Rate
+            </a>
+
+            <a href="{% url 'cash_count_dashboard' %}" class="btn-rate">
+                💵 Cash Count
+            </a>
+        </div>
+    </div>
+
+    <img src="{% static 'img/bubu-sales-hero.png' %}" class="hero-img">
+</div>
+
+<form method="get" class="filter-row">
+    <div class="filter-box">
+        🔍
+        <input type="text" name="q" placeholder="Search invoice ID, customer..." value="{{ request.GET.q }}">
+    </div>
+
+    <div class="date-group">
+        <div class="filter-box">
+            📅
+            <input type="datetime-local" name="date_from" value="{{ request.GET.date_from }}">
+        </div>
+
+        <div class="filter-box">
+            ⏰
+            <input type="datetime-local" name="date_to" value="{{ request.GET.date_to }}">
+        </div>
+    </div>
+
+    <div class="filter-box">
+        📌
+        <select name="status">
+            <option value="">All Status</option>
+            <option value="paid" {% if request.GET.status == "paid" %}selected{% endif %}>Paid</option>
+            <option value="unpaid" {% if request.GET.status == "unpaid" %}selected{% endif %}>Unpaid</option>
+            <option value="partial" {% if request.GET.status == "partial" %}selected{% endif %}>Partial</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn-orange">Search</button>
+    <a href="{% url 'sale_list' %}" class="btn-clear">Clear</a>
+</form>
+
+<div class="sales-table-card">
+    <table class="sales-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Total</th>
+                <th>Paid</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for sale in sales %}
+            <tr>
+                <td>#{{ sale.id }}</td>
+
+                <td>
+                    {% if sale.customer %}
+                        {{ sale.customer }}
+                    {% else %}
+                        Walk-in
+                    {% endif %}
+                </td>
+
+                <td>${{ sale.total_amount|floatformat:2 }}</td>
+                <td>${{ sale.paid_amount|floatformat:2 }}</td>
+
+                <td>
+                    {% if sale.paid_amount >= sale.total_amount %}
+                        <span class="status-paid">Paid</span>
+                    {% elif sale.paid_amount == 0 %}
+                        <span class="status-unpaid">Unpaid</span>
+                    {% else %}
+                        <span class="status-partial">Partial</span>
+                    {% endif %}
+                </td>
+
+                <td>{{ sale.created_at|date:"d M Y H:i" }}</td>
+
+                <td>
+                    <a class="btn-clear" href="{% url 'sale_detail' sale.id %}">
+                        View
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7">
+                    <div class="empty-sale">
+                        <div class="empty-icon">📋🛍️</div>
+                        <h3>No sales found</h3>
+                        <p>You haven't created any sales yet.</p>
+                        <a href="{% url 'pos' %}" class="btn-primary">New Sale</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
