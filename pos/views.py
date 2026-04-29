@@ -567,7 +567,6 @@ def pos_checkout(request):
     for cart_item in cart_items:
         item = cart_item["item"]
         variant = cart_item["variant"]
-        qty = int(cart_item["quantity"])
 
         if is_service_item(item):
             continue
@@ -575,9 +574,6 @@ def pos_checkout(request):
         if not variant:
             messages.error(request, f"{item.name} has no variant selected.")
             return redirect("pos")
-
-        # ✅ Do NOT block checkout when stock is low.
-        # Real shop flow allows negative stock; stock will be deducted below.
 
     rate = get_khr_rate()
 
@@ -590,6 +586,8 @@ def pos_checkout(request):
     discount_value = money(request.POST.get("discount_value"))
     tax_type = request.POST.get("tax_type", "percent")
     tax_value = money(request.POST.get("tax_value"))
+
+    sale_type = request.POST.get("sale_type", "walk_in")
 
     discount_amount = Decimal("0.00")
 
@@ -640,6 +638,7 @@ def pos_checkout(request):
     sale = Sale.objects.create(
         branch=current_branch,
         customer=customer,
+        sale_type=sale_type,
         total_amount=final_total,
         paid_amount=paid_usd,
         change_amount=max(change_usd, Decimal("0.00")),
@@ -688,13 +687,18 @@ def pos_checkout(request):
 
     _save_cart(request, {})
 
-    messages.success(
-        request,
-        f"Sale completed at {current_branch.name}. Change: ${max(change_usd, Decimal('0.00')):.2f} / +{points} pts",
-    )
+    if sale.sale_type == "prepare_delivery":
+        messages.success(
+            request,
+            f"Sale #{sale.id} saved for delivery preparation.",
+        )
+    else:
+        messages.success(
+            request,
+            f"Sale completed at {current_branch.name}. Change: ${max(change_usd, Decimal('0.00')):.2f} / +{points} pts",
+        )
 
     return redirect("sale_detail", pk=sale.id)
-
 
 # ==================================================
 # SALES

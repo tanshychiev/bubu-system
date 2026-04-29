@@ -6,6 +6,11 @@ from inventory.models import Item, ItemVariant, Branch
 
 
 class Sale(models.Model):
+    SALE_TYPE_CHOICES = [
+        ("walk_in", "Walk-in"),
+        ("prepare_delivery", "Prepare for Delivery"),
+    ]
+
     branch = models.ForeignKey(
         Branch,
         on_delete=models.PROTECT,
@@ -19,6 +24,14 @@ class Sale(models.Model):
         null=True,
         blank=True,
     )
+
+    sale_type = models.CharField(
+        max_length=30,
+        choices=SALE_TYPE_CHOICES,
+        default="walk_in",
+    )
+    delivery_created = models.BooleanField(default=False)
+
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     change_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)

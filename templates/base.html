@@ -1,9 +1,10 @@
 {% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>BUBU Pet Store</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
@@ -25,9 +26,12 @@ body{
 
 a{
     text-decoration:none;
+    color:inherit;
 }
 
+/* ============================= */
 /* SIDEBAR */
+/* ============================= */
 .sidebar{
     width:230px;
     height:100vh;
@@ -40,9 +44,10 @@ a{
     display:flex;
     flex-direction:column;
     overflow:hidden;
+    z-index:2000;
+    transition:transform .28s ease;
 }
 
-/* LOGO */
 .logo{
     text-align:center;
     flex-shrink:0;
@@ -69,7 +74,6 @@ a{
     font-weight:700;
 }
 
-/* MENU */
 .menu{
     flex:1;
     overflow-y:auto;
@@ -113,7 +117,6 @@ a{
     transform:translateX(4px);
 }
 
-/* SIDEBAR BOTTOM */
 .sidebar-footer{
     flex-shrink:0;
     text-align:center;
@@ -146,14 +149,25 @@ a{
     transform:translateY(-2px) !important;
 }
 
-.server-text{
-    margin-top:10px;
-    font-size:13px;
-    color:#9c8a83;
-    font-weight:700;
+/* ============================= */
+/* SIDEBAR OVERLAY FOR IPAD */
+/* ============================= */
+.sidebar-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(23,21,47,.38);
+    backdrop-filter:blur(2px);
+    z-index:1800;
 }
 
+.sidebar-overlay.active{
+    display:block;
+}
+
+/* ============================= */
 /* MAIN */
+/* ============================= */
 .main{
     margin-left:230px;
     min-height:100vh;
@@ -169,9 +183,30 @@ a{
     backdrop-filter:blur(14px);
     border-bottom:1px solid #f1d8c4;
     display:flex;
-    justify-content:flex-end;
+    justify-content:space-between;
     align-items:center;
     padding:0 36px;
+    position:sticky;
+    top:0;
+    z-index:1500;
+}
+
+.menu-toggle{
+    display:none;
+    width:56px;
+    height:56px;
+    border-radius:18px;
+    border:none;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    font-size:28px;
+    font-weight:1000;
+    cursor:pointer;
+    box-shadow:0 12px 25px rgba(155,124,246,.25);
+    position:relative;
+    z-index:2100;
 }
 
 .top-actions{
@@ -201,12 +236,15 @@ a{
     overflow-x:hidden;
 }
 
+/* ============================= */
 /* PAGE HEADER */
+/* ============================= */
 .page-head{
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
     margin-bottom:28px;
+    gap:24px;
 }
 
 h1{
@@ -230,7 +268,9 @@ h1{
     margin-top:-25px;
 }
 
+/* ============================= */
 /* FORMS */
+/* ============================= */
 .tool-row{
     display:flex;
     gap:12px;
@@ -265,7 +305,9 @@ textarea:focus{
     box-shadow:0 0 0 4px rgba(155,124,246,.13);
 }
 
+/* ============================= */
 /* BUTTONS */
+/* ============================= */
 .btn,
 button{
     min-height:44px;
@@ -327,7 +369,9 @@ button:hover,
 .btn-edit{background:#f0e9ff;color:#7e57e8;}
 .btn-delete{background:#ffe8e2;color:#ff6b4a;}
 
+/* ============================= */
 /* CARDS + TABLE */
+/* ============================= */
 .card,
 .table-card{
     background:rgba(255,255,255,.92);
@@ -374,7 +418,9 @@ tbody tr:hover{
     background:#fffaf6;
 }
 
+/* ============================= */
 /* EMPTY */
+/* ============================= */
 .empty-box{
     min-height:390px;
     display:flex;
@@ -403,7 +449,9 @@ tbody tr:hover{
     line-height:1.5;
 }
 
+/* ============================= */
 /* BADGES */
+/* ============================= */
 .badge{
     display:inline-flex;
     align-items:center;
@@ -420,7 +468,9 @@ tbody tr:hover{
 .badge-orange{background:#fff3dd;color:#ff9f1a;}
 .badge-red{background:#ffe7ec;color:#ff4d6d;}
 
-/* DASHBOARD */
+/* ============================= */
+/* DASHBOARD COMMON */
+/* ============================= */
 .grid-cards{
     display:grid;
     grid-template-columns:repeat(4,1fr);
@@ -537,7 +587,6 @@ tbody tr:hover{
     background:linear-gradient(135deg,#f5eaff,#fff0f9);
 }
 
-/* FOOTER */
 .footer{
     text-align:center;
     margin-top:42px;
@@ -545,7 +594,9 @@ tbody tr:hover{
     font-weight:800;
 }
 
-/* RESPONSIVE */
+/* ============================= */
+/* DESKTOP RESPONSIVE */
+/* ============================= */
 @media(max-width:1100px){
     .grid-cards{
         grid-template-columns:repeat(2,1fr);
@@ -556,48 +607,176 @@ tbody tr:hover{
     }
 }
 
-@media(max-width:900px){
+/* ============================= */
+/* IPAD + TABLET: SLIDE SIDEBAR */
+/* ============================= */
+@media (min-width:768px) and (max-width:1194px){
     .sidebar{
-        width:82px;
-        padding:20px 8px;
+        transform:translateX(-100%);
+        box-shadow:0 24px 70px rgba(23,21,47,.28);
     }
 
-    .logo h3,
-    .logo small,
-    .sidebar-footer{
-        display:none;
-    }
-
-    .logo-img{
-        width:64px;
-        margin-bottom:10px;
-    }
-
-    .menu a{
-        justify-content:center;
-        font-size:0;
-        padding:13px 8px;
-    }
-
-    .menu a span:first-child{
-        font-size:22px;
+    .sidebar.active{
+        transform:translateX(0);
     }
 
     .main{
-        margin-left:82px;
+        margin-left:0 !important;
     }
 
     .topbar{
-        padding:0 18px;
+        height:76px;
+        padding:0 22px;
+    }
+
+    .menu-toggle{
+        display:inline-flex;
+        flex-shrink:0;
+    }
+
+    .top-actions{
+        gap:14px;
+    }
+
+    .open-pos{
+        min-height:50px;
+        padding:0 22px;
+        font-size:15px;
     }
 
     .content{
-        padding:28px;
+        padding:24px;
+    }
+
+    .page-head{
+        gap:18px;
+        margin-bottom:22px;
+    }
+
+    h1{
+        font-size:32px;
+    }
+
+    .page-subtitle{
+        margin-bottom:18px;
+    }
+
+    .pet-hero-img,
+    .dashboard-hero{
+        max-width:220px;
+        margin-top:0;
+    }
+
+    .tool-row{
+        gap:10px;
+        margin-bottom:22px;
+    }
+
+    .search-input{
+        width:100%;
+        min-height:56px;
+    }
+
+    .btn,
+    button{
+        min-height:56px;
+        font-size:16px;
+    }
+
+    input,
+    select,
+    textarea{
+        min-height:56px;
+        font-size:16px;
+    }
+
+    .grid-cards{
+        grid-template-columns:repeat(2,1fr);
+        gap:18px;
+    }
+
+    .grid-main{
+        grid-template-columns:1fr;
+        gap:18px;
+    }
+
+    .table-card{
+        overflow-x:auto;
+    }
+
+    th,
+    td{
+        padding:14px;
+        font-size:14px;
+    }
+}
+
+/* ============================= */
+/* PHONE */
+/* ============================= */
+@media(max-width:767px){
+    .sidebar{
+        width:250px;
+        transform:translateX(-100%);
+        box-shadow:0 24px 70px rgba(23,21,47,.28);
+    }
+
+    .sidebar.active{
+        transform:translateX(0);
+    }
+
+    .main{
+        margin-left:0 !important;
+    }
+
+    .topbar{
+        height:72px;
+        padding:0 14px;
+    }
+
+    .menu-toggle{
+        display:inline-flex;
+        width:52px;
+        height:52px;
+        font-size:26px;
+        border-radius:16px;
+    }
+
+    .top-actions{
+        gap:8px;
+    }
+
+    .open-pos{
+        min-height:48px;
+        padding:0 16px;
+        font-size:13px;
+    }
+
+    .bell,
+    .avatar{
+        font-size:22px;
+    }
+
+    .content{
+        padding:18px;
+    }
+
+    .page-head{
+        display:block;
+    }
+
+    h1{
+        font-size:30px;
     }
 
     .pet-hero-img,
     .dashboard-hero{
         display:none;
+    }
+
+    .tool-row{
+        display:grid;
+        grid-template-columns:1fr;
     }
 
     .search-input{
@@ -608,8 +787,13 @@ tbody tr:hover{
         overflow-x:auto;
     }
 
-    .grid-cards{
+    .grid-cards,
+    .grid-main{
         grid-template-columns:1fr;
+    }
+
+    .chart-footer{
+        flex-direction:column;
     }
 }
 </style>
@@ -617,7 +801,9 @@ tbody tr:hover{
 
 <body>
 
-<div class="sidebar">
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<div class="sidebar" id="sidebar">
     <div class="logo">
         <img src="{% static 'img/bubu-logo.png' %}" class="logo-img" alt="BUBU Logo">
         <h3>BUBU</h3>
@@ -625,47 +811,47 @@ tbody tr:hover{
     </div>
 
     <div class="menu">
-        <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <a href="{% url 'dashboard' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
             <span>🏠</span><span>Dashboard</span>
         </a>
 
-        <a href="{% url 'pos' %}" class="{% if request.resolver_match.url_name == 'pos' %}active{% endif %}">
+        <a href="{% url 'pos' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'pos' %}active{% endif %}">
             <span>🛍️</span><span>POS</span>
         </a>
 
-        <a href="{% url 'sale_list' %}" class="{% if request.resolver_match.url_name == 'sale_list' %}active{% endif %}">
+        <a href="{% url 'sale_list' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'sale_list' %}active{% endif %}">
             <span>📊</span><span>Sales</span>
         </a>
 
-        <a href="{% url 'item_list' %}" class="{% if request.resolver_match.url_name == 'item_list' %}active{% endif %}">
+        <a href="{% url 'item_list' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'item_list' %}active{% endif %}">
             <span>📦</span><span>Inventory</span>
         </a>
-        
-        <a href="{% url 'branch_list' %}" class="{% if request.resolver_match.url_name == 'branch_list' %}active{% endif %}">
-    <span>🏪</span><span>Shops</span>
-</a>
 
-        <a href="{% url 'purchase_list' %}" class="{% if request.resolver_match.url_name == 'purchase_list' %}active{% endif %}">
+        <a href="{% url 'branch_list' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'branch_list' %}active{% endif %}">
+            <span>🏪</span><span>Shops</span>
+        </a>
+
+        <a href="{% url 'purchase_list' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'purchase_list' %}active{% endif %}">
             <span>🛒</span><span>Purchases</span>
         </a>
 
-        <a href="{% url 'customer_list' %}" class="{% if request.resolver_match.url_name == 'customer_list' %}active{% endif %}">
+        <a href="{% url 'customer_list' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'customer_list' %}active{% endif %}">
             <span>👥</span><span>Customers</span>
         </a>
 
-        <a href="{% url 'service_list' %}" class="{% if request.resolver_match.url_name == 'service_list' %}active{% endif %}">
+        <a href="{% url 'service_list' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'service_list' %}active{% endif %}">
             <span>✂️</span><span>Services</span>
         </a>
 
-        <a href="{% url 'delivery_list' %}" class="{% if request.resolver_match.url_name == 'delivery_list' %}active{% endif %}">
+        <a href="{% url 'delivery_list' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'delivery_list' %}active{% endif %}">
             <span>🚚</span><span>Delivery</span>
         </a>
 
         {% if perms.auth.view_user %}
-<a href="{% url 'user_list' %}" class="{% if request.resolver_match.url_name == 'user_list' %}active{% endif %}">
-    <span>🔒</span><span>Users</span>
-</a>
-{% endif %}
+        <a href="{% url 'user_list' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'user_list' %}active{% endif %}">
+            <span>🔒</span><span>Users</span>
+        </a>
+        {% endif %}
     </div>
 
     <div class="sidebar-footer">
@@ -674,13 +860,13 @@ tbody tr:hover{
         <a href="{% url 'logout' %}" class="btn logout-btn">
             <span>🔓</span><span>Logout</span>
         </a>
-
-    
     </div>
 </div>
 
 <div class="main">
     <div class="topbar">
+        <button type="button" class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
         <div class="top-actions">
             <a class="open-pos" href="{% url 'pos' %}">🛍️ Open POS</a>
             <div class="bell">🔔</div>
@@ -696,6 +882,39 @@ tbody tr:hover{
         </div>
     </div>
 </div>
+
+<script>
+function toggleSidebar(){
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebarOverlay");
+
+    if(!sidebar || !overlay) return;
+
+    const isOpen = sidebar.classList.contains("active");
+
+    if(isOpen){
+        sidebar.classList.remove("active");
+        overlay.classList.remove("active");
+    }else{
+        sidebar.classList.add("active");
+        overlay.classList.add("active");
+    }
+}
+
+function closeSidebar(){
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebarOverlay");
+
+    if(sidebar) sidebar.classList.remove("active");
+    if(overlay) overlay.classList.remove("active");
+}
+
+document.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){
+        closeSidebar();
+    }
+});
+</script>
 
 </body>
 </html>

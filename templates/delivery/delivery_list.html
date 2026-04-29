@@ -6,24 +6,24 @@
 <div class="page-head">
     <div>
         <h1>Delivery ✨</h1>
-        <div class="page-subtitle">Manage your delivery orders 💗</div>
+        <div class="page-subtitle">Manage COD, delivery fee, lack money, and next delivery 💗</div>
 
         <form method="get" class="tool-row">
-            <input
-                type="text"
-                name="q"
-                value="{{ request.GET.q }}"
-                placeholder="Search customer..."
-                class="search-input"
-            >
+            <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search customer / phone / location..." class="search-input">
 
             <select name="status" class="search-input">
                 <option value="">All Status</option>
-                <option value="pending" {% if request.GET.status == "pending" %}selected{% endif %}>Pending</option>
-                <option value="confirmed" {% if request.GET.status == "confirmed" %}selected{% endif %}>Confirmed</option>
-                <option value="on_the_way" {% if request.GET.status == "on_the_way" %}selected{% endif %}>On the way</option>
-                <option value="delivered" {% if request.GET.status == "delivered" %}selected{% endif %}>Delivered</option>
+                <option value="pending" {% if request.GET.status == "pending" %}selected{% endif %}>Pending / Next Delivery</option>
+                <option value="out" {% if request.GET.status == "out" %}selected{% endif %}>Out For Delivery</option>
+                <option value="done" {% if request.GET.status == "done" %}selected{% endif %}>Delivered</option>
                 <option value="cancelled" {% if request.GET.status == "cancelled" %}selected{% endif %}>Cancelled</option>
+            </select>
+
+            <select name="payment_type" class="search-input">
+                <option value="">All Payment</option>
+                <option value="paid" {% if request.GET.payment_type == "paid" %}selected{% endif %}>Already Paid</option>
+                <option value="cod_collect" {% if request.GET.payment_type == "cod_collect" %}selected{% endif %}>COD Collect</option>
+                <option value="cod_shop" {% if request.GET.payment_type == "cod_shop" %}selected{% endif %}>COD Pay To Shop</option>
             </select>
 
             <button type="submit" class="btn btn-search">🔍 Search</button>
@@ -31,11 +31,7 @@
         </form>
     </div>
 
-    <img
-        src="{% static 'img/delivery-hero.png' %}"
-        class="pet-hero-img"
-        alt="Delivery pets"
-    >
+    <img src="{% static 'img/delivery-hero.png' %}" class="pet-hero-img" alt="Delivery pets">
 </div>
 
 <div style="margin-bottom:18px;">
@@ -46,14 +42,20 @@
     <table>
         <thead>
             <tr>
-                <th>ID ↕</th>
-                <th>Order ↕</th>
-                <th>Customer ↕</th>
-                <th>Phone ↕</th>
-                <th>Fee ↕</th>
-                <th>Status ↕</th>
-                <th>Created ↕</th>
-                <th>Action ↕</th>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Location</th>
+                <th>Total</th>
+                <th>Payment</th>
+                <th>Expected</th>
+                <th>Received</th>
+                <th>Lack</th>
+                <th>Delivery Fee</th>
+                <th>Fee Paid</th>
+                <th>Delivery Date</th>
+                <th>Status</th>
+                <th>Action</th>
             </tr>
         </thead>
 
@@ -65,38 +67,69 @@
                 </td>
 
                 <td>
-                    <strong>
-                        {% if delivery.order %}
-                            #ORD-{{ delivery.order.id }}
-                        {% else %}
-                            -
-                        {% endif %}
-                    </strong>
-                </td>
-
-                <td>
                     <div style="display:flex;align-items:center;gap:10px;justify-content:center;">
                         <div style="width:42px;height:42px;border-radius:50%;background:#fff1e7;display:flex;align-items:center;justify-content:center;font-size:22px;">
                             🐶
                         </div>
                         <div style="text-align:left;">
-                            <strong>{{ delivery.customer.name|default:"-" }}</strong><br>
-                            <small style="color:#7b7288;">{{ delivery.customer.email|default:"" }}</small>
+                            <strong>{{ delivery.customer_name|default:"-" }}</strong><br>
+                            <small style="color:#7b7288;">{{ delivery.delivery_note|truncatechars:35 }}</small>
                         </div>
                     </div>
                 </td>
 
                 <td>📞 {{ delivery.phone|default:"-" }}</td>
 
-                <td>${{ delivery.fee|default:"0.00" }}</td>
+                <td style="max-width:220px;text-align:left;">
+                    {{ delivery.location|truncatechars:70 }}
+                </td>
 
                 <td>
-                    {% if delivery.status == "delivered" %}
+                    <strong>${{ delivery.total_price|floatformat:2 }}</strong>
+                </td>
+
+                <td>
+                    {% if delivery.payment_type == "paid" %}
+                        <span class="badge badge-green">Already Paid</span>
+                    {% elif delivery.payment_type == "cod_collect" %}
+                        <span class="badge badge-orange">COD Collect</span>
+                    {% elif delivery.payment_type == "cod_shop" %}
+                        <span class="badge badge-purple">COD Pay To Shop</span>
+                    {% endif %}
+                </td>
+
+                <td>${{ delivery.expected_collect|floatformat:2 }}</td>
+                <td>${{ delivery.actual_received|floatformat:2 }}</td>
+
+                <td>
+                    {% if delivery.lack_amount > 0 %}
+                        <span class="badge badge-red">-${{ delivery.lack_amount|floatformat:2 }}</span>
+                    {% else %}
+                        <span class="badge badge-green">$0.00</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    <strong>${{ delivery.delivery_fee|floatformat:2 }}</strong>
+                </td>
+
+                <td>
+                    {% if delivery.delivery_fee_paid %}
+                        <span class="badge badge-green">Paid</span>
+                    {% else %}
+                        <span class="badge badge-red">Unpaid</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    📅 {{ delivery.delivery_date|date:"M d, Y" }}
+                </td>
+
+                <td>
+                    {% if delivery.status == "done" %}
                         <span class="badge badge-green">Delivered</span>
-                    {% elif delivery.status == "on_the_way" %}
-                        <span class="badge badge-blue">On the way</span>
-                    {% elif delivery.status == "confirmed" %}
-                        <span class="badge badge-purple">Confirmed</span>
+                    {% elif delivery.status == "out" %}
+                        <span class="badge badge-blue">Out</span>
                     {% elif delivery.status == "cancelled" %}
                         <span class="badge badge-red">Cancelled</span>
                     {% else %}
@@ -105,27 +138,20 @@
                 </td>
 
                 <td>
-                    📅 {{ delivery.created_at|date:"M d, Y" }}<br>
-                    🕘 {{ delivery.created_at|time:"h:i A" }}
-                </td>
-
-                <td>
                     <a href="{% url 'delivery_detail' delivery.id %}" class="mini-btn btn-view">👁</a>
                     <a href="{% url 'delivery_update' delivery.id %}" class="mini-btn btn-edit">✏️</a>
-                    <a href="{% url 'delivery_delete' delivery.id %}" class="mini-btn btn-delete">🚚</a>
+                    <a href="{% url 'delivery_sticker' delivery.id %}" target="_blank" class="mini-btn btn-view">🏷️</a>
+                    <a href="{% url 'delivery_delete' delivery.id %}" class="mini-btn btn-delete">🗑️</a>
                 </td>
             </tr>
 
         {% empty %}
             <tr>
-                <td colspan="8">
+                <td colspan="14">
                     <div class="empty-box">
                         <div class="empty-icon">🚚✨</div>
                         <h3>No delivery found</h3>
-                        <p>
-                            Looks like you do not have delivery orders yet.<br>
-                            Create your first delivery to get started!
-                        </p>
+                        <p>Create your first delivery order.</p>
                         <a href="{% url 'delivery_create' %}" class="btn btn-add">＋ Create Delivery</a>
                     </div>
                 </td>

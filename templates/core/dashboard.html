@@ -3,113 +3,419 @@
 
 {% block content %}
 
-<div class="page-head">
-    <div>
-        <h1>Dashboard 🐾</h1>
-        <div class="page-subtitle">
-            Welcome back, BUBU! Here's what's happening in your store today. 💜
+<div class="dashboard-page">
+
+    <div class="dashboard-head">
+        <div>
+            <h1>Dashboard 🐾</h1>
+            <div class="page-subtitle">
+                Welcome back, BUBU! Here's what's happening in your store today. 💜
+            </div>
+        </div>
+
+        <img src="{% static 'img/dashboard-hero.png' %}" class="dashboard-hero" alt="Dashboard pets">
+    </div>
+
+    <div class="grid-cards">
+
+        <div class="card stat purple">
+            <div>
+                <small>Total Products</small>
+                <h2>{{ total_products|default:0 }}</h2>
+                <span>Inventory items ↗</span>
+            </div>
+            <div class="icon">🛍️</div>
+        </div>
+
+        <div class="card stat orange">
+            <div>
+                <small>Total Sales</small>
+                <h2>${{ total_sales|default:"0.00" }}</h2>
+                <span>All sales total ↗</span>
+            </div>
+            <div class="icon">💳</div>
+        </div>
+
+        <div class="card stat blue">
+            <div>
+                <small>Total Orders</small>
+                <h2>{{ total_orders|default:0 }}</h2>
+                <span>All orders ↗</span>
+            </div>
+            <div class="icon">📦</div>
+        </div>
+
+        <div class="card stat green">
+            <div>
+                <small>Total Customers</small>
+                <h2>{{ total_customers|default:0 }}</h2>
+                <span>Customer records ↗</span>
+            </div>
+            <div class="icon">👥</div>
+        </div>
+
+    </div>
+
+    <div class="grid-main">
+
+        <div class="card big sales-card">
+            <h3>Sales Overview ✨</h3>
+
+            <div class="fake-chart"></div>
+
+            <div class="chart-footer">
+                <div>This Week: <b>${{ this_week_sales|default:"0.00" }}</b></div>
+                <div>Last Week: <b>${{ last_week_sales|default:"0.00" }}</b></div>
+            </div>
+
+            <img src="{% static 'img/dashboard-cat.png' %}" class="chart-cat" alt="Cute cat">
+        </div>
+
+        <div class="card side">
+            <h3>Recent Orders</h3>
+
+            {% for order in recent_orders %}
+                <div class="order">
+                    <span>#{{ order.id }} {{ order.customer.name|default:"Customer" }}</span>
+                    <span>${{ order.total|default:"0.00" }}</span>
+                </div>
+            {% empty %}
+                <div class="empty-box">
+                    <div class="empty-icon">📦✨</div>
+                    <h3>No recent orders</h3>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="card side">
+            <h3>Low Stock Alert</h3>
+
+            {% for item in low_stock_items %}
+                <div class="stock">
+                    <span>{{ item.name }}</span>
+                    <span class="danger-text">{{ item.stock }} left</span>
+                </div>
+            {% empty %}
+                <div class="stock">
+                    <span>No low stock</span>
+                    <span>✅</span>
+                </div>
+            {% endfor %}
+
+            <img src="{% static 'img/dashboard-dog.png' %}" class="alert-dog" alt="Cute dog">
+        </div>
+
+    </div>
+
+    <div class="card footer-box">
+        <div>
+            <h3>You're doing great today! 🌟</h3>
+            <p>Keep up the pawsome work 💜</p>
         </div>
     </div>
 
-    <img src="{% static 'img/dashboard-hero.png' %}" class="dashboard-hero" alt="Dashboard pets">
 </div>
 
-<div class="grid-cards">
+<style>
+.dashboard-page{
+    padding:28px 36px;
+}
 
-    <div class="card stat purple">
-        <div>
-            <small>Total Products</small>
-            <h2>{{ total_products|default:0 }}</h2>
-            <span>Inventory items ↗</span>
-        </div>
-        <div class="icon">🛍️</div>
-    </div>
+.dashboard-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:24px;
+    margin-bottom:28px;
+}
 
-    <div class="card stat orange">
-        <div>
-            <small>Total Sales</small>
-            <h2>${{ total_sales|default:"0.00" }}</h2>
-            <span>All sales total ↗</span>
-        </div>
-        <div class="icon">💳</div>
-    </div>
+.dashboard-head h1{
+    margin:0;
+    font-size:34px;
+    font-weight:1000;
+    color:#080634;
+}
 
-    <div class="card stat blue">
-        <div>
-            <small>Total Orders</small>
-            <h2>{{ total_orders|default:0 }}</h2>
-            <span>All orders ↗</span>
-        </div>
-        <div class="icon">📦</div>
-    </div>
+.page-subtitle{
+    margin-top:10px;
+    font-size:16px;
+    font-weight:800;
+    color:#81758f;
+}
 
-    <div class="card stat green">
-        <div>
-            <small>Total Customers</small>
-            <h2>{{ total_customers|default:0 }}</h2>
-            <span>Customer records ↗</span>
-        </div>
-        <div class="icon">👥</div>
-    </div>
+.dashboard-hero{
+    width:320px;
+    max-width:34%;
+    object-fit:contain;
+}
 
-</div>
+.grid-cards{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:20px;
+    margin-bottom:26px;
+}
 
-<div class="grid-main">
+.card{
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:30px;
+    box-shadow:0 18px 40px rgba(130,91,60,.08);
+}
 
-    <div class="card big">
-        <h3>Sales Overview ✨</h3>
+.stat{
+    min-height:150px;
+    padding:22px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+}
 
-        <div class="fake-chart"></div>
+.stat small{
+    display:block;
+    font-size:14px;
+    font-weight:1000;
+    color:#81758f;
+}
 
-        <div class="chart-footer">
-            <div>This Week: <b>${{ this_week_sales|default:"0.00" }}</b></div>
-            <div>Last Week: <b>${{ last_week_sales|default:"0.00" }}</b></div>
-        </div>
+.stat h2{
+    margin:8px 0;
+    font-size:34px;
+    font-weight:1000;
+    color:#080634;
+}
 
-        <img src="{% static 'img/dashboard-cat.png' %}" class="chart-cat" alt="Cute cat">
-    </div>
+.stat span{
+    font-size:13px;
+    font-weight:900;
+    color:#81758f;
+}
 
-    <div class="card side">
-        <h3>Recent Orders</h3>
+.stat .icon{
+    width:62px;
+    height:62px;
+    border-radius:22px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:32px;
+}
 
-        {% for order in recent_orders %}
-            <div class="order">
-                <span>#{{ order.id }} {{ order.customer.name|default:"Customer" }}</span>
-                <span>${{ order.total|default:"0.00" }}</span>
-            </div>
-        {% empty %}
-            <div class="empty-box" style="min-height:240px;">
-                <div class="empty-icon">📦✨</div>
-                <h3>No recent orders</h3>
-            </div>
-        {% endfor %}
-    </div>
+.stat.purple .icon{background:#f2edff;}
+.stat.orange .icon{background:#fff1df;}
+.stat.blue .icon{background:#eaf4ff;}
+.stat.green .icon{background:#eafff3;}
 
-    <div class="card side">
-        <h3>Low Stock Alert</h3>
+.grid-main{
+    display:grid;
+    grid-template-columns:2fr 1fr 1fr;
+    gap:22px;
+    align-items:stretch;
+}
 
-        {% for item in low_stock_items %}
-            <div class="stock">
-                <span>{{ item.name }}</span>
-                <span style="color:#ff4d6d;">{{ item.stock }} left</span>
-            </div>
-        {% empty %}
-            <div class="stock">
-                <span>No low stock</span>
-                <span>✅</span>
-            </div>
-        {% endfor %}
+.big,
+.side{
+    padding:24px;
+    position:relative;
+    overflow:hidden;
+}
 
-        <img src="{% static 'img/dashboard-dog.png' %}" class="alert-dog" alt="Cute dog">
-    </div>
+.big h3,
+.side h3,
+.footer-box h3{
+    margin:0 0 18px;
+    font-size:24px;
+    font-weight:1000;
+    color:#080634;
+}
 
-</div>
+.fake-chart{
+    height:250px;
+    border-radius:24px;
+    background:
+        linear-gradient(180deg, rgba(155,124,246,.12), rgba(255,140,107,.08)),
+        repeating-linear-gradient(
+            to right,
+            transparent 0,
+            transparent 34px,
+            rgba(155,124,246,.18) 35px,
+            transparent 36px
+        );
+    border:2px dashed #eaddec;
+}
 
-<div class="card footer-box">
-    <div>
-        <h3>You're doing great today! 🌟</h3>
-        <p>Keep up the pawsome work 💜</p>
-    </div>
-</div>
+.chart-footer{
+    display:flex;
+    justify-content:space-between;
+    gap:14px;
+    margin-top:16px;
+    font-weight:900;
+    color:#625a74;
+}
+
+.chart-cat{
+    position:absolute;
+    right:18px;
+    bottom:8px;
+    width:110px;
+    opacity:.95;
+}
+
+.order,
+.stock{
+    min-height:54px;
+    padding:14px 0;
+    border-bottom:1px dashed #eaddec;
+    display:flex;
+    justify-content:space-between;
+    gap:14px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.danger-text{
+    color:#ff4d6d;
+}
+
+.empty-box{
+    min-height:180px;
+    border:2px dashed #eaddec;
+    border-radius:24px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    color:#81758f;
+}
+
+.empty-icon{
+    font-size:42px;
+}
+
+.alert-dog{
+    width:130px;
+    display:block;
+    margin:22px auto 0;
+}
+
+.footer-box{
+    margin-top:24px;
+    padding:24px;
+}
+
+.footer-box h3{
+    margin-bottom:6px;
+}
+
+.footer-box p{
+    margin:0;
+    font-weight:900;
+    color:#81758f;
+}
+
+/* iPad 11 inch */
+@media (min-width:768px) and (max-width:1194px){
+    .dashboard-page{
+        padding:22px;
+    }
+
+    .dashboard-head{
+        align-items:flex-start;
+        gap:18px;
+    }
+
+    .dashboard-head h1{
+        font-size:32px;
+    }
+
+    .page-subtitle{
+        font-size:15px;
+        max-width:520px;
+    }
+
+    .dashboard-hero{
+        width:210px;
+        max-width:28%;
+    }
+
+    .grid-cards{
+        grid-template-columns:repeat(2, 1fr);
+        gap:18px;
+    }
+
+    .stat{
+        min-height:168px;
+        padding:24px;
+    }
+
+    .stat h2{
+        font-size:38px;
+    }
+
+    .stat .icon{
+        width:68px;
+        height:68px;
+        font-size:34px;
+    }
+
+    .grid-main{
+        grid-template-columns:1fr;
+        gap:18px;
+    }
+
+    .big,
+    .side{
+        padding:24px;
+    }
+
+    .fake-chart{
+        height:280px;
+    }
+
+    .chart-cat{
+        width:100px;
+    }
+
+    .order,
+    .stock{
+        min-height:62px;
+        font-size:16px;
+    }
+}
+
+/* Phone */
+@media (max-width:700px){
+    .dashboard-page{
+        padding:18px;
+    }
+
+    .dashboard-head{
+        display:block;
+    }
+
+    .dashboard-head h1{
+        font-size:30px;
+    }
+
+    .dashboard-hero{
+        display:none;
+    }
+
+    .grid-cards,
+    .grid-main{
+        grid-template-columns:1fr;
+    }
+
+    .chart-footer{
+        flex-direction:column;
+    }
+
+    .fake-chart{
+        height:200px;
+    }
+}
+</style>
 
 {% endblock %}
