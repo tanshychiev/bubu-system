@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="detail-page">
+    <div class="page-top">
+        <div>
+            <h1>Pet Sale #{{ sale.id }} 🐾</h1>
+            <p>{{ sale.customer_name }} · {{ sale.phone|default:"No phone" }}</p>
+        </div>
+
+        <div class="top-actions">
+            <a href="{% url 'pet_sale_edit' sale.id %}" class="soft-btn">✏️ Edit</a>
+            <a href="{% url 'pet_sale_receipt_print' sale.id %}" class="print-btn">🖨️ Receipt</a>
+            <a href="{% url 'pet_warranty_print' sale.id %}" class="warranty-btn">🛡️ Warranty</a>
+        </div>
+    </div>
+
+    <div class="layout">
+        <div class="left">
+            <div class="card pet-card">
+                <div class="pet-photo">
+                    {% if sale.sale_photo %}
+                        <img src="{{ sale.sale_photo.url }}">
+                    {% elif sale.pet and sale.pet.photo %}
+                        <img src="{{ sale.pet.photo.url }}">
+                    {% else %}
+                        <div>🐶</div>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <h2>{{ sale.pet_type_display }} · {{ sale.breed_display|default:"-" }}</h2>
+                    <p>
+                        {% if sale.pet_name_display %}Name: {{ sale.pet_name_display }} · {% endif %}
+                        Sex: {{ sale.gender_display|default:"-" }}
+                    </p>
+
+                    <span class="badge">{{ sale.get_status_display }}</span>
+                    <span class="badge mode">{{ sale.get_sale_kind_display }}</span>
+                </div>
+            </div>
+
+            {% if sale.sale_kind == "preorder" %}
+            <div class="card">
+                <div class="copy-head">
+                    <h2>Copy Pre-order Info</h2>
+                    <button onclick="copyInfo()">Copy</button>
+                </div>
+
+                <textarea id="copyText" readonly>{{ copy_text }}</textarea>
+            </div>
+            {% endif %}
+
+            <div class="card">
+                <h2>Customer</h2>
+
+                <div class="info-row"><span>Name</span><strong>{{ sale.customer_name }}</strong></div>
+                <div class="info-row"><span>Phone</span><strong>{{ sale.phone|default:"-" }}</strong></div>
+                <div class="info-row"><span>Location</span><strong>{{ sale.address|default:"-" }}</strong></div>
+            </div>
+
+            <div class="card">
+                <h2>Remark</h2>
+                <p class="note">{{ sale.note|default:"No remark" }}</p>
+            </div>
+        </div>
+
+        <div class="right">
+            <div class="card sticky">
+                <h2>Payment</h2>
+
+                <div class="money-row">
+                    <span>Full Price</span>
+                    <strong>${{ sale.sale_price }}</strong>
+                </div>
+
+                <div class="money-row">
+                    <span>Paid / Deposit</span>
+                    <strong>${{ sale.paid_amount }}</strong>
+                </div>
+
+                <div class="money-row total">
+                    <span>Remaining</span>
+                    <strong>${{ sale.remaining_amount }}</strong>
+                </div>
+
+                <div class="line"></div>
+
+                <h2>Warranty</h2>
+
+                <div class="info-row"><span>Days</span><strong>{{ sale.warranty_days|default:"3" }} days</strong></div>
+                <div class="info-row"><span>Start</span><strong>{{ sale.warranty_start_date|date:"d/m/Y"|default:"-" }}</strong></div>
+                <div class="info-row"><span>Expire</span><strong>{{ sale.warranty_expire_date|date:"d/m/Y"|default:"-" }}</strong></div>
+
+                {% if sale.sale_kind == "preorder" and sale.status == "deposit" %}
+                <form method="post" action="{% url 'pet_sale_mark_arrived' sale.id %}">
+                    {% csrf_token %}
+                    <button class="arrived-btn" type="submit">📦 Mark Arrived</button>
+                </form>
+                {% endif %}
+
+                {% if sale.status != "completed" and sale.status != "cancelled" and sale.status != "refunded" %}
+                <form method="post" action="{% url 'pet_sale_complete' sale.id %}" class="mini-form">
+                    {% csrf_token %}
+
+                    <label>
+                        Add Extra Paid
+                        <input type="number" step="0.01" name="extra_paid" value="{{ sale.remaining_amount }}">
+                    </label>
+
+                    <label>
+                        Warranty Days
+                        <input type="number" name="warranty_days" value="{{ sale.warranty_days|default:'3' }}">
+                    </label>
+
+                    <button class="complete-btn" type="submit">✅ Complete Sale</button>
+                </form>
+                {% endif %}
+
+                {% if sale.status != "cancelled" and sale.status != "completed" and sale.status != "refunded" %}
+                <form method="post" action="{% url 'pet_sale_cancel' sale.id %}" class="mini-form">
+                    {% csrf_token %}
+                    <label>
+                        Cancel Reason
+                        <textarea name="cancel_reason"></textarea>
+                    </label>
+                    <button class="cancel-btn" type="submit">❌ Customer Cancel</button>
+                </form>
+                {% endif %}
+
+                {% if sale.status != "refunded" %}
+                <form method="post" action="{% url 'pet_sale_refund' sale.id %}" class="mini-form">
+                    {% csrf_token %}
+                    <label>
+                        Refund Reason
+                        <textarea name="refund_reason"></textarea>
+                    </label>
+                    <button class="refund-btn" type="submit">↩️ Refund</button>
+                </form>
+                {% endif %}
+
+                <a href="{% url 'pet_warranty_claim_create' sale.id %}" class="claim-btn">⚕️ Warranty Claim</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+*{box-sizing:border-box}
+a{text-decoration:none}
+
+.detail-page{padding:24px 28px}
+.page-top{display:flex;justify-content:space-between;gap:18px;margin-bottom:22px}
+.page-top h1{margin:0;font-size:34px;font-weight:1000;color:#080634}
+.page-top p{color:#7b7288;font-weight:900}
+.top-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+.soft-btn,.print-btn,.warranty-btn,.arrived-btn,.complete-btn,.cancel-btn,.refund-btn,.claim-btn{
+    min-height:54px;
+    padding:0 18px;
+    border-radius:18px;
+    border:0;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.soft-btn{background:#f1f5f9;color:#334155}
+.print-btn{background:linear-gradient(135deg,#ff8c6b,#ff5d73);color:white}
+.warranty-btn{background:linear-gradient(135deg,#34c6ff,#7b5cff);color:white}
+
+.layout{display:grid;grid-template-columns:1fr 430px;gap:22px}
+.left,.right{display:grid;gap:18px}
+.card{
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:30px;
+    padding:20px;
+    box-shadow:0 18px 40px rgba(130,91,60,.08);
+}
+.sticky{position:sticky;top:18px}
+
+.pet-card{display:grid;grid-template-columns:160px 1fr;gap:18px;align-items:center}
+.pet-photo{
+    height:150px;
+    border-radius:24px;
+    background:#fff8f4;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:70px;
+}
+.pet-photo img{width:100%;height:100%;object-fit:cover}
+
+.card h2{margin:0 0 14px;color:#080634}
+.card p{font-weight:900;color:#7b7288}
+
+.badge{
+    display:inline-flex;
+    padding:8px 12px;
+    border-radius:999px;
+    background:#eafff3;
+    color:#16a05d;
+    font-weight:1000;
+    margin-right:6px;
+}
+.badge.mode{background:#f2edff;color:#7b5cff}
+
+.copy-head{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.copy-head button{
+    border:0;
+    border-radius:999px;
+    background:#080634;
+    color:white;
+    padding:10px 16px;
+    font-weight:1000;
+    cursor:pointer;
+}
+#copyText{width:100%;min-height:230px;border:2px dashed #f3c987;border-radius:20px;padding:14px;font-weight:900}
+
+.info-row,.money-row{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    padding:12px 0;
+    border-bottom:1px dashed #eaddec;
+    font-weight:900;
+}
+.info-row span,.money-row span{color:#7b7288}
+.money-row strong{font-size:21px;color:#080634}
+.money-row.total strong{color:#ff5d73;font-size:25px}
+.line{border-top:2px dashed #eaddec;margin:18px 0}
+
+.note{background:#fffaf0;border-radius:18px;padding:14px;color:#080634!important}
+
+.mini-form{margin-top:16px;padding-top:16px;border-top:1px dashed #eaddec}
+.mini-form label{font-weight:1000;color:#080634}
+.mini-form input,.mini-form textarea{
+    width:100%;
+    border:2px solid #eaddec;
+    border-radius:16px;
+    padding:12px;
+    margin-top:6px;
+    font-size:16px;
+    font-weight:900;
+}
+.mini-form input{height:52px}
+.mini-form textarea{min-height:80px}
+
+.arrived-btn,.complete-btn,.cancel-btn,.refund-btn,.claim-btn{width:100%;margin-top:10px;color:white}
+.arrived-btn{background:linear-gradient(135deg,#34c6ff,#7b5cff)}
+.complete-btn{background:linear-gradient(135deg,#13a85f,#7b5cff)}
+.cancel-btn{background:linear-gradient(135deg,#ff8c6b,#ff5d73)}
+.refund-btn{background:linear-gradient(135deg,#64748b,#0f172a)}
+.claim-btn{background:linear-gradient(135deg,#f59e0b,#ef4444)}
+
+@media(max-width:1194px){
+    .page-top{display:block}
+    .top-actions{margin-top:14px}
+    .layout{grid-template-columns:1fr}
+    .sticky{position:relative;top:auto}
+}
+@media(max-width:700px){
+    .detail-page{padding:18px}
+    .page-top h1{font-size:28px}
+    .pet-card{grid-template-columns:1fr}
+}
+</style>
+
+<script>
+function copyInfo(){
+    const box = document.getElementById("copyText");
+    if(!box) return;
+    box.select();
+    box.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(box.value).then(function(){
+        alert("Copied ✅");
+    });
+}
+</script>
+
+{% endblock %}

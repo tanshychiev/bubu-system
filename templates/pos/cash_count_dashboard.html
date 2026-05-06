@@ -2,191 +2,539 @@
 {% block content %}
 
 <style>
-.cash-page {
-    max-width: 1200px;
-    margin: 0 auto;
+.cash-page{
+    max-width:1200px;
+    margin:0 auto;
 }
 
-.cash-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 24px;
+.cash-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    margin-bottom:24px;
 }
 
-.cash-head h1 {
-    font-size: 38px;
-    margin: 0;
-    color: #1c143a;
+.cash-head h1{
+    font-size:38px;
+    margin:0;
+    color:#1c143a;
+    font-weight:900;
 }
 
-.cash-head p {
-    color: #7b6f92;
-    font-weight: 700;
+.cash-head p{
+    color:#7b6f92;
+    font-weight:800;
+    margin:8px 0 0;
 }
 
-.btn-main {
-    background: linear-gradient(135deg, #7b5cff, #b07cff);
-    color: white;
-    padding: 13px 24px;
-    border-radius: 999px;
-    font-weight: 900;
-    border: none;
-    text-decoration: none;
-    cursor: pointer;
+.head-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
 }
 
-.btn-soft {
-    background: #f8f6ff;
-    color: #7b5cff;
-    padding: 13px 24px;
-    border-radius: 999px;
-    font-weight: 900;
-    border: 1.5px solid #e2dbff;
-    text-decoration: none;
+.btn-main{
+    background:linear-gradient(135deg,#7b5cff,#b07cff);
+    color:white;
+    padding:13px 24px;
+    border-radius:999px;
+    font-weight:900;
+    border:none;
+    text-decoration:none;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
 }
 
+.btn-soft{
+    background:#f8f6ff;
+    color:#7b5cff;
+    padding:13px 24px;
+    border-radius:999px;
+    font-weight:900;
+    border:1.5px solid #e2dbff;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.shop-card,
 .date-card,
 .summary-grid,
 .count-card,
-.sales-card {
-    background: white;
-    border: 1px solid #f0dcd0;
-    border-radius: 24px;
-    box-shadow: 0 12px 30px rgba(111,75,50,0.06);
-    padding: 22px;
-    margin-bottom: 22px;
+.sales-card{
+    background:white;
+    border:1px solid #f0dcd0;
+    border-radius:24px;
+    box-shadow:0 12px 30px rgba(111,75,50,0.06);
+    padding:22px;
+    margin-bottom:22px;
 }
 
-.date-form {
-    display: flex;
-    gap: 12px;
-    align-items: center;
+.shop-card{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
 }
 
-.date-form input {
-    padding: 14px 16px;
-    border-radius: 18px;
-    border: 1.5px solid #eadbd4;
-    font-weight: 800;
+.shop-title{
+    font-weight:900;
+    color:#1c143a;
+    font-size:20px;
 }
 
-.summary-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
+.shop-sub{
+    color:#7b6f92;
+    font-weight:800;
+    margin-top:6px;
 }
 
-.summary-box {
-    background: #fff8fb;
-    border-radius: 20px;
-    padding: 20px;
+.shop-badge{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    border-radius:999px;
+    padding:12px 20px;
+    font-weight:900;
+    white-space:nowrap;
 }
 
-.summary-box .label {
-    color: #7b6f92;
-    font-weight: 800;
-    margin-bottom: 8px;
+.date-form{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap:wrap;
 }
 
-.summary-box .value {
-    font-size: 28px;
-    font-weight: 900;
-    color: #1c143a;
+.date-touch-btn{
+    min-height:62px;
+    min-width:260px;
+    border-radius:999px;
+    border:1.5px solid #eadbd4;
+    background:white;
+    color:#1c143a;
+    font-weight:900;
+    font-size:16px;
+    padding:0 24px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(111,75,50,0.06);
 }
 
-.count-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 18px;
+.date-touch-btn:hover{
+    border-color:#9b7cf6;
 }
 
-.count-box {
-    background: #fff8fb;
-    border-radius: 20px;
-    padding: 18px;
+.summary-grid{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:16px;
 }
 
-.count-box label {
-    display: block;
-    font-weight: 900;
-    color: #1c143a;
-    margin-bottom: 10px;
+.summary-box{
+    background:#fff8fb;
+    border-radius:20px;
+    padding:20px;
 }
 
-.count-box input {
-    width: 100%;
-    padding: 16px;
-    border-radius: 16px;
-    border: 1.5px solid #eadbd4;
-    font-size: 20px;
-    font-weight: 900;
+.summary-box .label{
+    color:#7b6f92;
+    font-weight:900;
+    margin-bottom:8px;
+    font-size:13px;
 }
 
-.diff {
-    margin-top: 12px;
-    font-weight: 900;
-    padding: 10px 14px;
-    border-radius: 14px;
+.summary-box .value{
+    font-size:26px;
+    font-weight:900;
+    color:#1c143a;
 }
 
-.diff.good {
-    background: #eaffef;
-    color: #168a3a;
+.count-card h2,
+.sales-card h2{
+    color:#1c143a;
+    font-size:28px;
+    margin:0 0 18px;
+    font-weight:900;
 }
 
-.diff.bad {
-    background: #fff0f0;
-    color: #d62828;
+.count-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:18px;
 }
 
-.diff.zero {
-    background: #f4f1ff;
-    color: #7b5cff;
+.count-box{
+    background:#fff8fb;
+    border-radius:20px;
+    padding:18px;
 }
 
-.note-box {
-    margin-top: 18px;
+.count-box label{
+    display:block;
+    font-weight:900;
+    color:#1c143a;
+    margin-bottom:10px;
 }
 
-.note-box textarea {
-    width: 100%;
-    min-height: 90px;
-    padding: 16px;
-    border-radius: 18px;
-    border: 1.5px solid #eadbd4;
-    font-weight: 700;
+.count-box input{
+    width:100%;
+    padding:16px;
+    border-radius:16px;
+    border:1.5px solid #eadbd4;
+    font-size:20px;
+    font-weight:900;
+    box-sizing:border-box;
 }
 
-.sales-table {
-    width: 100%;
-    border-collapse: collapse;
+.diff{
+    margin-top:12px;
+    font-weight:900;
+    padding:10px 14px;
+    border-radius:14px;
 }
 
-.sales-table th {
-    background: #fff8fb;
-    padding: 14px;
-    text-align: left;
-    color: #1c143a;
+.diff.good{
+    background:#eaffef;
+    color:#168a3a;
 }
 
-.sales-table td {
-    padding: 14px;
-    border-top: 1px solid #f4e3d8;
-    font-weight: 700;
+.diff.bad{
+    background:#fff0f0;
+    color:#d62828;
 }
 
-@media (max-width: 900px) {
+.diff.zero{
+    background:#f4f1ff;
+    color:#7b5cff;
+}
+
+.note-box{
+    margin-top:18px;
+}
+
+.note-box label{
+    display:block;
+    margin-bottom:10px;
+    color:#1c143a;
+    font-weight:900;
+}
+
+.note-box textarea{
+    width:100%;
+    min-height:100px;
+    padding:16px;
+    border-radius:18px;
+    border:1.5px solid #eadbd4;
+    font-weight:800;
+    box-sizing:border-box;
+}
+
+.save-row{
+    margin-top:18px;
+    display:flex;
+    justify-content:flex-end;
+}
+
+.table-wrap{
+    overflow-x:auto;
+}
+
+.sales-table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:900px;
+}
+
+.sales-table th{
+    background:#fff8fb;
+    padding:14px;
+    text-align:left;
+    color:#1c143a;
+    white-space:nowrap;
+}
+
+.sales-table td{
+    padding:14px;
+    border-top:1px solid #f4e3d8;
+    font-weight:800;
+    white-space:nowrap;
+}
+
+.status-pill{
+    display:inline-flex;
+    padding:7px 12px;
+    border-radius:999px;
+    background:#f4f1ff;
+    color:#7b5cff;
+    font-weight:900;
+    font-size:13px;
+}
+
+.empty-row{
+    text-align:center;
+    padding:40px !important;
+    color:#7b6f92;
+    font-weight:900;
+}
+
+/* ========================= */
+/* CUSTOM DATE POPUP */
+/* ========================= */
+
+.calendar-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(28,20,58,.38);
+    z-index:9000;
+}
+
+.calendar-backdrop.active{
+    display:block;
+}
+
+.calendar-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:360px;
+    max-width:calc(100% - 28px);
+    background:white;
+    border-radius:28px;
+    overflow:hidden;
+    box-shadow:0 28px 80px rgba(28,20,58,.30);
+    z-index:9001;
+    border:1px solid #eee1d8;
+}
+
+.calendar-popup.active{
+    display:block;
+}
+
+.calendar-top{
+    background:linear-gradient(135deg,#7b5cff,#8f63ff);
+    color:white;
+    padding:16px 18px 14px;
+}
+
+.calendar-top small{
+    display:block;
+    opacity:.9;
+    font-weight:800;
+    margin-bottom:4px;
+}
+
+.calendar-selected-text{
+    font-size:24px;
+    font-weight:900;
+    line-height:1.2;
+}
+
+.calendar-body{
+    padding:14px;
+}
+
+.quick-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:12px;
+}
+
+.quick-btn{
+    min-height:52px;
+    border:none;
+    border-radius:16px;
+    color:white;
+    font-size:15px;
+    font-weight:900;
+    cursor:pointer;
+}
+
+.quick-btn.today{
+    background:linear-gradient(135deg,#19a974,#54d59b);
+}
+
+.quick-btn.yesterday{
+    background:linear-gradient(135deg,#7b5cff,#ff8c6b);
+}
+
+.calendar-month-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+}
+
+.calendar-month-title{
+    font-size:16px;
+    font-weight:900;
+    color:#1c143a;
+}
+
+.calendar-nav{
+    display:flex;
+    gap:6px;
+}
+
+.calendar-nav button{
+    width:38px;
+    height:38px;
+    border:none;
+    border-radius:50%;
+    background:#f4f1ff;
+    color:#7b5cff;
+    font-size:18px;
+    font-weight:900;
+    cursor:pointer;
+}
+
+.calendar-weekdays,
+.calendar-grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:6px;
+}
+
+.calendar-weekdays div{
+    text-align:center;
+    font-size:12px;
+    font-weight:900;
+    color:#8e86a3;
+    padding:6px 0;
+}
+
+.calendar-day{
+    height:42px;
+    border:none;
+    border-radius:50%;
+    background:transparent;
+    font-size:14px;
+    font-weight:900;
+    color:#1c143a;
+    cursor:pointer;
+}
+
+.calendar-day.other{
+    color:#c4bdd3;
+}
+
+.calendar-day:hover{
+    background:#f3efff;
+}
+
+.calendar-day.selected{
+    background:#7b5cff;
+    color:white;
+    box-shadow:0 8px 18px rgba(123,92,255,.28);
+}
+
+.calendar-day.today-mark{
+    border:2px solid #19a974;
+}
+
+.calendar-bottom{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    border-top:1px solid #f0e7ea;
+    padding:14px;
+}
+
+.calendar-cancel,
+.calendar-ok{
+    min-width:90px;
+    min-height:44px;
+    border:none;
+    border-radius:999px;
+    font-weight:900;
+    cursor:pointer;
+}
+
+.calendar-cancel{
+    background:#f5f1ff;
+    color:#7b5cff;
+}
+
+.calendar-ok{
+    background:linear-gradient(135deg,#7b5cff,#8f63ff);
+    color:white;
+}
+
+@media (max-width:1100px){
+    .summary-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+}
+
+@media (max-width:900px){
     .cash-head,
-    .date-form {
-        flex-direction: column;
-        align-items: stretch;
+    .date-form,
+    .shop-card{
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .head-actions{
+        display:grid;
+        grid-template-columns:1fr;
     }
 
     .summary-grid,
-    .count-grid {
-        grid-template-columns: 1fr;
+    .count-grid{
+        grid-template-columns:1fr;
+    }
+
+    .btn-main,
+    .btn-soft,
+    .date-touch-btn{
+        width:100%;
+        box-sizing:border-box;
+        min-height:60px;
+    }
+
+    .save-row{
+        display:block;
+    }
+
+    .cash-head h1{
+        font-size:32px;
+    }
+
+    .calendar-popup{
+        left:14px;
+        right:14px;
+        bottom:18px;
+        top:auto;
+        width:auto;
+        max-width:none;
+        transform:none;
+        border-radius:26px;
+    }
+}
+
+@media (max-width:500px){
+    .quick-row{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .calendar-day{
+        height:40px;
+        font-size:13px;
+    }
+
+    .calendar-selected-text{
+        font-size:22px;
     }
 }
 </style>
@@ -196,19 +544,38 @@
     <div class="cash-head">
         <div>
             <h1>Daily Cash Count 💵</h1>
-            <p>Check system money vs staff counted money.</p>
+            <p>Check system money vs staff counted money by shop/branch.</p>
         </div>
 
-        <div>
+        <div class="head-actions">
             <a href="{% url 'sale_list' %}" class="btn-soft">← Back Sales</a>
             <a href="{% url 'pos' %}" class="btn-main">New Sale</a>
         </div>
     </div>
 
+    <div class="shop-card">
+        <div>
+            <div class="shop-title">Current Shop / Branch</div>
+            <div class="shop-sub">
+                This cash count is saved separately for this shop and date.
+            </div>
+        </div>
+
+        <div class="shop-badge">
+            🏪 {% if current_branch %}{{ current_branch.name }}{% else %}No Branch{% endif %}
+        </div>
+    </div>
+
     <div class="date-card">
-        <form method="get" class="date-form">
+        <form method="get" class="date-form" id="dateForm">
             <strong>Count Date:</strong>
-            <input type="date" name="date" value="{{ count_date|date:'Y-m-d' }}">
+
+            <input type="hidden" name="date" id="dateInput" value="{{ count_date|date:'Y-m-d' }}">
+
+            <button type="button" class="date-touch-btn" onclick="openCalendarPopup()">
+                📅 <span id="dateLabel">{{ count_date|date:"d M Y" }}</span>
+            </button>
+
             <button class="btn-main" type="submit">View</button>
         </form>
     </div>
@@ -235,7 +602,7 @@
         </div>
 
         <div class="summary-box">
-            <div class="label">ABA Should Have</div>
+            <div class="label">ABA USD Should Have</div>
             <div class="value">${{ system_aba_usd|floatformat:2 }}</div>
         </div>
     </div>
@@ -249,8 +616,12 @@
 
             <div class="count-box">
                 <label>Cash USD Counted</label>
-                <input type="number" step="0.01" name="counted_cash_usd"
-                       value="{{ cash_count.counted_cash_usd|floatformat:2 }}">
+                <input
+                    type="number"
+                    step="0.01"
+                    name="counted_cash_usd"
+                    value="{{ cash_count.counted_cash_usd|floatformat:2 }}"
+                >
 
                 {% if diff_usd > 0 %}
                     <div class="diff good">Over: ${{ diff_usd|floatformat:2 }}</div>
@@ -263,8 +634,12 @@
 
             <div class="count-box">
                 <label>Cash KHR Counted</label>
-                <input type="number" step="1" name="counted_cash_khr"
-                       value="{{ cash_count.counted_cash_khr|floatformat:0 }}">
+                <input
+                    type="number"
+                    step="1"
+                    name="counted_cash_khr"
+                    value="{{ cash_count.counted_cash_khr|floatformat:0 }}"
+                >
 
                 {% if diff_khr > 0 %}
                     <div class="diff good">Over: {{ diff_khr|floatformat:0 }}៛</div>
@@ -276,9 +651,13 @@
             </div>
 
             <div class="count-box">
-                <label>ABA Counted</label>
-                <input type="number" step="0.01" name="counted_aba_usd"
-                       value="{{ cash_count.counted_aba_usd|floatformat:2 }}">
+                <label>ABA USD Counted</label>
+                <input
+                    type="number"
+                    step="0.01"
+                    name="counted_aba_usd"
+                    value="{{ cash_count.counted_aba_usd|floatformat:2 }}"
+                >
 
                 {% if diff_aba > 0 %}
                     <div class="diff good">Over: ${{ diff_aba|floatformat:2 }}</div>
@@ -292,65 +671,290 @@
         </div>
 
         <div class="note-box">
-            <label><strong>Note</strong></label>
+            <label>Note</label>
             <textarea name="note" placeholder="Write reason if money missing or over...">{{ cash_count.note }}</textarea>
         </div>
 
-        <br>
-        <button type="submit" class="btn-main">Save Cash Count</button>
+        <div class="save-row">
+            <button type="submit" class="btn-main">Save Cash Count</button>
+        </div>
     </form>
 
     <div class="sales-card">
-        <h2>Sales Today</h2>
+        <h2>Sales for Selected Day</h2>
 
-        <table class="sales-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Total</th>
-                    <th>Paid</th>
-                    <th>Cash USD</th>
-                    <th>Cash KHR</th>
-                    <th>ABA</th>
-                    <th>View</th>
-                </tr>
-            </thead>
+        <div class="table-wrap">
+            <table class="sales-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Time</th>
+                        <th>Customer</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                        <th>Paid</th>
+                        <th>Change</th>
+                        <th>Payments</th>
+                        <th>View</th>
+                    </tr>
+                </thead>
 
-            <tbody>
-                {% for sale in sales %}
-                <tr>
-                    <td>#{{ sale.id }}</td>
-
-                    <td>
-                        {% if sale.customer %}
-                            {{ sale.customer }}
-                        {% else %}
-                            Walk-in
-                        {% endif %}
-                    </td>
-
-                    <td>${{ sale.total_amount|floatformat:2 }}</td>
-                    <td>${{ sale.paid_amount|floatformat:2 }}</td>
-                    <td>${{ sale.cash_usd|floatformat:2 }}</td>
-                    <td>{{ sale.cash_khr|floatformat:0 }}៛</td>
-                    <td>${{ sale.aba_usd|floatformat:2 }}</td>
-
-                    <td>
-                        <a href="{% url 'sale_detail' sale.id %}" class="btn-soft">View</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="8" style="text-align:center;padding:40px;">
-                        No sales found for this day.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                <tbody>
+                    {% for sale in sales %}
+                    <tr>
+                        <td>#{{ sale.id }}</td>
+                        <td>{{ sale.created_at|date:"H:i" }}</td>
+                        <td>
+                            {% if sale.customer %}
+                                {{ sale.customer }}
+                            {% else %}
+                                Walk-in
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="status-pill">{{ sale.status }}</span>
+                        </td>
+                        <td>${{ sale.total_amount|floatformat:2 }}</td>
+                        <td>${{ sale.paid_amount|floatformat:2 }}</td>
+                        <td>${{ sale.change_amount|floatformat:2 }}</td>
+                        <td>
+                            {% for payment in sale.payments.all %}
+                                {{ payment.get_method_display }}: {{ payment.amount|floatformat:2 }}{% if not forloop.last %}<br>{% endif %}
+                            {% empty %}
+                                -
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <a href="{% url 'sale_detail' sale.id %}" class="btn-soft">View</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="empty-row">No sales found for this day.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
 </div>
+
+<!-- CUSTOM CALENDAR POPUP -->
+<div class="calendar-backdrop" id="calendarBackdrop" onclick="closeCalendarPopup()"></div>
+
+<div class="calendar-popup" id="calendarPopup">
+    <div class="calendar-top">
+        <small>Selected date</small>
+        <div class="calendar-selected-text" id="calendarSelectedText"></div>
+    </div>
+
+    <div class="calendar-body">
+        <div class="quick-row">
+            <button type="button" class="quick-btn today" onclick="pickQuickDate('today')">Today</button>
+            <button type="button" class="quick-btn yesterday" onclick="pickQuickDate('yesterday')">Yesterday</button>
+        </div>
+
+        <div class="calendar-month-row">
+            <div class="calendar-month-title" id="calendarMonthTitle"></div>
+            <div class="calendar-nav">
+                <button type="button" onclick="changeMonth(-1)">‹</button>
+                <button type="button" onclick="changeMonth(1)">›</button>
+            </div>
+        </div>
+
+        <div class="calendar-weekdays">
+            <div>Su</div>
+            <div>Mo</div>
+            <div>Tu</div>
+            <div>We</div>
+            <div>Th</div>
+            <div>Fr</div>
+            <div>Sa</div>
+        </div>
+
+        <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+
+    <div class="calendar-bottom">
+        <button type="button" class="calendar-cancel" onclick="closeCalendarPopup()">Cancel</button>
+        <button type="button" class="calendar-ok" onclick="applyCalendarDate()">OK</button>
+    </div>
+</div>
+
+<script>
+const dateInput = document.getElementById("dateInput");
+const dateLabel = document.getElementById("dateLabel");
+const dateForm = document.getElementById("dateForm");
+
+const calendarPopup = document.getElementById("calendarPopup");
+const calendarBackdrop = document.getElementById("calendarBackdrop");
+const calendarGrid = document.getElementById("calendarGrid");
+const calendarMonthTitle = document.getElementById("calendarMonthTitle");
+const calendarSelectedText = document.getElementById("calendarSelectedText");
+
+let selectedDate = parseLocalDate(dateInput.value);
+let tempSelectedDate = new Date(selectedDate.getTime());
+let currentMonthDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+
+function parseLocalDate(value){
+    if(!value){
+        return new Date();
+    }
+
+    const parts = value.split("-");
+    if(parts.length !== 3){
+        return new Date();
+    }
+
+    return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+}
+
+function formatYMD(date){
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+}
+
+function formatLongDate(date){
+    return date.toLocaleDateString("en-US", {
+        weekday:"short",
+        month:"short",
+        day:"numeric",
+        year:"numeric"
+    });
+}
+
+function formatShortDate(date){
+    return date.toLocaleDateString("en-GB", {
+        day:"2-digit",
+        month:"short",
+        year:"numeric"
+    });
+}
+
+function sameDate(a, b){
+    return a.getFullYear() === b.getFullYear()
+        && a.getMonth() === b.getMonth()
+        && a.getDate() === b.getDate();
+}
+
+function openCalendarPopup(){
+    tempSelectedDate = new Date(selectedDate.getTime());
+    currentMonthDate = new Date(tempSelectedDate.getFullYear(), tempSelectedDate.getMonth(), 1);
+    renderCalendar();
+    calendarPopup.classList.add("active");
+    calendarBackdrop.classList.add("active");
+}
+
+function closeCalendarPopup(){
+    calendarPopup.classList.remove("active");
+    calendarBackdrop.classList.remove("active");
+}
+
+function renderCalendar(){
+    const year = currentMonthDate.getFullYear();
+    const month = currentMonthDate.getMonth();
+
+    calendarMonthTitle.textContent = currentMonthDate.toLocaleDateString("en-US", {
+        month:"long",
+        year:"numeric"
+    });
+
+    calendarSelectedText.textContent = formatLongDate(tempSelectedDate);
+
+    calendarGrid.innerHTML = "";
+
+    const firstDay = new Date(year, month, 1);
+    const startWeekday = firstDay.getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const prevMonthDays = new Date(year, month, 0).getDate();
+
+    for(let i = 0; i < 42; i++){
+        let dayNumber;
+        let btnDate;
+        let isOtherMonth = false;
+
+        if(i < startWeekday){
+            dayNumber = prevMonthDays - startWeekday + i + 1;
+            btnDate = new Date(year, month - 1, dayNumber);
+            isOtherMonth = true;
+        }else if(i >= startWeekday + daysInMonth){
+            dayNumber = i - (startWeekday + daysInMonth) + 1;
+            btnDate = new Date(year, month + 1, dayNumber);
+            isOtherMonth = true;
+        }else{
+            dayNumber = i - startWeekday + 1;
+            btnDate = new Date(year, month, dayNumber);
+        }
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "calendar-day";
+        btn.textContent = dayNumber;
+
+        if(isOtherMonth){
+            btn.classList.add("other");
+        }
+
+        const today = new Date();
+        if(sameDate(btnDate, new Date(today.getFullYear(), today.getMonth(), today.getDate()))){
+            btn.classList.add("today-mark");
+        }
+
+        if(sameDate(btnDate, tempSelectedDate)){
+            btn.classList.add("selected");
+        }
+
+        btn.onclick = function(){
+            tempSelectedDate = new Date(btnDate.getTime());
+
+            if(isOtherMonth){
+                currentMonthDate = new Date(tempSelectedDate.getFullYear(), tempSelectedDate.getMonth(), 1);
+            }
+
+            renderCalendar();
+        };
+
+        calendarGrid.appendChild(btn);
+    }
+}
+
+function changeMonth(step){
+    currentMonthDate = new Date(
+        currentMonthDate.getFullYear(),
+        currentMonthDate.getMonth() + step,
+        1
+    );
+    renderCalendar();
+}
+
+function pickQuickDate(type){
+    const base = new Date();
+    const quick = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+
+    if(type === "yesterday"){
+        quick.setDate(quick.getDate() - 1);
+    }
+
+    tempSelectedDate = quick;
+    currentMonthDate = new Date(quick.getFullYear(), quick.getMonth(), 1);
+    renderCalendar();
+}
+
+function applyCalendarDate(){
+    selectedDate = new Date(tempSelectedDate.getTime());
+    const value = formatYMD(selectedDate);
+
+    dateInput.value = value;
+    dateLabel.textContent = formatShortDate(selectedDate);
+
+    closeCalendarPopup();
+    dateForm.submit();
+}
+
+dateLabel.textContent = formatShortDate(selectedDate);
+</script>
 
 {% endblock %}

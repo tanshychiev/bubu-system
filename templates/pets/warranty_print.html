@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <title>Warranty #{{ sale.id }}</title>
+
+    <style>
+        @page{size:A4;margin:12mm}
+        *{box-sizing:border-box}
+        body{margin:0;font-family:Arial,"Khmer OS Battambang","Khmer OS",sans-serif;color:#111;background:#fff}
+        .print{position:fixed;right:12px;top:12px}
+        .print button{border:0;border-radius:999px;background:#111;color:white;padding:10px 16px;font-weight:900}
+        .paper{max-width:800px;margin:0 auto;border:2px solid #111;padding:28px;border-radius:12px}
+        .head{text-align:center;border-bottom:2px solid #111;padding-bottom:16px;margin-bottom:20px}
+        .head h1{margin:0;font-size:30px}
+        .head p{margin:6px 0 0;font-weight:700}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+        .box{border:1px solid #ddd;border-radius:12px;padding:14px;background:#fafafa}
+        .box h2{margin:0 0 10px;font-size:18px}
+        .row{display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:8px 0;gap:14px}
+        .row span{color:#555}
+        .row strong{text-align:right}
+        .policy{margin-top:20px;border:2px solid #111;border-radius:12px;padding:18px}
+        .policy h2{text-align:center;margin:0 0 14px}
+        ul{line-height:1.7}
+        li{margin-bottom:8px}
+        .en{border-top:1px dashed #999;margin-top:14px;padding-top:14px}
+        .sign{display:grid;grid-template-columns:1fr 1fr;gap:50px;margin-top:60px;text-align:center}
+        .sign div{border-top:1px solid #111;padding-top:8px;font-weight:900}
+        @media print{.print{display:none}.paper{border:0;padding:0}}
+    </style>
+</head>
+
+<body>
+
+<div class="print">
+    <button onclick="window.print()">Print</button>
+</div>
+
+<div class="paper">
+    <div class="head">
+        <h1>BUBU PET STORE</h1>
+        <p>Pet Warranty Certificate / ប័ណ្ណធានាសត្វចិញ្ចឹម</p>
+        <p>No: PW-{{ sale.id }}</p>
+    </div>
+
+    <div class="grid">
+        <div class="box">
+            <h2>Pet Information</h2>
+            <div class="row"><span>Type</span><strong>{{ sale.pet_type_display }}</strong></div>
+            <div class="row"><span>Breed</span><strong>{{ sale.breed_display|default:"-" }}</strong></div>
+            <div class="row"><span>Sex</span><strong>{{ sale.gender_display|default:"-" }}</strong></div>
+            <div class="row"><span>Name</span><strong>{{ sale.pet_name_display|default:"-" }}</strong></div>
+        </div>
+
+        <div class="box">
+            <h2>Customer</h2>
+            <div class="row"><span>Name</span><strong>{{ sale.customer_name }}</strong></div>
+            <div class="row"><span>Phone</span><strong>{{ sale.phone|default:"-" }}</strong></div>
+            <div class="row"><span>Location</span><strong>{{ sale.address|default:"-" }}</strong></div>
+            <div class="row"><span>Receipt</span><strong>PS-{{ sale.id }}</strong></div>
+        </div>
+
+        <div class="box">
+            <h2>Payment</h2>
+            <div class="row"><span>Full Price</span><strong>${{ sale.sale_price }}</strong></div>
+            <div class="row"><span>Paid</span><strong>${{ sale.paid_amount }}</strong></div>
+            <div class="row"><span>Remaining</span><strong>${{ sale.remaining_amount }}</strong></div>
+            <div class="row"><span>Status</span><strong>{{ sale.get_status_display }}</strong></div>
+        </div>
+
+        <div class="box">
+            <h2>Warranty Date</h2>
+            <div class="row"><span>Warranty Days</span><strong>{{ sale.warranty_days|default:"3" }} days</strong></div>
+            <div class="row"><span>Start Date</span><strong>{{ sale.warranty_start_date|date:"d/m/Y"|default:"-" }}</strong></div>
+            <div class="row"><span>Expire Date</span><strong>{{ sale.warranty_expire_date|date:"d/m/Y"|default:"-" }}</strong></div>
+            <div class="row"><span>Sale Date</span><strong>{{ sale.created_at|date:"d/m/Y" }}</strong></div>
+        </div>
+    </div>
+
+    <div class="policy">
+        <h2>គោលការណ៍ធានា</h2>
+
+        <ul>
+            <li>ការធានាមានសុពលភាព ៣ថ្ងៃ ចាប់ពីថ្ងៃទិញ ឬថ្ងៃទទួលសត្វ។</li>
+            <li>ធានាចំពោះជំងឺធ្ងន់ធ្ងរដែលពាក់ព័ន្ធនឹងសុខភាពសត្វ ដូចជា Parvo និង Distemper បើមានការបញ្ជាក់ពីពេទ្យសត្វ។</li>
+            <li>សូមអតិថិជនរក្សាវិក្កយបត្រ និងទាក់ទងមកហាងភ្លាមៗ ប្រសិនបើសត្វមានអាការៈមិនប្រក្រតី។</li>
+            <li>ការធានាមិនគ្របដណ្តប់លើគ្រោះថ្នាក់ ការថែទាំមិនត្រឹមត្រូវ ការផ្លាស់ប្តូរអាហារខុសរបៀប ឬបញ្ហាដែលកើតឡើងក្រោយរយៈពេលធានា។</li>
+            <li>ការប្តូរ ការសងប្រាក់ ឬដំណោះស្រាយផ្សេងៗ ត្រូវពិនិត្យតាមករណីជាក់ស្តែង និងសម្រេចដោយ BUBU Pet Store។</li>
+        </ul>
+
+        <div class="en">
+            <h2>Warranty Policy</h2>
+
+            <ul>
+                <li>Warranty is valid for 3 days from the purchase date or pet handover date.</li>
+                <li>Warranty covers serious health conditions such as Parvo and Distemper when confirmed by a veterinarian.</li>
+                <li>Please keep this receipt and contact BUBU Pet Store immediately if the pet shows abnormal symptoms.</li>
+                <li>Warranty does not cover accidents, improper care, incorrect food changes, or problems occurring after the warranty period.</li>
+                <li>Exchange, refund, or compensation will be reviewed case by case and decided by BUBU Pet Store.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="sign">
+        <div>Customer Signature</div>
+        <div>BUBU Staff Signature</div>
+    </div>
+</div>
+
+<script>
+window.addEventListener("load", function(){
+    setTimeout(function(){
+        window.print();
+    }, 300);
+});
+</script>
+
+</body>
+</html>

@@ -1,50 +1,505 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
-<h1>Delivery Detail</h1>
 
-<p><strong>Order:</strong> {{ delivery.order }}</p>
-<p><strong>Customer:</strong> {{ delivery.customer_name }}</p>
-<p><strong>Phone:</strong> {{ delivery.phone }}</p>
-<p><strong>Address:</strong> {{ delivery.address }}</p>
-<p><strong>Delivery Fee:</strong> {{ delivery.delivery_fee }}</p>
-<p><strong>Status:</strong> {{ delivery.status }}</p>
-<p><strong>Note:</strong> {{ delivery.note }}</p>
-<p><strong>Created:</strong> {{ delivery.created_at }}</p>
-<p><strong>Delivered:</strong> {{ delivery.delivered_at }}</p>
+<style>
+.delivery-detail-page{
+    max-width:1150px;
+    margin:auto;
+}
 
-<a href="{% url 'delivery_update' delivery.id %}">Edit</a>
-|
-<a href="{% url 'delivery_list' %}">Back</a>
+a{
+    text-decoration:none !important;
+}
 
-<hr>
+.top-actions{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+}
 
-<h2>Status Logs</h2>
+.btn-back,
+.btn-main,
+.btn-soft,
+.btn-danger{
+    min-height:54px;
+    padding:0 22px;
+    border-radius:999px;
+    border:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+}
 
-<table border="1" cellpadding="8">
-    <thead>
-        <tr>
-            <th>Old</th>
-            <th>New</th>
-            <th>Changed By</th>
-            <th>Note</th>
-            <th>Date</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for log in logs %}
-        <tr>
-            <td>{{ log.old_status }}</td>
-            <td>{{ log.new_status }}</td>
-            <td>{{ log.changed_by }}</td>
-            <td>{{ log.note }}</td>
-            <td>{{ log.created_at }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="5">No logs.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+.btn-back,
+.btn-soft{
+    background:white;
+    color:#7b5cff;
+    border:1.5px solid #e2dbff;
+}
+
+.btn-main{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    box-shadow:0 14px 28px rgba(155,124,246,.25);
+}
+
+.btn-danger{
+    background:#fff0f0;
+    color:#ff4d5d;
+    border:1px solid #ffd0d0;
+}
+
+.hero-card{
+    display:grid;
+    grid-template-columns:1fr 300px;
+    gap:20px;
+    align-items:center;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+    border:1px solid #f0dcd0;
+    border-radius:30px;
+    padding:26px;
+    box-shadow:0 14px 34px rgba(111,75,50,.07);
+    margin-bottom:20px;
+}
+
+.hero-card h1{
+    margin:0;
+    font-size:38px;
+    color:#1c143a;
+    font-weight:1000;
+}
+
+.hero-card p{
+    margin:10px 0 0;
+    color:#7b6f92;
+    font-weight:900;
+}
+
+.hero-img{
+    width:100%;
+    height:190px;
+    object-fit:contain;
+}
+
+.branch-card,
+.card,
+.money-card,
+.item-card{
+    background:white;
+    border:1px solid #f0dcd0;
+    border-radius:26px;
+    padding:22px;
+    box-shadow:0 12px 30px rgba(111,75,50,.06);
+    margin-bottom:20px;
+}
+
+.branch-card{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+}
+
+.branch-title{
+    color:#1c143a;
+    font-size:20px;
+    font-weight:1000;
+}
+
+.branch-sub{
+    color:#7b6f92;
+    font-weight:800;
+    margin-top:6px;
+}
+
+.branch-badge{
+    min-height:50px;
+    padding:0 18px;
+    border-radius:999px;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    font-weight:1000;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.info-grid,
+.money-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:15px;
+}
+
+.info-box,
+.money-box{
+    background:#fff8fb;
+    border-radius:18px;
+    padding:16px;
+    border:1px solid #f4e3d8;
+}
+
+.info-box small,
+.money-box small{
+    display:block;
+    color:#7b6f92;
+    font-weight:900;
+    margin-bottom:8px;
+}
+
+.info-box h3,
+.money-box h3{
+    margin:0;
+    color:#1c143a;
+    font-size:22px;
+    font-weight:1000;
+}
+
+.money-box.cod{
+    background:#fff7df;
+}
+
+.money-box.received{
+    background:#f0fff6;
+}
+
+.money-box.lack{
+    background:#fff0f0;
+}
+
+.badge{
+    display:inline-flex;
+    padding:8px 13px;
+    border-radius:999px;
+    font-weight:1000;
+    font-size:13px;
+}
+
+.badge-green{
+    background:#e6fff3;
+    color:#00a86b;
+}
+
+.badge-orange{
+    background:#fff4e6;
+    color:#ff9900;
+}
+
+.badge-purple{
+    background:#f4f1ff;
+    color:#7b5cff;
+}
+
+.badge-red{
+    background:#ffe6e6;
+    color:#ff4d4f;
+}
+
+.badge-blue{
+    background:#e8f2ff;
+    color:#3a86ff;
+}
+
+.section-title{
+    color:#1c143a;
+    font-size:26px;
+    font-weight:1000;
+    margin:0 0 16px;
+}
+
+.table-wrap{
+    overflow-x:auto;
+}
+
+.table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:760px;
+}
+
+.table th{
+    background:#fff8fb;
+    padding:14px;
+    text-align:left;
+    color:#1c143a;
+    white-space:nowrap;
+}
+
+.table td{
+    padding:14px;
+    border-top:1px solid #f4e3d8;
+    color:#30244f;
+    font-weight:800;
+    white-space:nowrap;
+}
+
+.item-name{
+    font-weight:1000;
+    color:#1c143a;
+}
+
+.item-meta{
+    color:#7b6f92;
+    font-size:13px;
+    font-weight:800;
+    margin-top:4px;
+}
+
+.empty-box{
+    background:#fff8fb;
+    border-radius:18px;
+    padding:26px;
+    color:#7b6f92;
+    font-weight:900;
+    text-align:center;
+}
+
+.link-sale{
+    display:inline-flex;
+    margin-top:8px;
+    padding:8px 12px;
+    border-radius:999px;
+    background:#f4f1ff;
+    color:#7b5cff;
+    font-weight:1000;
+}
+
+@media(max-width:850px){
+    .hero-card,
+    .info-grid,
+    .money-grid{
+        grid-template-columns:1fr;
+    }
+
+    .hero-img{
+        display:none;
+    }
+
+    .top-actions{
+        display:grid;
+        grid-template-columns:1fr;
+    }
+
+    .btn-back,
+    .btn-main,
+    .btn-soft,
+    .btn-danger{
+        width:100%;
+    }
+
+    .branch-card{
+        display:block;
+    }
+
+    .branch-badge{
+        width:100%;
+        margin-top:12px;
+    }
+
+    .hero-card h1{
+        font-size:30px;
+    }
+}
+</style>
+
+<div class="delivery-detail-page">
+
+    <div class="top-actions">
+        <a href="{% url 'delivery_list' %}" class="btn-back">← Back to Delivery</a>
+        <a href="{% url 'delivery_update' delivery.id %}" class="btn-main">✏️ Edit Delivery</a>
+        <a href="{% url 'delivery_sticker' delivery.id %}" target="_blank" class="btn-soft">🏷️ Print Sticker</a>
+        <a href="{% url 'delivery_delete' delivery.id %}" class="btn-danger">🗑️ Delete</a>
+    </div>
+
+    <div class="hero-card">
+        <div>
+            <h1>Delivery #DLV-{{ delivery.id|stringformat:"04d" }} 🚚</h1>
+            <p>Delivery detail, COD money, lack amount, branch/shop and sale link.</p>
+
+            {% if delivery.sale %}
+                <a href="{% url 'sale_detail' delivery.sale.id %}" class="link-sale">
+                    View POS Sale #{{ delivery.sale.id }}
+                </a>
+            {% endif %}
+        </div>
+
+        <img src="{% static 'img/delivery-hero.png' %}" class="hero-img" alt="Delivery">
+    </div>
+
+    <div class="branch-card">
+        <div>
+            <div class="branch-title">Delivery Branch / Shop</div>
+            <div class="branch-sub">This delivery belongs to this shop. Staff from other shops cannot access it.</div>
+        </div>
+
+        <div class="branch-badge">
+            🏪 {% if delivery.branch %}{{ delivery.branch.name }}{% else %}No Branch{% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 class="section-title">Customer Information</h2>
+
+        <div class="info-grid">
+            <div class="info-box">
+                <small>Customer</small>
+                <h3>{{ delivery.customer_name|default:"-" }}</h3>
+            </div>
+
+            <div class="info-box">
+                <small>Phone</small>
+                <h3>{{ delivery.phone|default:"-" }}</h3>
+            </div>
+
+            <div class="info-box">
+                <small>Delivery Date</small>
+                <h3>{{ delivery.delivery_date|date:"M d, Y" }}</h3>
+            </div>
+
+            <div class="info-box">
+                <small>Status</small>
+                <h3>
+                    {% if delivery.status == "done" %}
+                        <span class="badge badge-green">Delivered</span>
+                    {% elif delivery.status == "out" %}
+                        <span class="badge badge-blue">Out For Delivery</span>
+                    {% elif delivery.status == "cancelled" %}
+                        <span class="badge badge-red">Cancelled</span>
+                    {% else %}
+                        <span class="badge badge-orange">Pending</span>
+                    {% endif %}
+                </h3>
+            </div>
+
+            <div class="info-box" style="grid-column:1 / -1;">
+                <small>Location / Address</small>
+                <h3 style="font-size:18px;line-height:1.5;">{{ delivery.location|default:"-" }}</h3>
+            </div>
+
+            <div class="info-box" style="grid-column:1 / -1;">
+                <small>Delivery Note</small>
+                <h3 style="font-size:18px;line-height:1.5;">{{ delivery.delivery_note|default:"-" }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="money-card">
+        <h2 class="section-title">Money / COD</h2>
+
+        <div class="money-grid">
+            <div class="money-box">
+                <small>Total Price / COD Total</small>
+                <h3>${{ delivery.total_price|floatformat:2 }}</h3>
+            </div>
+
+            <div class="money-box cod">
+                <small>Expected Collect</small>
+                <h3>${{ delivery.expected_collect|floatformat:2 }}</h3>
+            </div>
+
+            <div class="money-box received">
+                <small>Actual Received</small>
+                <h3>${{ delivery.actual_received|floatformat:2 }}</h3>
+            </div>
+
+            <div class="money-box lack">
+                <small>Lack Amount</small>
+                <h3>${{ delivery.lack_amount|floatformat:2 }}</h3>
+            </div>
+
+            <div class="money-box">
+                <small>Delivery Fee</small>
+                <h3>${{ delivery.delivery_fee|floatformat:2 }}</h3>
+            </div>
+
+            <div class="money-box">
+                <small>Delivery Fee Paid</small>
+                <h3>
+                    {% if delivery.delivery_fee_paid %}
+                        <span class="badge badge-green">Paid</span>
+                    {% else %}
+                        <span class="badge badge-red">Unpaid</span>
+                    {% endif %}
+                </h3>
+            </div>
+
+            <div class="money-box">
+                <small>Payment Type</small>
+                <h3>
+                    {% if delivery.payment_type == "paid" %}
+                        <span class="badge badge-green">Already Paid</span>
+                    {% elif delivery.payment_type == "cod_collect" %}
+                        <span class="badge badge-orange">COD Collect</span>
+                    {% elif delivery.payment_type == "cod_shop" %}
+                        <span class="badge badge-purple">COD Pay To Shop</span>
+                    {% endif %}
+                </h3>
+            </div>
+
+            <div class="money-box" style="grid-column:1 / -1;">
+                <small>Exchange Rate Note</small>
+                <h3 style="font-size:18px;">{{ delivery.exchange_rate_note|default:"-" }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="item-card">
+        <h2 class="section-title">Delivery Items</h2>
+
+        {% if delivery.items.all %}
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Item / Variant</th>
+                            <th>SKU</th>
+                            <th>Qty</th>
+                            <th>Unit Price</th>
+                            <th>Line Total</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in delivery.items.all %}
+                        <tr>
+                            <td>
+                                <div class="item-name">
+                                    {% if item.variant and item.variant.item %}
+                                        {{ item.variant.item.name }}
+                                    {% else %}
+                                        {{ item.variant }}
+                                    {% endif %}
+                                </div>
+
+                                {% if item.variant %}
+                                    <div class="item-meta">{{ item.variant.display_name }}</div>
+                                {% endif %}
+                            </td>
+
+                            <td>{% if item.variant %}{{ item.variant.sku|default:"-" }}{% else %}-{% endif %}</td>
+                            <td>{{ item.qty }}</td>
+                            <td>${{ item.unit_price|floatformat:2 }}</td>
+                            <td>${{ item.line_total|floatformat:2 }}</td>
+                            <td>{{ item.note|default:"-" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-box">
+                No delivery item rows. This delivery may come from POS sale total only.
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+
 {% endblock %}

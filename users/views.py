@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Q
 
 from .forms import UserForm, RoleForm
+from .models import StaffProfile
 
 
 def user_login(request):
@@ -34,7 +35,13 @@ def user_logout(request):
 def user_list(request):
     q = request.GET.get("q", "").strip()
 
-    users = User.objects.all().prefetch_related("groups").order_by("-id")
+    users = (
+        User.objects
+        .all()
+        .prefetch_related("groups")
+        .select_related("staff_profile", "staff_profile__branch")
+        .order_by("-id")
+    )
 
     if q:
         users = users.filter(
@@ -43,6 +50,7 @@ def user_list(request):
             | Q(first_name__icontains=q)
             | Q(last_name__icontains=q)
             | Q(groups__name__icontains=q)
+            | Q(staff_profile__branch__name__icontains=q)
         ).distinct()
 
     return render(request, "users/user_list.html", {
@@ -58,8 +66,11 @@ def user_create(request):
         form = UserForm(request.POST)
 
         if form.is_valid():
-            form.save()
-            messages.success(request, "User created successfully.")
+            user = form.save()
+            messages.success(
+                request,
+                f"User {user.username} created successfully.",
+            )
             return redirect("user_list")
     else:
         form = UserForm()
@@ -79,8 +90,11 @@ def user_edit(request, pk):
         form = UserForm(request.POST, instance=user_obj)
 
         if form.is_valid():
-            form.save()
-            messages.success(request, "User updated successfully.")
+            user = form.save()
+            messages.success(
+                request,
+                f"User {user.username} updated successfully.",
+            )
             return redirect("user_list")
     else:
         form = UserForm(instance=user_obj)
@@ -102,7 +116,7 @@ def user_toggle_active(request, pk):
         return redirect("user_list")
 
     user_obj.is_active = not user_obj.is_active
-    user_obj.save()
+    user_obj.save(update_fields=["is_active"])
 
     messages.success(request, "User status updated.")
     return redirect("user_list")
@@ -171,6 +185,21 @@ def role_edit(request, pk):
 
 
 @login_required
+@permission_required("auth.delete_group", raise_exception=True)
+def role_delete(request, pk):
+    role = get_object_or_404(Group, pk=pk)
+
+    if request.method == "POST":
+        role.delete()
+        messages.success(request, "Role deleted successfully.")
+        return redirect("role_list")
+
+    return render(request, "users/role_delete.html", {
+        "role": role,
+    })
+
+
+@login_required
 @permission_required("auth.view_permission", raise_exception=True)
 def permission_list(request):
     q = request.GET.get("q", "").strip()
@@ -192,18 +221,4 @@ def permission_list(request):
     return render(request, "users/permission_list.html", {
         "permissions": permissions,
         "q": q,
-    })
-
-@login_required
-@permission_required("auth.delete_group", raise_exception=True)
-def role_delete(request, pk):
-    role = get_object_or_404(Group, pk=pk)
-
-    if request.method == "POST":
-        role.delete()
-        messages.success(request, "Role deleted successfully.")
-        return redirect("role_list")
-
-    return render(request, "users/role_delete.html", {
-        "role": role,
     })

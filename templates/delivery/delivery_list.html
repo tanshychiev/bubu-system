@@ -6,10 +6,34 @@
 <div class="page-head">
     <div>
         <h1>Delivery ✨</h1>
-        <div class="page-subtitle">Manage COD, delivery fee, lack money, and next delivery 💗</div>
+
+        <div class="page-subtitle">
+            Manage COD, delivery fee, lack money, next delivery and shop branch 💗
+        </div>
+
+        <div style="margin:12px 0 0;">
+            {% if request.user.is_superuser %}
+                <span class="badge badge-purple">Admin View · All Shops</span>
+            {% else %}
+                <span class="badge badge-green">
+                    🔒 Branch Locked:
+                    {% if current_branch %}
+                        {{ current_branch.name }}
+                    {% else %}
+                        No Branch
+                    {% endif %}
+                </span>
+            {% endif %}
+        </div>
 
         <form method="get" class="tool-row">
-            <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search customer / phone / location..." class="search-input">
+            <input
+                type="text"
+                name="q"
+                value="{{ request.GET.q }}"
+                placeholder="Search customer / phone / location / shop / sale..."
+                class="search-input"
+            >
 
             <select name="status" class="search-input">
                 <option value="">All Status</option>
@@ -43,10 +67,12 @@
         <thead>
             <tr>
                 <th>ID</th>
+                <th>Shop</th>
+                <th>POS Sale</th>
                 <th>Customer</th>
                 <th>Phone</th>
                 <th>Location</th>
-                <th>Total</th>
+                <th>Total / COD</th>
                 <th>Payment</th>
                 <th>Expected</th>
                 <th>Received</th>
@@ -64,6 +90,24 @@
             <tr>
                 <td>
                     <strong style="color:#9b7cf6;">#DLV-{{ delivery.id|stringformat:"04d" }}</strong>
+                </td>
+
+                <td>
+                    {% if delivery.branch %}
+                        <span class="badge badge-purple">🏪 {{ delivery.branch.name }}</span>
+                    {% else %}
+                        <span class="badge badge-red">No Branch</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if delivery.sale %}
+                        <a href="{% url 'sale_detail' delivery.sale.id %}" class="badge badge-blue">
+                            Sale #{{ delivery.sale.id }}
+                        </a>
+                    {% else %}
+                        <span class="badge badge-orange">Manual</span>
+                    {% endif %}
                 </td>
 
                 <td>
@@ -147,7 +191,7 @@
 
         {% empty %}
             <tr>
-                <td colspan="14">
+                <td colspan="16">
                     <div class="empty-box">
                         <div class="empty-icon">🚚✨</div>
                         <h3>No delivery found</h3>

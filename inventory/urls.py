@@ -9,6 +9,11 @@ urlpatterns = [
     path("", views.item_list, name="item_list"),
 
     # =====================
+    # CONTROL CENTER
+    # =====================
+    path("control-center/", views.inventory_control_center, name="inventory_control_center"),
+
+    # =====================
     # BRANCH / SHOP
     # =====================
     path("branches/", views.branch_list, name="branch_list"),
@@ -16,10 +21,12 @@ urlpatterns = [
     path("branches/<int:pk>/toggle/", views.branch_toggle, name="branch_toggle"),
 
     # =====================
-    # CREATE
+    # CREATE / TYPE / UNIT
     # =====================
     path("create/", views.item_create, name="item_create"),
     path("types/create/", views.item_type_create, name="item_type_create"),
+    path("types/<int:pk>/delete/", views.item_type_delete, name="item_type_delete"),
+    path("units/<int:pk>/delete/", views.unit_option_delete, name="unit_option_delete"),
 
     # =====================
     # BATCH + API
@@ -28,7 +35,8 @@ urlpatterns = [
     path("api/variant-search/", views.variant_search_api, name="variant_search_api"),
 
     # =====================
-    # VARIANT (IMPORTANT: before <int:pk>)
+    # VARIANT
+    # IMPORTANT: before <int:pk>
     # =====================
     path("variant/<int:variant_id>/stock/", views.variant_stock_movement, name="variant_stock_movement"),
     path("variant/<int:variant_id>/barcode/", views.variant_barcode_label, name="variant_barcode_label"),

@@ -6,6 +6,7 @@ class DeliveryForm(forms.ModelForm):
     class Meta:
         model = Delivery
         fields = [
+            "branch",
             "customer_name",
             "phone",
             "location",
@@ -22,6 +23,8 @@ class DeliveryForm(forms.ModelForm):
         ]
 
         widgets = {
+            "branch": forms.Select(attrs={"class": "form-control"}),
+
             "customer_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Customer name"}),
             "phone": forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone number"}),
             "location": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Delivery location"}),
@@ -37,7 +40,7 @@ class DeliveryForm(forms.ModelForm):
 
             "exchange_rate_note": forms.TextInput(attrs={
                 "class": "form-control",
-                "placeholder": "Example: customer paid riel, $1 = 4000៛"
+                "placeholder": "Example: customer paid riel, $1 = 4000៛",
             }),
 
             "delivery_note": forms.Textarea(attrs={"class": "form-control", "rows": 3}),

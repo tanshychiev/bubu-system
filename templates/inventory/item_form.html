@@ -76,7 +76,6 @@ p{
 }
 
 .form-box input,
-.form-box select,
 .form-box textarea{
     width:100%;
     min-height:64px;
@@ -89,8 +88,11 @@ p{
     font-family:'Nunito',sans-serif;
 }
 
+.form-box select{
+    display:none;
+}
+
 .form-box input:focus,
-.form-box select:focus,
 .form-box textarea:focus{
     outline:none;
     border-color:#b99cff;
@@ -98,10 +100,7 @@ p{
 }
 
 .form-box input[type="checkbox"]{
-    width:26px;
-    height:26px;
-    min-height:26px;
-    accent-color:#7b5cff;
+    display:none;
 }
 
 .full{
@@ -122,6 +121,151 @@ p{
     cursor:pointer;
 }
 
+/* ============================= */
+/* TOUCH SELECT POPUP */
+/* ============================= */
+
+.fake-select-btn{
+    width:100%;
+    min-height:64px;
+    border-radius:22px;
+    border:1px solid #eaddec;
+    background:white;
+    padding:0 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    font-size:18px;
+    font-weight:900;
+    color:#17152f;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(130,91,60,.04);
+}
+
+.fake-select-btn span{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.fake-select-btn small{
+    color:#9b7cf6;
+    font-weight:900;
+    font-size:20px;
+}
+
+.popup-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(23,21,47,.38);
+    z-index:7000;
+}
+
+.popup-backdrop.active{
+    display:block;
+}
+
+.select-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:460px;
+    max-width:calc(100% - 28px);
+    max-height:82vh;
+    overflow:hidden;
+    background:white;
+    border-radius:30px;
+    border:1px solid #f1ddd1;
+    box-shadow:0 30px 90px rgba(23,21,47,.28);
+    z-index:7001;
+    padding:18px;
+}
+
+.select-popup.active{
+    display:block;
+}
+
+.popup-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:14px;
+}
+
+.popup-head h3{
+    margin:0;
+    color:#17152f;
+    font-size:24px;
+    font-weight:900;
+}
+
+.popup-close{
+    width:44px;
+    height:44px;
+    border:none;
+    border-radius:50%;
+    background:#fff3f1;
+    color:#ff4d4d;
+    font-weight:900;
+    cursor:pointer;
+}
+
+.popup-list{
+    display:grid;
+    gap:10px;
+    max-height:60vh;
+    overflow-y:auto;
+    padding-right:4px;
+}
+
+.popup-option{
+    width:100%;
+    min-height:62px;
+    border-radius:22px;
+    border:1px solid #eaddec;
+    background:#fffaf7;
+    padding:0 16px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    cursor:pointer;
+    font-size:16px;
+    font-weight:900;
+    color:#17152f;
+}
+
+.popup-option:hover,
+.popup-option.active{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    border-color:transparent;
+}
+
+.popup-option .emoji{
+    font-size:22px;
+}
+
+.popup-option strong{
+    flex:1;
+    text-align:left;
+}
+
+.popup-option em{
+    font-style:normal;
+    font-size:12px;
+    padding:5px 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,.25);
+}
+
+/* ============================= */
+/* IMAGE DROP */
+/* ============================= */
+
 .drop-zone{
     min-height:300px;
     border:2px dashed #d9c6ec;
@@ -139,6 +283,7 @@ p{
     font-weight:900;
     text-align:center;
     padding:24px;
+    position:relative;
 }
 
 .drop-zone:hover,
@@ -158,13 +303,157 @@ p{
     font-weight:800;
 }
 
-.preview-box img{
+.preview-box{
     margin-top:14px;
-    max-height:180px;
-    max-width:260px;
+    position:relative;
+    display:inline-flex;
+}
+
+.preview-box img{
+    max-height:210px;
+    max-width:280px;
     border-radius:20px;
     object-fit:contain;
+    background:white;
+    border:1px solid #f0e5ee;
+    box-shadow:0 10px 24px rgba(130,91,60,.10);
 }
+
+.remove-image-btn{
+    display:none;
+    position:absolute;
+    top:-12px;
+    right:-12px;
+    width:38px;
+    height:38px;
+    border:none;
+    border-radius:50%;
+    background:#ff4d4d;
+    color:white;
+    font-size:20px;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 10px 22px rgba(255,77,77,.25);
+    z-index:3;
+}
+
+.preview-box.has-image .remove-image-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+/* ============================= */
+/* ACTIVE TOGGLE BUTTON */
+/* ============================= */
+
+.status-toggle-wrap{
+    width:100%;
+}
+
+.status-toggle-btn{
+    width:100%;
+    min-height:76px;
+    border:none;
+    border-radius:26px;
+    background:#f3f0f8;
+    border:1px solid #eaddec;
+    padding:10px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    cursor:pointer;
+    transition:.22s;
+    box-shadow:0 10px 24px rgba(130,91,60,.05);
+}
+
+.status-toggle-btn:hover{
+    transform:translateY(-1px);
+}
+
+.status-toggle-btn.active{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    border-color:transparent;
+    box-shadow:0 16px 30px rgba(155,124,246,.25);
+}
+
+.status-left{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    text-align:left;
+}
+
+.status-icon{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    box-shadow:0 6px 14px rgba(0,0,0,.08);
+    flex-shrink:0;
+}
+
+.status-text{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+}
+
+.status-title{
+    font-size:17px;
+    font-weight:900;
+    color:#17152f;
+}
+
+.status-desc{
+    font-size:13px;
+    font-weight:800;
+    color:#7b7288;
+}
+
+.status-toggle-btn.active .status-title,
+.status-toggle-btn.active .status-desc{
+    color:white;
+}
+
+.status-pill{
+    min-width:112px;
+    min-height:48px;
+    border-radius:999px;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:0 14px;
+    font-weight:900;
+    color:#7b5cff;
+    flex-shrink:0;
+}
+
+.status-dot{
+    width:12px;
+    height:12px;
+    border-radius:50%;
+    background:#c7c0d6;
+}
+
+.status-toggle-btn.active .status-dot{
+    background:#19a974;
+}
+
+.status-toggle-btn.active .status-pill{
+    color:#ff7f61;
+}
+
+/* ============================= */
+/* ERROR */
+/* ============================= */
 
 .error{
     background:#fff3f1;
@@ -195,14 +484,18 @@ p{
     }
 
     .form-box input,
-    .form-box select,
-    .form-box textarea{
+    .form-box textarea,
+    .fake-select-btn{
         min-height:68px;
         font-size:18px;
     }
 
     .drop-zone{
         min-height:340px;
+    }
+
+    .status-toggle-btn{
+        min-height:84px;
     }
 
     .back-btn,
@@ -220,6 +513,48 @@ p{
 
     h1{
         font-size:30px;
+    }
+
+    .select-popup{
+        left:14px;
+        right:14px;
+        top:auto;
+        bottom:16px;
+        width:auto;
+        max-width:none;
+        max-height:75vh;
+        transform:none;
+        border-radius:28px;
+    }
+
+    .popup-list{
+        max-height:56vh;
+    }
+
+    .status-toggle-btn{
+        min-height:86px;
+        padding:12px;
+    }
+
+    .status-icon{
+        width:44px;
+        height:44px;
+        font-size:20px;
+    }
+
+    .status-pill{
+        min-width:96px;
+        min-height:44px;
+        padding:0 10px;
+        font-size:14px;
+    }
+
+    .status-title{
+        font-size:16px;
+    }
+
+    .status-desc{
+        font-size:12px;
     }
 }
 </style>
@@ -259,13 +594,27 @@ p{
 
                 <div class="form-box">
                     <label>Type</label>
+
                     {{ form.item_type }}
+
+                    <button type="button" class="fake-select-btn" onclick="openSelectPopup('typePopup')">
+                        <span id="typeLabel">Choose Type</span>
+                        <small>⌄</small>
+                    </button>
+
                     {% for e in form.item_type.errors %}<div class="error">{{ e }}</div>{% endfor %}
                 </div>
 
                 <div class="form-box">
                     <label>Unit</label>
+
                     {{ form.unit }}
+
+                    <button type="button" class="fake-select-btn" onclick="openSelectPopup('unitPopup')">
+                        <span id="unitLabel">Choose Unit</span>
+                        <small>⌄</small>
+                    </button>
+
                     {% for e in form.unit.errors %}<div class="error">{{ e }}</div>{% endfor %}
                 </div>
 
@@ -289,13 +638,15 @@ p{
                     <label>Product Image</label>
 
                     <div class="drop-zone" id="dropZone">
-                        <div class="drop-icon">📸</div>
-                        <strong>Tap, drag, or paste image here</strong>
-                        <span>Touch screen friendly • Ctrl + V supported</span>
+                        <div class="drop-icon" id="dropIcon">📸</div>
+                        <strong id="dropText">Tap, drag, or paste image here</strong>
+                        <span id="dropSubText">Touch screen friendly • Ctrl + V supported</span>
 
-                        <div id="previewBox" class="preview-box">
+                        <div id="previewBox" class="preview-box {% if form.instance.image %}has-image{% endif %}">
+                            <button type="button" class="remove-image-btn" onclick="removeImage(event)">×</button>
+
                             {% if form.instance.image %}
-                                <img src="{{ form.instance.image.url }}">
+                                <img src="{{ form.instance.image.url }}" alt="Preview">
                             {% endif %}
                         </div>
                     </div>
@@ -304,12 +655,52 @@ p{
                         {{ form.image }}
                     </div>
 
+                    <input type="hidden" name="remove_image" id="removeImageInput" value="0">
+
                     {% for e in form.image.errors %}<div class="error">{{ e }}</div>{% endfor %}
                 </div>
 
                 <div class="form-box">
-                    <label>Active</label>
-                    {{ form.is_active }}
+                    <label>Item Status</label>
+
+                    <div class="status-toggle-wrap">
+                        {{ form.is_active }}
+
+                        <button
+                            type="button"
+                            id="activeToggleBtn"
+                            class="status-toggle-btn {% if form.is_active.value %}active{% endif %}"
+                            onclick="toggleActiveStatus()"
+                        >
+                            <div class="status-left">
+                                <div class="status-icon" id="activeStatusIcon">
+                                    {% if form.is_active.value %}✅{% else %}⏸{% endif %}
+                                </div>
+
+                                <div class="status-text">
+                                    <div class="status-title" id="activeStatusTitle">
+                                        {% if form.is_active.value %}Active{% else %}Inactive{% endif %}
+                                    </div>
+
+                                    <div class="status-desc" id="activeStatusDesc">
+                                        {% if form.is_active.value %}
+                                            This item is visible and ready to sell
+                                        {% else %}
+                                            This item is hidden / not ready to sell
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="status-pill">
+                                <span class="status-dot"></span>
+                                <span id="activeStatusPillText">
+                                    {% if form.is_active.value %}ON{% else %}OFF{% endif %}
+                                </span>
+                            </div>
+                        </button>
+                    </div>
+
                     {% for e in form.is_active.errors %}<div class="error">{{ e }}</div>{% endfor %}
                 </div>
 
@@ -323,28 +714,250 @@ p{
 
 </div>
 
+<!-- TYPE POPUP -->
+<div class="popup-backdrop" id="typePopupBackdrop" onclick="closeSelectPopup('typePopup')"></div>
+
+<div class="select-popup" id="typePopup">
+    <div class="popup-head">
+        <h3>Choose Type</h3>
+        <button type="button" class="popup-close" onclick="closeSelectPopup('typePopup')">✕</button>
+    </div>
+
+    <div class="popup-list" id="typePopupList"></div>
+</div>
+
+<!-- UNIT POPUP -->
+<div class="popup-backdrop" id="unitPopupBackdrop" onclick="closeSelectPopup('unitPopup')"></div>
+
+<div class="select-popup" id="unitPopup">
+    <div class="popup-head">
+        <h3>Choose Unit</h3>
+        <button type="button" class="popup-close" onclick="closeSelectPopup('unitPopup')">✕</button>
+    </div>
+
+    <div class="popup-list" id="unitPopupList"></div>
+</div>
+
 <script>
 const dropZone = document.getElementById("dropZone");
 const imageInput = document.querySelector('input[type="file"][name="image"]');
 const previewBox = document.getElementById("previewBox");
+const removeImageInput = document.getElementById("removeImageInput");
+
+const typeSelect = document.querySelector('select[name="item_type"]');
+const unitSelect = document.querySelector('select[name="unit"]');
+const typeLabel = document.getElementById("typeLabel");
+const unitLabel = document.getElementById("unitLabel");
+
+const activeCheckbox = document.querySelector('input[type="checkbox"][name="is_active"]');
+const activeToggleBtn = document.getElementById("activeToggleBtn");
+const activeStatusIcon = document.getElementById("activeStatusIcon");
+const activeStatusTitle = document.getElementById("activeStatusTitle");
+const activeStatusDesc = document.getElementById("activeStatusDesc");
+const activeStatusPillText = document.getElementById("activeStatusPillText");
+
+function selectIcon(text){
+    const value = (text || "").toLowerCase();
+
+    if(value.includes("toy")){
+        return "🧸";
+    }
+
+    if(value.includes("food") || value.includes("ចំណី")){
+        return "🥫";
+    }
+
+    if(value.includes("service") || value.includes("groom")){
+        return "✂️";
+    }
+
+    if(value.includes("medicine") || value.includes("med")){
+        return "💊";
+    }
+
+    if(value.includes("kg") || value.includes("gram") || value.includes("g")){
+        return "⚖️";
+    }
+
+    if(value.includes("bottle")){
+        return "🧴";
+    }
+
+    if(value.includes("pack") || value.includes("box")){
+        return "📦";
+    }
+
+    if(value.includes("piece") || value.includes("pcs")){
+        return "🔢";
+    }
+
+    return "🐾";
+}
+
+function initFakeSelect(selectEl, labelEl, popupListId, popupId){
+    if(!selectEl || !labelEl){
+        return;
+    }
+
+    const popupList = document.getElementById(popupListId);
+    popupList.innerHTML = "";
+
+    Array.from(selectEl.options).forEach(option => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "popup-option";
+
+        if(option.selected){
+            btn.classList.add("active");
+            labelEl.textContent = option.textContent.trim() || "Choose";
+        }
+
+        btn.innerHTML = `
+            <span class="emoji">${selectIcon(option.textContent)}</span>
+            <strong>${option.textContent || "Choose"}</strong>
+            ${option.selected ? "<em>Current</em>" : ""}
+        `;
+
+        btn.onclick = function(){
+            selectEl.value = option.value;
+            labelEl.textContent = option.textContent.trim() || "Choose";
+
+            Array.from(popupList.querySelectorAll(".popup-option")).forEach(x => {
+                x.classList.remove("active");
+                const em = x.querySelector("em");
+                if(em){
+                    em.remove();
+                }
+            });
+
+            btn.classList.add("active");
+
+            if(!btn.querySelector("em")){
+                const em = document.createElement("em");
+                em.textContent = "Current";
+                btn.appendChild(em);
+            }
+
+            closeSelectPopup(popupId);
+        };
+
+        popupList.appendChild(btn);
+    });
+
+    if(!labelEl.textContent.trim()){
+        const selected = selectEl.options[selectEl.selectedIndex];
+        if(selected){
+            labelEl.textContent = selected.textContent.trim() || "Choose";
+        }
+    }
+}
+
+function openSelectPopup(id){
+    const popup = document.getElementById(id);
+    const backdrop = document.getElementById(id + "Backdrop");
+
+    if(popup){
+        popup.classList.add("active");
+    }
+
+    if(backdrop){
+        backdrop.classList.add("active");
+    }
+}
+
+function closeSelectPopup(id){
+    const popup = document.getElementById(id);
+    const backdrop = document.getElementById(id + "Backdrop");
+
+    if(popup){
+        popup.classList.remove("active");
+    }
+
+    if(backdrop){
+        backdrop.classList.remove("active");
+    }
+}
+
+function refreshActiveToggleUI(){
+    if(!activeCheckbox || !activeToggleBtn){
+        return;
+    }
+
+    if(activeCheckbox.checked){
+        activeToggleBtn.classList.add("active");
+        activeStatusIcon.textContent = "✅";
+        activeStatusTitle.textContent = "Active";
+        activeStatusDesc.textContent = "This item is visible and ready to sell";
+        activeStatusPillText.textContent = "ON";
+    }else{
+        activeToggleBtn.classList.remove("active");
+        activeStatusIcon.textContent = "⏸";
+        activeStatusTitle.textContent = "Inactive";
+        activeStatusDesc.textContent = "This item is hidden / not ready to sell";
+        activeStatusPillText.textContent = "OFF";
+    }
+}
+
+function toggleActiveStatus(){
+    if(!activeCheckbox){
+        return;
+    }
+
+    activeCheckbox.checked = !activeCheckbox.checked;
+    refreshActiveToggleUI();
+}
 
 function setImageFile(file){
-    if(!file || !file.type.startsWith("image/")) return;
+    if(!file || !file.type.startsWith("image/")){
+        return;
+    }
 
     const dt = new DataTransfer();
     dt.items.add(file);
     imageInput.files = dt.files;
 
+    removeImageInput.value = "0";
+
     const reader = new FileReader();
+
     reader.onload = function(e){
-        previewBox.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+        previewBox.classList.add("has-image");
+        previewBox.innerHTML = `
+            <button type="button" class="remove-image-btn" onclick="removeImage(event)">×</button>
+            <img src="${e.target.result}" alt="Preview">
+        `;
     };
+
     reader.readAsDataURL(file);
+}
+
+function removeImage(event){
+    if(event){
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    if(imageInput){
+        imageInput.value = "";
+    }
+
+    removeImageInput.value = "1";
+
+    previewBox.classList.remove("has-image");
+    previewBox.innerHTML = `
+        <button type="button" class="remove-image-btn" onclick="removeImage(event)">×</button>
+    `;
 }
 
 if(dropZone && imageInput){
     dropZone.addEventListener("click", function(){
         imageInput.click();
+    });
+
+    imageInput.addEventListener("change", function(){
+        if(imageInput.files && imageInput.files[0]){
+            setImageFile(imageInput.files[0]);
+        }
     });
 
     dropZone.addEventListener("dragover", function(e){
@@ -363,6 +976,10 @@ if(dropZone && imageInput){
     });
 
     document.addEventListener("paste", function(e){
+        if(!e.clipboardData || !e.clipboardData.items){
+            return;
+        }
+
         const items = e.clipboardData.items;
 
         for(let i = 0; i < items.length; i++){
@@ -373,6 +990,10 @@ if(dropZone && imageInput){
         }
     });
 }
+
+initFakeSelect(typeSelect, typeLabel, "typePopupList", "typePopup");
+initFakeSelect(unitSelect, unitLabel, "unitPopupList", "unitPopup");
+refreshActiveToggleUI();
 </script>
 
 {% endblock %}

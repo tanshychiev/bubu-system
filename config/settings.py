@@ -22,6 +22,8 @@ INSTALLED_APPS = [
     "delivery",
     "purchases",
     "services",
+    "pets",
+
 ]
 
 MIDDLEWARE = [

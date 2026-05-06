@@ -1,14 +1,190 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
-<h1>Delete Delivery</h1>
 
-<p>Are you sure you want to delete this delivery?</p>
-<p><strong>{{ delivery.customer_name }}</strong> - {{ delivery.phone }}</p>
+<style>
+.delete-page{
+    max-width:720px;
+    margin:40px auto;
+}
 
-<form method="post">
-    {% csrf_token %}
-    <button type="submit">Yes, Delete</button>
-    <a href="{% url 'delivery_detail' delivery.id %}">Cancel</a>
-</form>
+.delete-card{
+    background:white;
+    border:1px solid #f0dcd0;
+    border-radius:30px;
+    padding:30px;
+    box-shadow:0 18px 45px rgba(111,75,50,.10);
+    text-align:center;
+}
+
+.delete-icon{
+    width:90px;
+    height:90px;
+    border-radius:50%;
+    background:#fff0f0;
+    color:#ff4d5d;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:44px;
+    margin:0 auto 18px;
+}
+
+.delete-card h1{
+    margin:0;
+    color:#1c143a;
+    font-size:32px;
+    font-weight:1000;
+}
+
+.delete-card p{
+    color:#7b6f92;
+    font-weight:900;
+    line-height:1.6;
+}
+
+.delivery-info{
+    margin:22px 0;
+    padding:18px;
+    border-radius:22px;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+    border:1px solid #f0dcd0;
+    text-align:left;
+}
+
+.info-row{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    padding:9px 0;
+    border-bottom:1px dashed #eadbd4;
+    font-weight:900;
+}
+
+.info-row:last-child{
+    border-bottom:none;
+}
+
+.info-row span{
+    color:#7b6f92;
+}
+
+.info-row strong{
+    color:#1c143a;
+}
+
+.action-row{
+    display:flex;
+    gap:12px;
+    justify-content:center;
+    flex-wrap:wrap;
+}
+
+.btn-cancel,
+.btn-delete{
+    min-height:56px;
+    padding:0 26px;
+    border-radius:999px;
+    border:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+    text-decoration:none;
+    cursor:pointer;
+}
+
+.btn-cancel{
+    background:white;
+    color:#7b5cff;
+    border:1.5px solid #e2dbff;
+}
+
+.btn-delete{
+    background:#ff4d5d;
+    color:white;
+    box-shadow:0 14px 28px rgba(255,77,93,.25);
+}
+
+@media(max-width:650px){
+    .delete-page{
+        margin:20px auto;
+    }
+
+    .delete-card{
+        padding:22px;
+    }
+
+    .action-row{
+        display:grid;
+        grid-template-columns:1fr;
+    }
+
+    .btn-cancel,
+    .btn-delete{
+        width:100%;
+    }
+
+    .info-row{
+        display:block;
+    }
+
+    .info-row strong{
+        display:block;
+        margin-top:5px;
+    }
+}
+</style>
+
+<div class="delete-page">
+    <div class="delete-card">
+        <div class="delete-icon">🗑️</div>
+
+        <h1>Delete Delivery?</h1>
+        <p>This action will remove this delivery record. Please check the customer and COD information before deleting.</p>
+
+        <div class="delivery-info">
+            <div class="info-row">
+                <span>Delivery ID</span>
+                <strong>#DLV-{{ delivery.id|stringformat:"04d" }}</strong>
+            </div>
+
+            <div class="info-row">
+                <span>Shop</span>
+                <strong>{% if delivery.branch %}{{ delivery.branch.name }}{% else %}No Branch{% endif %}</strong>
+            </div>
+
+            <div class="info-row">
+                <span>Customer</span>
+                <strong>{{ delivery.customer_name }}</strong>
+            </div>
+
+            <div class="info-row">
+                <span>Phone</span>
+                <strong>{{ delivery.phone|default:"-" }}</strong>
+            </div>
+
+            <div class="info-row">
+                <span>Total / COD</span>
+                <strong>${{ delivery.total_price|floatformat:2 }}</strong>
+            </div>
+
+            <div class="info-row">
+                <span>Status</span>
+                <strong>{{ delivery.get_status_display }}</strong>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="action-row">
+                <a href="{% url 'delivery_detail' delivery.id %}" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-delete">Yes, Delete</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 {% endblock %}

@@ -87,6 +87,69 @@ h2{
     margin-bottom:14px;
 }
 
+/* ============================= */
+/* BRANCH LOCK CARD */
+/* ============================= */
+.branch-box{
+    margin:14px 0 18px;
+    padding:16px 18px;
+    border-radius:24px;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+    border:1px solid #f0e5ee;
+    display:flex;
+    justify-content:space-between;
+    gap:14px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+
+.branch-left{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.branch-icon{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    box-shadow:0 8px 18px rgba(130,91,60,.08);
+}
+
+.branch-title{
+    color:#17152f;
+    font-weight:900;
+    font-size:18px;
+}
+
+.branch-sub{
+    color:#7b7288;
+    font-weight:800;
+    margin-top:4px;
+}
+
+.branch-badge{
+    min-height:46px;
+    padding:0 18px;
+    border-radius:999px;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    font-weight:900;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    white-space:nowrap;
+}
+
+.branch-badge.locked{
+    background:linear-gradient(135deg,#19a974,#7be0b2);
+}
+
 .info-grid{
     display:grid;
     grid-template-columns:repeat(2,1fr);
@@ -124,6 +187,9 @@ h2{
     color:white;
     font-weight:900;
     text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
 }
 
 .btn-soft{
@@ -134,6 +200,9 @@ h2{
     color:#7b5cff;
     font-weight:900;
     text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
 }
 
 .btn-danger{
@@ -144,6 +213,9 @@ h2{
     color:#ff4d4d;
     font-weight:900;
     text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
 }
 
 .variant-head-row{
@@ -213,14 +285,53 @@ h2{
     font-weight:900;
 }
 
-.stock-good{
-    color:#19a974;
+.stock-good,
+.stock-low,
+.stock-zero{
+    display:inline-flex;
+    padding:8px 12px;
+    border-radius:999px;
     font-weight:900;
+    font-size:13px;
+}
+
+.stock-good{
+    background:#eafff4;
+    color:#19a974;
 }
 
 .stock-low{
+    background:#ffe6e6;
     color:#ff4d4d;
+}
+
+.stock-zero{
+    background:#f1f1f1;
+    color:#777;
+}
+
+.branch-stock-list{
+    margin-top:10px;
+    display:grid;
+    gap:7px;
+}
+
+.branch-stock-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:#fff8fb;
+    border:1px solid #f0e5ee;
+    border-radius:14px;
+    padding:8px 10px;
+    font-size:12px;
     font-weight:900;
+    color:#514a5f;
+}
+
+.branch-stock-row strong{
+    color:#17152f;
 }
 
 .price-row{
@@ -261,6 +372,10 @@ h2{
     background:linear-gradient(135deg,#7b5cff,#b07cff);
 }
 
+.edit-btn{
+    background:linear-gradient(135deg,#ff9d6c,#ff7f61);
+}
+
 .empty-variant{
     text-align:center;
     padding:50px 10px;
@@ -295,12 +410,46 @@ h2{
     h1{
         font-size:32px;
     }
+
+    .detail-card,
+    .variant-card{
+        padding:16px;
+        border-radius:24px;
+    }
+
+    .branch-box{
+        display:block;
+    }
+
+    .branch-badge{
+        width:100%;
+        margin-top:12px;
+    }
+
+    .action-row,
+    .variant-action{
+        display:grid;
+        grid-template-columns:1fr;
+    }
+
+    .btn-main,
+    .btn-soft,
+    .btn-danger,
+    .variant-stock-btn{
+        width:100%;
+        justify-content:center;
+    }
 }
 </style>
 
 <div class="detail-page">
 
-    <a href="{% url 'item_list' %}" class="back-btn">← Back to Inventory</a>
+    <a
+        href="{% url 'item_list' %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}"
+        class="back-btn"
+    >
+        ← Back to Inventory
+    </a>
 
     <div class="detail-card">
         <div class="detail-grid">
@@ -325,10 +474,48 @@ h2{
                 <h1>{{ item.name }}</h1>
                 <div class="brand">{{ item.brand|default:"No brand" }}</div>
 
+                <div class="branch-box">
+                    <div class="branch-left">
+                        <div class="branch-icon">🏪</div>
+
+                        <div>
+                            <div class="branch-title">
+                                Current Shop:
+                                {% if current_branch %}
+                                    {{ current_branch.name }}
+                                {% else %}
+                                    No shop selected
+                                {% endif %}
+                            </div>
+
+                            <div class="branch-sub">
+                                {% if request.user.is_superuser %}
+                                    Admin is viewing this shop inventory.
+                                {% else %}
+                                    Stock view is locked to your assigned staff shop.
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="branch-badge {% if not request.user.is_superuser %}locked{% endif %}">
+                        {% if request.user.is_superuser %}
+                            Admin Shop View
+                        {% else %}
+                            🔒 Branch Locked
+                        {% endif %}
+                    </div>
+                </div>
+
                 <div class="info-grid">
                     <div class="info-box">
-                        <small>Total Stock From Variants</small>
-                        <h3>{{ item.total_stock }} {{ item.get_unit_display }}</h3>
+                        <small>
+                            Total Stock
+                            {% if current_branch %}
+                                / {{ current_branch.name }}
+                            {% endif %}
+                        </small>
+                        <h3>{{ item.branch_stock_total }} {{ item.get_unit_display }}</h3>
                     </div>
 
                     <div class="info-box">
@@ -336,12 +523,14 @@ h2{
                         <h3>{{ item.get_unit_display }}</h3>
                     </div>
 
-                    {% if can_manage_inventory %}
+                    {% if can_view_cost_price %}
                     <div class="info-box">
                         <small>Default Cost</small>
                         <h3>${{ item.cost_price|floatformat:2 }}</h3>
                     </div>
+                    {% endif %}
 
+                    {% if can_manage_inventory %}
                     <div class="info-box">
                         <small>Default Sale Price</small>
                         <h3>${{ item.sale_price|floatformat:2 }}</h3>
@@ -356,9 +545,17 @@ h2{
 
                 {% if can_manage_inventory %}
                 <div class="action-row">
-                    <a href="{% url 'item_variant_create' item.id %}" class="btn-main">+ Add Variant Size / Color / Price</a>
-                    <a href="{% url 'item_edit' item.id %}" class="btn-soft">Edit Item</a>
-                    <a href="{% url 'item_delete' item.id %}" class="btn-danger">Delete</a>
+                    <a href="{% url 'item_variant_create' item.id %}" class="btn-main">
+                        + Add Variant Size / Color / Price
+                    </a>
+
+                    <a href="{% url 'item_edit' item.id %}" class="btn-soft">
+                        Edit Item
+                    </a>
+
+                    <a href="{% url 'item_delete' item.id %}" class="btn-danger">
+                        Delete
+                    </a>
                 </div>
                 {% endif %}
             </div>
@@ -371,7 +568,9 @@ h2{
             <h2>Sellable Variants 🎨</h2>
 
             {% if can_manage_inventory %}
-                <a href="{% url 'item_variant_create' item.id %}" class="btn-main">+ Add Variant</a>
+                <a href="{% url 'item_variant_create' item.id %}" class="btn-main">
+                    + Add Variant
+                </a>
             {% endif %}
         </div>
 
@@ -415,33 +614,70 @@ h2{
                     {% endif %}
                 </div>
 
-                {% if variant.quantity <= 3 %}
-                    <div class="stock-low">Low Stock: {{ variant.quantity }} {{ item.get_unit_display }}</div>
+                {% if variant.branch_stock_qty <= 0 %}
+                    <div class="stock-zero">
+                        Out of Stock: {{ variant.branch_stock_qty }} {{ item.get_unit_display }}
+                    </div>
+                {% elif variant.branch_stock_qty <= 3 %}
+                    <div class="stock-low">
+                        Low Stock: {{ variant.branch_stock_qty }} {{ item.get_unit_display }}
+                    </div>
                 {% else %}
-                    <div class="stock-good">Stock: {{ variant.quantity }} {{ item.get_unit_display }}</div>
+                    <div class="stock-good">
+                        Stock: {{ variant.branch_stock_qty }} {{ item.get_unit_display }}
+                    </div>
+                {% endif %}
+
+                {% if request.user.is_superuser %}
+                    <div class="branch-stock-list">
+                        {% for stock in variant.branch_stock_rows %}
+                            <div class="branch-stock-row">
+                                <span>{{ stock.branch.name }}</span>
+                                <strong>{{ stock.quantity }} {{ item.get_unit_display }}</strong>
+                            </div>
+                        {% empty %}
+                            <div class="branch-stock-row">
+                                <span>No branch stock yet</span>
+                                <strong>0 {{ item.get_unit_display }}</strong>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% if can_view_cost_price or can_manage_inventory %}
+                <div class="price-row">
+                    {% if can_view_cost_price %}
+                        <span class="cost">Cost: ${{ variant.cost_price|floatformat:2 }}</span>
+                    {% else %}
+                        <span class="cost">Cost: Hidden</span>
+                    {% endif %}
+
+                    {% if can_manage_inventory %}
+                        <span class="price">Sale: ${{ variant.sale_price|floatformat:2 }}</span>
+                    {% endif %}
+                </div>
                 {% endif %}
 
                 {% if can_manage_inventory %}
-                <div class="price-row">
-                    <span class="cost">Cost: ${{ variant.cost_price|floatformat:2 }}</span>
-                    <span class="price">Sale: ${{ variant.sale_price|floatformat:2 }}</span>
-                </div>
-
                 <div class="variant-action">
-    <a href="{% url 'variant_stock_movement' variant.id %}" class="variant-stock-btn">
-        Stock In / Out
-    </a>
+                    <a
+                        href="{% url 'variant_stock_movement' variant.id %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}"
+                        class="variant-stock-btn"
+                    >
+                        Stock In / Out
+                    </a>
 
-    <a href="{% url 'variant_barcode_label' variant.id %}" class="variant-stock-btn barcode-btn">
-        Print Barcode
-    </a>
+                    <a href="{% url 'variant_barcode_label' variant.id %}" class="variant-stock-btn barcode-btn">
+                        Print Barcode
+                    </a>
 
-    <a href="{% url 'item_variant_edit' item.id variant.id %}" class="variant-stock-btn barcode-btn">
-        Edit
-    </a>
-</div>
+                    <a href="{% url 'item_variant_edit' item.id variant.id %}" class="variant-stock-btn edit-btn">
+                        Edit
+                    </a>
+                </div>
                 {% endif %}
             </div>
+
             {% empty %}
             <div class="empty-variant">
                 <div style="font-size:70px;">📦✨</div>
@@ -449,7 +685,9 @@ h2{
                 <p>Add each real sellable size/color/price row here.</p>
 
                 {% if can_manage_inventory %}
-                    <a href="{% url 'item_variant_create' item.id %}" class="btn-main">+ Add First Variant</a>
+                    <a href="{% url 'item_variant_create' item.id %}" class="btn-main">
+                        + Add First Variant
+                    </a>
                 {% endif %}
             </div>
             {% endfor %}

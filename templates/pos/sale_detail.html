@@ -5,8 +5,45 @@
 
 <style>
 .detail-container {
-    max-width: 1100px;
+    max-width: 1150px;
     margin: auto;
+}
+
+a {
+    text-decoration: none !important;
+}
+
+.top-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.btn-back,
+.btn-main,
+.btn-soft {
+    min-height: 52px;
+    padding: 0 22px;
+    border-radius: 999px;
+    font-weight: 900;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-back,
+.btn-soft {
+    background: #f8f6ff;
+    color: #7b5cff;
+    border: 1.5px solid #e2dbff;
+}
+
+.btn-main {
+    background: linear-gradient(135deg, #7b5cff, #b07cff);
+    color: white;
+    box-shadow: 0 12px 26px rgba(123,92,255,0.28);
 }
 
 .detail-header {
@@ -18,14 +55,16 @@
 }
 
 .detail-title h1 {
-    font-size: 36px;
+    font-size: 38px;
     color: #1c143a;
     margin: 0;
+    font-weight: 900;
 }
 
 .detail-title p {
     color: #7b6f92;
-    margin-top: 6px;
+    margin-top: 8px;
+    font-weight: 800;
 }
 
 .hero-img {
@@ -34,24 +73,50 @@
     object-fit: contain;
 }
 
-.btn-back {
-    background: #f8f6ff;
-    color: #7b5cff;
-    padding: 10px 18px;
-    border-radius: 999px;
-    font-weight: 800;
-    border: 1.5px solid #e2dbff;
-    display: inline-block;
-    margin-bottom: 15px;
-}
-
-.card {
+.card,
+.table-card,
+.payment-card {
     background: white;
-    border-radius: 22px;
-    padding: 20px;
+    border-radius: 24px;
+    padding: 22px;
     border: 1px solid #f0dcd0;
     box-shadow: 0 12px 30px rgba(111,75,50,0.06);
     margin-bottom: 20px;
+}
+
+.branch-card {
+    background: linear-gradient(135deg, #fff8fb, #fbf8ff);
+    border-radius: 24px;
+    padding: 18px 22px;
+    border: 1px solid #f0dcd0;
+    box-shadow: 0 12px 30px rgba(111,75,50,0.06);
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.branch-title {
+    font-weight: 900;
+    color: #1c143a;
+    font-size: 20px;
+}
+
+.branch-sub {
+    color: #7b6f92;
+    font-weight: 800;
+    margin-top: 6px;
+}
+
+.branch-badge {
+    background: linear-gradient(135deg, #9b7cf6, #ff8c6b);
+    color: white;
+    border-radius: 999px;
+    padding: 12px 20px;
+    font-weight: 900;
+    white-space: nowrap;
 }
 
 .info-grid {
@@ -62,25 +127,28 @@
 
 .info-box {
     background: #fff8fb;
-    padding: 14px;
-    border-radius: 16px;
+    padding: 16px;
+    border-radius: 18px;
 }
 
 .info-box small {
     color: #7b6f92;
-    font-weight: 700;
+    font-weight: 900;
 }
 
 .info-box h3 {
-    margin: 6px 0 0;
+    margin: 8px 0 0;
     color: #1c143a;
+    font-size: 22px;
+    font-weight: 900;
 }
 
 .badge {
-    padding: 6px 12px;
+    padding: 8px 13px;
     border-radius: 999px;
-    font-weight: 800;
+    font-weight: 900;
     font-size: 13px;
+    display: inline-flex;
 }
 
 .paid {
@@ -98,28 +166,189 @@
     color: #ff9900;
 }
 
-.table-card {
-    background: white;
-    border-radius: 22px;
-    overflow: hidden;
+.section-title {
+    color: #1c143a;
+    font-size: 26px;
+    font-weight: 900;
+    margin: 0 0 16px;
+}
+
+/* =========================
+   CUSTOMER MONEY BREAKDOWN
+========================= */
+.bill-card {
+    background: linear-gradient(135deg, #fff8fb, #fbf8ff);
     border: 1px solid #f0dcd0;
+    border-radius: 26px;
+    padding: 22px;
     box-shadow: 0 12px 30px rgba(111,75,50,0.06);
+    margin-bottom: 20px;
+}
+
+.bill-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.bill-head h2 {
+    margin: 0;
+    color: #1c143a;
+    font-size: 26px;
+    font-weight: 900;
+}
+
+.bill-head p {
+    margin: 6px 0 0;
+    color: #7b6f92;
+    font-weight: 800;
+}
+
+.bill-total-badge {
+    min-height: 54px;
+    padding: 0 20px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #9b7cf6, #ff8c6b);
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 18px;
+    white-space: nowrap;
+}
+
+.bill-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+.bill-box {
+    background: white;
+    border: 1px solid #f0dcd0;
+    border-radius: 20px;
+    padding: 16px;
+}
+
+.bill-box small {
+    display: block;
+    color: #7b6f92;
+    font-weight: 900;
+    margin-bottom: 8px;
+}
+
+.bill-box h3 {
+    margin: 0;
+    color: #1c143a;
+    font-size: 22px;
+    font-weight: 900;
+}
+
+.bill-box.product {
+    border-color: #e7ddff;
+}
+
+.bill-box.grooming {
+    border-color: #ffe0b8;
+}
+
+.bill-box.service {
+    border-color: #ffd8e2;
+}
+
+.bill-box.pet {
+    border-color: #c9f2dc;
+}
+
+.payment-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+.payment-box {
+    background: #fff8fb;
+    border-radius: 18px;
+    padding: 16px;
+    border: 1px solid #f0dcd0;
+}
+
+.payment-box small {
+    color: #7b6f92;
+    font-weight: 900;
+}
+
+.payment-box h3 {
+    margin: 8px 0 0;
+    color: #1c143a;
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.table-wrap {
+    overflow-x: auto;
 }
 
 .table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 860px;
 }
 
 .table th {
     background: #fff8fb;
     padding: 16px;
     text-align: left;
+    color: #1c143a;
+    white-space: nowrap;
 }
 
 .table td {
-    padding: 14px;
+    padding: 14px 16px;
     border-top: 1px solid #f4e3d8;
+    font-weight: 800;
+    color: #30244f;
+    vertical-align: top;
+    white-space: nowrap;
+}
+
+.item-name {
+    font-weight: 900;
+    color: #1c143a;
+}
+
+.item-meta {
+    color: #7b6f92;
+    font-size: 13px;
+    font-weight: 800;
+    margin-top: 4px;
+}
+
+.variant-pill,
+.branch-pill,
+.type-pill {
+    display: inline-flex;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #f4f1ff;
+    color: #7b5cff;
+    font-size: 12px;
+    font-weight: 900;
+    margin-top: 6px;
+}
+
+.branch-pill {
+    background: #e6fff3;
+    color: #00a86b;
+}
+
+.type-pill {
+    background: #fff4e6;
+    color: #ff9900;
 }
 
 .total-row {
@@ -127,28 +356,127 @@
     background: #fff3ff;
 }
 
-@media (max-width: 900px) {
+.total-row td {
+    color: #1c143a;
+    font-size: 17px;
+}
+
+.add-payment-card {
+    background: linear-gradient(135deg, #fff8fb, #fbf8ff);
+    border-radius: 24px;
+    padding: 22px;
+    border: 1px solid #f0dcd0;
+    margin-bottom: 20px;
+}
+
+.add-payment-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.5fr auto;
+    gap: 12px;
+    align-items: end;
+}
+
+.form-box label {
+    display: block;
+    color: #1c143a;
+    font-weight: 900;
+    margin-bottom: 8px;
+}
+
+.form-box input,
+.form-box select {
+    width: 100%;
+    min-height: 54px;
+    border-radius: 18px;
+    border: 1.5px solid #eadbd4;
+    padding: 0 14px;
+    font-weight: 900;
+    color: #1c143a;
+    box-sizing: border-box;
+    background: white;
+}
+
+.empty-box {
+    background: #fff8fb;
+    border-radius: 18px;
+    padding: 22px;
+    color: #7b6f92;
+    font-weight: 900;
+    text-align: center;
+}
+
+@media (max-width: 950px) {
     .detail-header,
-    .info-grid {
+    .info-grid,
+    .payment-grid,
+    .add-payment-form,
+    .bill-grid {
         grid-template-columns: 1fr;
+    }
+
+    .hero-img {
+        display: none;
+    }
+
+    .top-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .btn-back,
+    .btn-main,
+    .btn-soft {
+        width: 100%;
+        min-height: 58px;
+    }
+
+    .branch-card {
+        display: block;
+    }
+
+    .branch-badge {
+        display: inline-flex;
+        margin-top: 12px;
+    }
+
+    .bill-total-badge {
+        width: 100%;
+    }
+
+    .detail-title h1 {
+        font-size: 32px;
     }
 }
 </style>
 
 <div class="detail-container">
 
-    <a href="{% url 'sale_list' %}" class="btn-back">← Back to Sales</a>
+    <div class="top-actions">
+        <a href="{% url 'sale_list' %}" class="btn-back">← Back to Sales</a>
+        <a href="{% url 'pos' %}" class="btn-main">🛒 New Sale</a>
+        <a href="{% url 'cash_count_dashboard' %}" class="btn-soft">💵 Cash Count</a>
+    </div>
 
     <div class="detail-header">
         <div class="detail-title">
             <h1>Sale #{{ sale.id }} 🧾</h1>
-            <p>Transaction details and items</p>
+            <p>Transaction details, branch, items, customer money and payments.</p>
         </div>
 
         <img src="{% static 'img/bubu-sales-hero.png' %}" class="hero-img">
     </div>
 
-    <!-- INFO -->
+    <div class="branch-card">
+        <div>
+            <div class="branch-title">Sale Branch / Shop</div>
+            <div class="branch-sub">This sale and stock deduction belong to this shop.</div>
+        </div>
+
+        <div class="branch-badge">
+            🏪 {% if sale.branch %}{{ sale.branch.name }}{% else %}No Branch{% endif %}
+        </div>
+    </div>
+
     <div class="card">
         <div class="info-grid">
 
@@ -164,7 +492,7 @@
             </div>
 
             <div class="info-box">
-                <small>Total</small>
+                <small>Customer Pay Total</small>
                 <h3>${{ sale.total_amount|floatformat:2 }}</h3>
             </div>
 
@@ -176,6 +504,11 @@
             <div class="info-box">
                 <small>Balance</small>
                 <h3>${{ balance|floatformat:2 }}</h3>
+            </div>
+
+            <div class="info-box">
+                <small>Change</small>
+                <h3>${{ sale.change_amount|floatformat:2 }}</h3>
             </div>
 
             <div class="info-box">
@@ -192,41 +525,184 @@
             </div>
 
             <div class="info-box">
+                <small>Sale Type</small>
+                <h3>{{ sale.get_sale_type_display }}</h3>
+            </div>
+
+            <div class="info-box">
                 <small>Date</small>
                 <h3>{{ sale.created_at|date:"d M Y H:i" }}</h3>
+            </div>
+
+            <div class="info-box">
+                <small>Delivery Created</small>
+                <h3>{% if sale.delivery_created %}Yes{% else %}No{% endif %}</h3>
             </div>
 
         </div>
     </div>
 
-    <!-- ITEMS -->
-    <div class="table-card">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>Qty</th>
-                    <th>Price</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
+    <div class="bill-card">
+        <div class="bill-head">
+            <div>
+                <h2>Customer Money Breakdown</h2>
+                <p>For mixed sales: product, grooming, service and pet in one bill.</p>
+            </div>
 
-            <tbody>
-                {% for line in sale.items.all %}
-                <tr>
-                    <td>{{ line.item }}</td>
-                    <td>{{ line.quantity }}</td>
-                    <td>${{ line.price|floatformat:2 }}</td>
-                    <td>${{ line.total|floatformat:2 }}</td>
-                </tr>
+            <div class="bill-total-badge">
+                Total: ${{ sale.total_amount|floatformat:2 }}
+            </div>
+        </div>
+
+        <div class="bill-grid">
+            <div class="bill-box product">
+                <small>🛍️ Products / Accessories</small>
+                <h3>${{ product_total|default:"0.00"|floatformat:2 }}</h3>
+            </div>
+
+            <div class="bill-box grooming">
+                <small>✂️ Grooming</small>
+                <h3>${{ grooming_total|default:"0.00"|floatformat:2 }}</h3>
+            </div>
+
+            <div class="bill-box service">
+                <small>🎀 Services</small>
+                <h3>${{ service_total|default:"0.00"|floatformat:2 }}</h3>
+            </div>
+
+            <div class="bill-box pet">
+                <small>🐶 Pet / Dog / Cat</small>
+                <h3>${{ pet_total|default:"0.00"|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+
+    {% if balance > 0 %}
+    <div class="add-payment-card">
+        <h2 class="section-title">Add Payment</h2>
+
+        <form method="post" action="{% url 'sale_add_payment' sale.id %}" class="add-payment-form">
+            {% csrf_token %}
+
+            <div class="form-box">
+                <label>Amount</label>
+                <input type="number" step="0.01" name="amount" placeholder="0.00" required>
+            </div>
+
+            <div class="form-box">
+                <label>Method</label>
+                <select name="method">
+                    <option value="cash_usd">Cash USD</option>
+                    <option value="cash_khr">Cash KHR</option>
+                    <option value="aba_usd">ABA USD</option>
+                    <option value="aba_khr">ABA KHR</option>
+                    <option value="bank">Bank</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-box">
+                <label>Note</label>
+                <input type="text" name="note" placeholder="Optional note">
+            </div>
+
+            <button type="submit" class="btn-main">Save Payment</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="payment-card">
+        <h2 class="section-title">Payments</h2>
+
+        {% if sale.payments.all %}
+            <div class="payment-grid">
+                {% for payment in sale.payments.all %}
+                <div class="payment-box">
+                    <small>{{ payment.created_at|date:"d M Y H:i" }}</small>
+                    <h3>{{ payment.get_method_display }}: ${{ payment.amount|floatformat:2 }}</h3>
+                    {% if payment.note %}
+                        <div class="item-meta">{{ payment.note }}</div>
+                    {% endif %}
+                </div>
                 {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-box">No payment records yet.</div>
+        {% endif %}
+    </div>
 
-                <tr class="total-row">
-                    <td colspan="3">TOTAL</td>
-                    <td>${{ sale.total_amount|floatformat:2 }}</td>
-                </tr>
-            </tbody>
-        </table>
+    <div class="table-card">
+        <h2 class="section-title">Sale Items</h2>
+
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Type</th>
+                        <th>Variant</th>
+                        <th>Shop</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for line in sale.items.all %}
+                    <tr>
+                        <td>
+                            <div class="item-name">{{ line.item.name }}</div>
+
+                            {% if line.item.brand %}
+                                <div class="item-meta">{{ line.item.brand }}</div>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if line.item.item_type %}
+                                <span class="type-pill">
+                                    {{ line.item.item_type.name }}
+                                </span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if line.variant %}
+                                <span class="variant-pill">{{ line.variant.display_name }}</span>
+                                {% if line.variant.sku %}
+                                    <div class="item-meta">SKU: {{ line.variant.sku }}</div>
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if line.branch %}
+                                <span class="branch-pill">{{ line.branch.name }}</span>
+                            {% elif sale.branch %}
+                                <span class="branch-pill">{{ sale.branch.name }}</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>{{ line.quantity }}</td>
+                        <td>${{ line.price|floatformat:2 }}</td>
+                        <td>${{ line.total|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+
+                    <tr class="total-row">
+                        <td colspan="6">CUSTOMER PAY TOTAL</td>
+                        <td>${{ sale.total_amount|floatformat:2 }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
 </div>

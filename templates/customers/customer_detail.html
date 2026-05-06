@@ -1,26 +1,600 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block content %}
 
-<div class="page-head">
-    <div>
-        <h1>Customer Detail 🐾</h1>
-        <div class="page-subtitle">View full information</div>
+<div class="customer-detail-page">
+
+    <div class="detail-hero">
+        <div>
+            <h1>{{ customer.name }} 🐾</h1>
+            <p>Customer profile, pet profiles, warranty and history.</p>
+        </div>
+
+        <div class="hero-actions">
+            <a href="{% url 'customer_list' %}" class="soft-btn">← Back</a>
+            <a href="{% url 'customer_update' customer.id %}" class="edit-btn">✏️ Edit Customer</a>
+            <a href="{% url 'customer_pet_create' customer.id %}" class="add-btn">＋ Add Pet</a>
+        </div>
     </div>
+
+    <div class="top-grid">
+        <div class="profile-card">
+            <div class="avatar">👤</div>
+
+            <div>
+                <h2>{{ customer.name }}</h2>
+                <p>{{ customer.phone|default:"No phone" }}</p>
+                <p>{{ customer.email|default:"No email" }}</p>
+                <p>{{ customer.address|default:"No location" }}</p>
+            </div>
+        </div>
+
+        <div class="stat-card purple">
+            <span>🐾</span>
+            <small>Total Pets</small>
+            <strong>{{ customer_pets.count }}</strong>
+        </div>
+
+        <div class="stat-card green">
+            <span>⭐</span>
+            <small>Points</small>
+            <strong>{{ customer.points|default:0 }}</strong>
+        </div>
+
+        <div class="stat-card orange">
+            <span>💰</span>
+            <small>Total Spent</small>
+            <strong>${{ customer.total_spent|default:"0.00" }}</strong>
+        </div>
+    </div>
+
+    <div class="section-card">
+        <div class="section-head">
+            <div>
+                <h2>Customer Pets</h2>
+                <p>Know if pet is bought at BUBU, pre-order, or customer own pet.</p>
+            </div>
+
+            <a href="{% url 'customer_pet_create' customer.id %}" class="add-small">＋ Add Pet Profile</a>
+        </div>
+
+        <div class="pet-grid">
+            {% for pet in customer_pets %}
+                <div class="pet-card">
+                    <div class="pet-photo">
+                        {% if pet.photo %}
+                            <img src="{{ pet.photo.url }}" alt="{{ pet.pet_name }}">
+                        {% else %}
+                            <div>
+                                {% if pet.pet_type == "cat" %}
+                                    🐱
+                                {% else %}
+                                    🐶
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="pet-info">
+                        <h3>{{ pet.pet_name|default:"No Name Yet" }}</h3>
+
+                        <div class="pet-meta">
+                            {{ pet.get_pet_type_display }}
+                            {% if pet.breed %} · {{ pet.breed }}{% endif %}
+                            {% if pet.gender %} · {{ pet.gender }}{% endif %}
+                        </div>
+
+                        {% if pet.age_text %}
+                            <div class="pet-line">Age: {{ pet.age_text }}</div>
+                        {% endif %}
+
+                        {% if pet.birth_date %}
+                            <div class="pet-line">Birthday: {{ pet.birth_date|date:"d/m/Y" }}</div>
+                        {% endif %}
+
+                        {% if pet.color %}
+                            <div class="pet-line">Color: {{ pet.color }}</div>
+                        {% endif %}
+
+                        <div class="source-badge source-{{ pet.source }}">
+                            {% if pet.source == "bubu_sale" %}
+                                ✅ Bought at BUBU
+                            {% elif pet.source == "bubu_preorder" %}
+                                📝 BUBU Pre-order
+                            {% else %}
+                                🐾 Customer Own Pet
+                            {% endif %}
+                        </div>
+
+                        {% if pet.warranty_expire_date %}
+                            <div class="warranty-line">
+                                Warranty until: {{ pet.warranty_expire_date|date:"d/m/Y" }}
+                            </div>
+                        {% endif %}
+
+                        {% if pet.pet_sale %}
+                            <a href="{% url 'pet_sale_detail' pet.pet_sale.id %}" class="invoice-link">
+                                View Pet Sale #{{ pet.pet_sale.id }}
+                            </a>
+                        {% endif %}
+
+                        {% if pet.note %}
+                            <p class="pet-note">{{ pet.note }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="pet-actions">
+                        <a href="{% url 'customer_pet_update' pet.id %}" class="pet-edit">Edit</a>
+
+                        <form method="post" action="{% url 'customer_pet_delete' pet.id %}" onsubmit="return confirm('Delete this pet profile?');">
+                            {% csrf_token %}
+                            <button type="submit" class="pet-delete">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-box">
+                    <div>🐾</div>
+                    <h3>No pet profile yet</h3>
+                    <p>Add customer own pet, or later it will auto create from BUBU pet sale.</p>
+                    <a href="{% url 'customer_pet_create' customer.id %}" class="add-btn">＋ Add First Pet</a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="bottom-grid">
+        <div class="section-card">
+            <h2>Customer Info</h2>
+
+            <div class="info-row"><span>Name</span><strong>{{ customer.name }}</strong></div>
+            <div class="info-row"><span>Phone</span><strong>{{ customer.phone|default:"-" }}</strong></div>
+            <div class="info-row"><span>Email</span><strong>{{ customer.email|default:"-" }}</strong></div>
+            <div class="info-row"><span>Address</span><strong>{{ customer.address|default:"-" }}</strong></div>
+            <div class="info-row"><span>Created</span><strong>{{ customer.created_at|date:"d/m/Y H:i" }}</strong></div>
+            <div class="info-row"><span>Updated</span><strong>{{ customer.updated_at|date:"d/m/Y H:i" }}</strong></div>
+        </div>
+
+        <div class="section-card">
+            <h2>Edit History</h2>
+
+            <div class="history-list">
+                {% for h in histories %}
+                    <div class="history-item">
+                        <strong>{{ h.field_name|title }}</strong>
+                        <div>
+                            <span class="old">{{ h.old_value|default:"-" }}</span>
+                            →
+                            <span class="new">{{ h.new_value|default:"-" }}</span>
+                        </div>
+                        <small>{{ h.changed_by|default:"-" }} · {{ h.changed_at|date:"d/m/Y H:i" }}</small>
+                    </div>
+                {% empty %}
+                    <div class="empty-history">No edit history yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
 </div>
 
-<div class="card">
-<p>
-<a href="{% url 'customer_list' %}" class="btn btn-reset">← Back</a>
-<a href="{% url 'customer_update' customer.id %}" class="btn">Edit</a>
-</p>
+<style>
+*{box-sizing:border-box}
+a{text-decoration:none}
 
-<table>
-<tr><th>Name</th><td>{{ customer.name }}</td></tr>
-<tr><th>Phone</th><td>{{ customer.phone }}</td></tr>
-<tr><th>Email</th><td>{{ customer.email }}</td></tr>
-<tr><th>Address</th><td>{{ customer.address }}</td></tr>
-<tr><th>Created</th><td>{{ customer.created_at }}</td></tr>
-</table>
-</div>
+.customer-detail-page{
+    padding:24px 28px;
+}
+
+.detail-hero{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+    margin-bottom:22px;
+}
+
+.detail-hero h1{
+    margin:0;
+    font-size:38px;
+    font-weight:1000;
+    color:#17152f;
+}
+
+.detail-hero p{
+    margin:8px 0 0;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.hero-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.soft-btn,
+.edit-btn,
+.add-btn,
+.add-small{
+    min-height:54px;
+    padding:0 18px;
+    border-radius:18px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+}
+
+.soft-btn{
+    background:#f1f5f9;
+    color:#334155;
+}
+
+.edit-btn{
+    background:#fff6e8;
+    color:#ff8b3d;
+}
+
+.add-btn,
+.add-small{
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+    color:white;
+}
+
+.top-grid{
+    display:grid;
+    grid-template-columns:1.5fr repeat(3,1fr);
+    gap:16px;
+    margin-bottom:18px;
+}
+
+.profile-card,
+.stat-card,
+.section-card{
+    background:white;
+    border:1px solid #f1ddd1;
+    border-radius:28px;
+    box-shadow:0 18px 40px rgba(130,91,60,.08);
+}
+
+.profile-card{
+    padding:20px;
+    display:flex;
+    align-items:center;
+    gap:16px;
+}
+
+.avatar{
+    width:90px;
+    height:90px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#f3eaff,#fff0f6);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:44px;
+}
+
+.profile-card h2{
+    margin:0;
+    color:#17152f;
+    font-size:26px;
+    font-weight:1000;
+}
+
+.profile-card p{
+    margin:4px 0;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.stat-card{
+    padding:18px;
+    min-height:130px;
+    display:grid;
+    align-content:center;
+    gap:7px;
+}
+
+.stat-card span{
+    font-size:30px;
+}
+
+.stat-card small{
+    color:#7b7288;
+    font-weight:900;
+}
+
+.stat-card strong{
+    font-size:30px;
+    color:#17152f;
+}
+
+.stat-card.purple{background:linear-gradient(135deg,#fbf7ff,#f0e7ff)}
+.stat-card.green{background:linear-gradient(135deg,#fbfffc,#eafaf1)}
+.stat-card.orange{background:linear-gradient(135deg,#fffaf6,#fff0e8)}
+
+.section-card{
+    padding:22px;
+    margin-bottom:18px;
+}
+
+.section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    margin-bottom:18px;
+}
+
+.section-head h2,
+.section-card h2{
+    margin:0;
+    color:#17152f;
+    font-size:26px;
+    font-weight:1000;
+}
+
+.section-head p{
+    margin:6px 0 0;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.pet-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+}
+
+.pet-card{
+    border:1px solid #eaddec;
+    border-radius:24px;
+    padding:14px;
+    background:linear-gradient(180deg,#fff,#fffaf7);
+    display:grid;
+    gap:12px;
+}
+
+.pet-photo{
+    height:210px;
+    border-radius:22px;
+    background:#fff8f4;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    font-size:80px;
+}
+
+.pet-photo img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.pet-info h3{
+    margin:0;
+    font-size:22px;
+    font-weight:1000;
+    color:#17152f;
+}
+
+.pet-meta,
+.pet-line,
+.warranty-line{
+    color:#7b7288;
+    font-weight:900;
+    margin-top:5px;
+}
+
+.source-badge{
+    display:inline-flex;
+    margin-top:10px;
+    padding:8px 12px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:1000;
+}
+
+.source-bubu_sale{
+    background:#eafff3;
+    color:#16a05d;
+}
+
+.source-bubu_preorder{
+    background:#fff7ed;
+    color:#ea580c;
+}
+
+.source-customer_own{
+    background:#f2edff;
+    color:#7b5cff;
+}
+
+.warranty-line{
+    color:#20a864;
+}
+
+.invoice-link{
+    display:inline-flex;
+    margin-top:8px;
+    padding:8px 12px;
+    border-radius:14px;
+    background:#eaf6ff;
+    color:#3a86ff;
+    font-weight:1000;
+}
+
+.pet-note{
+    background:#fffaf0;
+    padding:10px;
+    border-radius:14px;
+    color:#6b6178;
+    font-weight:800;
+}
+
+.pet-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+}
+
+.pet-edit,
+.pet-delete{
+    min-height:44px;
+    border-radius:14px;
+    border:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+    cursor:pointer;
+    width:100%;
+}
+
+.pet-edit{
+    background:#f5f1ff;
+    color:#8e63ff;
+}
+
+.pet-delete{
+    background:#fff3f1;
+    color:#ff4d4d;
+}
+
+.empty-box{
+    grid-column:1/-1;
+    text-align:center;
+    padding:50px;
+    border:2px dashed #eaddec;
+    border-radius:24px;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.empty-box div{
+    font-size:80px;
+}
+
+.empty-box h3{
+    margin:8px 0;
+    color:#17152f;
+}
+
+.bottom-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+}
+
+.info-row{
+    display:flex;
+    justify-content:space-between;
+    gap:14px;
+    padding:12px 0;
+    border-bottom:1px dashed #eaddec;
+    font-weight:900;
+}
+
+.info-row span{
+    color:#7b7288;
+}
+
+.info-row strong{
+    color:#17152f;
+    text-align:right;
+}
+
+.history-list{
+    display:grid;
+    gap:10px;
+    margin-top:14px;
+}
+
+.history-item{
+    background:#f9f7ff;
+    border:1px dashed #ddd5f5;
+    border-radius:16px;
+    padding:12px;
+    display:grid;
+    gap:6px;
+    font-weight:900;
+}
+
+.old{
+    color:#ff4d4d;
+    background:#fff0f0;
+    padding:5px 8px;
+    border-radius:10px;
+}
+
+.new{
+    color:#20a864;
+    background:#effff5;
+    padding:5px 8px;
+    border-radius:10px;
+}
+
+.history-item small,
+.empty-history{
+    color:#7b7288;
+    font-weight:800;
+}
+
+@media(max-width:1200px){
+    .top-grid{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .pet-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .bottom-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:700px){
+    .customer-detail-page{
+        padding:18px;
+    }
+
+    .detail-hero{
+        display:block;
+    }
+
+    .hero-actions{
+        margin-top:14px;
+        display:grid;
+    }
+
+    .top-grid,
+    .pet-grid{
+        grid-template-columns:1fr;
+    }
+
+    .profile-card{
+        display:block;
+        text-align:center;
+    }
+
+    .avatar{
+        margin:0 auto 12px;
+    }
+
+    .section-head{
+        display:block;
+    }
+
+    .add-small{
+        width:100%;
+        margin-top:12px;
+    }
+}
+</style>
 
 {% endblock %}

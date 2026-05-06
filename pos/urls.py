@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     # POS
     path("", views.pos, name="pos"),
+    path("switch-branch/", views.pos_switch_branch, name="pos_switch_branch"),
 
     # Cart
     path("add/<int:item_id>/", views.pos_add_cart, name="pos_add_cart"),
@@ -22,6 +23,6 @@ urlpatterns = [
     path("sales/<int:pk>/payment/", views.sale_add_payment, name="sale_add_payment"),
     path("cash-count/", views.cash_count_dashboard, name="cash_count_dashboard"),
 
-    # Settings (Exchange Rate)
+    # Settings
     path("settings/exchange-rate/", views.pos_exchange_rate, name="pos_exchange_rate"),
 ]

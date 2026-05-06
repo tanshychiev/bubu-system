@@ -1,0 +1,1522 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="form-page">
+
+    <div class="page-top">
+        <div>
+            <h1>{% if pet %}Edit Pet{% else %}Add Pet{% endif %} 🐾</h1>
+            <p>Create or update pet stock, vaccine history, and pet health record.</p>
+        </div>
+
+        <a href="{% url 'pet_list' %}" class="soft-btn">← Back</a>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="form-card">
+        {% csrf_token %}
+
+        <div class="layout">
+
+            <!-- PHOTO PANEL -->
+            <div class="photo-panel">
+                <div class="preview" id="previewBox">
+                    {% if pet and pet.photo %}
+                        <img src="{{ pet.photo.url }}" id="photoPreview">
+                        <button type="button" class="photo-x" onclick="removeCurrentPhoto()">×</button>
+                    {% else %}
+                        <div id="photoEmpty">🐾</div>
+                        <img src="" id="photoPreview" style="display:none;">
+                        <button type="button" class="photo-x" id="photoX" style="display:none;" onclick="clearNewPhoto(event)">×</button>
+                    {% endif %}
+                </div>
+
+                <input type="hidden" name="remove_photo" id="removePhotoInput" value="0">
+
+                <div
+                    class="drop-zone"
+                    id="dropZone"
+                    onclick="document.getElementById('photoInput').click()"
+                    ondragover="handleDragOver(event)"
+                    ondragleave="handleDragLeave(event)"
+                    ondrop="handleDrop(event)"
+                >
+                    <div class="drop-title">📸 Upload Photo</div>
+                    <div class="drop-sub">
+                        Click to choose, drag image here, or copy screenshot then Ctrl + V.
+                    </div>
+                </div>
+
+                <input
+                    type="file"
+                    name="photo"
+                    id="photoInput"
+                    accept="image/*"
+                    class="hidden-file"
+                    onchange="previewPhotoFile(this)"
+                >
+            </div>
+
+            <!-- FIELDS -->
+            <div class="fields">
+
+                <div class="grid">
+
+                    <!-- TYPE -->
+                    <label>
+                        Type
+                        <input type="hidden" name="pet_type" id="petTypeInput" value="{% if pet %}{{ pet.pet_type }}{% else %}dog{% endif %}">
+
+                        <button type="button" class="touch-select" onclick="openOptionPopup('type')">
+                            <span id="petTypeLabel">
+                                {% if pet.pet_type == "cat" %}
+                                    🐱 Cat
+                                {% elif pet.pet_type == "other" %}
+                                    🐾 Other
+                                {% else %}
+                                    🐶 Dog
+                                {% endif %}
+                            </span>
+                            <b>⌄</b>
+                        </button>
+                    </label>
+
+                    <label>
+                        Breed
+                        <input name="breed" value="{{ pet.breed|default:'' }}" required placeholder="Example: Poodle">
+                    </label>
+
+                    <label>
+                        Name / Code
+                        <input name="name" value="{{ pet.name|default:'' }}" placeholder="Example: Bear">
+                    </label>
+
+                    <!-- GENDER -->
+                    <label>
+                        Gender
+                        <input type="hidden" name="gender" id="genderInput" value="{{ pet.gender|default:'' }}">
+
+                        <button type="button" class="touch-select" onclick="openOptionPopup('gender')">
+                            <span id="genderLabel">
+                                {% if pet.gender %}
+                                    {{ pet.gender }}
+                                {% else %}
+                                    Choose
+                                {% endif %}
+                            </span>
+                            <b>⌄</b>
+                        </button>
+                    </label>
+
+                    <label>
+                        Color
+                        <input name="color" value="{{ pet.color|default:'' }}" placeholder="Example: Brown">
+                    </label>
+
+                    <!-- STATUS -->
+                    <label>
+                        Stock Status
+                        <input type="hidden" name="status" id="statusInput" value="{% if pet %}{{ pet.status }}{% else %}in_stock{% endif %}">
+
+                        <button type="button" class="touch-select" onclick="openOptionPopup('status')">
+                            <span id="statusLabel">
+                                {% if pet.status == "reserved" %}
+                                    🟡 Reserved / Deposit
+                                {% elif pet.status == "sold" %}
+                                    🔴 Sold
+                                {% elif pet.status == "preorder" %}
+                                    🔵 Preorder
+                                {% elif pet.status == "sick" %}
+                                    🏥 Sick
+                                {% elif pet.status == "dead" %}
+                                    ⚫ Dead
+                                {% elif pet.status == "cancelled" %}
+                                    ❌ Cancelled
+                                {% else %}
+                                    🟢 In Stock
+                                {% endif %}
+                            </span>
+                            <b>⌄</b>
+                        </button>
+                    </label>
+
+                    <!-- BIRTH DATE -->
+                    <label>
+                        Birth Date
+                        <input type="hidden" name="birth_date" id="birthDateInput" value="{{ pet.birth_date|date:'Y-m-d' }}">
+
+                        <button type="button" class="touch-date-btn" onclick="openDatePicker('birthDateInput','birthDateLabel')">
+                            <span id="birthDateLabel">
+                                {% if pet.birth_date %}
+                                    {{ pet.birth_date|date:"M d, Y" }}
+                                {% else %}
+                                    Choose date
+                                {% endif %}
+                            </span>
+                            <b>📅</b>
+                        </button>
+                    </label>
+
+                    <!-- DEATH DATE -->
+                    <label>
+                        Death Date
+                        <input type="hidden" name="death_date" id="deathDateInput" value="{{ pet.death_date|date:'Y-m-d' }}">
+
+                        <button type="button" class="touch-date-btn" onclick="openDatePicker('deathDateInput','deathDateLabel')">
+                            <span id="deathDateLabel">
+                                {% if pet.death_date %}
+                                    {{ pet.death_date|date:"M d, Y" }}
+                                {% else %}
+                                    Choose date
+                                {% endif %}
+                            </span>
+                            <b>📅</b>
+                        </button>
+                    </label>
+
+                    <label>
+                        Cost Price
+                        <input type="number" step="0.01" name="cost_price" value="{{ pet.cost_price|default:'0.00' }}">
+                    </label>
+
+                    <label>
+                        Sale Price
+                        <input type="number" step="0.01" name="sale_price" value="{{ pet.sale_price|default:'0.00' }}">
+                    </label>
+
+                </div>
+
+                <!-- VACCINE SECTION -->
+                <div class="vaccine-section">
+                    <div class="vaccine-head">
+                        <div>
+                            <h3>💉 Vaccine History</h3>
+                            <p>Vaccine 1, Vaccine 2, and next recommended vaccine date. You can add more later.</p>
+                        </div>
+
+                        <button type="button" class="add-vaccine-btn" onclick="addVaccineRow()">＋ Add Vaccine</button>
+                    </div>
+
+                    <div id="vaccineRows">
+                        {% if pet and pet.vaccines.all %}
+                            {% for v in pet.vaccines.all %}
+                                <div class="vaccine-row">
+                                    <div class="vaccine-grid">
+                                        <label>
+                                            Vaccine No
+                                            <input type="number" name="vaccine_no[]" value="{{ v.vaccine_no|default:forloop.counter }}">
+                                        </label>
+
+                                        <label>
+                                            Vaccine Name
+                                            <input type="text" name="vaccine_name[]" value="{{ v.vaccine_name|default:'' }}" placeholder="Example: Vaccine 1 / Rabies">
+                                        </label>
+
+                                        <label>
+                                            Vaccine Date
+                                            <input type="hidden" name="vaccine_date[]" id="vaccineDateInput{{ forloop.counter }}" value="{{ v.vaccine_date|date:'Y-m-d' }}">
+
+                                            <button type="button" class="touch-date-btn small-date-btn" onclick="openDatePicker('vaccineDateInput{{ forloop.counter }}','vaccineDateLabel{{ forloop.counter }}')">
+                                                <span id="vaccineDateLabel{{ forloop.counter }}">
+                                                    {% if v.vaccine_date %}
+                                                        {{ v.vaccine_date|date:"M d, Y" }}
+                                                    {% else %}
+                                                        Choose date
+                                                    {% endif %}
+                                                </span>
+                                                <b>📅</b>
+                                            </button>
+                                        </label>
+
+                                        <label>
+                                            Next Recommended
+                                            <input type="hidden" name="next_recommended_date[]" id="nextVaccineInput{{ forloop.counter }}" value="{{ v.next_recommended_date|date:'Y-m-d' }}">
+
+                                            <button type="button" class="touch-date-btn small-date-btn" onclick="openDatePicker('nextVaccineInput{{ forloop.counter }}','nextVaccineLabel{{ forloop.counter }}')">
+                                                <span id="nextVaccineLabel{{ forloop.counter }}">
+                                                    {% if v.next_recommended_date %}
+                                                        {{ v.next_recommended_date|date:"M d, Y" }}
+                                                    {% else %}
+                                                        Choose date
+                                                    {% endif %}
+                                                </span>
+                                                <b>📅</b>
+                                            </button>
+                                        </label>
+                                    </div>
+
+                                    <div class="vaccine-note-row">
+                                        <label class="full">
+                                            Note
+                                            <input type="text" name="vaccine_note[]" value="{{ v.note|default:'' }}" placeholder="Optional note">
+                                        </label>
+
+                                        <button type="button" class="remove-vaccine-btn" onclick="removeVaccineRow(this)">✕</button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="vaccine-row">
+                                <div class="vaccine-grid">
+                                    <label>
+                                        Vaccine No
+                                        <input type="number" name="vaccine_no[]" value="1">
+                                    </label>
+
+                                    <label>
+                                        Vaccine Name
+                                        <input type="text" name="vaccine_name[]" placeholder="Example: Vaccine 1 / Rabies">
+                                    </label>
+
+                                    <label>
+                                        Vaccine Date
+                                        <input type="hidden" name="vaccine_date[]" id="vaccineDateInput1" value="">
+
+                                        <button type="button" class="touch-date-btn small-date-btn" onclick="openDatePicker('vaccineDateInput1','vaccineDateLabel1')">
+                                            <span id="vaccineDateLabel1">Choose date</span>
+                                            <b>📅</b>
+                                        </button>
+                                    </label>
+
+                                    <label>
+                                        Next Recommended
+                                        <input type="hidden" name="next_recommended_date[]" id="nextVaccineInput1" value="">
+
+                                        <button type="button" class="touch-date-btn small-date-btn" onclick="openDatePicker('nextVaccineInput1','nextVaccineLabel1')">
+                                            <span id="nextVaccineLabel1">Choose date</span>
+                                            <b>📅</b>
+                                        </button>
+                                    </label>
+                                </div>
+
+                                <div class="vaccine-note-row">
+                                    <label class="full">
+                                        Note
+                                        <input type="text" name="vaccine_note[]" placeholder="Optional note">
+                                    </label>
+
+                                    <button type="button" class="remove-vaccine-btn" onclick="removeVaccineRow(this)">✕</button>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <label class="full">
+                    Note
+                    <textarea name="note" placeholder="Extra note...">{{ pet.note|default:'' }}</textarea>
+                </label>
+
+                <div class="actions">
+                    <button class="save-btn" type="submit">💾 Save Pet</button>
+                    <a href="{% url 'pet_list' %}" class="cancel-btn">Cancel</a>
+                </div>
+
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- SELECT BACKDROP -->
+<div class="select-backdrop" id="selectBackdrop" onclick="closeOptionPopups()"></div>
+
+<!-- TYPE POPUP -->
+<div class="option-popup" id="typePopup">
+    <div class="option-head">
+        <h3>Choose Type</h3>
+        <button type="button" onclick="closeOptionPopups()">✕</button>
+    </div>
+
+    <div class="option-list">
+        <button type="button" class="option-btn" onclick="chooseOption('petTypeInput','petTypeLabel','dog','🐶 Dog')">
+            <span>🐶 Dog</span><b>✓</b>
+        </button>
+
+        <button type="button" class="option-btn" onclick="chooseOption('petTypeInput','petTypeLabel','cat','🐱 Cat')">
+            <span>🐱 Cat</span><b>✓</b>
+        </button>
+
+        <button type="button" class="option-btn" onclick="chooseOption('petTypeInput','petTypeLabel','other','🐾 Other')">
+            <span>🐾 Other</span><b>✓</b>
+        </button>
+    </div>
+</div>
+
+<!-- GENDER POPUP -->
+<div class="option-popup" id="genderPopup">
+    <div class="option-head">
+        <h3>Choose Gender</h3>
+        <button type="button" onclick="closeOptionPopups()">✕</button>
+    </div>
+
+    <div class="option-list">
+        <button type="button" class="option-btn" onclick="chooseOption('genderInput','genderLabel','','Choose')">
+            <span>⚪ Choose</span><b>✓</b>
+        </button>
+
+        <button type="button" class="option-btn" onclick="chooseOption('genderInput','genderLabel','Male','♂️ Male')">
+            <span>♂️ Male</span><b>✓</b>
+        </button>
+
+        <button type="button" class="option-btn" onclick="chooseOption('genderInput','genderLabel','Female','♀️ Female')">
+            <span>♀️ Female</span><b>✓</b>
+        </button>
+    </div>
+</div>
+
+<!-- STATUS POPUP -->
+<div class="option-popup" id="statusPopup">
+    <div class="option-head">
+        <h3>Choose Stock Status</h3>
+        <button type="button" onclick="closeOptionPopups()">✕</button>
+    </div>
+
+    <div class="option-list">
+        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','in_stock','🟢 In Stock')">
+            <span>🟢 In Stock</span><b>✓</b>
+        </button>
+
+        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','reserved','🟡 Reserved / Deposit')">
+            <span>🟡 Reserved / Deposit</span><b>✓</b>
+        </button>
+
+        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','sold','🔴 Sold')">
+            <span>🔴 Sold</span><b>✓</b>
+        </button>
+
+        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','preorder','🔵 Preorder')">
+            <span>🔵 Preorder</span><b>✓</b>
+        </button>
+
+        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','sick','🏥 Sick')">
+            <span>🏥 Sick</span><b>✓</b>
+        </button>
+
+        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','dead','⚫ Dead')">
+            <span>⚫ Dead</span><b>✓</b>
+        </button>
+
+        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','cancelled','❌ Cancelled')">
+            <span>❌ Cancelled</span><b>✓</b>
+        </button>
+    </div>
+</div>
+
+<!-- DATE PICKER POPUP -->
+<div class="date-backdrop" id="dateBackdrop" onclick="closeDatePicker()"></div>
+
+<div class="date-popup" id="datePopup">
+    <div class="date-top">
+        <div>
+            <div class="date-label">Choose date</div>
+            <div class="date-title" id="selectedDateTitle">Select Date</div>
+        </div>
+
+        <button type="button" class="date-close" onclick="closeDatePicker()">✕</button>
+    </div>
+
+    <div class="date-shortcuts">
+        <button type="button" onclick="selectToday()">Today</button>
+        <button type="button" onclick="selectYesterday()">Yesterday</button>
+        <button type="button" onclick="clearDatePicker()">Clear</button>
+    </div>
+
+    <div class="calendar-head">
+        <strong id="calendarMonthTitle">Month Year</strong>
+        <div>
+            <button type="button" onclick="changeMonth(-1)">‹</button>
+            <button type="button" onclick="changeMonth(1)">›</button>
+        </div>
+    </div>
+
+    <div class="week-row">
+        <span>Su</span>
+        <span>Mo</span>
+        <span>Tu</span>
+        <span>We</span>
+        <span>Th</span>
+        <span>Fr</span>
+        <span>Sa</span>
+    </div>
+
+    <div class="calendar-grid" id="calendarGrid"></div>
+
+    <div class="date-actions">
+        <button type="button" class="date-cancel" onclick="closeDatePicker()">Cancel</button>
+        <button type="button" class="date-ok" onclick="confirmDatePicker()">OK</button>
+    </div>
+</div>
+
+<style>
+*{box-sizing:border-box}
+a{text-decoration:none}
+
+.form-page{
+    padding:24px 28px;
+}
+
+.page-top{
+    display:flex;
+    justify-content:space-between;
+    gap:18px;
+    margin-bottom:22px;
+}
+
+.page-top h1{
+    margin:0;
+    font-size:34px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.page-top p{
+    margin:8px 0 0;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.soft-btn,
+.save-btn,
+.cancel-btn{
+    min-height:60px;
+    padding:0 22px;
+    border-radius:20px;
+    border:0;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.soft-btn{
+    background:#f1f5f9;
+    color:#334155;
+}
+
+.form-card{
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:30px;
+    padding:22px;
+    box-shadow:0 18px 40px rgba(130,91,60,.08);
+}
+
+.layout{
+    display:grid;
+    grid-template-columns:340px 1fr;
+    gap:24px;
+}
+
+.photo-panel{
+    background:#fff8f4;
+    border:2px solid #ffe1d6;
+    border-radius:28px;
+    padding:18px;
+}
+
+.preview{
+    height:320px;
+    border-radius:24px;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    font-size:84px;
+    position:relative;
+}
+
+.preview img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.photo-x{
+    position:absolute;
+    top:12px;
+    right:12px;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    border:0;
+    background:#ff4d5d;
+    color:white;
+    font-size:24px;
+    font-weight:1000;
+    cursor:pointer;
+    box-shadow:0 10px 20px rgba(255,77,93,.25);
+}
+
+.drop-zone{
+    margin-top:16px;
+    border-radius:22px;
+    border:2px dashed #e8d4e6;
+    padding:18px;
+    background:white;
+    cursor:pointer;
+    text-align:center;
+    transition:.2s;
+}
+
+.drop-zone:hover,
+.drop-zone.dragover{
+    border-color:#9b7cf6;
+    background:#fbf8ff;
+    box-shadow:0 0 0 5px rgba(155,124,246,.12);
+}
+
+.drop-title{
+    font-size:18px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.drop-sub{
+    margin-top:6px;
+    color:#7b7288;
+    font-size:13px;
+    font-weight:900;
+    line-height:1.5;
+}
+
+.hidden-file{
+    display:none;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:16px;
+}
+
+label{
+    font-weight:1000;
+    color:#080634;
+}
+
+input,
+textarea{
+    width:100%;
+    border:2px solid #eaddec;
+    border-radius:18px;
+    padding:0 16px;
+    margin-top:8px;
+    font-size:17px;
+    font-weight:900;
+    background:white;
+    outline:0;
+}
+
+input{
+    height:62px;
+}
+
+textarea{
+    padding:16px;
+    min-height:120px;
+}
+
+input:focus,
+textarea:focus{
+    border-color:#9b7cf6;
+    box-shadow:0 0 0 5px rgba(155,124,246,.12);
+}
+
+.full{
+    display:block;
+    margin-top:16px;
+}
+
+.actions{
+    margin-top:22px;
+    display:flex;
+    gap:12px;
+    justify-content:flex-end;
+}
+
+.save-btn{
+    background:linear-gradient(135deg,#13a85f,#7b5cff);
+    color:white;
+}
+
+.cancel-btn{
+    background:#fff0f0;
+    color:#ff4d5d;
+}
+
+.touch-select,
+.touch-date-btn{
+    width:100%;
+    height:62px;
+    border-radius:18px;
+    border:2px solid #eaddec;
+    background:white;
+    padding:0 16px;
+    margin-top:8px;
+    font-size:17px;
+    font-weight:1000;
+    color:#080634;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    cursor:pointer;
+}
+
+.touch-select:focus,
+.touch-date-btn:focus{
+    outline:0;
+    border-color:#9b7cf6;
+    box-shadow:0 0 0 5px rgba(155,124,246,.12);
+}
+
+.small-date-btn{
+    font-size:15px;
+}
+
+/* SELECT POPUP */
+.select-backdrop,
+.date-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(8,6,52,.42);
+    z-index:8000;
+}
+
+.select-backdrop.active,
+.date-backdrop.active{
+    display:block;
+}
+
+.option-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:420px;
+    max-width:calc(100% - 28px);
+    max-height:80vh;
+    overflow:auto;
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:30px;
+    padding:18px;
+    z-index:8001;
+    box-shadow:0 30px 90px rgba(8,6,52,.25);
+}
+
+.option-popup.active{
+    display:block;
+}
+
+.option-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:14px;
+}
+
+.option-head h3{
+    margin:0;
+    font-size:24px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.option-head button{
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    border:0;
+    background:#fff0f0;
+    color:#ff4d5d;
+    font-size:20px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.option-list{
+    display:grid;
+    gap:10px;
+}
+
+.option-btn{
+    width:100%;
+    min-height:64px;
+    border-radius:22px;
+    border:2px solid #eaddec;
+    background:#fff9fc;
+    color:#080634;
+    font-size:17px;
+    font-weight:1000;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 18px;
+    cursor:pointer;
+}
+
+.option-btn:hover{
+    border-color:transparent;
+    color:white;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+}
+
+/* VACCINE */
+.vaccine-section{
+    margin-top:22px;
+    padding:18px;
+    border:2px solid #f2e4ef;
+    border-radius:24px;
+    background:#fffafe;
+}
+
+.vaccine-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+}
+
+.vaccine-head h3{
+    margin:0;
+    color:#080634;
+    font-size:22px;
+    font-weight:1000;
+}
+
+.vaccine-head p{
+    margin:5px 0 0;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.add-vaccine-btn{
+    min-height:54px;
+    padding:0 18px;
+    border-radius:18px;
+    border:0;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.vaccine-row{
+    padding:16px;
+    border:1px solid #eaddec;
+    border-radius:20px;
+    background:white;
+    margin-bottom:14px;
+}
+
+.vaccine-grid{
+    display:grid;
+    grid-template-columns:1fr 1.4fr 1.2fr 1.2fr;
+    gap:14px;
+}
+
+.vaccine-note-row{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:12px;
+    align-items:end;
+    margin-top:14px;
+}
+
+.remove-vaccine-btn{
+    width:52px;
+    height:52px;
+    border-radius:16px;
+    border:0;
+    background:#fff0f0;
+    color:#ff4d5d;
+    font-size:22px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+/* DATE POPUP */
+.date-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:420px;
+    max-width:calc(100% - 28px);
+    max-height:88vh;
+    overflow:auto;
+    background:white;
+    border-radius:30px;
+    border:2px solid #f5e0d8;
+    z-index:8002;
+    box-shadow:0 30px 90px rgba(8,6,52,.25);
+}
+
+.date-popup.active{
+    display:block;
+}
+
+.date-top{
+    background:linear-gradient(135deg,#7b5cff,#9b7cf6);
+    color:white;
+    padding:20px;
+    border-radius:28px 28px 0 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+}
+
+.date-label{
+    font-size:13px;
+    font-weight:1000;
+    opacity:.85;
+}
+
+.date-title{
+    margin-top:6px;
+    font-size:23px;
+    font-weight:1000;
+}
+
+.date-close{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    border:0;
+    background:rgba(255,255,255,.18);
+    color:white;
+    font-size:20px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.date-shortcuts{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
+    padding:16px 18px 8px;
+}
+
+.date-shortcuts button{
+    min-height:52px;
+    border-radius:16px;
+    border:0;
+    color:white;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.date-shortcuts button:nth-child(1){
+    background:#25b879;
+}
+
+.date-shortcuts button:nth-child(2){
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+}
+
+.date-shortcuts button:nth-child(3){
+    background:#f1eafe;
+    color:#7b5cff;
+}
+
+.calendar-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 20px;
+    color:#080634;
+}
+
+.calendar-head strong{
+    font-size:18px;
+    font-weight:1000;
+}
+
+.calendar-head button{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    border:0;
+    margin-left:8px;
+    color:#7b5cff;
+    background:#f3ecff;
+    font-size:22px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.week-row,
+.calendar-grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    padding:0 20px;
+    gap:8px;
+}
+
+.week-row span{
+    text-align:center;
+    color:#9b8fb0;
+    font-size:12px;
+    font-weight:1000;
+    padding:8px 0;
+}
+
+.date-cell{
+    height:42px;
+    border-radius:50%;
+    border:0;
+    background:white;
+    color:#080634;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.date-cell.muted{
+    color:#c7bdd7;
+}
+
+.date-cell.active{
+    color:white;
+    background:linear-gradient(135deg,#25b879,#7b5cff);
+    box-shadow:0 10px 22px rgba(123,92,255,.25);
+}
+
+.date-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    padding:18px;
+}
+
+.date-actions button{
+    min-height:54px;
+    border-radius:18px;
+    border:0;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.date-cancel{
+    background:#f3ecff;
+    color:#7b5cff;
+}
+
+.date-ok{
+    background:#7b5cff;
+    color:white;
+}
+
+@media(max-width:1194px){
+    .page-top{
+        display:block;
+    }
+
+    .soft-btn{
+        margin-top:16px;
+    }
+
+    .layout{
+        grid-template-columns:1fr;
+    }
+
+    .grid{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .vaccine-grid{
+        grid-template-columns:1fr 1fr;
+    }
+}
+
+@media(max-width:700px){
+    .form-page{
+        padding:18px;
+    }
+
+    .page-top h1{
+        font-size:28px;
+    }
+
+    .grid,
+    .actions,
+    .vaccine-grid,
+    .vaccine-note-row{
+        grid-template-columns:1fr;
+        display:grid;
+    }
+
+    .soft-btn,
+    .save-btn,
+    .cancel-btn,
+    .add-vaccine-btn,
+    .remove-vaccine-btn{
+        width:100%;
+        min-height:70px;
+        font-size:19px;
+    }
+
+    .preview{
+        height:300px;
+    }
+
+    input,
+    .touch-select,
+    .touch-date-btn{
+        height:66px;
+        font-size:18px;
+    }
+
+    .option-popup,
+    .date-popup{
+        left:14px;
+        right:14px;
+        top:auto;
+        bottom:16px;
+        width:auto;
+        max-width:none;
+        max-height:78vh;
+        transform:none;
+        border-radius:28px;
+    }
+
+    .option-btn{
+        min-height:70px;
+        font-size:18px;
+    }
+}
+</style>
+
+<script>
+let activeDateInputId = null;
+let activeDateLabelId = null;
+let calendarDate = new Date();
+let selectedDate = null;
+
+function openOptionPopup(type){
+    closeOptionPopups();
+
+    const backdrop = document.getElementById("selectBackdrop");
+    const popup = document.getElementById(type + "Popup");
+
+    if(backdrop){
+        backdrop.classList.add("active");
+    }
+
+    if(popup){
+        popup.classList.add("active");
+    }
+}
+
+function closeOptionPopups(){
+    document.querySelectorAll(".option-popup").forEach(function(popup){
+        popup.classList.remove("active");
+    });
+
+    const backdrop = document.getElementById("selectBackdrop");
+
+    if(backdrop){
+        backdrop.classList.remove("active");
+    }
+}
+
+function chooseOption(inputId, labelId, value, label){
+    document.getElementById(inputId).value = value;
+    document.getElementById(labelId).innerText = label;
+    closeOptionPopups();
+}
+
+/* PHOTO UPLOAD */
+function previewPhotoFile(input){
+    if(input.files && input.files.length > 0){
+        setPhotoFile(input.files[0]);
+    }
+}
+
+function setPhotoFile(file){
+    if(!file || !file.type.startsWith("image/")){
+        alert("Please choose an image file.");
+        return;
+    }
+
+    const input = document.getElementById("photoInput");
+    const preview = document.getElementById("photoPreview");
+    const empty = document.getElementById("photoEmpty");
+    const removeInput = document.getElementById("removePhotoInput");
+
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    input.files = dataTransfer.files;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+        preview.src = e.target.result;
+        preview.style.display = "block";
+
+        if(empty){
+            empty.style.display = "none";
+        }
+
+        let xBtn = document.querySelector(".photo-x");
+
+        if(!xBtn){
+            xBtn = document.createElement("button");
+            xBtn.type = "button";
+            xBtn.className = "photo-x";
+            xBtn.innerText = "×";
+            xBtn.onclick = clearNewPhoto;
+            document.getElementById("previewBox").appendChild(xBtn);
+        }
+
+        xBtn.style.display = "block";
+    };
+
+    reader.readAsDataURL(file);
+
+    if(removeInput){
+        removeInput.value = "0";
+    }
+}
+
+function clearNewPhoto(e){
+    if(e){
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    const input = document.getElementById("photoInput");
+    const preview = document.getElementById("photoPreview");
+    const empty = document.getElementById("photoEmpty");
+    const removeInput = document.getElementById("removePhotoInput");
+
+    if(input){
+        input.value = "";
+    }
+
+    if(preview){
+        preview.src = "";
+        preview.style.display = "none";
+    }
+
+    if(empty){
+        empty.style.display = "block";
+    }
+
+    if(removeInput){
+        removeInput.value = "0";
+    }
+
+    document.querySelectorAll(".photo-x").forEach(function(btn){
+        btn.style.display = "none";
+    });
+}
+
+function removeCurrentPhoto(){
+    const preview = document.getElementById("photoPreview");
+    const empty = document.getElementById("photoEmpty");
+    const removeInput = document.getElementById("removePhotoInput");
+    const input = document.getElementById("photoInput");
+
+    if(input){
+        input.value = "";
+    }
+
+    if(preview){
+        preview.src = "";
+        preview.style.display = "none";
+    }
+
+    if(!empty){
+        const newEmpty = document.createElement("div");
+        newEmpty.id = "photoEmpty";
+        newEmpty.innerText = "🐾";
+        document.getElementById("previewBox").appendChild(newEmpty);
+    }else{
+        empty.style.display = "block";
+    }
+
+    if(removeInput){
+        removeInput.value = "1";
+    }
+
+    document.querySelectorAll(".photo-x").forEach(function(btn){
+        btn.style.display = "none";
+    });
+}
+
+function handleDragOver(e){
+    e.preventDefault();
+
+    const zone = document.getElementById("dropZone");
+
+    if(zone){
+        zone.classList.add("dragover");
+    }
+}
+
+function handleDragLeave(e){
+    e.preventDefault();
+
+    const zone = document.getElementById("dropZone");
+
+    if(zone){
+        zone.classList.remove("dragover");
+    }
+}
+
+function handleDrop(e){
+    e.preventDefault();
+
+    const zone = document.getElementById("dropZone");
+
+    if(zone){
+        zone.classList.remove("dragover");
+    }
+
+    const files = e.dataTransfer.files;
+
+    if(files && files.length > 0){
+        setPhotoFile(files[0]);
+    }
+}
+
+document.addEventListener("paste", function(e){
+    const items = e.clipboardData && e.clipboardData.items;
+
+    if(!items){
+        return;
+    }
+
+    for(let i = 0; i < items.length; i++){
+        const item = items[i];
+
+        if(item.type.indexOf("image") !== -1){
+            const file = item.getAsFile();
+            setPhotoFile(file);
+            break;
+        }
+    }
+});
+
+/* VACCINE ROW */
+function addVaccineRow(){
+    const wrap = document.getElementById("vaccineRows");
+    const count = wrap.querySelectorAll(".vaccine-row").length + 1;
+    const uniqueId = Date.now();
+
+    const row = document.createElement("div");
+    row.className = "vaccine-row";
+
+    row.innerHTML = `
+        <div class="vaccine-grid">
+            <label>
+                Vaccine No
+                <input type="number" name="vaccine_no[]" value="${count}">
+            </label>
+
+            <label>
+                Vaccine Name
+                <input type="text" name="vaccine_name[]" placeholder="Example: Vaccine 1 / Rabies">
+            </label>
+
+            <label>
+                Vaccine Date
+                <input type="hidden" name="vaccine_date[]" id="vaccineDateInput${uniqueId}" value="">
+
+                <button type="button" class="touch-date-btn small-date-btn" onclick="openDatePicker('vaccineDateInput${uniqueId}','vaccineDateLabel${uniqueId}')">
+                    <span id="vaccineDateLabel${uniqueId}">Choose date</span>
+                    <b>📅</b>
+                </button>
+            </label>
+
+            <label>
+                Next Recommended
+                <input type="hidden" name="next_recommended_date[]" id="nextVaccineInput${uniqueId}" value="">
+
+                <button type="button" class="touch-date-btn small-date-btn" onclick="openDatePicker('nextVaccineInput${uniqueId}','nextVaccineLabel${uniqueId}')">
+                    <span id="nextVaccineLabel${uniqueId}">Choose date</span>
+                    <b>📅</b>
+                </button>
+            </label>
+        </div>
+
+        <div class="vaccine-note-row">
+            <label class="full">
+                Note
+                <input type="text" name="vaccine_note[]" placeholder="Optional note">
+            </label>
+
+            <button type="button" class="remove-vaccine-btn" onclick="removeVaccineRow(this)">✕</button>
+        </div>
+    `;
+
+    wrap.appendChild(row);
+}
+
+function removeVaccineRow(btn){
+    const rows = document.querySelectorAll(".vaccine-row");
+
+    if(rows.length <= 1){
+        btn.closest(".vaccine-row").querySelectorAll("input").forEach(function(input){
+            input.value = "";
+        });
+        return;
+    }
+
+    btn.closest(".vaccine-row").remove();
+}
+
+/* DATE PICKER */
+function openDatePicker(inputId, labelId){
+    activeDateInputId = inputId;
+    activeDateLabelId = labelId;
+
+    const currentValue = document.getElementById(inputId).value;
+
+    if(currentValue){
+        selectedDate = parseYMD(currentValue);
+        calendarDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    }else{
+        selectedDate = new Date();
+        calendarDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    }
+
+    document.getElementById("dateBackdrop").classList.add("active");
+    document.getElementById("datePopup").classList.add("active");
+
+    renderCalendar();
+}
+
+function closeDatePicker(){
+    document.getElementById("dateBackdrop").classList.remove("active");
+    document.getElementById("datePopup").classList.remove("active");
+}
+
+function parseYMD(value){
+    const parts = value.split("-");
+    return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+}
+
+function formatYMD(date){
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+}
+
+function formatNice(date){
+    const options = {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+    };
+
+    return date.toLocaleDateString("en-US", options);
+}
+
+function renderCalendar(){
+    const grid = document.getElementById("calendarGrid");
+    const title = document.getElementById("calendarMonthTitle");
+    const selectedTitle = document.getElementById("selectedDateTitle");
+
+    grid.innerHTML = "";
+
+    title.innerText = calendarDate.toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric"
+    });
+
+    selectedTitle.innerText = selectedDate ? formatNice(selectedDate) : "Select Date";
+
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+
+    const firstDay = new Date(year, month, 1);
+    const startDay = firstDay.getDay();
+
+    const startDate = new Date(year, month, 1 - startDay);
+
+    for(let i = 0; i < 42; i++){
+        const cellDate = new Date(startDate);
+        cellDate.setDate(startDate.getDate() + i);
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "date-cell";
+        btn.innerText = cellDate.getDate();
+
+        if(cellDate.getMonth() !== month){
+            btn.classList.add("muted");
+        }
+
+        if(selectedDate && formatYMD(cellDate) === formatYMD(selectedDate)){
+            btn.classList.add("active");
+        }
+
+        btn.onclick = function(){
+            selectedDate = new Date(cellDate);
+            renderCalendar();
+        };
+
+        grid.appendChild(btn);
+    }
+}
+
+function changeMonth(amount){
+    calendarDate.setMonth(calendarDate.getMonth() + amount);
+    renderCalendar();
+}
+
+function selectToday(){
+    selectedDate = new Date();
+    calendarDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    renderCalendar();
+}
+
+function selectYesterday(){
+    selectedDate = new Date();
+    selectedDate.setDate(selectedDate.getDate() - 1);
+    calendarDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    renderCalendar();
+}
+
+function clearDatePicker(){
+    if(activeDateInputId && activeDateLabelId){
+        document.getElementById(activeDateInputId).value = "";
+        document.getElementById(activeDateLabelId).innerText = "Choose date";
+    }
+
+    closeDatePicker();
+}
+
+function confirmDatePicker(){
+    if(!selectedDate || !activeDateInputId || !activeDateLabelId){
+        closeDatePicker();
+        return;
+    }
+
+    document.getElementById(activeDateInputId).value = formatYMD(selectedDate);
+    document.getElementById(activeDateLabelId).innerText = formatNice(selectedDate);
+
+    closeDatePicker();
+}
+
+document.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){
+        closeOptionPopups();
+        closeDatePicker();
+    }
+});
+</script>
+
+{% endblock %}

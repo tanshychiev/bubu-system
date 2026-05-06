@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="pets-page">
+    <div class="page-top">
+        <div>
+            <h1>Pets Stock 🐾</h1>
+            <p>Manage dog/cat stock, preorder, sold, sick, dead, warranty and compensation.</p>
+        </div>
+
+        <div class="top-actions">
+            <a href="{% url 'pet_create' %}" class="main-btn">＋ Add Pet</a>
+            <a href="{% url 'pet_sale_create' %}" class="sale-btn">🐾 New Pet Sale</a>
+        </div>
+    </div>
+
+    <form method="get" class="filter-card">
+        <div class="filter-grid">
+            <label>
+                Search
+                <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Breed, name, color...">
+            </label>
+
+            <label>
+                Type
+                <select name="pet_type">
+                    <option value="">All Type</option>
+                    <option value="dog" {% if request.GET.pet_type == "dog" %}selected{% endif %}>Dog</option>
+                    <option value="cat" {% if request.GET.pet_type == "cat" %}selected{% endif %}>Cat</option>
+                    <option value="other" {% if request.GET.pet_type == "other" %}selected{% endif %}>Other</option>
+                </select>
+            </label>
+
+            <label>
+                Status
+                <select name="status">
+                    <option value="">All Status</option>
+                    <option value="in_stock" {% if request.GET.status == "in_stock" %}selected{% endif %}>In Stock</option>
+                    <option value="reserved" {% if request.GET.status == "reserved" %}selected{% endif %}>Reserved / Deposit</option>
+                    <option value="sold" {% if request.GET.status == "sold" %}selected{% endif %}>Sold</option>
+                    <option value="preorder" {% if request.GET.status == "preorder" %}selected{% endif %}>Preorder</option>
+                    <option value="sick" {% if request.GET.status == "sick" %}selected{% endif %}>Sick</option>
+                    <option value="dead" {% if request.GET.status == "dead" %}selected{% endif %}>Dead</option>
+                    <option value="cancelled" {% if request.GET.status == "cancelled" %}selected{% endif %}>Cancelled</option>
+                </select>
+            </label>
+
+            <button type="submit" class="dark-btn">Search</button>
+        </div>
+    </form>
+
+    <div class="summary-grid">
+        <div><span>In Stock</span><strong>{{ in_stock_count|default:0 }}</strong></div>
+        <div><span>Reserved</span><strong>{{ reserved_count|default:0 }}</strong></div>
+        <div><span>Sold</span><strong>{{ sold_count|default:0 }}</strong></div>
+        <div class="danger"><span>Sick / Dead</span><strong>{{ sick_dead_count|default:0 }}</strong></div>
+    </div>
+
+    <div class="pet-grid">
+        {% for pet in pets %}
+            <div class="pet-card">
+                <div class="photo-box">
+                    {% if pet.photo %}
+                        <img src="{{ pet.photo.url }}" alt="{{ pet.breed }}">
+                    {% else %}
+                        <div class="no-photo">🐾</div>
+                    {% endif %}
+                    <span class="status status-{{ pet.status }}">{{ pet.get_status_display }}</span>
+                </div>
+
+                <div class="pet-body">
+                    <div class="title-row">
+                        <h3>{{ pet.get_pet_type_display }} · {{ pet.breed }}</h3>
+                        <strong>${{ pet.sale_price }}</strong>
+                    </div>
+
+                    <div class="meta-row">
+                        {% if pet.name %}<span>{{ pet.name }}</span>{% endif %}
+                        {% if pet.gender %}<span>{{ pet.gender }}</span>{% endif %}
+                        {% if pet.color %}<span>{{ pet.color }}</span>{% endif %}
+                    </div>
+
+                    <div class="money-row">
+                        <div><small>Cost</small><b>${{ pet.cost_price }}</b></div>
+                        <div><small>Sale</small><b>${{ pet.sale_price }}</b></div>
+                    </div>
+
+                    {% if pet.note %}
+                        <p class="note">{{ pet.note|truncatechars:80 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="card-actions">
+                    <a href="{% url 'pet_detail' pet.id %}" class="soft-btn">View</a>
+
+                    {% if pet.status == "in_stock" or pet.status == "preorder" or pet.status == "reserved" %}
+                        <a href="{% url 'pet_sale_create' %}?pet={{ pet.id }}" class="green-btn">Sell</a>
+                    {% endif %}
+
+                    <a href="{% url 'pet_edit' pet.id %}" class="orange-btn">Edit</a>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-box">
+                <h2>No pets found</h2>
+                <p>Add dog/cat stock first.</p>
+                <a href="{% url 'pet_create' %}" class="main-btn">＋ Add Pet</a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.pets-page{padding:24px 28px}
+.page-top{display:flex;justify-content:space-between;gap:18px;margin-bottom:22px}
+.page-top h1{margin:0;font-size:34px;font-weight:1000;color:#080634}
+.page-top p{margin:8px 0 0;color:#7b7288;font-weight:900}
+.top-actions{display:flex;gap:12px;flex-wrap:wrap}
+.main-btn,.sale-btn,.dark-btn,.soft-btn,.green-btn,.orange-btn{
+    min-height:54px;padding:0 18px;border-radius:18px;border:0;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-weight:1000;text-decoration:none;cursor:pointer
+}
+.main-btn{background:linear-gradient(135deg,#9b7cf6,#ff8c6b);color:white}
+.sale-btn{background:linear-gradient(135deg,#13a85f,#7b5cff);color:white}
+.dark-btn{background:#080634;color:white}
+.soft-btn{background:#f1f5f9;color:#334155}
+.green-btn{background:#dcfce7;color:#16a34a}
+.orange-btn{background:#fff7ed;color:#ea580c}
+.filter-card{
+    background:white;border:2px solid #f5e0d8;border-radius:28px;
+    padding:18px;margin-bottom:18px;box-shadow:0 18px 40px rgba(130,91,60,.08)
+}
+.filter-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr auto;gap:14px;align-items:end}
+.filter-grid label{font-weight:1000;color:#080634}
+.filter-grid input,.filter-grid select{
+    width:100%;height:60px;border:2px solid #eaddec;border-radius:18px;
+    padding:0 16px;margin-top:8px;font-size:17px;font-weight:900;background:white
+}
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.summary-grid div{background:#f8f6ff;border:2px solid #e6dcff;border-radius:24px;padding:18px}
+.summary-grid span{display:block;color:#7b7288;font-weight:1000}
+.summary-grid strong{display:block;margin-top:6px;font-size:34px;color:#7b5cff}
+.summary-grid .danger{background:#fff0f0;border-color:#ffc9c9}
+.summary-grid .danger strong{color:#ff3d4f}
+.pet-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.pet-card{
+    background:white;border:2px solid #f5e0d8;border-radius:30px;overflow:hidden;
+    box-shadow:0 18px 40px rgba(130,91,60,.08)
+}
+.photo-box{
+    position:relative;height:230px;background:#fff8f4;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;font-size:70px
+}
+.photo-box img{width:100%;height:100%;object-fit:cover}
+.status{
+    position:absolute;top:14px;left:14px;padding:9px 13px;
+    border-radius:999px;font-size:13px;font-weight:1000
+}
+.status-in_stock{background:#dcfce7;color:#16a34a}
+.status-reserved{background:#fff7ed;color:#ea580c}
+.status-sold{background:#e0f2fe;color:#0284c7}
+.status-preorder{background:#f3e8ff;color:#9333ea}
+.status-sick{background:#fef9c3;color:#ca8a04}
+.status-dead{background:#fee2e2;color:#dc2626}
+.status-cancelled{background:#e5e7eb;color:#374151}
+.pet-body{padding:18px}
+.title-row{display:flex;justify-content:space-between;gap:12px}
+.title-row h3{margin:0;font-size:20px;font-weight:1000;color:#080634}
+.title-row strong{font-size:22px;color:#ff5d73}
+.meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.meta-row span{
+    padding:7px 11px;border-radius:999px;background:#f4f0ff;
+    color:#6f57d9;font-weight:1000;font-size:13px
+}
+.money-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.money-row div{background:#fafafa;border-radius:16px;padding:12px}
+.money-row small{display:block;color:#7b7288;font-weight:1000}
+.money-row b{display:block;margin-top:4px;color:#080634}
+.note{color:#625a74;font-weight:900}
+.card-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 18px 18px}
+.empty-box{
+    grid-column:1/-1;background:white;border:2px dashed #eaddec;
+    border-radius:28px;padding:36px;text-align:center
+}
+@media(max-width:1194px){
+    .page-top{display:block}
+    .top-actions{margin-top:16px}
+    .filter-grid{grid-template-columns:1fr 1fr}
+    .summary-grid,.pet-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:700px){
+    .pets-page{padding:18px}
+    .page-top h1{font-size:28px}
+    .top-actions,.filter-grid,.summary-grid,.pet-grid,.card-actions{
+        display:grid;grid-template-columns:1fr
+    }
+    .main-btn,.sale-btn,.dark-btn,.soft-btn,.green-btn,.orange-btn{
+        width:100%;min-height:68px;font-size:18px
+    }
+    .photo-box{height:250px}
+}
+</style>
+{% endblock %}

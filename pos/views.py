@@ -8,7 +8,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
-
 from customers.models import Customer
 from inventory.models import (
     Item,
@@ -47,26 +46,38 @@ def is_service_item(item):
     return name in ["grooming", "service", "services"]
 
 
+def get_user_branch(user):
+    profile = getattr(user, "staff_profile", None)
+
+    if profile and profile.branch_id:
+        return profile.branch
+
+    return None
+
+
 def get_pos_branch(request):
     """
     POS branch rule:
-    - normal staff: locked to user.staff_profile.branch
+    - normal staff/cashier: locked to user.staff_profile.branch
     - superuser: can use session branch if set
     - fallback: first active branch
     """
-
     if request.user.is_superuser:
         branch_id = request.session.get("pos_branch_id")
 
         if branch_id:
-            branch = Branch.objects.filter(id=branch_id, is_active=True).first()
+            branch = Branch.objects.filter(
+                id=branch_id,
+                is_active=True,
+            ).first()
+
             if branch:
                 return branch
 
-    profile = getattr(request.user, "staff_profile", None)
+    user_branch = get_user_branch(request.user)
 
-    if profile and profile.branch_id:
-        return profile.branch
+    if user_branch:
+        return user_branch
 
     return Branch.objects.filter(is_active=True).order_by("id").first()
 
@@ -116,7 +127,11 @@ def _get_item_branch_stock(item, branch):
 
     return (
         BranchStock.objects
-        .filter(branch=branch, variant__item=item, variant__is_active=True)
+        .filter(
+            branch=branch,
+            variant__item=item,
+            variant__is_active=True,
+        )
         .aggregate(total=Sum("quantity"))["total"]
         or 0
     )
@@ -168,12 +183,14 @@ def _build_cart_items(cart, branch=None):
         elif item.image:
             image_url = item.image.url
 
-        branch_stock = 0
-
         if variant:
             branch_stock = _get_branch_variant_stock(branch, variant)
         else:
             branch_stock = _get_item_branch_stock(item, branch)
+
+        item_type_name = ""
+        if item.item_type:
+            item_type_name = item.item_type.name.strip()
 
         cart_items.append({
             "cart_key": key,
@@ -189,10 +206,10 @@ def _build_cart_items(cart, branch=None):
             "total": line_total,
             "branch_stock": branch_stock,
             "is_service": is_service_item(item),
+            "item_type_name": item_type_name,
         })
 
     return cart_items, subtotal
-
 
 def _add_to_cart(request, item, variant=None):
     cart = _get_cart(request)
@@ -210,6 +227,11 @@ def _add_to_cart(request, item, variant=None):
 
 
 def _deduct_selected_variant_from_branch(item, variant, qty, user, sale, branch):
+    """
+    Do NOT manually edit BranchStock here.
+    StockMovement.save() updates BranchStock.
+    This prevents double deduction.
+    """
     if is_service_item(item):
         return
 
@@ -219,16 +241,8 @@ def _deduct_selected_variant_from_branch(item, variant, qty, user, sale, branch)
     if not variant:
         raise ValueError("No variant selected for stock item.")
 
-    stock, created = BranchStock.objects.select_for_update().get_or_create(
-        branch=branch,
-        variant=variant,
-        defaults={"quantity": 0},
-    )
-
-    stock.quantity = int(stock.quantity or 0) - int(qty)
-    stock.save(update_fields=["quantity"])
-
     StockMovement.objects.create(
+        branch=branch,
         item=item,
         variant=variant,
         movement_type="sale",
@@ -260,16 +274,52 @@ def _find_best_variant_for_branch(item, branch):
 
 
 # ==================================================
-# POS MAIN
+# POS MAIN / ADMIN BRANCH SWITCH
 # ==================================================
+
+@login_required
+def pos_switch_branch(request):
+    if not request.user.is_superuser:
+        messages.error(
+            request,
+            "You cannot change shop. Your POS is locked to your assigned branch.",
+        )
+        return redirect("pos")
+
+    if request.method != "POST":
+        return redirect("pos")
+
+    branch_id = request.POST.get("branch_id")
+
+    branch = Branch.objects.filter(
+        id=branch_id,
+        is_active=True,
+    ).first()
+
+    if not branch:
+        messages.error(request, "Invalid shop selected.")
+        return redirect("pos")
+
+    request.session["pos_branch_id"] = branch.id
+    request.session.modified = True
+
+    _save_cart(request, {})
+
+    messages.success(request, f"POS switched to {branch.name}. Cart cleared for safety.")
+    return redirect("pos")
 
 @login_required
 def pos(request):
     current_branch = get_pos_branch(request)
 
     if not current_branch:
-        messages.error(request, "No branch assigned. Please ask admin to set your shop.")
+        messages.error(
+            request,
+            "No branch assigned. Please ask admin to set your shop.",
+        )
         return redirect("dashboard")
+
+    branches = Branch.objects.filter(is_active=True).order_by("name")
 
     raw_q = request.GET.get("q", "").strip()
     q = raw_q
@@ -299,15 +349,20 @@ def pos(request):
         variant = (
             ItemVariant.objects
             .select_related("item", "item__item_type")
-            .filter(item__is_active=True, is_active=True, sku__iexact=q)
+            .filter(
+                item__is_active=True,
+                is_active=True,
+                sku__iexact=q,
+            )
             .first()
         )
 
         if variant:
-            # ✅ Allow cashier to sell even if branch stock is 0 or negative.
-            # Stock will be deducted at checkout and can become negative.
             _add_to_cart(request, variant.item, variant)
-            messages.success(request, f"Added {variant.item.name} - {variant.display_name()}")
+            messages.success(
+                request,
+                f"Added {variant.item.name} - {variant.display_name()}",
+            )
             return redirect("pos")
 
         exact_item = (
@@ -323,8 +378,6 @@ def pos(request):
 
             if active_variants.count() == 1:
                 variant = active_variants.first()
-
-                # ✅ Allow cashier to sell even if branch stock is 0 or negative.
                 _add_to_cart(request, exact_item, variant)
                 return redirect("pos")
 
@@ -367,26 +420,30 @@ def pos(request):
         item_stock_map[item_id] = item_stock_map.get(item_id, 0) + qty
         variant_stock_map[variant_id] = qty
 
-    # ✅ Coming Soon = bought already, but supplier not yet received
-    from purchases.models import PurchaseItem
+    # Coming Soon = bought already, but supplier not yet received.
+    try:
+        from purchases.models import PurchaseItem
 
-    purchase_data = PurchaseItem.objects.values("variant_id").annotate(
-        ordered=Sum("ordered_qty"),
-        received=Sum("received_qty"),
-    )
+        purchase_data = PurchaseItem.objects.values("variant_id").annotate(
+            ordered=Sum("ordered_qty"),
+            received=Sum("received_qty"),
+        )
 
-    coming_map = {}
+        coming_map = {}
 
-    for row in purchase_data:
-        variant_id = row["variant_id"]
+        for row in purchase_data:
+            variant_id = row["variant_id"]
 
-        if not variant_id:
-            continue
+            if not variant_id:
+                continue
 
-        coming_qty = (row["ordered"] or 0) - (row["received"] or 0)
+            coming_qty = (row["ordered"] or 0) - (row["received"] or 0)
 
-        if coming_qty > 0:
-            coming_map[variant_id] = coming_qty
+            if coming_qty > 0:
+                coming_map[variant_id] = coming_qty
+
+    except Exception:
+        coming_map = {}
 
     for item in items:
         item.branch_stock_total = item_stock_map.get(item.id, 0)
@@ -395,7 +452,6 @@ def pos(request):
 
         for variant in item.variants.all():
             variant.branch_stock_qty = variant_stock_map.get(variant.id, 0)
-
             variant.coming_soon_qty = coming_map.get(variant.id, 0)
             variant.is_coming_soon = variant.coming_soon_qty > 0
 
@@ -407,6 +463,29 @@ def pos(request):
     cart = _get_cart(request)
     cart_items, subtotal = _build_cart_items(cart, current_branch)
 
+    product_total = Decimal("0.00")
+    grooming_total = Decimal("0.00")
+    service_total = Decimal("0.00")
+    pet_total = Decimal("0.00")
+
+    for cart_item in cart_items:
+        type_name = (cart_item.get("item_type_name") or "").lower()
+        line_total = cart_item["total"]
+
+        if "groom" in type_name:
+            grooming_total += line_total
+        elif "service" in type_name:
+            service_total += line_total
+        elif (
+            "pet" in type_name
+            or "dog" in type_name
+            or "cat" in type_name
+            or "puppy" in type_name
+        ):
+            pet_total += line_total
+        else:
+            product_total += line_total
+
     return render(request, "pos/pos.html", {
         "items": items,
         "item_types": item_types,
@@ -415,11 +494,16 @@ def pos(request):
         "discount": Decimal("0.00"),
         "tax": Decimal("0.00"),
         "total": subtotal,
+        "product_total": product_total,
+        "grooming_total": grooming_total,
+        "service_total": service_total,
+        "pet_total": pet_total,
         "khr_rate": get_khr_rate(),
         "selected_type": type_id,
         "q": raw_q,
         "customers": customers,
         "current_branch": current_branch,
+        "branches": branches,
     })
 
 # ==================================================
@@ -431,7 +515,10 @@ def pos_add_cart(request, item_id):
     current_branch = get_pos_branch(request)
 
     if not current_branch:
-        messages.error(request, "No branch assigned. Please ask admin to set your shop.")
+        messages.error(
+            request,
+            "No branch assigned. Please ask admin to set your shop.",
+        )
         return redirect("pos")
 
     item = get_object_or_404(
@@ -456,8 +543,6 @@ def pos_add_cart(request, item_id):
         messages.error(request, "This product has no active variant.")
         return redirect("pos")
 
-    # ✅ Allow cashier to sell even if branch stock is 0 or negative.
-    # Stock will be deducted at checkout and can become negative.
     _add_to_cart(request, item, variant)
     return redirect("pos")
 
@@ -467,7 +552,10 @@ def pos_add_variant_cart(request, item_id, variant_id):
     current_branch = get_pos_branch(request)
 
     if not current_branch:
-        messages.error(request, "No branch assigned. Please ask admin to set your shop.")
+        messages.error(
+            request,
+            "No branch assigned. Please ask admin to set your shop.",
+        )
         return redirect("pos")
 
     item = get_object_or_404(
@@ -483,24 +571,16 @@ def pos_add_variant_cart(request, item_id, variant_id):
         is_active=True,
     )
 
-    # ✅ Allow cashier to sell even if branch stock is 0 or negative.
-    # Stock will be deducted at checkout and can become negative.
     _add_to_cart(request, item, variant)
     return redirect("pos")
 
 
 @login_required
 def pos_plus_cart(request, cart_key):
-    current_branch = get_pos_branch(request)
     cart = _get_cart(request)
 
     if cart_key in cart:
-        row = cart[cart_key]
-        variant_id = row.get("variant_id")
-        item_id = row.get("item_id")
-        current_qty = int(row.get("qty", 0))
-
-        # ✅ Allow qty to increase even if stock becomes negative.
+        current_qty = int(cart[cart_key].get("qty", 0))
         cart[cart_key]["qty"] = current_qty + 1
 
     _save_cart(request, cart)
@@ -532,7 +612,7 @@ def pos_remove_cart(request, cart_key):
 @login_required
 def pos_clear_cart(request):
     _save_cart(request, {})
-    messages.success(request, "Cart cleared")
+    messages.success(request, "Cart cleared.")
     return redirect("pos")
 
 
@@ -549,24 +629,32 @@ def pos_checkout(request):
     current_branch = get_pos_branch(request)
 
     if not current_branch:
-        messages.error(request, "No branch assigned. Please ask admin to set your shop.")
+        messages.error(
+            request,
+            "No branch assigned. Please ask admin to set your shop.",
+        )
         return redirect("pos")
 
     cart = _get_cart(request)
 
     if not cart:
-        messages.error(request, "Cart is empty")
+        messages.error(request, "Cart is empty.")
         return redirect("pos")
 
     cart_items, subtotal = _build_cart_items(cart, current_branch)
 
     if not cart_items:
-        messages.error(request, "Cart is invalid")
+        messages.error(request, "Cart is invalid.")
         return redirect("pos")
 
+    # =========================
+    # STOCK CHECK
+    # =========================
     for cart_item in cart_items:
         item = cart_item["item"]
         variant = cart_item["variant"]
+        qty = int(cart_item["quantity"])
+        branch_stock = int(cart_item.get("branch_stock") or 0)
 
         if is_service_item(item):
             continue
@@ -575,6 +663,17 @@ def pos_checkout(request):
             messages.error(request, f"{item.name} has no variant selected.")
             return redirect("pos")
 
+        if qty > branch_stock:
+            messages.error(
+                request,
+                f"Not enough stock for {item.name} in {current_branch.name}. "
+                f"Current stock: {branch_stock}",
+            )
+            return redirect("pos")
+
+    # =========================
+    # PAYMENT INPUTS
+    # =========================
     rate = get_khr_rate()
 
     cash_usd = money(request.POST.get("cash_usd"))
@@ -589,6 +688,9 @@ def pos_checkout(request):
 
     sale_type = request.POST.get("sale_type", "walk_in")
 
+    # =========================
+    # DISCOUNT / TAX
+    # =========================
     discount_amount = Decimal("0.00")
 
     if discount_value > 0:
@@ -610,19 +712,40 @@ def pos_checkout(request):
         else:
             tax_amount = tax_value
 
-    final_total = taxable_amount + tax_amount
+    # =========================
+    # DELIVERY FEE
+    # =========================
+    delivery_expense = Decimal("0.00")
 
+    if sale_type == "prepare_delivery":
+        delivery_expense = money(request.POST.get("delivery_expense"))
+
+    final_total = taxable_amount + tax_amount + delivery_expense
+
+    # =========================
+    # PAID / CHANGE
+    # =========================
     paid_usd = cash_usd + aba_usd + (cash_khr / rate) + (aba_khr / rate)
     change_usd = paid_usd - final_total
 
     if paid_usd < final_total:
-        messages.error(request, "Payment not enough")
+        messages.error(request, "Payment not enough.")
         return redirect("pos")
 
+    # =========================
+    # CUSTOMER
+    # =========================
     phone = (
         request.POST.get("customer_phone")
         or request.POST.get("phone")
         or ""
+    ).strip()
+
+    customer_name = (
+        request.POST.get("customer_name")
+        or request.POST.get("delivery_receiver_name")
+        or phone
+        or "Walk-in"
     ).strip()
 
     customer = None
@@ -630,11 +753,18 @@ def pos_checkout(request):
     if phone:
         customer, _ = Customer.objects.get_or_create(
             phone=phone,
-            defaults={"name": phone},
+            defaults={"name": customer_name or phone},
         )
+
+        if customer_name and customer.name == customer.phone:
+            customer.name = customer_name
+            customer.save(update_fields=["name"])
 
     points = int(final_total // Decimal("1"))
 
+    # =========================
+    # CREATE SALE
+    # =========================
     sale = Sale.objects.create(
         branch=current_branch,
         customer=customer,
@@ -644,6 +774,9 @@ def pos_checkout(request):
         change_amount=max(change_usd, Decimal("0.00")),
     )
 
+    # =========================
+    # CREATE SALE ITEMS + DEDUCT STOCK
+    # =========================
     for cart_item in cart_items:
         item = cart_item["item"]
         variant = cart_item["variant"]
@@ -668,18 +801,75 @@ def pos_checkout(request):
             branch=current_branch,
         )
 
+    # =========================
+    # AUTO CREATE DELIVERY FROM POS
+    # =========================
+    if sale.sale_type == "prepare_delivery":
+        from delivery.models import Delivery
+
+        delivery_address = (
+            request.POST.get("delivery_address")
+            or request.POST.get("location")
+            or ""
+        ).strip()
+
+        delivery_note = (
+            request.POST.get("delivery_note")
+            or "POS prepare delivery"
+        ).strip()
+
+        Delivery.objects.create(
+            branch=current_branch,
+            sale=sale,
+            customer_name=customer.name if customer else customer_name,
+            phone=phone,
+            location=delivery_address,
+            total_price=final_total,
+            payment_type="cod_collect",
+            expected_collect=final_total,
+            actual_received=Decimal("0.00"),
+            delivery_fee=delivery_expense,
+            delivery_fee_paid=False,
+            delivery_note=delivery_note,
+        )
+
+        sale.delivery_created = True
+        sale.save(update_fields=["delivery_created"])
+
+    # =========================
+    # PAYMENT RECORDS
+    # =========================
     if cash_usd > 0:
-        SalePayment.objects.create(sale=sale, method="cash_usd", amount=cash_usd)
+        SalePayment.objects.create(
+            sale=sale,
+            method="cash_usd",
+            amount=cash_usd,
+        )
 
     if cash_khr > 0:
-        SalePayment.objects.create(sale=sale, method="cash_khr", amount=cash_khr)
+        SalePayment.objects.create(
+            sale=sale,
+            method="cash_khr",
+            amount=cash_khr,
+        )
 
     if aba_usd > 0:
-        SalePayment.objects.create(sale=sale, method="aba_usd", amount=aba_usd)
+        SalePayment.objects.create(
+            sale=sale,
+            method="aba_usd",
+            amount=aba_usd,
+        )
 
     if aba_khr > 0:
-        SalePayment.objects.create(sale=sale, method="aba_khr", amount=aba_khr)
+        SalePayment.objects.create(
+            sale=sale,
+            method="aba_khr",
+            amount=aba_khr,
+        )
 
+    # =========================
+    # CUSTOMER POINTS
+    # =========================
     if customer:
         customer.points += points
         customer.total_spent += final_total
@@ -690,12 +880,14 @@ def pos_checkout(request):
     if sale.sale_type == "prepare_delivery":
         messages.success(
             request,
-            f"Sale #{sale.id} saved for delivery preparation.",
+            f"Sale #{sale.id} and delivery created for {current_branch.name}. "
+            f"COD: ${final_total:.2f}",
         )
     else:
         messages.success(
             request,
-            f"Sale completed at {current_branch.name}. Change: ${max(change_usd, Decimal('0.00')):.2f} / +{points} pts",
+            f"Sale completed at {current_branch.name}. "
+            f"Change: ${max(change_usd, Decimal('0.00')):.2f} / +{points} pts",
         )
 
     return redirect("sale_detail", pk=sale.id)
@@ -706,7 +898,16 @@ def pos_checkout(request):
 
 @login_required
 def sale_list(request):
-    sales = Sale.objects.select_related("customer", "branch").order_by("-created_at")
+    user_branch = get_user_branch(request.user)
+
+    sales = (
+        Sale.objects
+        .select_related("customer", "branch")
+        .order_by("-created_at")
+    )
+
+    if not request.user.is_superuser and user_branch:
+        sales = sales.filter(branch=user_branch)
 
     q = request.GET.get("q", "").strip()
     date_from = request.GET.get("date_from", "").strip()
@@ -722,7 +923,7 @@ def sale_list(request):
             | Q(branch__name__icontains=q)
         )
 
-    if branch_id:
+    if request.user.is_superuser and branch_id:
         sales = sales.filter(branch_id=branch_id)
 
     if date_from:
@@ -745,8 +946,14 @@ def sale_list(request):
             paid_amount__lt=F("total_amount"),
         )
 
-    total_amount = sales.aggregate(total=Sum("total_amount"))["total"] or Decimal("0.00")
-    total_paid = sales.aggregate(total=Sum("paid_amount"))["total"] or Decimal("0.00")
+    total_amount = (
+        sales.aggregate(total=Sum("total_amount"))["total"]
+        or Decimal("0.00")
+    )
+    total_paid = (
+        sales.aggregate(total=Sum("paid_amount"))["total"]
+        or Decimal("0.00")
+    )
     total_balance = total_amount - total_paid
 
     branches = Branch.objects.filter(is_active=True).order_by("name")
@@ -758,17 +965,60 @@ def sale_list(request):
         "total_balance": total_balance,
         "branches": branches,
         "selected_branch": branch_id,
+        "current_branch": user_branch,
     })
 
 
 @login_required
 def sale_detail(request, pk):
+    user_branch = get_user_branch(request.user)
+
     sale = get_object_or_404(
         Sale.objects
         .select_related("customer", "branch")
-        .prefetch_related("items__item", "items__variant", "payments"),
+        .prefetch_related(
+            "items__item",
+            "items__item__item_type",
+            "items__variant",
+            "payments",
+        ),
         pk=pk,
     )
+
+    if (
+        not request.user.is_superuser
+        and user_branch
+        and sale.branch_id != user_branch.id
+    ):
+        messages.error(request, "You do not have permission to view this sale.")
+        return redirect("sale_list")
+
+    product_total = Decimal("0.00")
+    grooming_total = Decimal("0.00")
+    service_total = Decimal("0.00")
+    pet_total = Decimal("0.00")
+
+    for line in sale.items.all():
+        type_name = ""
+
+        if line.item and line.item.item_type:
+            type_name = line.item.item_type.name.lower().strip()
+
+        line_total = line.total
+
+        if "groom" in type_name:
+            grooming_total += line_total
+        elif "service" in type_name:
+            service_total += line_total
+        elif (
+            "pet" in type_name
+            or "dog" in type_name
+            or "cat" in type_name
+            or "puppy" in type_name
+        ):
+            pet_total += line_total
+        else:
+            product_total += line_total
 
     balance = sale.total_amount - sale.paid_amount
 
@@ -776,12 +1026,25 @@ def sale_detail(request, pk):
         "sale": sale,
         "balance": balance,
         "khr_rate": get_khr_rate(),
+        "product_total": product_total,
+        "grooming_total": grooming_total,
+        "service_total": service_total,
+        "pet_total": pet_total,
     })
 
 
 @login_required
 def sale_add_payment(request, pk):
+    user_branch = get_user_branch(request.user)
     sale = get_object_or_404(Sale, pk=pk)
+
+    if (
+        not request.user.is_superuser
+        and user_branch
+        and sale.branch_id != user_branch.id
+    ):
+        messages.error(request, "You do not have permission to edit this sale.")
+        return redirect("sale_list")
 
     if request.method == "POST":
         amount = money(request.POST.get("amount"))
@@ -803,7 +1066,7 @@ def sale_add_payment(request, pk):
             method = "cash_usd"
 
         if amount <= 0:
-            messages.error(request, "Payment amount must be greater than 0")
+            messages.error(request, "Payment amount must be greater than 0.")
             return redirect("sale_detail", pk=sale.id)
 
         balance = sale.total_amount - sale.paid_amount
@@ -824,7 +1087,7 @@ def sale_add_payment(request, pk):
         sale.paid_amount += amount_to_add
         sale.save(update_fields=["paid_amount", "change_amount"])
 
-        messages.success(request, "Payment added successfully")
+        messages.success(request, "Payment added successfully.")
         return redirect("sale_detail", pk=sale.id)
 
     return redirect("sale_detail", pk=sale.id)
@@ -842,13 +1105,13 @@ def pos_exchange_rate(request):
         rate = money(request.POST.get("exchange_rate"))
 
         if rate <= 0:
-            messages.error(request, "Exchange rate must be greater than 0")
+            messages.error(request, "Exchange rate must be greater than 0.")
             return redirect("pos_exchange_rate")
 
         setting.exchange_rate = rate
         setting.save(update_fields=["exchange_rate"])
 
-        messages.success(request, "Exchange rate updated successfully")
+        messages.success(request, "Exchange rate updated successfully.")
         return redirect("pos_exchange_rate")
 
     return render(request, "pos/exchange_rate.html", {
@@ -869,34 +1132,61 @@ def cash_count_dashboard(request):
     else:
         count_date = timezone.localdate()
 
-    sales = Sale.objects.filter(created_at__date=count_date).order_by("-created_at")
-    payments = SalePayment.objects.filter(sale__created_at__date=count_date)
+    current_branch = get_pos_branch(request)
 
-    system_cash_usd = payments.filter(method="cash_usd").aggregate(
-        total=Sum("amount")
-    )["total"] or Decimal("0")
+    if not current_branch:
+        messages.error(
+            request,
+            "No branch assigned. Please ask admin to set your shop.",
+        )
+        return redirect("pos")
 
-    system_cash_khr = payments.filter(method="cash_khr").aggregate(
-        total=Sum("amount")
-    )["total"] or Decimal("0")
+    sales = (
+        Sale.objects
+        .filter(
+            branch=current_branch,
+            created_at__date=count_date,
+        )
+        .order_by("-created_at")
+    )
 
-    system_aba_usd = payments.filter(method="aba_usd").aggregate(
-        total=Sum("amount")
-    )["total"] or Decimal("0")
+    payments = SalePayment.objects.filter(
+        sale__branch=current_branch,
+        sale__created_at__date=count_date,
+    )
 
-    system_aba_khr = payments.filter(method="aba_khr").aggregate(
-        total=Sum("amount")
-    )["total"] or Decimal("0")
+    system_cash_usd = (
+        payments.filter(method="cash_usd").aggregate(total=Sum("amount"))["total"]
+        or Decimal("0")
+    )
 
-    total_sales = sales.aggregate(
-        total=Sum("total_amount")
-    )["total"] or Decimal("0")
+    system_cash_khr = (
+        payments.filter(method="cash_khr").aggregate(total=Sum("amount"))["total"]
+        or Decimal("0")
+    )
 
-    total_paid = sales.aggregate(
-        total=Sum("paid_amount")
-    )["total"] or Decimal("0")
+    system_aba_usd = (
+        payments.filter(method="aba_usd").aggregate(total=Sum("amount"))["total"]
+        or Decimal("0")
+    )
+
+    system_aba_khr = (
+        payments.filter(method="aba_khr").aggregate(total=Sum("amount"))["total"]
+        or Decimal("0")
+    )
+
+    total_sales = (
+        sales.aggregate(total=Sum("total_amount"))["total"]
+        or Decimal("0")
+    )
+
+    total_paid = (
+        sales.aggregate(total=Sum("paid_amount"))["total"]
+        or Decimal("0")
+    )
 
     cash_count, created = CashCount.objects.get_or_create(
+        branch=current_branch,
         date=count_date,
         defaults={
             "system_cash_usd": system_cash_usd,
@@ -908,7 +1198,11 @@ def cash_count_dashboard(request):
     cash_count.system_cash_usd = system_cash_usd
     cash_count.system_cash_khr = system_cash_khr
     cash_count.system_aba_usd = system_aba_usd
-    cash_count.save()
+    cash_count.save(update_fields=[
+        "system_cash_usd",
+        "system_cash_khr",
+        "system_aba_usd",
+    ])
 
     if request.method == "POST":
         cash_count.counted_cash_usd = money(request.POST.get("counted_cash_usd"))
@@ -927,6 +1221,7 @@ def cash_count_dashboard(request):
 
     return render(request, "pos/cash_count_dashboard.html", {
         "count_date": count_date,
+        "current_branch": current_branch,
         "sales": sales,
         "cash_count": cash_count,
         "total_sales": total_sales,

@@ -811,48 +811,91 @@ tbody tr:hover{
     </div>
 
     <div class="menu">
-        <a href="{% url 'dashboard' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-            <span>🏠</span><span>Dashboard</span>
-        </a>
 
-        <a href="{% url 'pos' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'pos' %}active{% endif %}">
-            <span>🛍️</span><span>POS</span>
-        </a>
+    <!-- CORE -->
+    <a href="{% url 'dashboard' %}" onclick="closeSidebar()"
+       class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <span>🏠</span><span>Dashboard</span>
+    </a>
 
-        <a href="{% url 'sale_list' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'sale_list' %}active{% endif %}">
-            <span>📊</span><span>Sales</span>
-        </a>
+    <a href="{% url 'pos' %}" onclick="closeSidebar()"
+       class="{% if request.resolver_match.url_name == 'pos' %}active{% endif %}">
+        <span>🛍️</span><span>POS</span>
+    </a>
 
-        <a href="{% url 'item_list' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'item_list' %}active{% endif %}">
-            <span>📦</span><span>Inventory</span>
-        </a>
+    <a href="{% url 'sale_list' %}" onclick="closeSidebar()"
+       class="{% if request.resolver_match.url_name == 'sale_list' %}active{% endif %}">
+        <span>📊</span><span>Sales</span>
+    </a>
 
-        <a href="{% url 'branch_list' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'branch_list' %}active{% endif %}">
-            <span>🏪</span><span>Shops</span>
-        </a>
 
-        <a href="{% url 'purchase_list' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'purchase_list' %}active{% endif %}">
-            <span>🛒</span><span>Purchases</span>
-        </a>
+    <!-- PETS (🔥 NEW MAIN MODULE) -->
+    <div class="menu-group-title">Pets</div>
 
-        <a href="{% url 'customer_list' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'customer_list' %}active{% endif %}">
-            <span>👥</span><span>Customers</span>
-        </a>
+    <a href="{% url 'pet_list' %}" onclick="closeSidebar()"
+       class="{% if request.resolver_match.url_name|slice:':4' == 'pet_' %}active{% endif %}">
+        <span>🐾</span><span>Pets Stock</span>
+    </a>
 
-        <a href="{% url 'service_list' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'service_list' %}active{% endif %}">
-            <span>✂️</span><span>Services</span>
-        </a>
+    <a href="{% url 'pet_sale_create' %}" onclick="closeSidebar()"
+       class="{% if request.resolver_match.url_name == 'pet_sale_create' %}active{% endif %}">
+        <span>💰</span><span>Pet Sale</span>
+    </a>
 
-        <a href="{% url 'delivery_list' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'delivery_list' %}active{% endif %}">
-            <span>🚚</span><span>Delivery</span>
-        </a>
 
-        {% if perms.auth.view_user %}
-        <a href="{% url 'user_list' %}" onclick="closeSidebar()" class="{% if request.resolver_match.url_name == 'user_list' %}active{% endif %}">
-            <span>🔒</span><span>Users</span>
-        </a>
-        {% endif %}
-    </div>
+    <!-- INVENTORY -->
+    <div class="menu-group-title">Inventory</div>
+
+    <a href="{% url 'item_list' %}" onclick="closeSidebar()"
+       class="{% if request.resolver_match.url_name == 'item_list' %}active{% endif %}">
+        <span>📦</span><span>Items</span>
+    </a>
+
+    <a href="{% url 'purchase_list' %}" onclick="closeSidebar()"
+       class="{% if request.resolver_match.url_name == 'purchase_list' %}active{% endif %}">
+        <span>🛒</span><span>Purchases</span>
+    </a>
+
+
+    <!-- OPERATIONS -->
+    <div class="menu-group-title">Operations</div>
+
+    <a href="{% url 'delivery_list' %}" onclick="closeSidebar()"
+       class="{% if request.resolver_match.url_name == 'delivery_list' %}active{% endif %}">
+        <span>🚚</span><span>Delivery</span>
+    </a>
+
+    <a href="{% url 'service_list' %}" onclick="closeSidebar()"
+       class="{% if request.resolver_match.url_name == 'service_list' %}active{% endif %}">
+        <span>✂️</span><span>Services</span>
+    </a>
+
+
+    <!-- CRM -->
+    <div class="menu-group-title">Customers</div>
+
+    <a href="{% url 'customer_list' %}" onclick="closeSidebar()"
+       class="{% if request.resolver_match.url_name == 'customer_list' %}active{% endif %}">
+        <span>👥</span><span>Customers</span>
+    </a>
+
+    <a href="{% url 'branch_list' %}" onclick="closeSidebar()"
+       class="{% if request.resolver_match.url_name == 'branch_list' %}active{% endif %}">
+        <span>🏪</span><span>Shops</span>
+    </a>
+
+
+    <!-- ADMIN -->
+    {% if perms.auth.view_user %}
+    <div class="menu-group-title">Admin</div>
+
+    <a href="{% url 'user_list' %}" onclick="closeSidebar()"
+       class="{% if request.resolver_match.url_name == 'user_list' %}active{% endif %}">
+        <span>🔒</span><span>Users</span>
+    </a>
+    {% endif %}
+
+</div>
 
     <div class="sidebar-footer">
         <img src="{% static 'img/sleep-cat.png' %}" class="sleep-cat-img" alt="Sleeping cat">

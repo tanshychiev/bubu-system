@@ -54,10 +54,26 @@ class Purchase(models.Model):
     def total_unallocated_qty(self):
         return sum(item.unallocated_qty for item in self.items.all())
 
+    @property
+    def has_plan(self):
+        return self.items.filter(branch_plans__isnull=False).exists()
+
+    @property
+    def is_allocated(self):
+        return self.total_received_qty > 0 and self.total_allocated_qty >= self.total_received_qty
+
+    @property
+    def allocation_status_text(self):
+        if self.total_received_qty <= 0:
+            return "Not received yet"
+        if self.total_allocated_qty <= 0:
+            return "Not allocated"
+        if self.total_allocated_qty < self.total_received_qty:
+            return "Partial allocated"
+        return "Allocated"
+
     def __str__(self):
         return f"Purchase #{self.id}"
-
-
 class PurchaseItem(models.Model):
     purchase = models.ForeignKey(
         Purchase,

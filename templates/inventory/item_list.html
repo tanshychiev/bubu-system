@@ -37,6 +37,7 @@ a { text-decoration:none !important; }
     gap:14px;
     flex-wrap:wrap;
     margin-top:22px;
+    align-items:center;
 }
 
 .search-pill {
@@ -58,6 +59,7 @@ a { text-decoration:none !important; }
     font-weight:900;
     background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
     box-shadow:0 12px 26px rgba(155,124,246,.25);
+    cursor:pointer;
 }
 
 .btn-reset {
@@ -70,6 +72,7 @@ a { text-decoration:none !important; }
     color:#6b6178;
     display:inline-flex;
     align-items:center;
+    justify-content:center;
 }
 
 .add-btn {
@@ -93,6 +96,196 @@ a { text-decoration:none !important; }
     background:linear-gradient(135deg,#19a974,#7be0b2);
 }
 
+.control-btn {
+    background:linear-gradient(135deg,#ff8c6b,#ffbd73);
+}
+
+/* ============================= */
+/* SHOP POPUP BUTTON */
+/* ============================= */
+.branch-popup-btn{
+    height:54px;
+    min-width:230px;
+    border-radius:999px;
+    border:1px solid #eaddec;
+    padding:0 22px;
+    background:white;
+    font-weight:900;
+    color:#17152f;
+    box-shadow:0 10px 24px rgba(130,91,60,.06);
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+}
+
+.branch-popup-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(23,21,47,.35);
+    z-index:5999;
+}
+
+.branch-popup-backdrop.active{
+    display:block;
+}
+
+.branch-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:420px;
+    max-width:calc(100% - 28px);
+    background:white;
+    border-radius:30px;
+    border:1px solid #f1ddd1;
+    box-shadow:0 30px 90px rgba(23,21,47,.28);
+    z-index:6000;
+    padding:18px;
+}
+
+.branch-popup.active{
+    display:block;
+}
+
+.branch-popup-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:14px;
+}
+
+.branch-popup-head h3{
+    margin:0;
+    font-size:24px;
+    font-weight:900;
+    color:#17152f;
+}
+
+.branch-popup-head button{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    border:0;
+    background:#fff3f1;
+    color:#ff4d4d;
+    font-weight:900;
+    cursor:pointer;
+}
+
+.branch-popup-list{
+    display:grid;
+    gap:10px;
+}
+
+.branch-option{
+    width:100%;
+    min-height:64px;
+    border-radius:22px;
+    border:1px solid #eaddec;
+    background:#fffaf7;
+    padding:0 16px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    cursor:pointer;
+    font-weight:900;
+    color:#17152f;
+}
+
+.branch-option:hover,
+.branch-option.active{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    border-color:transparent;
+}
+
+.branch-option span{
+    font-size:22px;
+}
+
+.branch-option strong{
+    flex:1;
+    text-align:left;
+}
+
+.branch-option em{
+    font-style:normal;
+    font-size:12px;
+    padding:5px 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,.25);
+}
+
+/* ============================= */
+/* CURRENT SHOP INFO */
+/* ============================= */
+.branch-info-box {
+    margin:18px 0 22px;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+    border:1px solid #f0e5ee;
+    border-radius:24px;
+    padding:16px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+}
+
+.branch-info-left {
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.branch-icon {
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    box-shadow:0 8px 18px rgba(130,91,60,.08);
+}
+
+.branch-info-title {
+    color:#17152f;
+    font-weight:900;
+    font-size:18px;
+}
+
+.branch-info-sub {
+    color:#7b7288;
+    font-weight:800;
+    margin-top:4px;
+}
+
+.branch-status-badge {
+    min-height:46px;
+    padding:0 18px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+    color:white;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+}
+
+.branch-status-badge.locked {
+    background:linear-gradient(135deg,#19a974,#7be0b2);
+}
+
+/* ============================= */
+/* PANEL */
+/* ============================= */
 .inventory-panel {
     background:white;
     border:1px solid #f5e8df;
@@ -108,6 +301,12 @@ a { text-decoration:none !important; }
     margin-bottom:22px;
 }
 
+.type-tab-wrap{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+}
+
 .tab {
     padding:14px 28px;
     border-radius:999px;
@@ -116,6 +315,10 @@ a { text-decoration:none !important; }
     color:#514a5f;
     font-weight:900;
     box-shadow:0 8px 18px rgba(130,91,60,.05);
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:50px;
 }
 
 .tab.active {
@@ -124,6 +327,9 @@ a { text-decoration:none !important; }
     box-shadow:0 12px 26px rgba(155,124,246,.25);
 }
 
+/* ============================= */
+/* PRODUCT GRID */
+/* ============================= */
 .product-grid {
     display:grid;
     grid-template-columns:repeat(5,1fr);
@@ -160,7 +366,9 @@ a { text-decoration:none !important; }
     object-fit:contain;
 }
 
-.placeholder { font-size:72px; }
+.placeholder {
+    font-size:72px;
+}
 
 .badge {
     display:inline-flex;
@@ -204,6 +412,11 @@ a { text-decoration:none !important; }
     color:#ff4d4d;
 }
 
+.stock.zero {
+    background:#f1f1f1;
+    color:#777;
+}
+
 .variant-list {
     margin-top:10px;
     display:flex;
@@ -221,6 +434,18 @@ a { text-decoration:none !important; }
     font-weight:900;
 }
 
+.variant-chip.low {
+    background:#ffe6e6;
+    color:#ff4d4d;
+    border-color:#ffd1d1;
+}
+
+.variant-chip.good {
+    background:#eafff4;
+    color:#19a974;
+    border-color:#c8f5df;
+}
+
 .price-row {
     display:flex;
     justify-content:space-between;
@@ -229,8 +454,13 @@ a { text-decoration:none !important; }
     font-weight:900;
 }
 
-.cost { color:#6b6178; }
-.price { color:#7b5cff; }
+.cost {
+    color:#6b6178;
+}
+
+.price {
+    color:#7b5cff;
+}
 
 .action-row {
     display:flex;
@@ -253,10 +483,23 @@ a { text-decoration:none !important; }
     background:#fbf8ff;
 }
 
-.view-btn { color:#7b5cff; }
-.edit-btn { color:#7b5cff; }
-.stock-btn { color:#19a974; background:#f0fff8; }
-.delete-btn { color:#ff4d4d; background:#fff3f1; }
+.view-btn {
+    color:#7b5cff;
+}
+
+.edit-btn {
+    color:#7b5cff;
+}
+
+.stock-btn {
+    color:#19a974;
+    background:#f0fff8;
+}
+
+.delete-btn {
+    color:#ff4d4d;
+    background:#fff3f1;
+}
 
 .empty-box {
     min-height:350px;
@@ -273,51 +516,338 @@ a { text-decoration:none !important; }
     margin:8px 0;
 }
 
+.empty-box p {
+    color:#7b7288;
+    font-weight:800;
+}
+
+/* ============================= */
+/* MOBILE ACTION POPUP */
+/* ============================= */
+.mobile-action-toggle{
+    display:none;
+}
+
+.mobile-action-panel{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+}
+
+.mobile-action-backdrop{
+    display:none;
+}
+
+/* ============================= */
+/* RESPONSIVE */
+/* ============================= */
 @media(max-width:1300px){
-    .product-grid{grid-template-columns:repeat(4,1fr);}
+    .product-grid{
+        grid-template-columns:repeat(4,1fr);
+    }
 }
 
 @media(max-width:1000px){
-    .inventory-hero{grid-template-columns:1fr;}
-    .hero-img{height:220px;}
-    .product-grid{grid-template-columns:repeat(2,1fr);}
+    .inventory-hero{
+        grid-template-columns:1fr;
+    }
+
+    .hero-img{
+        height:220px;
+    }
+
+    .product-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
 }
 
-@media(max-width:600px){
-    .product-grid{grid-template-columns:1fr;}
+@media(max-width:700px){
+    .inventory-title h1{
+        font-size:32px;
+    }
+
+    .inventory-title p{
+        font-size:14px;
+        line-height:1.5;
+    }
+
+    .hero-img{
+        display:none;
+    }
+
+    .tool-row{
+        display:grid;
+        grid-template-columns:1fr;
+        gap:12px;
+    }
+
+    .search-pill,
+    .branch-popup-btn,
+    .btn-search,
+    .btn-reset{
+        width:100%;
+        min-width:0;
+    }
+
+    .branch-popup{
+        left:14px;
+        right:14px;
+        top:auto;
+        bottom:18px;
+        width:auto;
+        max-width:none;
+        transform:none;
+        border-radius:28px;
+    }
+
+    .mobile-action-toggle{
+        display:flex;
+        width:100%;
+        height:56px;
+        border-radius:999px;
+        align-items:center;
+        justify-content:center;
+        border:none;
+        color:white;
+        font-weight:900;
+        background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+        box-shadow:0 14px 28px rgba(155,124,246,.25);
+        cursor:pointer;
+    }
+
+    .mobile-action-backdrop{
+        display:none;
+        position:fixed;
+        inset:0;
+        background:rgba(23,21,47,.35);
+        z-index:4999;
+    }
+
+    .mobile-action-backdrop.active{
+        display:block;
+    }
+
+    .mobile-action-panel{
+        display:none;
+        position:fixed;
+        left:14px;
+        right:14px;
+        bottom:18px;
+        z-index:5000;
+        background:white;
+        border:1px solid #f1ddd1;
+        border-radius:28px;
+        padding:16px;
+        box-shadow:0 24px 70px rgba(23,21,47,.25);
+    }
+
+    .mobile-action-panel.active{
+        display:grid;
+        grid-template-columns:1fr;
+        gap:12px;
+    }
+
+    .mobile-action-panel .add-btn{
+        width:100%;
+        height:56px;
+    }
+
+    .branch-info-box{
+        display:block;
+        padding:14px;
+    }
+
+    .branch-status-badge{
+        width:100%;
+        margin-top:12px;
+    }
+
+    .inventory-panel{
+        padding:14px;
+        border-radius:22px;
+    }
+
+    .category-tabs{
+        flex-wrap:nowrap;
+        overflow-x:auto;
+        padding-bottom:8px;
+    }
+
+    .type-tab-wrap{
+        flex:0 0 auto;
+    }
+
+    .tab{
+        flex:0 0 auto;
+        padding:12px 20px;
+    }
+
+    .product-grid{
+        grid-template-columns:1fr;
+    }
 }
 </style>
 
 <div class="inventory-hero">
     <div class="inventory-title">
         <h1>Pet Inventory 🐾</h1>
-        <p>First create type/category, then create item, then add size/color/style.</p>
 
-        <form method="get" class="tool-row">
-            <input class="search-pill" type="text" name="q" placeholder="🔍 Search pet product..." value="{{ request.GET.q }}">
+        <p>
+            Inventory is separated by shop/branch.
+            {% if current_branch %}
+                You are viewing stock for <strong>{{ current_branch.name }}</strong>.
+            {% else %}
+                No branch selected.
+            {% endif %}
+        </p>
+
+        <form method="get" class="tool-row" id="filterForm">
+            <input
+                class="search-pill"
+                type="text"
+                name="q"
+                placeholder="🔍 Search pet product..."
+                value="{{ request.GET.q }}"
+            >
+
+            {% if request.user.is_superuser %}
+                <input
+                    type="hidden"
+                    name="branch"
+                    id="branchInput"
+                    value="{% if current_branch %}{{ current_branch.id }}{% endif %}"
+                >
+
+                <button type="button" class="branch-popup-btn" onclick="openBranchPopup()">
+                    🏪 {% if current_branch %}{{ current_branch.name }}{% else %}Choose Shop{% endif %}
+                </button>
+            {% endif %}
+
+            {% if selected_type %}
+                <input type="hidden" name="type" value="{{ selected_type }}">
+            {% endif %}
+
             <button class="btn-search" type="submit">Search</button>
+
             <a href="{% url 'item_list' %}" class="btn-reset">Reset</a>
 
             {% if can_manage_inventory %}
-                <a href="{% url 'item_type_create' %}" class="add-btn type-btn">+ Create Type</a>
-                <a href="{% url 'item_create' %}" class="add-btn">+ Add Item</a>
-                <a href="{% url 'stock_batch_in' %}" class="add-btn stock-batch-btn">+ Batch Stock In</a>
+                <button type="button" class="mobile-action-toggle" onclick="openMobileActions()">
+                    ＋ Inventory Actions
+                </button>
+
+                <div class="mobile-action-backdrop" id="mobileActionBackdrop" onclick="closeMobileActions()"></div>
+
+                <div class="mobile-action-panel" id="mobileActionPanel">
+                    <a href="{% url 'inventory_control_center' %}" class="add-btn control-btn">⚙️ Control Center</a>
+                    <a href="{% url 'item_type_create' %}" class="add-btn type-btn">+ Create Type</a>
+                    <a href="{% url 'item_create' %}" class="add-btn">+ Add Item</a>
+
+                    {% if current_branch and request.user.is_superuser %}
+                        <a href="{% url 'stock_batch_in' %}?branch={{ current_branch.id }}" class="add-btn stock-batch-btn">
+                            + Batch Stock In
+                        </a>
+                    {% else %}
+                        <a href="{% url 'stock_batch_in' %}" class="add-btn stock-batch-btn">
+                            + Batch Stock In
+                        </a>
+                    {% endif %}
+                </div>
             {% endif %}
         </form>
+
+        {% if request.user.is_superuser %}
+            <div class="branch-popup-backdrop" id="branchPopupBackdrop" onclick="closeBranchPopup()"></div>
+
+            <div class="branch-popup" id="branchPopup">
+                <div class="branch-popup-head">
+                    <h3>Choose Shop</h3>
+                    <button type="button" onclick="closeBranchPopup()">✕</button>
+                </div>
+
+                <div class="branch-popup-list">
+                    {% for branch in branches %}
+                        <button
+                            type="button"
+                            class="branch-option {% if current_branch and current_branch.id == branch.id %}active{% endif %}"
+                            onclick="selectBranch('{{ branch.id }}')"
+                        >
+                            <span>🏪</span>
+                            <strong>{{ branch.name }}</strong>
+
+                            {% if current_branch and current_branch.id == branch.id %}
+                                <em>Current</em>
+                            {% endif %}
+                        </button>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
     </div>
 
     <img src="{% static 'img/inventory-hero.png' %}" class="hero-img">
 </div>
 
+<div class="branch-info-box">
+    <div class="branch-info-left">
+        <div class="branch-icon">🏪</div>
+
+        <div>
+            <div class="branch-info-title">
+                Current Shop:
+                {% if current_branch %}
+                    {{ current_branch.name }}
+                {% else %}
+                    No shop selected
+                {% endif %}
+            </div>
+
+            <div class="branch-info-sub">
+                {% if request.user.is_superuser %}
+                    Admin can choose which shop inventory to view.
+                {% else %}
+                    Stock view is locked to your assigned staff shop.
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="branch-status-badge {% if not request.user.is_superuser %}locked{% endif %}">
+        {% if request.user.is_superuser %}
+            Admin Shop View
+        {% else %}
+            🔒 Branch Locked
+        {% endif %}
+    </div>
+</div>
+
+{% if can_manage_inventory %}
+<div style="margin-bottom:18px;">
+    <a href="{% url 'inventory_control_center' %}" class="add-btn control-btn">⚙️ Inventory Control Center</a>
+</div>
+{% endif %}
+
 <div class="inventory-panel">
 
     <div class="category-tabs">
-        <a class="tab {% if not selected_type %}active{% endif %}" href="{% url 'item_list' %}">▦ All Items</a>
+        <div class="type-tab-wrap">
+            <a
+                class="tab {% if not selected_type %}active{% endif %}"
+                href="{% url 'item_list' %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}"
+            >
+                ▦ All Items
+            </a>
+        </div>
 
         {% for type in item_types %}
-            <a class="tab {% if selected_type == type.id|stringformat:'s' %}active{% endif %}" href="?type={{ type.id }}">
-                {{ type.emoji }} {{ type.name }}
-            </a>
+            <div class="type-tab-wrap">
+                <a
+                    class="tab {% if selected_type == type.id|stringformat:'s' %}active{% endif %}"
+                    href="?type={{ type.id }}{% if request.user.is_superuser and current_branch %}&branch={{ current_branch.id }}{% endif %}"
+                >
+                    {{ type.emoji|default:"📦" }} {{ type.name }}
+                </a>
+            </div>
         {% endfor %}
     </div>
 
@@ -328,16 +858,16 @@ a { text-decoration:none !important; }
 
             <span class="badge">
                 {% if item.item_type %}
-                    {{ item.item_type.emoji }} {{ item.item_type.name }}
+                    {{ item.item_type.emoji|default:"📦" }} {{ item.item_type.name }}
                 {% else %}
                     📦 No Type
                 {% endif %}
             </span>
 
-            <a href="{% url 'item_detail' item.id %}">
+            <a href="{% url 'item_detail' item.id %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}">
                 <div class="product-img">
                     {% if item.image %}
-                        <img src="{{ item.image.url }}">
+                        <img src="{{ item.image.url }}" alt="{{ item.name }}">
                     {% else %}
                         <div class="placeholder">📦</div>
                     {% endif %}
@@ -345,42 +875,82 @@ a { text-decoration:none !important; }
             </a>
 
             <div class="product-name">
-                <a href="?q={{ item.name }}">{{ item.name }}</a>
+                <a href="?q={{ item.name|urlencode }}{% if request.user.is_superuser and current_branch %}&branch={{ current_branch.id }}{% endif %}">
+                    {{ item.name }}
+                </a>
             </div>
 
             <div class="brand">{{ item.brand|default:"No brand" }}</div>
 
-            {% if item.total_stock <= 3 %}
-                <div class="stock low">Low Stock: {{ item.total_stock }} {{ item.get_unit_display }}</div>
+            {% if item.branch_stock_total <= 0 %}
+                <div class="stock zero">
+                    Out of Stock: {{ item.branch_stock_total }} {{ item.get_unit_display }}
+                </div>
+            {% elif item.branch_stock_total <= 3 %}
+                <div class="stock low">
+                    Low Stock: {{ item.branch_stock_total }} {{ item.get_unit_display }}
+                </div>
             {% else %}
-                <div class="stock">Stock: {{ item.total_stock }} {{ item.get_unit_display }}</div>
+                <div class="stock">
+                    Stock: {{ item.branch_stock_total }} {{ item.get_unit_display }}
+                </div>
             {% endif %}
 
             <div class="variant-list">
                 {% for variant in item.variants.all|slice:":3" %}
-                    <span class="variant-chip">
-                        {{ variant.display_name }}: {{ variant.quantity }}
+                    <span class="variant-chip {% if variant.branch_stock_qty <= 0 %}low{% else %}good{% endif %}">
+                        {{ variant.display_name }}: {{ variant.branch_stock_qty }}
                     </span>
                 {% empty %}
                     <span class="variant-chip">No variant yet</span>
                 {% endfor %}
             </div>
 
-            {% if can_manage_inventory %}
+            {% if can_view_cost_price or can_edit_cost_price %}
             <div class="price-row">
-                <span class="cost">Cost: ${{ item.cost_price|floatformat:2 }}</span>
+                {% if can_view_cost_price %}
+                    <span class="cost">Cost: ${{ item.cost_price|floatformat:2 }}</span>
+                {% else %}
+                    <span class="cost">Cost: Hidden</span>
+                {% endif %}
+
                 <span class="price">${{ item.sale_price|floatformat:2 }}</span>
             </div>
             {% endif %}
 
             <div class="action-row">
-                <a href="{% url 'item_detail' item.id %}" class="icon-btn view-btn">👁</a>
+                <a
+                    href="{% url 'item_detail' item.id %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}"
+                    class="icon-btn view-btn"
+                    title="View"
+                >
+                    👁
+                </a>
 
                 {% if can_manage_inventory %}
-                    <a href="{% url 'item_variant_create' item.id %}" class="icon-btn stock-btn">+ Size</a>
-                   
-                    <a href="{% url 'item_edit' item.id %}" class="icon-btn edit-btn">✎</a>
-                    <a href="{% url 'item_delete' item.id %}" class="icon-btn delete-btn">🗑</a>
+                    <a
+                        href="{% url 'item_variant_create' item.id %}"
+                        class="icon-btn stock-btn"
+                        title="Add variant"
+                    >
+                        + Size
+                    </a>
+
+                    <a
+                        href="{% url 'item_edit' item.id %}"
+                        class="icon-btn edit-btn"
+                        title="Edit"
+                    >
+                        ✎
+                    </a>
+
+                    <a
+                        href="{% url 'item_delete' item.id %}"
+                        class="icon-btn delete-btn"
+                        title="Delete"
+                    >
+                        🗑
+                    </a>
                 {% endif %}
             </div>
 
@@ -391,18 +961,86 @@ a { text-decoration:none !important; }
             <div>
                 <div style="font-size:90px;">📦✨</div>
                 <h3>No items found</h3>
-                <p>Looks like your inventory is empty.</p>
-
-                {% if can_manage_inventory %}
-                    <a href="{% url 'item_type_create' %}" class="add-btn type-btn">+ Create Type</a>
-                    <a href="{% url 'item_create' %}" class="add-btn">+ Add Item</a>
-                    <a href="{% url 'stock_batch_in' %}" class="add-btn stock-batch-btn">+ Batch Stock In</a>
-                {% endif %}
+                <p>Looks like your inventory is empty for this shop/filter.</p>
             </div>
         </div>
         {% endfor %}
 
     </div>
 </div>
+
+<script>
+function openBranchPopup(){
+    const popup = document.getElementById("branchPopup");
+    const backdrop = document.getElementById("branchPopupBackdrop");
+
+    if(popup){
+        popup.classList.add("active");
+    }
+
+    if(backdrop){
+        backdrop.classList.add("active");
+    }
+}
+
+function closeBranchPopup(){
+    const popup = document.getElementById("branchPopup");
+    const backdrop = document.getElementById("branchPopupBackdrop");
+
+    if(popup){
+        popup.classList.remove("active");
+    }
+
+    if(backdrop){
+        backdrop.classList.remove("active");
+    }
+}
+
+function selectBranch(branchId){
+    const input = document.getElementById("branchInput");
+    const form = document.getElementById("filterForm");
+
+    if(input){
+        input.value = branchId;
+    }
+
+    if(form){
+        form.submit();
+    }
+}
+
+function openMobileActions(){
+    const panel = document.getElementById("mobileActionPanel");
+    const backdrop = document.getElementById("mobileActionBackdrop");
+
+    if(panel){
+        panel.classList.add("active");
+    }
+
+    if(backdrop){
+        backdrop.classList.add("active");
+    }
+}
+
+function closeMobileActions(){
+    const panel = document.getElementById("mobileActionPanel");
+    const backdrop = document.getElementById("mobileActionBackdrop");
+
+    if(panel){
+        panel.classList.remove("active");
+    }
+
+    if(backdrop){
+        backdrop.classList.remove("active");
+    }
+}
+
+document.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){
+        closeBranchPopup();
+        closeMobileActions();
+    }
+});
+</script>
 
 {% endblock %}

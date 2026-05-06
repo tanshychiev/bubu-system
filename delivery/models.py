@@ -18,6 +18,22 @@ class Delivery(models.Model):
         ("cancelled", "Cancelled"),
     ]
 
+    branch = models.ForeignKey(
+        "inventory.Branch",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="deliveries",
+    )
+
+    sale = models.OneToOneField(
+        "pos.Sale",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="delivery",
+    )
+
     customer_name = models.CharField(max_length=150)
     phone = models.CharField(max_length=50, blank=True)
     location = models.TextField()
@@ -53,10 +69,12 @@ class Delivery(models.Model):
 
     def refresh_total_price(self):
         total = sum(item.line_total for item in self.items.all())
-        self.total_price = total
+
+        if total > 0:
+            self.total_price = total
 
         if self.payment_type == "cod_collect":
-            self.expected_collect = total
+            self.expected_collect = self.total_price
 
         self.lack_amount = self.calculate_lack()
 
@@ -74,7 +92,8 @@ class Delivery(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.customer_name} - {self.get_payment_type_display()}"
+        shop = self.branch.name if self.branch else "No Branch"
+        return f"{self.customer_name} - {shop} - {self.get_payment_type_display()}"
 
 
 class DeliveryItem(models.Model):

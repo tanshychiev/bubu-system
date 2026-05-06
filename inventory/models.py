@@ -11,6 +11,19 @@ class ItemType(models.Model):
         return f"{self.emoji} {self.name}"
 
 
+class UnitOption(models.Model):
+    code = models.CharField(max_length=20, unique=True)
+    name = models.CharField(max_length=100)
+    emoji = models.CharField(max_length=10, blank=True, default="📏")
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return f"{self.emoji} {self.name}"
+
+
 class Item(models.Model):
     UNIT_CHOICES = [
         ("piece", "Piece"),
@@ -20,6 +33,8 @@ class Item(models.Model):
         ("kg", "KG"),
         ("pack", "Pack"),
         ("box", "Box"),
+        ("service", "Service"),
+        ("pet", "Pet"),
     ]
 
     item_type = models.ForeignKey(
@@ -35,7 +50,6 @@ class Item(models.Model):
     image = models.ImageField(upload_to="items/", blank=True, null=True)
     unit = models.CharField(max_length=20, choices=UNIT_CHOICES, default="piece")
 
-    # Default prices only. Real POS price should come from ItemVariant.
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     sale_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
@@ -144,8 +158,6 @@ class ItemVariant(models.Model):
         return "-".join([p for p in parts if p])
 
     def save(self, *args, **kwargs):
-        is_new = self.pk is None
-
         if not self.sale_price:
             self.sale_price = self.item.sale_price
 
@@ -161,13 +173,25 @@ class ItemVariant(models.Model):
     def __str__(self):
         return f"{self.item.name} - {self.display_name()} - ${self.display_price}"
 
+
 class StockMovement(models.Model):
     MOVEMENT_TYPES = [
         ("in", "Stock In"),
         ("out", "Stock Out"),
         ("adjust", "Adjust Stock"),
         ("sale", "Sale"),
+        ("transfer_in", "Transfer In"),
+        ("transfer_out", "Transfer Out"),
+        ("damage", "Damage / Expired / Lost"),
     ]
+
+    branch = models.ForeignKey(
+        "Branch",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="stock_movements",
+    )
 
     item = models.ForeignKey(
         Item,
@@ -183,8 +207,11 @@ class StockMovement(models.Model):
         related_name="stock_movements",
     )
 
-    movement_type = models.CharField(max_length=20, choices=MOVEMENT_TYPES)
+    movement_type = models.CharField(max_length=30, choices=MOVEMENT_TYPES)
     quantity = models.IntegerField()
+
+    before_quantity = models.IntegerField(default=0)
+    after_quantity = models.IntegerField(default=0)
 
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     note = models.CharField(max_length=255, blank=True, default="")
@@ -204,32 +231,45 @@ class StockMovement(models.Model):
     def save(self, *args, **kwargs):
         is_new = self.pk is None
 
-        if is_new and self.variant:
+        if is_new and self.variant and self.branch:
+            stock, created = BranchStock.objects.get_or_create(
+                branch=self.branch,
+                variant=self.variant,
+                defaults={"quantity": 0},
+            )
+
+            old_qty = int(stock.quantity or 0)
             qty = abs(int(self.quantity or 0))
 
-            if qty > 0:
-                if self.movement_type == "in":
-                    self.variant.quantity += qty
+            if self.movement_type in ["in", "transfer_in"]:
+                new_qty = old_qty + qty
 
-                    if self.cost_price and self.cost_price > 0:
-                        self.variant.cost_price = self.cost_price
+                if self.cost_price and self.cost_price > 0:
+                    self.variant.cost_price = self.cost_price
+                    self.variant.save(update_fields=["cost_price"])
 
-                    self.variant.save(update_fields=["quantity", "cost_price"])
+            elif self.movement_type in ["out", "sale", "transfer_out", "damage"]:
+                new_qty = old_qty - qty
 
-                elif self.movement_type in ["out", "sale"]:
-                    self.variant.quantity -= qty
-                    self.variant.save(update_fields=["quantity"])
+            elif self.movement_type == "adjust":
+                new_qty = int(self.quantity or 0)
 
-                elif self.movement_type == "adjust":
-                    self.variant.quantity = int(self.quantity or 0)
-                    self.variant.save(update_fields=["quantity"])
+            else:
+                new_qty = old_qty
+
+            stock.quantity = new_qty
+            stock.save(update_fields=["quantity"])
+
+            self.before_quantity = old_qty
+            self.after_quantity = new_qty
 
         super().save(*args, **kwargs)
 
     def __str__(self):
         name = self.variant if self.variant else self.item
-        return f"{name} - {self.movement_type} - {self.quantity}"
-    
+        branch_name = self.branch.name if self.branch else "No Branch"
+        return f"{branch_name} - {name} - {self.movement_type} - {self.quantity}"
+
 
 class VariantEditHistory(models.Model):
     variant = models.ForeignKey(
@@ -255,8 +295,36 @@ class VariantEditHistory(models.Model):
         ordering = ["-created_at", "-id"]
 
     def __str__(self):
-        return f"{self.variant} - {self.field_name}"    
-    
+        return f"{self.variant} - {self.field_name}"
+
+
+class ItemEditHistory(models.Model):
+    item = models.ForeignKey(
+        Item,
+        on_delete=models.CASCADE,
+        related_name="edit_histories",
+    )
+
+    edited_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    field_name = models.CharField(max_length=100)
+    old_value = models.CharField(max_length=255, blank=True, default="")
+    new_value = models.CharField(max_length=255, blank=True, default="")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        return f"{self.item} - {self.field_name}"
+
+
 class Branch(models.Model):
     name = models.CharField(max_length=100, unique=True)
     is_active = models.BooleanField(default=True)
@@ -266,12 +334,20 @@ class Branch(models.Model):
 
 
 class BranchStock(models.Model):
-    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name="stocks")
-    variant = models.ForeignKey(ItemVariant, on_delete=models.CASCADE, related_name="branch_stocks")
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.CASCADE,
+        related_name="stocks",
+    )
+    variant = models.ForeignKey(
+        ItemVariant,
+        on_delete=models.CASCADE,
+        related_name="branch_stocks",
+    )
     quantity = models.IntegerField(default=0)
 
     class Meta:
         unique_together = ("branch", "variant")
 
     def __str__(self):
-        return f"{self.branch} - {self.variant} - {self.quantity}"    
+        return f"{self.branch} - {self.variant} - {self.quantity}"

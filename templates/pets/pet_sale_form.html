@@ -1,0 +1,643 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="sale-page">
+    <div class="page-top">
+        <div>
+            <h1>{% if sale %}Edit Pet Sale{% else %}Pet Sale / Pre-order{% endif %} 🐶🐱</h1>
+            <p>Separate dog & cat selling from POS. Sell in-stock pet or create preorder deposit.</p>
+        </div>
+
+        <a href="{% url 'pet_list' %}" class="soft-btn">← Back</a>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="sale-card" id="petSaleForm">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="error-box">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <input type="hidden" name="submit_action" id="submitAction" value="save">
+
+        <div class="mode-tabs">
+            <label class="mode-card" id="modeInStock">
+                <input type="radio" name="sale_kind" value="in_stock"
+                    {% if not sale or sale.sale_kind == "in_stock" %}checked{% endif %}
+                    onchange="switchSaleMode()">
+                <span>🐾</span>
+                <strong>Sell In-stock Pet</strong>
+                <small>Select dog/cat from stock and sell now.</small>
+            </label>
+
+            <label class="mode-card" id="modePreorder">
+                <input type="radio" name="sale_kind" value="preorder"
+                    {% if sale and sale.sale_kind == "preorder" %}checked{% endif %}
+                    onchange="switchSaleMode()">
+                <span>📝</span>
+                <strong>Create Pre-order</strong>
+                <small>No pet stock yet. Save deposit + deadline.</small>
+            </label>
+        </div>
+
+        <div class="sale-layout">
+            <div class="left">
+
+                <div class="box">
+                    <h2>Customer Info</h2>
+
+                    <div class="grid2">
+                        <label>
+                            Customer Name
+                            <input name="customer_name" id="customerName" value="{{ sale.customer_name|default:'' }}" required>
+                        </label>
+
+                        <label>
+                            Phone
+                            <input name="phone" id="customerPhone" value="{{ sale.phone|default:'' }}">
+                        </label>
+                    </div>
+
+                    <label>
+                        Location
+                        <textarea name="address" id="customerAddress">{{ sale.address|default:'' }}</textarea>
+                    </label>
+                </div>
+
+                <div class="box" id="inStockBox">
+                    <h2>Choose In-stock Dog / Cat</h2>
+
+                    <select name="pet" id="petSelect" onchange="updatePetPrice()">
+                        <option value="">Choose pet</option>
+
+                        {% for pet in pets %}
+                            <option
+                                value="{{ pet.id }}"
+                                data-price="{{ pet.sale_price }}"
+                                data-type="{{ pet.pet_type }}"
+                                data-breed="{{ pet.breed }}"
+                                data-gender="{{ pet.gender }}"
+                                data-name="{{ pet.get_pet_type_display }} · {{ pet.breed }}{% if pet.name %} · {{ pet.name }}{% endif %}"
+                                {% if selected_pet and selected_pet.id == pet.id %}selected{% endif %}
+                                {% if sale and sale.pet_id == pet.id %}selected{% endif %}
+                            >
+                                {{ pet.get_pet_type_display }} · {{ pet.breed }}
+                                {% if pet.name %} · {{ pet.name }}{% endif %}
+                                · ${{ pet.sale_price }}
+                                · {{ pet.get_status_display }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <div class="pet-preview">
+                        <strong id="petNameShow">No pet selected</strong>
+                        <span id="petPriceShow">$0.00</span>
+                    </div>
+                </div>
+
+                <div class="box" id="preorderBox">
+                    <h2>Pre-order Dog / Cat Info</h2>
+
+                    <div class="grid2">
+                        <label>
+                            Pet Type
+                            <select name="preorder_pet_type" id="preorderPetType">
+                                <option value="dog" {% if sale and sale.preorder_pet_type == "dog" %}selected{% endif %}>Dog</option>
+                                <option value="cat" {% if sale and sale.preorder_pet_type == "cat" %}selected{% endif %}>Cat</option>
+                                <option value="other" {% if sale and sale.preorder_pet_type == "other" %}selected{% endif %}>Other</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            Breed
+                            <input name="preorder_breed" id="preorderBreed" value="{{ sale.preorder_breed|default:'' }}" placeholder="Example: Poodle">
+                        </label>
+                    </div>
+
+                    <div class="grid2">
+                        <label>
+                            Sex
+                            <select name="preorder_gender" id="preorderGender">
+                                <option value="">Choose</option>
+                                <option value="Male" {% if sale and sale.preorder_gender == "Male" %}selected{% endif %}>Male</option>
+                                <option value="Female" {% if sale and sale.preorder_gender == "Female" %}selected{% endif %}>Female</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            Waiting Deadline
+                            <input type="date" name="deadline" id="deadlineInput" value="{{ sale.deadline|date:'Y-m-d' }}">
+                        </label>
+                    </div>
+
+                    <div class="copy-card">
+                        <div class="copy-head">
+                            <strong>Copy text for chat</strong>
+                            <button type="button" onclick="copyPreorderInfo()">Copy</button>
+                        </div>
+
+                        <textarea id="copyBox" readonly></textarea>
+                    </div>
+                </div>
+
+                <div class="box">
+                    <h2>Sale / Pre-order Photo</h2>
+
+                    <div class="photo-preview" id="dropPhotoBox">
+                        {% if sale and sale.sale_photo %}
+                            <img src="{{ sale.sale_photo.url }}" id="salePhotoPreview">
+                            <div id="salePhotoEmpty" style="display:none;">📸</div>
+                        {% else %}
+                            <div id="salePhotoEmpty">📸</div>
+                            <img src="" id="salePhotoPreview" style="display:none">
+                        {% endif %}
+                    </div>
+
+                    <label class="upload-btn">
+                        Upload Photo
+                        <input type="file" name="sale_photo" id="salePhotoInput" accept="image/*" onchange="previewSalePhoto(event)">
+                    </label>
+
+                    <small class="photo-help">Upload, drag image here, or paste screenshot with Ctrl + V.</small>
+                </div>
+
+            </div>
+
+            <div class="right">
+                <div class="box sticky">
+                    <h2>Payment</h2>
+
+                    <div class="money-grid">
+                        <label>
+                            Full Price
+                            <input type="number" step="0.01" name="sale_price" id="salePrice"
+                                value="{% if selected_pet %}{{ selected_pet.sale_price }}{% elif sale %}{{ sale.sale_price }}{% else %}0.00{% endif %}"
+                                oninput="calcSale(); updateCopyBox();">
+                        </label>
+
+                        <label>
+                            Paid / Deposit
+                            <input type="number" step="0.01" name="paid_amount" id="paidAmount"
+                                value="{{ sale.paid_amount|default:'0.00' }}"
+                                oninput="calcSale(); updateCopyBox();">
+                        </label>
+                    </div>
+
+                    <div class="result">
+                        <div>
+                            <span>Full Price</span>
+                            <strong id="salePriceShow">$0.00</strong>
+                        </div>
+
+                        <div>
+                            <span>Paid / Deposit</span>
+                            <strong id="paidShow">$0.00</strong>
+                        </div>
+
+                        <div id="remainCard">
+                            <span id="remainTitle">Remaining</span>
+                            <strong id="remainShow">$0.00</strong>
+                        </div>
+                    </div>
+
+                    <h2>Warranty</h2>
+
+                    <div class="grid2">
+                        <label>
+                            Warranty Days
+                            <input type="number" name="warranty_days" id="warrantyDays"
+                                value="{{ sale.warranty_days|default:'3' }}">
+                        </label>
+
+                        <label>
+                            Warranty Start
+                            <input type="date" name="warranty_start_date"
+                                value="{{ sale.warranty_start_date|date:'Y-m-d' }}">
+                        </label>
+                    </div>
+
+                    <label>
+                        Remark
+                        <textarea name="note" id="noteInput" oninput="updateCopyBox()">{{ sale.note|default:'' }}</textarea>
+                    </label>
+
+                    <button type="submit" class="save-btn" onclick="return submitAction('save')">
+                        💾 Save
+                    </button>
+
+                    <button type="submit" class="print-btn" onclick="return submitAction('save_print')">
+                        🖨️ Save + Print Receipt
+                    </button>
+
+                    <button type="submit" class="warranty-btn" onclick="return submitAction('save_warranty')">
+                        🛡️ Save + Print Warranty
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+*{box-sizing:border-box}
+a{text-decoration:none}
+
+.sale-page{padding:24px 28px}
+.page-top{display:flex;justify-content:space-between;gap:18px;margin-bottom:22px}
+.page-top h1{margin:0;font-size:34px;font-weight:1000;color:#080634}
+.page-top p{color:#7b7288;font-weight:900}
+
+.soft-btn,.upload-btn,.save-btn,.print-btn,.warranty-btn{
+    min-height:60px;
+    padding:0 22px;
+    border-radius:20px;
+    border:0;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.soft-btn{background:#f1f5f9;color:#334155}
+
+.sale-card,.box{
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:30px;
+    box-shadow:0 18px 40px rgba(130,91,60,.08);
+}
+
+.sale-card{padding:22px}
+.error-box{background:#fff0f0;color:#e03131;border-radius:18px;padding:14px;font-weight:900;margin-bottom:14px}
+
+.mode-tabs{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin-bottom:20px;
+}
+
+.mode-card{
+    border:2px solid #eaddec;
+    border-radius:26px;
+    padding:18px;
+    background:#fffafe;
+    cursor:pointer;
+    display:grid;
+    gap:6px;
+}
+
+.mode-card.active{
+    border-color:#9b7cf6;
+    background:linear-gradient(135deg,#fbf7ff,#fff3ee);
+    box-shadow:0 14px 30px rgba(155,124,246,.14);
+}
+
+.mode-card input{display:none}
+.mode-card span{font-size:34px}
+.mode-card strong{font-size:19px;color:#080634}
+.mode-card small{font-weight:900;color:#7b7288}
+
+.sale-layout{display:grid;grid-template-columns:1fr 430px;gap:22px}
+.left,.right{display:grid;gap:18px}
+.box{padding:20px}
+.box h2{margin:0 0 16px;color:#080634}
+
+.grid2,.money-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{font-weight:1000;color:#080634}
+
+input,select,textarea{
+    width:100%;
+    border:2px solid #eaddec;
+    border-radius:18px;
+    padding:0 16px;
+    margin-top:8px;
+    font-size:17px;
+    font-weight:900;
+    outline:0;
+    background:white;
+}
+
+input,select{height:62px}
+textarea{padding:16px;min-height:105px;resize:vertical}
+
+input:focus,select:focus,textarea:focus{
+    border-color:#9b7cf6;
+    box-shadow:0 0 0 5px rgba(155,124,246,.12);
+}
+
+.pet-preview{
+    margin-top:14px;
+    padding:16px;
+    border-radius:20px;
+    background:#f8f6ff;
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    font-weight:1000;
+}
+.pet-preview span{color:#ff5d73;font-size:22px}
+
+.copy-card{
+    margin-top:16px;
+    background:#fffaf0;
+    border:2px dashed #f3c987;
+    border-radius:22px;
+    padding:14px;
+}
+.copy-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.copy-head button{
+    border:0;
+    border-radius:999px;
+    background:#080634;
+    color:white;
+    padding:10px 16px;
+    font-weight:1000;
+    cursor:pointer;
+}
+#copyBox{min-height:220px;background:white;font-size:15px;line-height:1.5}
+
+.photo-preview{
+    height:280px;
+    border-radius:24px;
+    background:#fff8f4;
+    border:3px dashed transparent;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    font-size:70px;
+    transition:.15s;
+}
+.photo-preview img{width:100%;height:100%;object-fit:cover}
+.photo-preview.dragging{border-color:#9b7cf6;background:#f4f0ff;transform:scale(.99)}
+
+.upload-btn{width:100%;margin-top:14px;background:linear-gradient(135deg,#9b7cf6,#ff8c6b);color:white}
+.upload-btn input{display:none}
+.photo-help{display:block;margin-top:10px;color:#7b7288;font-weight:900;text-align:center}
+
+.sticky{position:sticky;top:18px}
+.result{display:grid;gap:10px;margin:16px 0}
+.result div{padding:15px;border-radius:18px;background:#f8f6ff;display:flex;justify-content:space-between;gap:12px}
+.result strong{font-size:22px}
+#remainCard.paid-ok{background:#dcfce7;color:#16a34a}
+#remainCard.remain-left{background:#fff7ed;color:#ea580c}
+#remainCard.overpaid{background:#e0f2fe;color:#0284c7}
+
+.save-btn,.print-btn,.warranty-btn{width:100%;margin-top:10px;color:white}
+.save-btn{background:linear-gradient(135deg,#13a85f,#7b5cff)}
+.print-btn{background:linear-gradient(135deg,#ff8c6b,#ff5d73)}
+.warranty-btn{background:linear-gradient(135deg,#34c6ff,#7b5cff)}
+
+@media(max-width:1194px){
+    .page-top{display:block}
+    .soft-btn{margin-top:16px}
+    .sale-layout{grid-template-columns:1fr}
+    .sticky{position:relative;top:auto}
+}
+@media(max-width:700px){
+    .sale-page{padding:18px}
+    .page-top h1{font-size:28px}
+    .mode-tabs,.grid2,.money-grid{grid-template-columns:1fr}
+    .soft-btn,.upload-btn,.save-btn,.print-btn,.warranty-btn{width:100%;min-height:70px;font-size:18px}
+    .photo-preview{height:300px}
+}
+</style>
+
+<script>
+function money(value){
+    return "$" + Number(value || 0).toFixed(2);
+}
+
+function num(id){
+    const el = document.getElementById(id);
+    if(!el) return 0;
+    return parseFloat(el.value || 0);
+}
+
+function val(id){
+    const el = document.getElementById(id);
+    if(!el) return "";
+    return el.value || "";
+}
+
+function setText(id, value){
+    const el = document.getElementById(id);
+    if(el) el.innerText = value;
+}
+
+function activeSaleMode(){
+    const checked = document.querySelector("input[name='sale_kind']:checked");
+    return checked ? checked.value : "in_stock";
+}
+
+function switchSaleMode(){
+    const mode = activeSaleMode();
+
+    const inStockBox = document.getElementById("inStockBox");
+    const preorderBox = document.getElementById("preorderBox");
+    const modeInStock = document.getElementById("modeInStock");
+    const modePreorder = document.getElementById("modePreorder");
+    const petSelect = document.getElementById("petSelect");
+
+    if(mode === "preorder"){
+        inStockBox.style.display = "none";
+        preorderBox.style.display = "block";
+        modePreorder.classList.add("active");
+        modeInStock.classList.remove("active");
+        if(petSelect) petSelect.required = false;
+    }else{
+        inStockBox.style.display = "block";
+        preorderBox.style.display = "none";
+        modeInStock.classList.add("active");
+        modePreorder.classList.remove("active");
+        if(petSelect) petSelect.required = true;
+    }
+
+    updateCopyBox();
+}
+
+function updatePetPrice(){
+    const select = document.getElementById("petSelect");
+    if(!select) return;
+
+    const option = select.options[select.selectedIndex];
+    if(!option) return;
+
+    const price = option.dataset.price || 0;
+    const name = option.dataset.name || "No pet selected";
+
+    const priceInput = document.getElementById("salePrice");
+    if(priceInput){
+        priceInput.value = Number(price).toFixed(2);
+    }
+
+    setText("petNameShow", name);
+    setText("petPriceShow", money(price));
+
+    calcSale();
+    updateCopyBox();
+}
+
+function calcSale(){
+    const price = num("salePrice");
+    const paid = num("paidAmount");
+    const remain = price - paid;
+
+    setText("salePriceShow", money(price));
+    setText("paidShow", money(paid));
+
+    const remainCard = document.getElementById("remainCard");
+    if(remainCard){
+        remainCard.classList.remove("paid-ok", "remain-left", "overpaid");
+    }
+
+    if(remain > 0){
+        setText("remainTitle", "Remaining");
+        setText("remainShow", money(remain));
+        if(remainCard) remainCard.classList.add("remain-left");
+    }else if(remain < 0){
+        setText("remainTitle", "Overpaid");
+        setText("remainShow", money(Math.abs(remain)));
+        if(remainCard) remainCard.classList.add("overpaid");
+    }else{
+        setText("remainTitle", "Paid Full");
+        setText("remainShow", money(0));
+        if(remainCard) remainCard.classList.add("paid-ok");
+    }
+}
+
+function updateCopyBox(){
+    const box = document.getElementById("copyBox");
+    if(!box) return;
+
+    const breed = val("preorderBreed") || "-";
+    const sex = val("preorderGender") || "-";
+    const note = val("noteInput") || "-";
+    const fullPrice = val("salePrice") || "0.00";
+    const deposit = val("paidAmount") || "0.00";
+    const deadline = val("deadlineInput") || "-";
+    const name = val("customerName") || "-";
+    const phone = val("customerPhone") || "-";
+    const location = val("customerAddress") || "-";
+
+    box.value =
+`🐶 BUBU PET PRE-ORDER
+Breed: ${breed}
+Sex: ${sex}
+Remark: ${note}
+Full Price: $${fullPrice}
+Deposit: $${deposit}
+Deadline: ${deadline}
+
+Customer Info
+Name: ${name}
+Phone: ${phone}
+Location: ${location}`;
+}
+
+function copyPreorderInfo(){
+    updateCopyBox();
+    const box = document.getElementById("copyBox");
+    if(!box) return;
+
+    box.select();
+    box.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(box.value).then(function(){
+        alert("Copied preorder info ✅");
+    });
+}
+
+function submitAction(action){
+    const input = document.getElementById("submitAction");
+    if(input) input.value = action;
+    return true;
+}
+
+function showSalePhotoFile(file){
+    if(!file || !file.type || !file.type.startsWith("image/")) return;
+
+    const input = document.getElementById("salePhotoInput");
+    const img = document.getElementById("salePhotoPreview");
+    const empty = document.getElementById("salePhotoEmpty");
+
+    if(input){
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        input.files = dataTransfer.files;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e){
+        if(img){
+            img.src = e.target.result;
+            img.style.display = "block";
+        }
+        if(empty){
+            empty.style.display = "none";
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function previewSalePhoto(event){
+    const file = event.target.files && event.target.files[0];
+    showSalePhotoFile(file);
+}
+
+const dropBox = document.getElementById("dropPhotoBox");
+
+if(dropBox){
+    dropBox.addEventListener("dragover", function(e){
+        e.preventDefault();
+        dropBox.classList.add("dragging");
+    });
+
+    dropBox.addEventListener("dragleave", function(){
+        dropBox.classList.remove("dragging");
+    });
+
+    dropBox.addEventListener("drop", function(e){
+        e.preventDefault();
+        dropBox.classList.remove("dragging");
+
+        const file = e.dataTransfer.files && e.dataTransfer.files[0];
+        showSalePhotoFile(file);
+    });
+}
+
+document.addEventListener("paste", function(e){
+    const items = e.clipboardData && e.clipboardData.items;
+    if(!items) return;
+
+    for(let i = 0; i < items.length; i++){
+        const item = items[i];
+        if(item.type.indexOf("image") !== -1){
+            showSalePhotoFile(item.getAsFile());
+            break;
+        }
+    }
+});
+
+["preorderBreed","preorderGender","deadlineInput","customerName","customerPhone","customerAddress","noteInput"].forEach(function(id){
+    const el = document.getElementById(id);
+    if(el){
+        el.addEventListener("input", updateCopyBox);
+        el.addEventListener("change", updateCopyBox);
+    }
+});
+
+window.addEventListener("load", function(){
+    switchSaleMode();
+    updatePetPrice();
+    calcSale();
+    updateCopyBox();
+});
+</script>
+
+{% endblock %}

@@ -10,6 +10,59 @@
             <h1>BUBU Cashier POS 🐾</h1>
             <p>Scan barcode or tap product to add to cart</p>
 
+            <div class="branch-lock-card">
+                <div>
+                    <div class="branch-lock-left">
+                        <div class="branch-lock-icon">🏪</div>
+
+                        <div>
+                            <div class="branch-lock-title">
+                                Current Shop:
+                                {% if current_branch %}
+                                    {{ current_branch.name }}
+                                {% else %}
+                                    No Branch
+                                {% endif %}
+                            </div>
+
+                            <div class="branch-lock-sub">
+                                {% if request.user.is_superuser %}
+                                    Admin mode. You can switch POS shop, but cart will clear for safety.
+                                {% else %}
+                                    Locked to your staff account. You cannot change shop from POS.
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if not request.user.is_superuser %}
+                        <div class="branch-lock-warning">
+                            Stock and sales will be saved only to your assigned shop.
+                        </div>
+                    {% else %}
+                        <div class="branch-lock-warning admin-warning">
+                            Admin warning: make sure you select the correct shop before selling.
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="branch-lock-actions">
+                    <div class="branch-lock-badge {% if not request.user.is_superuser %}locked{% endif %}">
+                        {% if request.user.is_superuser %}
+                            Admin View
+                        {% else %}
+                            🔒 Branch Locked
+                        {% endif %}
+                    </div>
+
+                    {% if request.user.is_superuser %}
+                        <button type="button" class="switch-shop-btn" onclick="openSwitchShopModal()">
+                            🔄 Switch Shop
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+
             <form method="get" id="posSearchForm" class="scan-box">
                 <input
                     type="text"
@@ -45,7 +98,7 @@
     <div class="pos-layout">
 
         <div class="product-area">
-            <h2>Products</h2>
+            <h2>Products / Services / Pets</h2>
 
             <div class="product-grid">
                 {% for item in items %}
@@ -85,7 +138,7 @@
                                 {% elif item.is_coming_soon %}
                                     <span class="stock coming">Coming Soon</span>
                                 {% else %}
-                                    <span class="stock good">Stock: 0</span>
+                                    <span class="stock zero">Stock: 0</span>
                                 {% endif %}
                             </div>
                         </div>
@@ -109,6 +162,10 @@
                                 <div>
                                     <h3>{{ item.name }}</h3>
                                     <strong>${{ item.sale_price }}</strong>
+
+                                    {% if current_branch %}
+                                        <small>Shop stock: {{ current_branch.name }}</small>
+                                    {% endif %}
                                 </div>
                             </div>
 
@@ -140,13 +197,21 @@
                                                 ${{ variant.sale_price|default:item.sale_price }}
                                             </div>
 
-                                            {% if variant.branch_stock_qty < 0 %}
+                                            {% if variant.branch_stock_qty > 0 %}
+                                                <div class="stock good variant-coming">
+                                                    Stock: {{ variant.branch_stock_qty }}
+                                                </div>
+                                            {% elif variant.branch_stock_qty < 0 %}
                                                 <div class="stock bad variant-coming">
                                                     Stock: {{ variant.branch_stock_qty }}
                                                 </div>
                                             {% elif variant.is_coming_soon %}
                                                 <div class="stock coming variant-coming">
                                                     Coming Soon
+                                                </div>
+                                            {% else %}
+                                                <div class="stock zero variant-coming">
+                                                    Stock: 0
                                                 </div>
                                             {% endif %}
                                         </div>
@@ -169,7 +234,12 @@
 
         <div class="cart-card">
             <div class="cart-head">
-                <h2>🛒 Cart</h2>
+                <div>
+                    <h2>🛒 Cart</h2>
+                    {% if current_branch %}
+                        <small class="cart-branch">Shop: {{ current_branch.name }}</small>
+                    {% endif %}
+                </div>
 
                 {% if cart_items %}
                     <a href="{% url 'pos_clear_cart' %}" class="clear-btn">Clear</a>
@@ -201,7 +271,19 @@
                                     </small>
                                 {% endif %}
 
+                                {% if cart_item.item_type_name %}
+                                    <small class="cart-type-chip">{{ cart_item.item_type_name }}</small>
+                                {% endif %}
+
                                 <small>${{ cart_item.price|default:cart_item.item.sale_price }}</small>
+
+                                {% if not cart_item.is_service %}
+                                    {% if cart_item.branch_stock < cart_item.quantity %}
+                                        <small class="stock-alert">⚠ Stock in this shop: {{ cart_item.branch_stock }}</small>
+                                    {% else %}
+                                        <small class="stock-ok">Stock in this shop: {{ cart_item.branch_stock }}</small>
+                                    {% endif %}
+                                {% endif %}
                             </div>
 
                             <div class="qty-box">
@@ -221,6 +303,30 @@
                 {% endfor %}
             </div>
 
+            <div class="customer-bill-summary">
+                <div class="bill-title">Customer Bill Summary</div>
+
+                <div class="bill-row">
+                    <span>🛍️ Products / Accessories</span>
+                    <strong>${{ product_total|default:"0.00" }}</strong>
+                </div>
+
+                <div class="bill-row">
+                    <span>✂️ Grooming</span>
+                    <strong>${{ grooming_total|default:"0.00" }}</strong>
+                </div>
+
+                <div class="bill-row">
+                    <span>🎀 Services</span>
+                    <strong>${{ service_total|default:"0.00" }}</strong>
+                </div>
+
+                <div class="bill-row">
+                    <span>🐶 Pet / Dog / Cat</span>
+                    <strong>${{ pet_total|default:"0.00" }}</strong>
+                </div>
+            </div>
+
             <div class="summary">
                 <div><span>Subtotal</span><strong id="cartSubtotalShow">${{ subtotal|default:"0.00" }}</strong></div>
                 <div><span>Discount</span><strong id="cartDiscountShow">-$0.00</strong></div>
@@ -228,17 +334,65 @@
             </div>
 
             <div class="grand-total">
-                <span>Total</span>
+                <span>Customer Pay Total</span>
                 <strong id="cartTotalShow">${{ total|default:"0.00" }}</strong>
             </div>
 
-            <button type="button" class="checkout-btn" onclick="openPaymentModal()">
+            <button type="button" class="checkout-btn" onclick="openPaymentModal()" {% if not cart_items %}disabled{% endif %}>
                 Checkout
             </button>
         </div>
 
     </div>
 </div>
+
+{% if request.user.is_superuser %}
+<div class="switch-shop-modal" id="switchShopModal">
+    <div class="switch-shop-box">
+        <div class="switch-shop-head">
+            <div>
+                <h2>Switch POS Shop</h2>
+                <p>Admin only. Cart will be cleared after switching shop.</p>
+            </div>
+
+            <button type="button" onclick="closeSwitchShopModal()">×</button>
+        </div>
+
+        <form method="post" action="{% url 'pos_switch_branch' %}" class="switch-shop-list">
+            {% csrf_token %}
+
+            {% for branch in branches %}
+                <button
+                    type="submit"
+                    name="branch_id"
+                    value="{{ branch.id }}"
+                    class="switch-shop-option {% if current_branch and current_branch.id == branch.id %}active{% endif %}"
+                >
+                    <span class="shop-icon">🏪</span>
+
+                    <span class="shop-info">
+                        <strong>{{ branch.name }}</strong>
+
+                        {% if current_branch and current_branch.id == branch.id %}
+                            <small>Current selected shop</small>
+                        {% else %}
+                            <small>Switch POS to this shop</small>
+                        {% endif %}
+                    </span>
+
+                    {% if current_branch and current_branch.id == branch.id %}
+                        <em>Current</em>
+                    {% else %}
+                        <em>Switch</em>
+                    {% endif %}
+                </button>
+            {% empty %}
+                <div class="empty-box">No active shops found.</div>
+            {% endfor %}
+        </form>
+    </div>
+</div>
+{% endif %}
 
 <div class="payment-modal" id="paymentModal">
     <div class="payment-box">
@@ -256,6 +410,26 @@
             <input type="hidden" name="tax_value" id="tax_value_hidden" value="0">
             <input type="hidden" name="final_total" id="final_total_hidden" value="{{ total|default:'0.00' }}">
             <input type="hidden" name="checkout_action" id="checkout_action" value="complete">
+            <input type="hidden" name="sale_type_hidden" id="sale_type_hidden" value="walk_in">
+
+            <div class="modal-branch-card">
+                <div>
+                    <strong>Sale Shop</strong>
+                    <span>
+                        {% if current_branch %}
+                            {{ current_branch.name }}
+                        {% else %}
+                            No Branch
+                        {% endif %}
+                    </span>
+                </div>
+
+                {% if not request.user.is_superuser %}
+                    <em>🔒 Locked</em>
+                {% else %}
+                    <em>Admin</em>
+                {% endif %}
+            </div>
 
             <div class="sale-type-box">
                 <label>Customer Status</label>
@@ -277,10 +451,53 @@
                 </div>
             </div>
 
+            <div class="delivery-expense-box" id="deliveryExpenseBox">
+                <label>
+                    Delivery Expense
+                    <input type="number" step="0.01" name="delivery_expense" id="deliveryExpense" value="1.25" placeholder="Delivery expense, can edit later" oninput="calcChange()">
+                </label>
+                <small>For Prepare for Delivery. You can edit this later in delivery.</small>
+            </div>
+
+            <div class="payment-bill-summary">
+                <div class="bill-title">Customer Money Breakdown</div>
+
+                <div class="bill-row">
+                    <span>🛍️ Products / Accessories</span>
+                    <strong>${{ product_total|default:"0.00" }}</strong>
+                </div>
+
+                <div class="bill-row">
+                    <span>✂️ Grooming</span>
+                    <strong>${{ grooming_total|default:"0.00" }}</strong>
+                </div>
+
+                <div class="bill-row">
+                    <span>🎀 Services</span>
+                    <strong>${{ service_total|default:"0.00" }}</strong>
+                </div>
+
+                <div class="bill-row">
+                    <span>🐶 Pet / Dog / Cat</span>
+                    <strong>${{ pet_total|default:"0.00" }}</strong>
+                </div>
+
+                <div class="bill-total-row">
+                    <span>Customer Pay Total</span>
+                    <strong id="customerPayTotalShow">${{ total|default:"0.00" }}</strong>
+                </div>
+            </div>
 
             <div class="pay-total">
-                <span>Total Amount</span>
+                <span id="totalTitleShow">Customer Pay Total</span>
                 <strong id="modalTotalShow">${{ total|default:"0.00" }}</strong>
+
+                <div class="delivery-total-detail" id="deliveryTotalDetail">
+                    <div><span>Item Total</span><strong id="itemTotalShow">${{ total|default:"0.00" }}</strong></div>
+                    <div><span>Delivery Fee</span><strong id="deliveryFeeShow">$0.00</strong></div>
+                    <div><span>Total COD</span><strong id="codTotalShow">${{ total|default:"0.00" }}</strong></div>
+                </div>
+
                 <small>Customer pay: 1 USD = 4100 KHR</small>
                 <small>Customer change: 1 USD = 4000 KHR</small>
             </div>
@@ -300,6 +517,11 @@
                 </label>
 
                 <input type="hidden" name="customer_phone" id="customerPhoneHidden">
+                <input type="hidden" name="customer_name" id="customerNameHidden">
+                <input type="hidden" name="delivery_phone" id="deliveryPhoneHidden">
+                <input type="hidden" name="delivery_receiver_name" id="deliveryReceiverNameHidden">
+                <input type="hidden" name="delivery_address" id="deliveryAddressHidden" value="">
+                <input type="hidden" name="delivery_note" id="deliveryNoteHidden" value="POS prepare delivery">
 
                 <datalist id="customerList">
                     {% for customer in customers %}
@@ -402,11 +624,11 @@
             </div>
 
             <div class="payment-actions two-actions">
-                <button type="submit" class="complete-btn complete-only-btn" onclick="setCheckoutAction('complete')">
+                <button type="submit" class="complete-btn complete-only-btn" id="primarySubmitBtn" onclick="return submitPOSCheckout(event, 'complete')">
                     Complete Sale
                 </button>
 
-                <button type="submit" class="complete-print-btn" onclick="completeAndPrint(event)">
+                <button type="submit" class="complete-print-btn" id="secondarySubmitBtn" onclick="return submitPOSCheckout(event, 'complete_print')">
                     Complete + Print Receipt
                 </button>
             </div>
@@ -419,6 +641,14 @@
         <div class="receipt-center">
             <h2>BUBU PET STORE</h2>
             <p>Customer Receipt</p>
+            <p>
+                Shop:
+                {% if current_branch %}
+                    {{ current_branch.name }}
+                {% else %}
+                    No Branch
+                {% endif %}
+            </p>
             <p id="receiptDate"></p>
         </div>
 
@@ -436,11 +666,36 @@
                                 {% if cart_item.variant.color %} · {{ cart_item.variant.color }}{% endif %}
                             </small>
                         {% endif %}
+                        {% if cart_item.item_type_name %}
+                            <small>{{ cart_item.item_type_name }}</small>
+                        {% endif %}
                         <small>{{ cart_item.quantity }} x ${{ cart_item.price|default:cart_item.item.sale_price }}</small>
                     </div>
                     <strong>${{ cart_item.total }}</strong>
                 </div>
             {% endfor %}
+        </div>
+
+        <div class="receipt-line"></div>
+
+        <div class="receipt-row">
+            <span>Products</span>
+            <strong>${{ product_total|default:"0.00" }}</strong>
+        </div>
+
+        <div class="receipt-row">
+            <span>Grooming</span>
+            <strong>${{ grooming_total|default:"0.00" }}</strong>
+        </div>
+
+        <div class="receipt-row">
+            <span>Services</span>
+            <strong>${{ service_total|default:"0.00" }}</strong>
+        </div>
+
+        <div class="receipt-row">
+            <span>Pet / Dog / Cat</span>
+            <strong>${{ pet_total|default:"0.00" }}</strong>
         </div>
 
         <div class="receipt-line"></div>
@@ -460,8 +715,13 @@
             <strong id="receiptTax">$0.00</strong>
         </div>
 
+        <div class="receipt-row">
+            <span>Delivery Fee</span>
+            <strong id="receiptDeliveryFee">$0.00</strong>
+        </div>
+
         <div class="receipt-row receipt-total">
-            <span>Total</span>
+            <span>Customer Pay Total</span>
             <strong id="receiptTotal">${{ total|default:"0.00" }}</strong>
         </div>
 
@@ -530,6 +790,240 @@ a{
     margin:10px 0 18px;
     font-weight:900;
     color:#81758f;
+}
+
+/* =========================
+   BRANCH LOCK
+========================= */
+.branch-lock-card{
+    margin:16px 0 18px;
+    padding:16px 18px;
+    border-radius:24px;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+    border:2px solid #f0dcd0;
+    box-shadow:0 12px 28px rgba(130,91,60,.06);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+}
+
+.branch-lock-left{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.branch-lock-icon{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    box-shadow:0 8px 18px rgba(130,91,60,.08);
+}
+
+.branch-lock-title{
+    font-size:18px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.branch-lock-sub{
+    margin-top:4px;
+    font-size:13px;
+    font-weight:900;
+    color:#7b7288;
+}
+
+.branch-lock-badge{
+    min-height:46px;
+    padding:0 18px;
+    border-radius:999px;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    font-weight:1000;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    white-space:nowrap;
+}
+
+.branch-lock-badge.locked{
+    background:linear-gradient(135deg,#19a974,#7be0b2);
+}
+
+.branch-lock-warning{
+    margin-top:10px;
+    padding:10px 14px;
+    border-radius:16px;
+    background:#fff7df;
+    color:#b86b00;
+    font-size:13px;
+    font-weight:900;
+}
+
+.admin-warning{
+    background:#fff0f0;
+    color:#d62828;
+}
+
+.branch-lock-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.switch-shop-btn{
+    min-height:46px;
+    padding:0 18px;
+    border:none;
+    border-radius:999px;
+    background:linear-gradient(135deg,#34c6ff,#7b5cff);
+    color:white;
+    font-weight:1000;
+    cursor:pointer;
+    box-shadow:0 10px 22px rgba(52,198,255,.22);
+}
+
+.switch-shop-btn:active{
+    transform:scale(.97);
+}
+
+/* =========================
+   SWITCH SHOP MODAL
+========================= */
+.switch-shop-modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(20,18,45,.42);
+    z-index:10020;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+}
+
+.switch-shop-box{
+    width:460px;
+    max-width:100%;
+    background:white;
+    border-radius:30px;
+    padding:22px;
+    box-shadow:0 28px 80px rgba(20,18,45,.28);
+    border:2px solid #f0dcd0;
+}
+
+.switch-shop-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:14px;
+    margin-bottom:16px;
+}
+
+.switch-shop-head h2{
+    margin:0;
+    font-size:28px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.switch-shop-head p{
+    margin:7px 0 0;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.switch-shop-head button{
+    width:50px;
+    height:50px;
+    border:none;
+    border-radius:50%;
+    background:#fff0f0;
+    color:#ff4d5d;
+    font-size:28px;
+    cursor:pointer;
+}
+
+.switch-shop-list{
+    display:grid;
+    gap:12px;
+    max-height:60vh;
+    overflow:auto;
+}
+
+.switch-shop-option{
+    width:100%;
+    min-height:76px;
+    border:2px solid #eaddec;
+    border-radius:22px;
+    background:#fff8fb;
+    padding:14px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    text-align:left;
+    color:#080634;
+}
+
+.switch-shop-option.active{
+    border-color:#19a974;
+    background:#f0fff6;
+}
+
+.switch-shop-option:active{
+    transform:scale(.98);
+}
+
+.shop-icon{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    box-shadow:0 8px 18px rgba(130,91,60,.08);
+}
+
+.shop-info{
+    flex:1;
+    min-width:0;
+}
+
+.shop-info strong{
+    display:block;
+    font-size:17px;
+    font-weight:1000;
+}
+
+.shop-info small{
+    display:block;
+    margin-top:4px;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.switch-shop-option em{
+    font-style:normal;
+    padding:8px 12px;
+    border-radius:999px;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    font-weight:1000;
+    white-space:nowrap;
+}
+
+.switch-shop-option.active em{
+    background:linear-gradient(135deg,#19a974,#7be0b2);
 }
 
 .scan-box input{
@@ -694,6 +1188,7 @@ a{
 .stock.service{background:#fff4df;color:#d27b00;}
 .stock.coming{background:#fff1db;color:#d77a00;}
 .stock.bad{background:#ffe5e5;color:#e03131;}
+.stock.zero{background:#f1f1f1;color:#777;}
 
 /* =========================
    CART
@@ -720,6 +1215,13 @@ a{
     margin:0;
     font-size:24px;
     font-weight:1000;
+}
+
+.cart-branch{
+    display:block;
+    margin-top:4px;
+    color:#7b7288;
+    font-weight:900;
 }
 
 .clear-btn{
@@ -777,6 +1279,32 @@ a{
     font-weight:900;
     color:#7b7288;
     margin-top:3px;
+}
+
+.cart-type-chip{
+    display:inline-flex !important;
+    width:max-content;
+    padding:5px 9px;
+    border-radius:999px;
+    background:#f2edff;
+    color:#7b5cff !important;
+    font-size:12px;
+}
+
+.stock-alert{
+    color:#e03131 !important;
+    background:#ffe5e5;
+    padding:5px 8px;
+    border-radius:999px;
+    width:max-content;
+}
+
+.stock-ok{
+    color:#16a05d !important;
+    background:#eafff3;
+    padding:5px 8px;
+    border-radius:999px;
+    width:max-content;
 }
 
 .qty-box{
@@ -837,6 +1365,56 @@ a{
     font-weight:1000;
 }
 
+.customer-bill-summary,
+.payment-bill-summary{
+    margin:16px 0;
+    padding:16px;
+    border-radius:22px;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+    border:2px solid #f0dcd0;
+}
+
+.bill-title{
+    font-size:17px;
+    font-weight:1000;
+    color:#080634;
+    margin-bottom:12px;
+}
+
+.bill-row{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    padding:9px 0;
+    border-bottom:1px dashed #eaddec;
+    font-weight:1000;
+}
+
+.bill-row span{
+    color:#625a74;
+}
+
+.bill-row strong{
+    color:#080634;
+}
+
+.bill-total-row{
+    margin-top:12px;
+    padding:14px;
+    border-radius:18px;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    font-weight:1000;
+    font-size:20px;
+}
+
+.bill-total-row strong{
+    color:white;
+}
+
 .summary{
     padding:18px 0;
     border-bottom:1px dashed #edd5d5;
@@ -851,7 +1429,17 @@ a{
 }
 
 .grand-total{
-    font-size:26px;
+    font-size:24px;
+    align-items:center;
+    gap:12px;
+}
+
+.grand-total span{
+    color:#080634;
+}
+
+.grand-total strong{
+    color:#ff5d73;
 }
 
 .checkout-btn,
@@ -868,6 +1456,11 @@ a{
     margin-top:18px;
 }
 
+.checkout-btn:disabled{
+    opacity:.45;
+    cursor:not-allowed;
+}
+
 /* =========================
    MODALS
 ========================= */
@@ -881,6 +1474,7 @@ a{
     align-items:center;
     justify-content:center;
     padding:20px;
+    pointer-events:auto;
 }
 
 .payment-box,
@@ -892,6 +1486,9 @@ a{
     padding:26px;
     max-height:90vh;
     overflow:auto;
+    position:relative;
+    z-index:10;
+    pointer-events:auto;
 }
 
 .payment-head,
@@ -919,6 +1516,44 @@ a{
     color:#ff4d5d;
     font-size:28px;
     cursor:pointer;
+}
+
+.modal-branch-card{
+    margin:16px 0;
+    padding:14px 16px;
+    border-radius:20px;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+    border:2px solid #f0dcd0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+}
+
+.modal-branch-card strong,
+.modal-branch-card span{
+    display:block;
+}
+
+.modal-branch-card strong{
+    color:#080634;
+    font-size:16px;
+    font-weight:1000;
+}
+
+.modal-branch-card span{
+    color:#7b7288;
+    font-weight:900;
+    margin-top:3px;
+}
+
+.modal-branch-card em{
+    font-style:normal;
+    padding:8px 13px;
+    border-radius:999px;
+    background:linear-gradient(135deg,#19a974,#7be0b2);
+    color:white;
+    font-weight:1000;
 }
 
 /* =========================
@@ -988,6 +1623,45 @@ a{
     color:#7b7288;
 }
 
+.delivery-expense-box{
+    display:none;
+    padding:16px;
+    border-radius:22px;
+    background:#f8fff8;
+    border:2px solid #ccefd8;
+    margin-bottom:16px;
+}
+
+.delivery-expense-box.show{
+    display:block;
+}
+
+.delivery-expense-box label{
+    display:block;
+    font-weight:1000;
+    color:#080634;
+}
+
+.delivery-expense-box input{
+    width:100%;
+    height:58px;
+    border:2px solid #ccefd8;
+    border-radius:18px;
+    padding:0 16px;
+    margin-top:8px;
+    font-size:18px;
+    font-weight:900;
+    outline:none;
+    background:white;
+}
+
+.delivery-expense-box small{
+    display:block;
+    margin-top:8px;
+    color:#16a05d;
+    font-weight:900;
+}
+
 /* =========================
    PAYMENT CONTENT
 ========================= */
@@ -1008,6 +1682,39 @@ a{
 .pay-total small{
     font-weight:900;
     color:#625a74;
+}
+
+.delivery-total-detail{
+    display:none;
+    position:relative;
+    z-index:1;
+    pointer-events:auto;
+    margin:10px 0;
+    padding:12px;
+    border-radius:16px;
+    background:white;
+    border:2px solid #ffe8f0;
+    gap:8px;
+}
+
+.delivery-total-detail.show{
+    display:grid;
+}
+
+.delivery-total-detail div{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    font-weight:1000;
+}
+
+.delivery-total-detail span{
+    color:#625a74;
+}
+
+.delivery-total-detail strong{
+    font-size:18px;
+    color:#080634;
 }
 
 .member-box{
@@ -1298,8 +2005,16 @@ a{
 }
 
 .variant-product strong{
+    display:block;
     font-size:22px;
     color:#ff5d73;
+}
+
+.variant-product small{
+    display:block;
+    margin-top:5px;
+    color:#7b7288;
+    font-weight:900;
 }
 
 .variant-list{
@@ -1489,7 +2204,7 @@ a{
 }
 
 /* =========================
-   iPad 11-inch / Tablet
+   iPad / Tablet
 ========================= */
 @media (min-width:768px) and (max-width:1194px){
     .pos-page{
@@ -1602,9 +2317,10 @@ a{
     }
 
     .pay-grid input,
-    .member-box input{
-        height:68px;
+    .member-box input,
+    .delivery-expense-box input{
         font-size:22px;
+        height:68px;
     }
 
     .sale-type-card{
@@ -1644,6 +2360,42 @@ a{
 
     .pos-hero-img{
         display:none;
+    }
+
+    .branch-lock-card{
+        display:block;
+    }
+
+    .branch-lock-actions{
+        display:grid;
+        grid-template-columns:1fr;
+        margin-top:12px;
+    }
+
+    .branch-lock-badge{
+        width:100%;
+        min-height:54px;
+    }
+
+    .switch-shop-btn{
+        width:100%;
+        min-height:54px;
+    }
+
+    .switch-shop-modal{
+        align-items:flex-end;
+        padding:14px;
+    }
+
+    .switch-shop-box{
+        border-radius:28px;
+        width:100%;
+        max-height:calc(100vh - 28px);
+        overflow:auto;
+    }
+
+    .switch-shop-option{
+        min-height:82px;
     }
 
     .product-grid{
@@ -1691,6 +2443,15 @@ a{
         padding:20px;
     }
 
+    .modal-branch-card{
+        display:block;
+    }
+
+    .modal-branch-card em{
+        display:inline-flex;
+        margin-top:10px;
+    }
+
     .variant-row{
         align-items:flex-start;
         flex-direction:column;
@@ -1720,14 +2481,27 @@ const searchForm = document.getElementById("posSearchForm");
 
 window.addEventListener("load", function(){
     if(searchInput) searchInput.focus();
+    setCurrentSaleType();
     calcChange();
 });
 
 document.addEventListener("click", function(e){
+    const paymentModal = document.getElementById("paymentModal");
+    const switchShopModal = document.getElementById("switchShopModal");
+
+    const paymentModalIsOpen = paymentModal && paymentModal.style.display === "flex";
+    const switchShopModalIsOpen = switchShopModal && switchShopModal.style.display === "flex";
+
+    if(paymentModalIsOpen || switchShopModalIsOpen){
+        return;
+    }
+
     if(
         e.target.tagName !== "INPUT" &&
+        e.target.tagName !== "TEXTAREA" &&
         e.target.tagName !== "BUTTON" &&
-        e.target.tagName !== "A"
+        e.target.tagName !== "A" &&
+        e.target.tagName !== "LABEL"
     ){
         if(searchInput) searchInput.focus();
     }
@@ -1751,8 +2525,25 @@ if(searchInput){
     });
 }
 
+function openSwitchShopModal(){
+    const modal = document.getElementById("switchShopModal");
+
+    if(modal){
+        modal.style.display = "flex";
+    }
+}
+
+function closeSwitchShopModal(){
+    const modal = document.getElementById("switchShopModal");
+
+    if(modal){
+        modal.style.display = "none";
+    }
+}
+
 function openPaymentModal(){
     document.getElementById("paymentModal").style.display = "flex";
+    setCurrentSaleType();
     calcChange();
 
     setTimeout(function(){
@@ -1851,6 +2642,9 @@ function calcPercentOrAmount(typeId, valueId, base){
 }
 
 function calcFinalTotal(){
+    const saleType = getSelectedSaleType();
+    const deliveryExpense = saleType === "prepare_delivery" ? Math.max(num("deliveryExpense"), 0) : 0;
+
     const discountAmount = Math.min(
         calcPercentOrAmount("discount_type", "discount_value", subtotalBase),
         subtotalBase
@@ -1858,8 +2652,9 @@ function calcFinalTotal(){
 
     const taxableAmount = Math.max(subtotalBase - discountAmount, 0);
     const taxAmount = calcPercentOrAmount("tax_type", "tax_value", taxableAmount);
+    const itemTotal = Math.max(taxableAmount + taxAmount, 0);
 
-    total = Math.max(taxableAmount + taxAmount, 0);
+    total = Math.max(itemTotal + deliveryExpense, 0);
 
     text("cartDiscountShow", "-" + moneyUSD(discountAmount));
     text("modalDiscountShow", "-" + moneyUSD(discountAmount));
@@ -1871,7 +2666,13 @@ function calcFinalTotal(){
 
     text("cartTotalShow", moneyUSD(total));
     text("modalTotalShow", moneyUSD(total));
+    text("customerPayTotalShow", moneyUSD(total));
     text("receiptTotal", moneyUSD(total));
+
+    text("itemTotalShow", moneyUSD(itemTotal));
+    text("deliveryFeeShow", moneyUSD(deliveryExpense));
+    text("codTotalShow", moneyUSD(total));
+    text("receiptDeliveryFee", moneyUSD(deliveryExpense));
 
     const finalInput = document.getElementById("final_total_hidden");
     if(finalInput) finalInput.value = total.toFixed(2);
@@ -1907,9 +2708,25 @@ function paymentBreakdown(cashUsd, cashKhrRaw, abaUsd, abaKhrRaw){
     return parts.length ? parts.join("<br>") : "No payment yet";
 }
 
+function setDeliveryFieldsFromCustomer(name, phone){
+    const deliveryPhoneHidden = document.getElementById("deliveryPhoneHidden");
+    const deliveryNameHidden = document.getElementById("deliveryReceiverNameHidden");
+
+    if(deliveryPhoneHidden) deliveryPhoneHidden.value = phone || "";
+    if(deliveryNameHidden) deliveryNameHidden.value = name || "";
+}
+
+function updateDeliveryAddressHidden(rawValue){
+    const deliveryAddressHidden = document.getElementById("deliveryAddressHidden");
+    if(deliveryAddressHidden){
+        deliveryAddressHidden.value = rawValue || "";
+    }
+}
+
 function selectCustomerInfo(){
     const input = document.getElementById("customerSearch");
     const phoneHidden = document.getElementById("customerPhoneHidden");
+    const nameHidden = document.getElementById("customerNameHidden");
     if(!input) return;
 
     const raw = input.value.trim();
@@ -1952,6 +2769,9 @@ function selectCustomerInfo(){
         text("receiptCustomer", name);
 
         if(phoneHidden) phoneHidden.value = phone;
+        if(nameHidden) nameHidden.value = name;
+        setDeliveryFieldsFromCustomer(name, phone);
+        updateDeliveryAddressHidden(input.value.trim());
         return;
     }
 
@@ -1963,6 +2783,9 @@ function selectCustomerInfo(){
         text("receiptCustomer", raw);
 
         if(phoneHidden) phoneHidden.value = raw;
+        if(nameHidden) nameHidden.value = raw;
+        setDeliveryFieldsFromCustomer(raw, raw);
+        updateDeliveryAddressHidden(raw);
         return;
     }
 
@@ -1973,8 +2796,59 @@ function selectCustomerInfo(){
     text("receiptCustomer", "Walk-in");
 
     if(phoneHidden) phoneHidden.value = "";
+    if(nameHidden) nameHidden.value = "";
+    setDeliveryFieldsFromCustomer("", "");
+    updateDeliveryAddressHidden("");
 }
 
+function getSelectedSaleType(){
+    const checked = document.querySelector("input[name='sale_type']:checked");
+    return checked ? checked.value : "walk_in";
+}
+
+function setCurrentSaleType(){
+    const saleType = getSelectedSaleType();
+    const hidden = document.getElementById("sale_type_hidden");
+    const deliveryBox = document.getElementById("deliveryExpenseBox");
+    const deliveryDetail = document.getElementById("deliveryTotalDetail");
+    const totalTitle = document.getElementById("totalTitleShow");
+    const primaryBtn = document.getElementById("primarySubmitBtn");
+    const secondaryBtn = document.getElementById("secondarySubmitBtn");
+
+    if(hidden) hidden.value = saleType;
+
+    if(deliveryBox){
+        if(saleType === "prepare_delivery"){
+            deliveryBox.classList.add("show");
+        }else{
+            deliveryBox.classList.remove("show");
+        }
+    }
+
+    if(deliveryDetail){
+        if(saleType === "prepare_delivery"){
+            deliveryDetail.classList.add("show");
+        }else{
+            deliveryDetail.classList.remove("show");
+        }
+    }
+
+    if(totalTitle){
+        totalTitle.innerText = saleType === "prepare_delivery" ? "Total COD" : "Customer Pay Total";
+    }
+
+    if(primaryBtn && secondaryBtn){
+        if(saleType === "prepare_delivery"){
+            primaryBtn.innerText = "Save Sale + Delivery";
+            secondaryBtn.innerText = "Save + Print Delivery Label";
+        }else{
+            primaryBtn.innerText = "Complete Sale";
+            secondaryBtn.innerText = "Complete + Print Receipt";
+        }
+    }
+
+    selectCustomerInfo();
+}
 
 function setSaleTypeCard(card){
     document.querySelectorAll(".sale-type-card").forEach(function(item){
@@ -1987,12 +2861,13 @@ function setSaleTypeCard(card){
     if(radio){
         radio.checked = true;
     }
-}
 
+    setCurrentSaleType();
+}
 
 function calcChange(){
     calcFinalTotal();
-    selectCustomerInfo();
+    setCurrentSaleType();
 
     const cashUsd = num("cash_usd");
     const cashKhrRaw = num("cash_khr");
@@ -2006,8 +2881,6 @@ function calcChange(){
     const diff = paid - total;
 
     const changeCard = document.getElementById("changeCard");
-    const changeTitle = document.getElementById("changeTitle");
-
     const breakdown = paymentBreakdown(cashUsd, cashKhrRaw, abaUsd, abaKhrRaw);
 
     text("paidTotalShow", moneyUSD(paid));
@@ -2071,24 +2944,42 @@ function setCheckoutAction(action){
     }
 }
 
-function completeAndPrint(e){
-    e.preventDefault();
+function validatePrepareDelivery(){
+    return true;
+}
 
-    setCheckoutAction("complete_print");
-    prepareReceipt();
-    window.print();
+function submitPOSCheckout(e, action){
+    setCheckoutAction(action);
 
-    setTimeout(function(){
-        const form = document.getElementById("paymentForm");
-        if(form){
+    if(!validatePrepareDelivery()){
+        e.preventDefault();
+        return false;
+    }
+
+    const form = document.getElementById("paymentForm");
+    if(!form) return true;
+
+    const saleType = getSelectedSaleType();
+
+    if(action === "complete_print" && saleType === "walk_in"){
+        e.preventDefault();
+        prepareReceipt();
+        window.print();
+
+        setTimeout(function(){
             form.submit();
-        }
-    }, 350);
+        }, 350);
+
+        return false;
+    }
+
+    return true;
 }
 
 document.addEventListener("keydown", function(e){
     if(e.key === "Escape"){
         closePaymentModal();
+        closeSwitchShopModal();
 
         document.querySelectorAll(".variant-modal").forEach(function(modal){
             modal.style.display = "none";

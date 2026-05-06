@@ -1,13 +1,414 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
-<h1>{{ title }}</h1>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
+<style>
+.delivery-form-page{
+    max-width:1100px;
+    margin:auto;
+}
 
-    <button type="submit">Save</button>
-    <a href="{% url 'delivery_list' %}">Cancel</a>
-</form>
+a{
+    text-decoration:none !important;
+}
+
+.top-actions{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+}
+
+.btn-back,
+.btn-save{
+    min-height:56px;
+    padding:0 26px;
+    border-radius:999px;
+    border:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.btn-back{
+    background:white;
+    color:#7b5cff;
+    border:1.5px solid #e2dbff;
+}
+
+.btn-save{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    box-shadow:0 14px 28px rgba(155,124,246,.25);
+}
+
+.hero-card{
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+    border:1px solid #f0dcd0;
+    border-radius:30px;
+    padding:26px;
+    box-shadow:0 14px 34px rgba(111,75,50,.07);
+    display:grid;
+    grid-template-columns:1fr 280px;
+    gap:18px;
+    align-items:center;
+    margin-bottom:22px;
+}
+
+.hero-card h1{
+    margin:0;
+    color:#1c143a;
+    font-size:38px;
+    font-weight:1000;
+}
+
+.hero-card p{
+    color:#7b6f92;
+    font-weight:900;
+    margin:10px 0 0;
+}
+
+.hero-img{
+    width:100%;
+    height:180px;
+    object-fit:contain;
+}
+
+.branch-card{
+    background:white;
+    border:1px solid #f0dcd0;
+    border-radius:24px;
+    padding:18px 20px;
+    box-shadow:0 12px 30px rgba(111,75,50,.06);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+}
+
+.branch-title{
+    color:#1c143a;
+    font-weight:1000;
+    font-size:20px;
+}
+
+.branch-sub{
+    color:#7b6f92;
+    font-weight:800;
+    margin-top:5px;
+}
+
+.branch-badge{
+    min-height:48px;
+    padding:0 18px;
+    border-radius:999px;
+    background:linear-gradient(135deg,#19a974,#7be0b2);
+    color:white;
+    font-weight:1000;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.branch-badge.admin{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+}
+
+.form-card{
+    background:white;
+    border:1px solid #f0dcd0;
+    border-radius:30px;
+    padding:26px;
+    box-shadow:0 14px 34px rgba(111,75,50,.07);
+}
+
+.section-title{
+    color:#1c143a;
+    font-size:24px;
+    font-weight:1000;
+    margin:0 0 16px;
+}
+
+.form-section{
+    margin-bottom:26px;
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:16px;
+}
+
+.form-grid.three{
+    grid-template-columns:repeat(3,1fr);
+}
+
+.form-box label{
+    display:block;
+    color:#1c143a;
+    font-weight:1000;
+    margin-bottom:8px;
+}
+
+.form-box input,
+.form-box select,
+.form-box textarea{
+    width:100%;
+    min-height:56px;
+    border-radius:18px;
+    border:1.5px solid #eadbd4;
+    padding:12px 14px;
+    background:white;
+    color:#1c143a;
+    font-weight:900;
+    box-sizing:border-box;
+}
+
+.form-box textarea{
+    min-height:105px;
+    resize:vertical;
+}
+
+.form-box input:focus,
+.form-box select:focus,
+.form-box textarea:focus{
+    outline:none;
+    border-color:#9b7cf6;
+    box-shadow:0 0 0 5px rgba(155,124,246,.12);
+}
+
+.help-text{
+    display:block;
+    margin-top:7px;
+    color:#7b6f92;
+    font-weight:800;
+    font-size:13px;
+}
+
+.check-card{
+    min-height:56px;
+    padding:12px 16px;
+    border-radius:18px;
+    border:1.5px solid #eadbd4;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#fff8fb;
+    font-weight:1000;
+    color:#1c143a;
+}
+
+.check-card input{
+    width:22px;
+    height:22px;
+}
+
+.error-box{
+    margin-top:16px;
+    padding:14px 18px;
+    border-radius:18px;
+    background:#ffe7ec;
+    color:#ff4d6d;
+    font-weight:900;
+}
+
+.save-row{
+    display:flex;
+    justify-content:flex-end;
+    gap:12px;
+    flex-wrap:wrap;
+    border-top:1px dashed #eadbd4;
+    padding-top:22px;
+}
+
+@media(max-width:850px){
+    .hero-card,
+    .form-grid,
+    .form-grid.three{
+        grid-template-columns:1fr;
+    }
+
+    .hero-img{
+        display:none;
+    }
+
+    .branch-card{
+        display:block;
+    }
+
+    .branch-badge{
+        width:100%;
+        margin-top:12px;
+    }
+
+    .save-row{
+        display:grid;
+        grid-template-columns:1fr;
+    }
+
+    .btn-back,
+    .btn-save{
+        width:100%;
+    }
+
+    .hero-card h1{
+        font-size:30px;
+    }
+}
+</style>
+
+<div class="delivery-form-page">
+
+    <div class="top-actions">
+        <a href="{% url 'delivery_list' %}" class="btn-back">← Back to Delivery</a>
+    </div>
+
+    <div class="hero-card">
+        <div>
+            <h1>{{ title }} 🚚</h1>
+            <p>Create or update delivery order, COD collect, delivery fee, lack money and shop branch.</p>
+        </div>
+
+        <img src="{% static 'img/delivery-hero.png' %}" class="hero-img" alt="Delivery">
+    </div>
+
+    <div class="branch-card">
+        <div>
+            <div class="branch-title">Delivery Shop / Branch</div>
+            <div class="branch-sub">
+                {% if request.user.is_superuser %}
+                    Admin can choose the shop for this delivery.
+                {% else %}
+                    Staff delivery is locked to your assigned shop.
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="branch-badge {% if request.user.is_superuser %}admin{% endif %}">
+            {% if request.user.is_superuser %}
+                Admin Shop View
+            {% else %}
+                🔒 Branch Locked
+            {% endif %}
+        </div>
+    </div>
+
+    <form method="post" class="form-card">
+        {% csrf_token %}
+
+        <div class="form-section">
+            <h2 class="section-title">Customer Information</h2>
+
+            <div class="form-grid">
+                {% if form.branch %}
+                <div class="form-box">
+                    <label>Shop / Branch</label>
+                    {{ form.branch }}
+                    <span class="help-text">Delivery belongs to this shop.</span>
+                </div>
+                {% endif %}
+
+                <div class="form-box">
+                    <label>Customer Name</label>
+                    {{ form.customer_name }}
+                </div>
+
+                <div class="form-box">
+                    <label>Phone</label>
+                    {{ form.phone }}
+                </div>
+
+                <div class="form-box">
+                    <label>Delivery Date</label>
+                    {{ form.delivery_date }}
+                </div>
+
+                <div class="form-box" style="grid-column:1 / -1;">
+                    <label>Location / Address</label>
+                    {{ form.location }}
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2 class="section-title">Money / COD</h2>
+
+            <div class="form-grid three">
+                <div class="form-box">
+                    <label>Total Price / COD Total</label>
+                    {{ form.total_price }}
+                    <span class="help-text">Total customer needs to pay.</span>
+                </div>
+
+                <div class="form-box">
+                    <label>Payment Type</label>
+                    {{ form.payment_type }}
+                </div>
+
+                <div class="form-box">
+                    <label>Expected Collect</label>
+                    {{ form.expected_collect }}
+                </div>
+
+                <div class="form-box">
+                    <label>Actual Received</label>
+                    {{ form.actual_received }}
+                    <span class="help-text">Fill after delivery returns money.</span>
+                </div>
+
+                <div class="form-box">
+                    <label>Delivery Fee</label>
+                    {{ form.delivery_fee }}
+                </div>
+
+                <div class="form-box">
+                    <label>Delivery Fee Paid?</label>
+                    <label class="check-card">
+                        {{ form.delivery_fee_paid }}
+                        <span>Fee paid to delivery company</span>
+                    </label>
+                </div>
+
+                <div class="form-box" style="grid-column:1 / -1;">
+                    <label>Exchange Rate Note</label>
+                    {{ form.exchange_rate_note }}
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2 class="section-title">Status / Note</h2>
+
+            <div class="form-grid">
+                <div class="form-box">
+                    <label>Status</label>
+                    {{ form.status }}
+                </div>
+
+                <div class="form-box" style="grid-column:1 / -1;">
+                    <label>Delivery Note</label>
+                    {{ form.delivery_note }}
+                </div>
+            </div>
+        </div>
+
+        {% if form.errors %}
+            <div class="error-box">
+                {{ form.errors }}
+            </div>
+        {% endif %}
+
+        <div class="save-row">
+            <a href="{% url 'delivery_list' %}" class="btn-back">Cancel</a>
+            <button type="submit" class="btn-save">💜 Save Delivery</button>
+        </div>
+    </form>
+
+</div>
+
 {% endblock %}

@@ -4,57 +4,578 @@
 {% block content %}
 
 <style>
-.batch-page{max-width:1200px;margin:auto;}
-.back-btn{display:inline-flex;padding:13px 24px;border-radius:999px;background:white;border:1px solid #eaddec;color:#6b6178;font-weight:900;text-decoration:none;margin-bottom:18px;}
-.batch-card{background:white;border:1px solid #f5e8df;border-radius:30px;padding:24px;box-shadow:0 20px 50px rgba(130,91,60,.10);margin-bottom:22px;}
-h1{font-size:40px;color:#17152f;margin:0 0 8px;font-weight:900;}
-p{color:#7b7288;font-weight:800;margin-bottom:22px;}
-.scan-row{display:grid;grid-template-columns:1fr auto;gap:12px;}
-.scan-input{height:58px;border-radius:999px;border:1px solid #eaddec;padding:0 20px;font-size:18px;font-weight:900;background:#fff;}
-.btn-main{border:none;border-radius:999px;padding:0 30px;height:58px;color:white;font-weight:900;background:linear-gradient(135deg,#9b7cf6,#ff8c6b);box-shadow:0 12px 26px rgba(155,124,246,.25);cursor:pointer;}
-.help{background:#fff8fb;border-radius:18px;padding:14px;color:#7b7288;font-weight:800;margin-top:14px;}
-.results{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px;}
-.result-card{border:1px solid #f1ddd1;border-radius:22px;padding:14px;background:linear-gradient(180deg,#fff,#fffaf7);display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:center;cursor:pointer;}
-.result-img{width:90px;height:90px;border-radius:18px;background:#fff6ef;display:flex;align-items:center;justify-content:center;overflow:hidden;}
-.result-img img{width:100%;height:100%;object-fit:contain;}
-.result-name{font-weight:900;color:#17152f;}
-.result-meta{color:#7b7288;font-weight:800;font-size:13px;margin-top:4px;}
-.sku{display:inline-flex;background:#eee4ff;color:#7b5cff;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:900;margin-top:6px;}
-.table-wrap{overflow-x:auto;}
-.stock-table{width:100%;border-collapse:collapse;min-width:950px;}
-.stock-table th{background:#fff8fb;padding:14px;text-align:left;color:#17152f;}
-.stock-table td{padding:12px;border-top:1px solid #f4e3d8;font-weight:800;vertical-align:middle;}
-.row-img{width:58px;height:58px;border-radius:14px;background:#fff6ef;display:flex;align-items:center;justify-content:center;overflow:hidden;}
-.row-img img{width:100%;height:100%;object-fit:contain;}
-.qty-input,.cost-input,.note-input{height:44px;border-radius:14px;border:1px solid #eaddec;padding:0 12px;font-weight:900;width:100%;}
-.remove-btn{border:none;border-radius:14px;background:#fff3f1;color:#ff4d4d;font-weight:900;height:42px;padding:0 14px;cursor:pointer;}
-.save-row{display:flex;justify-content:flex-end;margin-top:18px;}
-.empty{padding:45px;text-align:center;color:#7b7288;font-weight:900;}
-@media(max-width:900px){.scan-row{grid-template-columns:1fr;}.results{grid-template-columns:1fr;}}
+.batch-page{
+    max-width:1200px;
+    margin:auto;
+}
+
+.back-btn{
+    display:inline-flex;
+    padding:13px 24px;
+    border-radius:999px;
+    background:white;
+    border:1px solid #eaddec;
+    color:#6b6178;
+    font-weight:900;
+    text-decoration:none;
+    margin-bottom:18px;
+}
+
+.batch-card{
+    background:white;
+    border:1px solid #f5e8df;
+    border-radius:30px;
+    padding:24px;
+    box-shadow:0 20px 50px rgba(130,91,60,.10);
+    margin-bottom:22px;
+}
+
+h1{
+    font-size:40px;
+    color:#17152f;
+    margin:0 0 8px;
+    font-weight:900;
+}
+
+p{
+    color:#7b7288;
+    font-weight:800;
+    margin-bottom:22px;
+}
+
+/* ========================= */
+/* BRANCH LOCK / ADMIN SHOP */
+/* ========================= */
+.branch-box{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+    border:1px solid #f0e5ee;
+    border-radius:24px;
+    padding:16px 18px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+}
+
+.branch-left{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.branch-icon{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    box-shadow:0 8px 18px rgba(130,91,60,.08);
+}
+
+.branch-title{
+    font-weight:900;
+    color:#17152f;
+    font-size:18px;
+}
+
+.branch-sub{
+    color:#7b7288;
+    font-weight:800;
+    margin-top:4px;
+}
+
+.branch-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.branch-badge{
+    min-height:46px;
+    padding:0 18px;
+    border-radius:999px;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    font-weight:900;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    white-space:nowrap;
+}
+
+.branch-badge.locked{
+    background:linear-gradient(135deg,#19a974,#7be0b2);
+}
+
+.branch-popup-btn{
+    min-height:46px;
+    padding:0 18px;
+    border:none;
+    border-radius:999px;
+    background:linear-gradient(135deg,#34c6ff,#7b5cff);
+    color:white;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 10px 22px rgba(52,198,255,.22);
+}
+
+.branch-popup-btn:active{
+    transform:scale(.97);
+}
+
+.branch-warning{
+    background:#fff3dd;
+    color:#b76b00;
+    border:1px solid #ffe0a6;
+    padding:12px 16px;
+    border-radius:18px;
+    font-weight:900;
+    margin-bottom:16px;
+}
+
+/* ========================= */
+/* SHOP POPUP */
+/* ========================= */
+.shop-popup-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(23,21,47,.38);
+    z-index:9000;
+}
+
+.shop-popup-backdrop.active{
+    display:block;
+}
+
+.shop-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:430px;
+    max-width:calc(100% - 28px);
+    background:white;
+    border-radius:30px;
+    border:1px solid #f1ddd1;
+    box-shadow:0 30px 90px rgba(23,21,47,.28);
+    z-index:9001;
+    padding:18px;
+}
+
+.shop-popup.active{
+    display:block;
+}
+
+.shop-popup-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:14px;
+}
+
+.shop-popup-head h3{
+    margin:0;
+    font-size:24px;
+    font-weight:900;
+    color:#17152f;
+}
+
+.shop-popup-head button{
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    border:0;
+    background:#fff3f1;
+    color:#ff4d4d;
+    font-weight:900;
+    cursor:pointer;
+}
+
+.shop-list{
+    display:grid;
+    gap:10px;
+    max-height:60vh;
+    overflow:auto;
+}
+
+.shop-option{
+    width:100%;
+    min-height:68px;
+    border-radius:22px;
+    border:1px solid #eaddec;
+    background:#fffaf7;
+    padding:0 16px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    cursor:pointer;
+    font-weight:900;
+    color:#17152f;
+    text-align:left;
+}
+
+.shop-option:hover,
+.shop-option.active{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    border-color:transparent;
+}
+
+.shop-option span{
+    font-size:22px;
+}
+
+.shop-option strong{
+    flex:1;
+}
+
+.shop-option em{
+    font-style:normal;
+    font-size:12px;
+    padding:5px 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,.25);
+}
+
+/* ========================= */
+/* SEARCH */
+/* ========================= */
+.scan-row{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:12px;
+}
+
+.scan-input{
+    height:58px;
+    border-radius:999px;
+    border:1px solid #eaddec;
+    padding:0 20px;
+    font-size:18px;
+    font-weight:900;
+    background:#fff;
+}
+
+.scan-input:focus{
+    outline:none;
+    border-color:#9b7cf6;
+    box-shadow:0 0 0 4px rgba(155,124,246,.12);
+}
+
+.btn-main{
+    border:none;
+    border-radius:999px;
+    padding:0 30px;
+    height:58px;
+    color:white;
+    font-weight:900;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    box-shadow:0 12px 26px rgba(155,124,246,.25);
+    cursor:pointer;
+}
+
+.help{
+    background:#fff8fb;
+    border-radius:18px;
+    padding:14px;
+    color:#7b7288;
+    font-weight:800;
+    margin-top:14px;
+}
+
+.results{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+    margin-top:18px;
+}
+
+.result-card{
+    border:1px solid #f1ddd1;
+    border-radius:22px;
+    padding:14px;
+    background:linear-gradient(180deg,#fff,#fffaf7);
+    display:grid;
+    grid-template-columns:90px 1fr;
+    gap:12px;
+    align-items:center;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.result-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 14px 28px rgba(130,91,60,.10);
+}
+
+.result-img{
+    width:90px;
+    height:90px;
+    border-radius:18px;
+    background:#fff6ef;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+}
+
+.result-img img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+
+.result-name{
+    font-weight:900;
+    color:#17152f;
+}
+
+.result-meta{
+    color:#7b7288;
+    font-weight:800;
+    font-size:13px;
+    margin-top:4px;
+}
+
+.sku{
+    display:inline-flex;
+    background:#eee4ff;
+    color:#7b5cff;
+    border-radius:999px;
+    padding:5px 9px;
+    font-size:12px;
+    font-weight:900;
+    margin-top:6px;
+}
+
+/* ========================= */
+/* TABLE */
+/* ========================= */
+.table-wrap{
+    overflow-x:auto;
+}
+
+.stock-table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:950px;
+}
+
+.stock-table th{
+    background:#fff8fb;
+    padding:14px;
+    text-align:left;
+    color:#17152f;
+}
+
+.stock-table td{
+    padding:12px;
+    border-top:1px solid #f4e3d8;
+    font-weight:800;
+    vertical-align:middle;
+}
+
+.row-img{
+    width:58px;
+    height:58px;
+    border-radius:14px;
+    background:#fff6ef;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+}
+
+.row-img img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+
+.qty-input,
+.cost-input,
+.note-input{
+    height:44px;
+    border-radius:14px;
+    border:1px solid #eaddec;
+    padding:0 12px;
+    font-weight:900;
+    width:100%;
+}
+
+.cost-hidden{
+    color:#8a7b99;
+    font-weight:900;
+}
+
+.remove-btn{
+    border:none;
+    border-radius:14px;
+    background:#fff3f1;
+    color:#ff4d4d;
+    font-weight:900;
+    height:42px;
+    padding:0 14px;
+    cursor:pointer;
+}
+
+.save-row{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:18px;
+}
+
+.empty{
+    padding:45px;
+    text-align:center;
+    color:#7b7288;
+    font-weight:900;
+}
+
+@media(max-width:900px){
+    .scan-row{
+        grid-template-columns:1fr;
+    }
+
+    .btn-main{
+        width:100%;
+    }
+
+    .results{
+        grid-template-columns:1fr;
+    }
+
+    .branch-box{
+        display:block;
+    }
+
+    .branch-actions{
+        display:grid;
+        grid-template-columns:1fr;
+        margin-top:14px;
+    }
+
+    .branch-badge,
+    .branch-popup-btn{
+        width:100%;
+        min-height:54px;
+    }
+
+    .shop-popup{
+        left:14px;
+        right:14px;
+        top:auto;
+        bottom:18px;
+        width:auto;
+        max-width:none;
+        transform:none;
+        border-radius:28px;
+    }
+
+    .save-row{
+        display:block;
+    }
+}
 </style>
 
 <div class="batch-page">
 
-    <a href="{% url 'item_list' %}" class="back-btn">← Back to Inventory</a>
+    <a
+        href="{% url 'item_list' %}{% if request.user.is_superuser and selected_branch %}?branch={{ selected_branch.id }}{% endif %}"
+        class="back-btn"
+    >
+        ← Back to Inventory
+    </a>
 
     <div class="batch-card">
         <h1>Batch Stock In 📦</h1>
-        <p>Scan SKU/barcode or search by name, color, size, style. Add many rows, then save once.</p>
+        <p>Choose the shop first, then scan SKU/barcode or search by name, color, size, style.</p>
+
+        {% if not selected_branch %}
+            <div class="branch-warning">
+                No shop selected or assigned. Please ask admin to assign your user to a shop.
+            </div>
+        {% endif %}
+
+        <div class="branch-box">
+            <div class="branch-left">
+                <div class="branch-icon">🏪</div>
+
+                <div>
+                    <div class="branch-title">
+                        Stock will add to:
+                        {% if selected_branch %}
+                            {{ selected_branch.name }}
+                        {% else %}
+                            No Shop
+                        {% endif %}
+                    </div>
+
+                    <div class="branch-sub">
+                        {% if request.user.is_superuser %}
+                            Admin can choose shop before batch stock in.
+                        {% else %}
+                            Locked to your assigned staff shop. Branch A and Branch B will not mix stock.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="branch-actions">
+                <div class="branch-badge {% if not request.user.is_superuser %}locked{% endif %}">
+                    {% if request.user.is_superuser %}
+                        Admin Shop View
+                    {% else %}
+                        🔒 Branch Locked
+                    {% endif %}
+                </div>
+
+                {% if request.user.is_superuser %}
+                    <button type="button" class="branch-popup-btn" onclick="openShopPopup()">
+                        🔄 Change Shop
+                    </button>
+                {% endif %}
+            </div>
+        </div>
 
         <div class="scan-row">
-            <input id="searchInput" class="scan-input" type="text" placeholder="Scan SKU or search name / color / size / style..." autofocus>
-            <button type="button" class="btn-main" onclick="searchVariant()">Search</button>
+            <input
+                id="searchInput"
+                class="scan-input"
+                type="text"
+                placeholder="Scan SKU or search name / color / size / style..."
+                autofocus
+            >
+
+            <button type="button" class="btn-main" onclick="searchVariant()">
+                Search
+            </button>
         </div>
 
         <div class="help">
-            Tip: scanner works like keyboard. Scan SKU then press Enter. If no SKU, type name/color/size/style and select the correct item.
+            Tip: scanner works like keyboard. Scan SKU then press Enter. Current stock shown is for the selected shop only.
         </div>
 
         <div id="results" class="results"></div>
     </div>
 
-    <form method="post" class="batch-card" onsubmit="return prepareSubmit();">
+    <form id="stockForm" method="post" class="batch-card" onsubmit="return prepareSubmit();">
         {% csrf_token %}
+
+        {% if selected_branch %}
+            <input type="hidden" name="branch" id="branchInput" value="{{ selected_branch.id }}">
+        {% else %}
+            <input type="hidden" name="branch" id="branchInput" value="">
+        {% endif %}
+
         <input type="hidden" name="rows_json" id="rowsJson">
 
         <h1 style="font-size:30px;">Stock Rows</h1>
@@ -66,16 +587,19 @@ p{color:#7b7288;font-weight:800;margin-bottom:22px;}
                         <th>Photo</th>
                         <th>Item Info</th>
                         <th>SKU</th>
-                        <th>Current</th>
+                        <th>Current Stock</th>
                         <th>Qty In</th>
-                        <th>Cost</th>
+                        {% if can_edit_cost_price %}
+                            <th>Cost</th>
+                        {% endif %}
                         <th>Note</th>
                         <th></th>
                     </tr>
                 </thead>
+
                 <tbody id="rowsBody">
                     <tr id="emptyRow">
-                        <td colspan="8">
+                        <td colspan="{% if can_edit_cost_price %}8{% else %}7{% endif %}">
                             <div class="empty">No stock rows yet. Scan or search above.</div>
                         </td>
                     </tr>
@@ -84,32 +608,124 @@ p{color:#7b7288;font-weight:800;margin-bottom:22px;}
         </div>
 
         <div class="save-row">
-            <button class="btn-main" type="submit">Save Batch Stock In</button>
+            <button class="btn-main" type="submit">
+                Save Batch Stock In
+            </button>
         </div>
     </form>
 
 </div>
 
+{% if request.user.is_superuser %}
+<div class="shop-popup-backdrop" id="shopPopupBackdrop" onclick="closeShopPopup()"></div>
+
+<div class="shop-popup" id="shopPopup">
+    <div class="shop-popup-head">
+        <h3>Choose Shop</h3>
+        <button type="button" onclick="closeShopPopup()">✕</button>
+    </div>
+
+    <div class="shop-list">
+        {% for branch in branches %}
+            <button
+                type="button"
+                class="shop-option {% if selected_branch and selected_branch.id == branch.id %}active{% endif %}"
+                onclick="changeBranch('{{ branch.id }}')"
+            >
+                <span>🏪</span>
+                <strong>{{ branch.name }}</strong>
+
+                {% if selected_branch and selected_branch.id == branch.id %}
+                    <em>Current</em>
+                {% else %}
+                    <em>Choose</em>
+                {% endif %}
+            </button>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 <script>
 let selectedRows = [];
+const canEditCostPrice = {% if can_edit_cost_price %}true{% else %}false{% endif %};
 
 const searchInput = document.getElementById("searchInput");
 const resultsBox = document.getElementById("results");
 const rowsBody = document.getElementById("rowsBody");
 const rowsJson = document.getElementById("rowsJson");
+const branchInput = document.getElementById("branchInput");
 
-searchInput.addEventListener("keydown", function(e){
-    if(e.key === "Enter"){
-        e.preventDefault();
-        searchVariant();
+if(searchInput){
+    searchInput.addEventListener("keydown", function(e){
+        if(e.key === "Enter"){
+            e.preventDefault();
+            searchVariant();
+        }
+    });
+}
+
+function getBranchId(){
+    if(!branchInput){
+        return "";
     }
-});
+
+    return branchInput.value || "";
+}
+
+function openShopPopup(){
+    const popup = document.getElementById("shopPopup");
+    const backdrop = document.getElementById("shopPopupBackdrop");
+
+    if(popup){
+        popup.classList.add("active");
+    }
+
+    if(backdrop){
+        backdrop.classList.add("active");
+    }
+}
+
+function closeShopPopup(){
+    const popup = document.getElementById("shopPopup");
+    const backdrop = document.getElementById("shopPopupBackdrop");
+
+    if(popup){
+        popup.classList.remove("active");
+    }
+
+    if(backdrop){
+        backdrop.classList.remove("active");
+    }
+}
+
+function changeBranch(branchId){
+    selectedRows = [];
+    renderRows();
+    resultsBox.innerHTML = "";
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("branch", branchId);
+    window.location.href = url.toString();
+}
 
 async function searchVariant(){
     const q = searchInput.value.trim();
-    if(!q) return;
+    const branchId = getBranchId();
 
-    const res = await fetch("{% url 'variant_search_api' %}?q=" + encodeURIComponent(q));
+    if(!q){
+        return;
+    }
+
+    if(!branchId){
+        alert("Please select shop/branch first.");
+        return;
+    }
+
+    const res = await fetch(
+        "{% url 'variant_search_api' %}?q=" + encodeURIComponent(q) + "&branch=" + encodeURIComponent(branchId)
+    );
+
     const data = await res.json();
 
     resultsBox.innerHTML = "";
@@ -136,13 +752,15 @@ async function searchVariant(){
             <div class="result-img">
                 ${v.image ? `<img src="${v.image}">` : "📦"}
             </div>
+
             <div>
                 <div class="result-name">${v.type_emoji} ${v.item_name}</div>
                 <div class="result-meta">${v.brand || "No brand"} • ${v.display}</div>
-                <div class="result-meta">Stock: ${v.stock} ${v.unit}</div>
+                <div class="result-meta">Current Stock: ${v.stock} ${v.unit}</div>
                 <span class="sku">${v.sku || "No SKU"}</span>
             </div>
         `;
+
         resultsBox.appendChild(card);
     });
 
@@ -183,7 +801,7 @@ function renderRows(){
     if(selectedRows.length === 0){
         rowsBody.innerHTML = `
             <tr id="emptyRow">
-                <td colspan="8">
+                <td colspan="${canEditCostPrice ? 8 : 7}">
                     <div class="empty">No stock rows yet. Scan or search above.</div>
                 </td>
             </tr>
@@ -194,20 +812,64 @@ function renderRows(){
     selectedRows.forEach((row, index) => {
         const tr = document.createElement("tr");
 
+        let costCell = "";
+
+        if(canEditCostPrice){
+            costCell = `
+                <td>
+                    <input
+                        class="cost-input"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value="${row.cost_price}"
+                        onchange="updateRow(${index}, 'cost_price', this.value)"
+                    >
+                </td>
+            `;
+        }
+
         tr.innerHTML = `
             <td>
                 <div class="row-img">${row.image ? `<img src="${row.image}">` : "📦"}</div>
             </td>
+
             <td>
                 <div style="font-weight:900;color:#17152f;">${row.item_name}</div>
                 <div style="color:#7b7288;">${row.brand || "No brand"} • ${row.display}</div>
             </td>
+
             <td>${row.sku || "No SKU"}</td>
+
             <td>${row.stock} ${row.unit}</td>
-            <td><input class="qty-input" type="number" min="1" value="${row.quantity}" onchange="updateRow(${index}, 'quantity', this.value)"></td>
-            <td><input class="cost-input" type="number" step="0.01" min="0" value="${row.cost_price}" onchange="updateRow(${index}, 'cost_price', this.value)"></td>
-            <td><input class="note-input" type="text" value="${row.note}" onchange="updateRow(${index}, 'note', this.value)" placeholder="Optional"></td>
-            <td><button type="button" class="remove-btn" onclick="removeRow(${index})">Remove</button></td>
+
+            <td>
+                <input
+                    class="qty-input"
+                    type="number"
+                    min="1"
+                    value="${row.quantity}"
+                    onchange="updateRow(${index}, 'quantity', this.value)"
+                >
+            </td>
+
+            ${costCell}
+
+            <td>
+                <input
+                    class="note-input"
+                    type="text"
+                    value="${row.note}"
+                    onchange="updateRow(${index}, 'note', this.value)"
+                    placeholder="Optional"
+                >
+            </td>
+
+            <td>
+                <button type="button" class="remove-btn" onclick="removeRow(${index})">
+                    Remove
+                </button>
+            </td>
         `;
 
         rowsBody.appendChild(tr);
@@ -215,9 +877,13 @@ function renderRows(){
 }
 
 function updateRow(index, field, value){
+    if(!selectedRows[index]){
+        return;
+    }
+
     if(field === "quantity"){
         selectedRows[index][field] = parseInt(value || "1");
-    } else {
+    }else{
         selectedRows[index][field] = value;
     }
 }
@@ -228,6 +894,13 @@ function removeRow(index){
 }
 
 function prepareSubmit(){
+    const branchId = getBranchId();
+
+    if(!branchId){
+        alert("Please select shop/branch first.");
+        return false;
+    }
+
     const validRows = selectedRows.filter(r => parseInt(r.quantity) > 0);
 
     if(validRows.length === 0){
@@ -238,6 +911,12 @@ function prepareSubmit(){
     rowsJson.value = JSON.stringify(validRows);
     return true;
 }
+
+document.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){
+        closeShopPopup();
+    }
+});
 </script>
 
 {% endblock %}

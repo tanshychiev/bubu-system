@@ -2,35 +2,468 @@
 {% block content %}
 
 <style>
-.page{max-width:1100px;margin:auto;}
-.back{display:inline-flex;padding:12px 22px;border-radius:999px;background:white;border:1px solid #eaddec;color:#6b6178;font-weight:900;text-decoration:none;margin-bottom:18px;box-shadow:0 8px 20px rgba(130,91,60,.06);}
-.card{background:linear-gradient(135deg,#fff,#fff7fb);border:1px solid #f5e8df;border-radius:34px;padding:28px;box-shadow:0 24px 60px rgba(130,91,60,.10);margin-bottom:22px;}
-.top-grid{display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:center;}
-.photo{width:220px;height:220px;border-radius:28px;background:#fff6ef;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #f1ddd1;}
-.photo img{width:100%;height:100%;object-fit:contain;}
-.placeholder{font-size:80px;}
-h1{color:#17152f;font-size:38px;margin:0 0 8px;font-weight:900;}
-.sub{color:#7b7288;font-weight:800;margin-bottom:18px;}
-.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0;}
-.info-box{background:white;border:1px solid #f0e5ee;border-radius:22px;padding:15px;box-shadow:0 10px 24px rgba(130,91,60,.05);}
-.info-box small{display:block;color:#8a7b99;font-weight:900;margin-bottom:7px;}
-.info-box strong{display:block;color:#17152f;font-size:17px;font-weight:900;}
-.form-card{background:white;border-radius:28px;padding:22px;border:1px solid #f0e5ee;margin-top:18px;}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-.box label{display:block;font-weight:900;margin-bottom:8px;color:#17152f;}
-.box input,.box select{width:100%;height:56px;border-radius:20px;border:1px solid #eaddec;padding:0 16px;font-weight:900;background:#fff;}
-.box input:focus,.box select:focus{outline:none;border-color:#9b7cf6;box-shadow:0 0 0 4px rgba(155,124,246,.12);}
-.btn{border:none;border-radius:999px;padding:16px 38px;color:white;font-weight:900;background:linear-gradient(135deg,#9b7cf6,#ff8c6b);box-shadow:0 14px 28px rgba(155,124,246,.22);cursor:pointer;}
-.history-card{background:white;border:1px solid #f5e8df;border-radius:34px;padding:24px;box-shadow:0 20px 50px rgba(130,91,60,.08);}
-.table{width:100%;border-collapse:collapse;}
-.table th{background:#fff8fb;padding:14px;text-align:left;color:#17152f;}
-.table td{padding:14px;border-top:1px solid #f4e3d8;font-weight:800;}
-@media(max-width:850px){.top-grid,.form-grid,.info-grid{grid-template-columns:1fr;}.photo{width:100%;}}
+.page{
+    max-width:1100px;
+    margin:auto;
+}
+
+.back{
+    display:inline-flex;
+    padding:12px 22px;
+    border-radius:999px;
+    background:white;
+    border:1px solid #eaddec;
+    color:#6b6178;
+    font-weight:900;
+    text-decoration:none;
+    margin-bottom:18px;
+    box-shadow:0 8px 20px rgba(130,91,60,.06);
+}
+
+.card{
+    background:linear-gradient(135deg,#fff,#fff7fb);
+    border:1px solid #f5e8df;
+    border-radius:34px;
+    padding:28px;
+    box-shadow:0 24px 60px rgba(130,91,60,.10);
+    margin-bottom:22px;
+}
+
+.top-grid{
+    display:grid;
+    grid-template-columns:220px 1fr;
+    gap:24px;
+    align-items:center;
+}
+
+.photo{
+    width:220px;
+    height:220px;
+    border-radius:28px;
+    background:#fff6ef;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    border:1px solid #f1ddd1;
+}
+
+.photo img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+
+.placeholder{
+    font-size:80px;
+}
+
+h1{
+    color:#17152f;
+    font-size:38px;
+    margin:0 0 8px;
+    font-weight:900;
+}
+
+.sub{
+    color:#7b7288;
+    font-weight:800;
+    margin-bottom:18px;
+}
+
+.info-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    margin:18px 0;
+}
+
+.info-box{
+    background:white;
+    border:1px solid #f0e5ee;
+    border-radius:22px;
+    padding:15px;
+    box-shadow:0 10px 24px rgba(130,91,60,.05);
+}
+
+.info-box small{
+    display:block;
+    color:#8a7b99;
+    font-weight:900;
+    margin-bottom:7px;
+}
+
+.info-box strong{
+    display:block;
+    color:#17152f;
+    font-size:17px;
+    font-weight:900;
+}
+
+/* ========================= */
+/* BRANCH LOCK / ADMIN SHOP */
+/* ========================= */
+.branch-card{
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+    border:1px solid #f0e5ee;
+    border-radius:24px;
+    padding:16px;
+    margin-top:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+}
+
+.branch-left{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.branch-icon{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    box-shadow:0 8px 18px rgba(130,91,60,.08);
+}
+
+.branch-title{
+    color:#17152f;
+    font-weight:900;
+    font-size:18px;
+}
+
+.branch-sub{
+    color:#7b7288;
+    font-weight:800;
+    margin-top:4px;
+}
+
+.branch-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.branch-badge{
+    min-height:46px;
+    padding:0 18px;
+    border-radius:999px;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    font-weight:900;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    white-space:nowrap;
+}
+
+.branch-badge.locked{
+    background:linear-gradient(135deg,#19a974,#7be0b2);
+}
+
+.branch-popup-btn{
+    min-height:46px;
+    padding:0 18px;
+    border:none;
+    border-radius:999px;
+    background:linear-gradient(135deg,#34c6ff,#7b5cff);
+    color:white;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 10px 22px rgba(52,198,255,.22);
+}
+
+.branch-popup-btn:active{
+    transform:scale(.97);
+}
+
+/* ========================= */
+/* SHOP POPUP */
+/* ========================= */
+.shop-popup-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(23,21,47,.38);
+    z-index:9000;
+}
+
+.shop-popup-backdrop.active{
+    display:block;
+}
+
+.shop-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:430px;
+    max-width:calc(100% - 28px);
+    background:white;
+    border-radius:30px;
+    border:1px solid #f1ddd1;
+    box-shadow:0 30px 90px rgba(23,21,47,.28);
+    z-index:9001;
+    padding:18px;
+}
+
+.shop-popup.active{
+    display:block;
+}
+
+.shop-popup-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:14px;
+}
+
+.shop-popup-head h3{
+    margin:0;
+    font-size:24px;
+    font-weight:900;
+    color:#17152f;
+}
+
+.shop-popup-head button{
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    border:0;
+    background:#fff3f1;
+    color:#ff4d4d;
+    font-weight:900;
+    cursor:pointer;
+}
+
+.shop-list{
+    display:grid;
+    gap:10px;
+    max-height:60vh;
+    overflow:auto;
+}
+
+.shop-option{
+    width:100%;
+    min-height:68px;
+    border-radius:22px;
+    border:1px solid #eaddec;
+    background:#fffaf7;
+    padding:0 16px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    cursor:pointer;
+    font-weight:900;
+    color:#17152f;
+    text-align:left;
+}
+
+.shop-option:hover,
+.shop-option.active{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+    border-color:transparent;
+}
+
+.shop-option span{
+    font-size:22px;
+}
+
+.shop-option strong{
+    flex:1;
+}
+
+.shop-option em{
+    font-style:normal;
+    font-size:12px;
+    padding:5px 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,.25);
+}
+
+.form-card{
+    background:white;
+    border-radius:28px;
+    padding:22px;
+    border:1px solid #f0e5ee;
+    margin-top:18px;
+}
+
+.form-title{
+    color:#17152f;
+    font-size:24px;
+    font-weight:900;
+    margin:0 0 14px;
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+}
+
+.box label{
+    display:block;
+    font-weight:900;
+    margin-bottom:8px;
+    color:#17152f;
+}
+
+.box input,
+.box select{
+    width:100%;
+    height:58px;
+    border-radius:20px;
+    border:1px solid #eaddec;
+    padding:0 16px;
+    font-weight:900;
+    background:#fff;
+}
+
+.box input:focus,
+.box select:focus{
+    outline:none;
+    border-color:#9b7cf6;
+    box-shadow:0 0 0 4px rgba(155,124,246,.12);
+}
+
+.submit-row{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:18px;
+}
+
+.btn{
+    border:none;
+    border-radius:999px;
+    padding:16px 38px;
+    color:white;
+    font-weight:900;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    box-shadow:0 14px 28px rgba(155,124,246,.22);
+    cursor:pointer;
+    min-height:58px;
+}
+
+.history-card{
+    background:white;
+    border:1px solid #f5e8df;
+    border-radius:34px;
+    padding:24px;
+    box-shadow:0 20px 50px rgba(130,91,60,.08);
+}
+
+.history-title{
+    font-size:28px;
+    color:#17152f;
+    margin:0 0 16px;
+    font-weight:900;
+}
+
+.table-wrap{
+    overflow-x:auto;
+}
+
+.table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:760px;
+}
+
+.table th{
+    background:#fff8fb;
+    padding:14px;
+    text-align:left;
+    color:#17152f;
+}
+
+.table td{
+    padding:14px;
+    border-top:1px solid #f4e3d8;
+    font-weight:800;
+}
+
+.badge{
+    display:inline-flex;
+    padding:6px 12px;
+    border-radius:999px;
+    font-weight:900;
+    background:#eee4ff;
+    color:#7b5cff;
+}
+
+.cost-hidden{
+    color:#8a7b99;
+    font-weight:900;
+}
+
+@media(max-width:850px){
+    .top-grid,
+    .form-grid,
+    .info-grid{
+        grid-template-columns:1fr;
+    }
+
+    .photo{
+        width:100%;
+    }
+
+    .branch-card{
+        display:block;
+    }
+
+    .branch-actions{
+        display:grid;
+        grid-template-columns:1fr;
+        margin-top:14px;
+    }
+
+    .branch-badge,
+    .branch-popup-btn{
+        width:100%;
+        min-height:54px;
+    }
+
+    .shop-popup{
+        left:14px;
+        right:14px;
+        top:auto;
+        bottom:18px;
+        width:auto;
+        max-width:none;
+        transform:none;
+        border-radius:28px;
+    }
+
+    .submit-row{
+        display:block;
+    }
+
+    .btn{
+        width:100%;
+    }
+}
 </style>
 
 <div class="page">
 
-    <a href="{% url 'item_detail' item.id %}" class="back">← Back</a>
+    <a
+        href="{% url 'item_detail' item.id %}{% if request.user.is_superuser and selected_branch %}?branch={{ selected_branch.id }}{% endif %}"
+        class="back"
+    >
+        ← Back
+    </a>
 
     <div class="card">
         <div class="top-grid">
@@ -47,7 +480,9 @@ h1{color:#17152f;font-size:38px;margin:0 0 8px;font-weight:900;}
 
             <div>
                 <h1>Stock In / Out 📦</h1>
-                <div class="sub">Update stock for this exact variant only.</div>
+                <div class="sub">
+                    Update stock for this exact variant and selected shop only.
+                </div>
 
                 <div class="info-grid">
                     <div class="info-box">
@@ -72,16 +507,68 @@ h1{color:#17152f;font-size:38px;margin:0 0 8px;font-weight:900;}
                     </div>
 
                     <div class="info-box">
-                        <small>Current Stock</small>
-                        <strong>{{ variant.quantity }} {{ item.get_unit_display }}</strong>
+                        <small>
+                            Current Stock
+                            {% if selected_branch %}
+                                / {{ selected_branch.name }}
+                            {% endif %}
+                        </small>
+                        <strong>{{ current_stock }} {{ item.get_unit_display }}</strong>
+                    </div>
+                </div>
+
+                <div class="branch-card">
+                    <div class="branch-left">
+                        <div class="branch-icon">🏪</div>
+
+                        <div>
+                            <div class="branch-title">
+                                Current Shop:
+                                {% if selected_branch %}
+                                    {{ selected_branch.name }}
+                                {% else %}
+                                    No shop selected
+                                {% endif %}
+                            </div>
+
+                            <div class="branch-sub">
+                                {% if request.user.is_superuser %}
+                                    Admin can choose shop before stock update.
+                                {% else %}
+                                    Locked to your assigned staff shop.
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="branch-actions">
+                        <div class="branch-badge {% if not request.user.is_superuser %}locked{% endif %}">
+                            {% if request.user.is_superuser %}
+                                Admin Shop View
+                            {% else %}
+                                🔒 Branch Locked
+                            {% endif %}
+                        </div>
+
+                        {% if request.user.is_superuser %}
+                            <button type="button" class="branch-popup-btn" onclick="openShopPopup()">
+                                🔄 Change Shop
+                            </button>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="form-card">
+            <h2 class="form-title">Save Stock Movement</h2>
+
             <form method="post">
                 {% csrf_token %}
+
+                {% if selected_branch %}
+                    <input type="hidden" name="branch" value="{{ selected_branch.id }}">
+                {% endif %}
 
                 <div class="form-grid">
                     <div class="box">
@@ -90,6 +577,7 @@ h1{color:#17152f;font-size:38px;margin:0 0 8px;font-weight:900;}
                             <option value="in">Stock In</option>
                             <option value="out">Stock Out</option>
                             <option value="adjust">Adjust Stock</option>
+                            <option value="damage">Damage / Expired / Lost</option>
                         </select>
                     </div>
 
@@ -98,54 +586,155 @@ h1{color:#17152f;font-size:38px;margin:0 0 8px;font-weight:900;}
                         <input type="number" name="quantity" min="1" required>
                     </div>
 
+                    {% if can_edit_cost_price %}
                     <div class="box">
                         <label>Cost Price</label>
                         <input type="number" step="0.01" name="cost_price" value="{{ variant.cost_price }}">
                     </div>
+                    {% endif %}
 
                     <div class="box">
                         <label>Note</label>
                         <input type="text" name="note" placeholder="Supplier / reason / sale note">
                     </div>
+                </div>
 
-                    <div>
-                        <button class="btn" type="submit">Save Stock</button>
-                    </div>
+                <div class="submit-row">
+                    <button class="btn" type="submit">
+                        Save Stock for
+                        {% if selected_branch %}
+                            {{ selected_branch.name }}
+                        {% else %}
+                            Selected Shop
+                        {% endif %}
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
     <div class="history-card">
-        <h1 style="font-size:28px;">History</h1>
+        <h1 class="history-title">History</h1>
 
-        <table class="table">
-            <tr>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Qty</th>
-                <th>Cost</th>
-                <th>By</th>
-                <th>Note / Sale</th>
-            </tr>
+        <div class="table-wrap">
+            <table class="table">
+                <tr>
+                    <th>Date</th>
+                    <th>Shop</th>
+                    <th>Type</th>
+                    <th>Qty</th>
+                    <th>Before</th>
+                    <th>After</th>
+                    {% if can_edit_cost_price %}
+                        <th>Cost</th>
+                    {% endif %}
+                    <th>By</th>
+                    <th>Note / Sale</th>
+                </tr>
 
-            {% for m in movements %}
-            <tr>
-                <td>{{ m.created_at|date:"d M Y H:i" }}</td>
-                <td>{{ m.get_movement_type_display }}</td>
-                <td>{{ m.quantity }}</td>
-                <td>${{ m.cost_price|floatformat:2 }}</td>
-                <td>{{ m.created_by|default:"-" }}</td>
-                <td>{{ m.note|default:"-" }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6">No history yet.</td>
-            </tr>
-            {% endfor %}
-        </table>
+                {% for m in movements %}
+                <tr>
+                    <td>{{ m.created_at|date:"d M Y H:i" }}</td>
+                    <td>
+                        {% if m.branch %}
+                            <span class="badge">{{ m.branch.name }}</span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ m.get_movement_type_display }}</td>
+                    <td>{{ m.quantity }}</td>
+                    <td>{{ m.before_quantity }}</td>
+                    <td>{{ m.after_quantity }}</td>
+
+                    {% if can_edit_cost_price %}
+                        <td>${{ m.cost_price|floatformat:2 }}</td>
+                    {% endif %}
+
+                    <td>{{ m.created_by|default:"-" }}</td>
+                    <td>{{ m.note|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{% if can_edit_cost_price %}9{% else %}8{% endif %}">
+                        No history yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
     </div>
 
 </div>
+
+{% if request.user.is_superuser %}
+<div class="shop-popup-backdrop" id="shopPopupBackdrop" onclick="closeShopPopup()"></div>
+
+<div class="shop-popup" id="shopPopup">
+    <div class="shop-popup-head">
+        <h3>Choose Shop</h3>
+        <button type="button" onclick="closeShopPopup()">✕</button>
+    </div>
+
+    <div class="shop-list">
+        {% for branch in branches %}
+            <button
+                type="button"
+                class="shop-option {% if selected_branch and selected_branch.id == branch.id %}active{% endif %}"
+                onclick="changeBranch('{{ branch.id }}')"
+            >
+                <span>🏪</span>
+                <strong>{{ branch.name }}</strong>
+
+                {% if selected_branch and selected_branch.id == branch.id %}
+                    <em>Current</em>
+                {% else %}
+                    <em>Choose</em>
+                {% endif %}
+            </button>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<script>
+function openShopPopup(){
+    const popup = document.getElementById("shopPopup");
+    const backdrop = document.getElementById("shopPopupBackdrop");
+
+    if(popup){
+        popup.classList.add("active");
+    }
+
+    if(backdrop){
+        backdrop.classList.add("active");
+    }
+}
+
+function closeShopPopup(){
+    const popup = document.getElementById("shopPopup");
+    const backdrop = document.getElementById("shopPopupBackdrop");
+
+    if(popup){
+        popup.classList.remove("active");
+    }
+
+    if(backdrop){
+        backdrop.classList.remove("active");
+    }
+}
+
+function changeBranch(branchId){
+    const url = new URL(window.location.href);
+    url.searchParams.set("branch", branchId);
+    window.location.href = url.toString();
+}
+
+document.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){
+        closeShopPopup();
+    }
+});
+</script>
 
 {% endblock %}

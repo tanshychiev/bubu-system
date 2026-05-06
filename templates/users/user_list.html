@@ -130,7 +130,7 @@ a{text-decoration:none!important}
 
 .user-grid{
     display:grid;
-    grid-template-columns:repeat(6,1fr);
+    grid-template-columns:repeat(4,1fr);
     gap:18px;
 }
 
@@ -172,7 +172,7 @@ a{text-decoration:none!important}
 .username{font-size:18px;color:#17152f;font-weight:900;margin-bottom:4px}
 .email{color:#7b7288;font-weight:800;font-size:14px;min-height:34px}
 
-.role,.status{
+.role,.status,.shop-badge{
     display:inline-flex;
     margin-top:12px;
     padding:8px 14px;
@@ -185,6 +185,53 @@ a{text-decoration:none!important}
 .role.staff{background:#e8f2ff;color:#3a86ff}
 .status.active{background:#ddf8ea;color:#20b86b}
 .status.inactive{background:#ffe7ec;color:#ff4d6d}
+
+.shop-box{
+    margin-top:14px;
+    padding:13px;
+    border-radius:18px;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+    border:1px solid #f0e5ee;
+}
+
+.shop-box small{
+    display:block;
+    color:#7b7288;
+    font-weight:900;
+    margin-bottom:6px;
+}
+
+.shop-badge{
+    margin-top:0;
+    background:linear-gradient(135deg,#19a974,#7be0b2);
+    color:white;
+}
+
+.shop-badge.admin{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+}
+
+.shop-badge.none{
+    background:#fff3dd;
+    color:#b76b00;
+}
+
+.group-list{
+    margin-top:10px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+}
+
+.group-chip{
+    display:inline-flex;
+    padding:5px 9px;
+    border-radius:999px;
+    background:#f5f1ff;
+    color:#8e63ff;
+    font-size:12px;
+    font-weight:900;
+}
 
 .edit-btn{
     margin-top:16px;
@@ -215,7 +262,7 @@ a{text-decoration:none!important}
     .user-hero{grid-template-columns:1fr}
 }
 
-@media(max-width:800px){
+@media(max-width:900px){
     .user-grid{grid-template-columns:1fr}
     .search-card{grid-template-columns:1fr}
     .hero-img{height:220px}
@@ -225,7 +272,7 @@ a{text-decoration:none!important}
 <div class="user-hero">
     <div class="user-title">
         <h1>Users 👤</h1>
-        <p>Manage staff accounts, roles<br>and permissions. 💗</p>
+        <p>Manage staff accounts, shop access, roles and permissions. 💗</p>
 
         <div class="hero-features">
             <a href="{% url 'user_create' %}" class="feature-card">
@@ -251,7 +298,7 @@ a{text-decoration:none!important}
 <form method="get" class="search-card">
     <div class="search-box">
         <span>⌕</span>
-        <input type="text" name="q" placeholder="Search username, email or role..." value="{{ q }}">
+        <input type="text" name="q" placeholder="Search username, email, role or shop..." value="{{ q }}">
     </div>
 
     <button type="submit" class="btn-search">Search</button>
@@ -272,7 +319,7 @@ a{text-decoration:none!important}
         </div>
 
         <div class="username">{{ u.username }}</div>
-        <div class="email">{{ u.email }}</div>
+        <div class="email">{{ u.email|default:"No email" }}</div>
 
         {% if u.is_superuser %}
             <div class="role admin">Administrator</div>
@@ -289,6 +336,26 @@ a{text-decoration:none!important}
         {% else %}
             <div class="status inactive">● Inactive</div>
         {% endif %}
+
+        <div class="shop-box">
+            <small>Allowed Shop / Branch</small>
+
+            {% if u.is_superuser %}
+                <div class="shop-badge admin">🏪 All Shops</div>
+            {% elif u.staff_profile and u.staff_profile.branch %}
+                <div class="shop-badge">🔒 {{ u.staff_profile.branch.name }}</div>
+            {% else %}
+                <div class="shop-badge none">⚠ No Shop Assigned</div>
+            {% endif %}
+        </div>
+
+        <div class="group-list">
+            {% for group in u.groups.all %}
+                <span class="group-chip">{{ group.name }}</span>
+            {% empty %}
+                <span class="group-chip">No role</span>
+            {% endfor %}
+        </div>
 
         <a href="{% url 'user_edit' u.id %}" class="edit-btn">✎ Edit</a>
     </div>

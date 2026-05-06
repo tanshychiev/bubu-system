@@ -4,7 +4,7 @@
 <div class="customer-form-page">
     <div class="form-head">
         <h1>{{ title|default:"Customer Form" }} 👥✨</h1>
-        <p>Add or edit customer 💗</p>
+        <p>Add or edit customer profile.</p>
     </div>
 
     <div class="form-card">
@@ -23,12 +23,17 @@
                 </label>
 
                 <label>
-                    Pet Name
-                    <input name="pet_name" value="{{ customer.pet_name|default:'' }}" placeholder="Pet name">
+                    Email
+                    <input type="email" name="email" value="{{ customer.email|default:'' }}" placeholder="Email">
                 </label>
 
                 <label>
-                    Pet Type
+                    Old Pet Name
+                    <input name="pet_name" value="{{ customer.pet_name|default:'' }}" placeholder="Old quick pet name">
+                </label>
+
+                <label>
+                    Old Pet Type
                     <input name="pet_type" value="{{ customer.pet_type|default:'' }}" placeholder="Dog, cat...">
                 </label>
             </div>
@@ -51,6 +56,7 @@
 
             <div class="history-card">
                 <h3>Edit History</h3>
+
                 {% for h in customer.histories.all|dictsortreversed:"changed_at" %}
                     <div class="history-row">
                         <strong>{{ h.field_name|title }}</strong>
@@ -69,7 +75,7 @@
 
             <div class="form-actions">
                 <button type="submit">💾 Save</button>
-                <a href="{% url 'customer_list' %}">Cancel</a>
+                <a href="{% if customer %}{% url 'customer_detail' customer.id %}{% else %}{% url 'customer_list' %}{% endif %}">Cancel</a>
             </div>
         </form>
     </div>

@@ -49,8 +49,19 @@ class Sale(models.Model):
             return "Unpaid"
         return "Partial"
 
+    def clean(self):
+        if self.total_amount < 0:
+            raise ValidationError("Total amount cannot be negative.")
+
+        if self.paid_amount < 0:
+            raise ValidationError("Paid amount cannot be negative.")
+
+        if self.change_amount < 0:
+            raise ValidationError("Change amount cannot be negative.")
+
     def __str__(self):
-        return f"Sale #{self.id}"
+        branch_name = self.branch.name if self.branch else "No Branch"
+        return f"Sale #{self.id} - {branch_name}"
 
 
 class SaleItem(models.Model):
@@ -86,7 +97,14 @@ class SaleItem(models.Model):
 
     def clean(self):
         if self.quantity <= 0:
-            raise ValidationError("Quantity must be greater than 0")
+            raise ValidationError("Quantity must be greater than 0.")
+
+        if self.price < 0:
+            raise ValidationError("Price cannot be negative.")
+
+        if self.sale and self.branch and self.sale.branch_id:
+            if self.branch_id != self.sale.branch_id:
+                raise ValidationError("Sale item branch must match sale branch.")
 
     def __str__(self):
         if self.variant:
@@ -118,7 +136,7 @@ class SalePayment(models.Model):
 
     def clean(self):
         if self.amount <= 0:
-            raise ValidationError("Payment amount must be greater than 0")
+            raise ValidationError("Payment amount must be greater than 0.")
 
     def __str__(self):
         return f"{self.sale} - {self.method} - {self.amount}"
@@ -133,7 +151,15 @@ class POSSetting(models.Model):
 
 
 class CashCount(models.Model):
-    date = models.DateField(unique=True)
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="cash_counts",
+    )
+
+    date = models.DateField()
 
     system_cash_usd = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     system_cash_khr = models.DecimalField(max_digits=14, decimal_places=0, default=0)
@@ -154,5 +180,29 @@ class CashCount(models.Model):
 
     counted_at = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        unique_together = ("branch", "date")
+        ordering = ["-date", "branch__name"]
+
+    def clean(self):
+        if self.system_cash_usd < 0:
+            raise ValidationError("System cash USD cannot be negative.")
+
+        if self.system_cash_khr < 0:
+            raise ValidationError("System cash KHR cannot be negative.")
+
+        if self.system_aba_usd < 0:
+            raise ValidationError("System ABA USD cannot be negative.")
+
+        if self.counted_cash_usd < 0:
+            raise ValidationError("Counted cash USD cannot be negative.")
+
+        if self.counted_cash_khr < 0:
+            raise ValidationError("Counted cash KHR cannot be negative.")
+
+        if self.counted_aba_usd < 0:
+            raise ValidationError("Counted ABA USD cannot be negative.")
+
     def __str__(self):
-        return f"Cash Count {self.date}"
+        branch_name = self.branch.name if self.branch else "No Branch"
+        return f"Cash Count {branch_name} - {self.date}"

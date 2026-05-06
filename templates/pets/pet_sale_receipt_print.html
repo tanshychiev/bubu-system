@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <title>Pet Sale Receipt #{{ sale.id }}</title>
+
+    <style>
+        @page{size:80mm auto;margin:0}
+        *{box-sizing:border-box}
+        body{margin:0;font-family:Arial,"Khmer OS Battambang","Khmer OS",sans-serif;background:#fff;color:#111}
+        .print-btn{position:fixed;top:12px;right:12px;z-index:20}
+        .print-btn button{border:0;border-radius:999px;background:#111;color:#fff;padding:10px 18px;font-weight:900;cursor:pointer}
+        .receipt{width:80mm;padding:7mm 5mm;margin:0 auto}
+        .center{text-align:center}
+        .logo-title{font-size:21px;font-weight:900;margin:0;letter-spacing:.5px}
+        .sub-title,.receipt-no{margin:4px 0;font-size:12px}
+        .line{border-top:1px dashed #111;margin:8px 0}
+        .section-title{font-size:13px;font-weight:900;margin:8px 0 5px}
+        .pet-box{padding:7px;border:1px solid #ddd;border-radius:8px;background:#fafafa}
+        .pet-name{font-size:13px;font-weight:900;margin-bottom:4px}
+        .small{font-size:11px;line-height:1.45}
+        .row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin:5px 0;font-size:12px}
+        .row span{color:#333}
+        .row strong{text-align:right;font-weight:900}
+        .total-row{font-size:15px;font-weight:900;padding-top:4px}
+        .status-badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#f2f2f2;font-size:11px;font-weight:900}
+        .warranty-box{margin-top:8px;padding:8px;border:1px solid #111;border-radius:8px}
+        .warranty-title{text-align:center;font-size:13px;font-weight:900;margin-bottom:6px}
+        .policy{margin:0;padding-left:15px;font-size:10.5px;line-height:1.55}
+        .policy li{margin-bottom:5px}
+        .policy-en{margin-top:7px;border-top:1px dashed #999;padding-top:7px}
+        .signature{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;font-size:11px;text-align:center}
+        .signature div{padding-top:26px}
+        .sign-line{border-top:1px solid #111;padding-top:4px}
+        .thank{margin-top:9px;font-size:12px;font-weight:900;text-align:center}
+        .muted{color:#666}
+        @media print{.print-btn{display:none}.receipt{margin:0}}
+    </style>
+</head>
+
+<body>
+
+<div class="print-btn">
+    <button onclick="window.print()">🖨 Print</button>
+</div>
+
+<div class="receipt">
+
+    <div class="center">
+        <h1 class="logo-title">BUBU PET STORE</h1>
+        <p class="sub-title">Dog / Cat Sale Receipt</p>
+        <p class="receipt-no">No: PS-{{ sale.id }}</p>
+        <p class="receipt-no">{{ sale.created_at|date:"d/m/Y H:i" }}</p>
+    </div>
+
+    <div class="line"></div>
+
+    <div class="section-title">Pet Information / ព័ត៌មានសត្វចិញ្ចឹម</div>
+
+    <div class="pet-box">
+        <div class="pet-name">
+            {{ sale.pet_type_display }} · {{ sale.breed_display|default:"-" }}
+        </div>
+
+        <div class="small">
+            {% if sale.pet_name_display %}Name: {{ sale.pet_name_display }}<br>{% endif %}
+            Sex: {{ sale.gender_display|default:"-" }}<br>
+            {% if sale.pet and sale.pet.color %}Color: {{ sale.pet.color }}<br>{% endif %}
+            {% if sale.pet and sale.pet.birth_date %}Birth Date: {{ sale.pet.birth_date|date:"d/m/Y" }}<br>{% endif %}
+            {% if sale.deadline %}Deadline: {{ sale.deadline|date:"d/m/Y" }}<br>{% endif %}
+            {% if sale.note %}Remark: {{ sale.note }}{% endif %}
+        </div>
+    </div>
+
+    <div class="line"></div>
+
+    <div class="section-title">Customer / អតិថិជន</div>
+
+    <div class="row"><span>Name</span><strong>{{ sale.customer_name }}</strong></div>
+    <div class="row"><span>Phone</span><strong>{{ sale.phone|default:"-" }}</strong></div>
+    <div class="row"><span>Location</span><strong>{{ sale.address|default:"-" }}</strong></div>
+    <div class="row"><span>Status</span><strong><span class="status-badge">{{ sale.get_status_display }}</span></strong></div>
+
+    <div class="line"></div>
+
+    <div class="section-title">Payment / ការទូទាត់</div>
+
+    <div class="row"><span>Full Price</span><strong>${{ sale.sale_price }}</strong></div>
+    <div class="row"><span>Paid / Deposit</span><strong>${{ sale.paid_amount }}</strong></div>
+    <div class="row total-row"><span>Remaining</span><strong>${{ sale.remaining_amount }}</strong></div>
+
+    <div class="line"></div>
+
+    <div class="section-title">Warranty / ការធានា</div>
+
+    <div class="row"><span>Warranty Days</span><strong>{{ sale.warranty_days|default:"3" }} days</strong></div>
+    <div class="row"><span>Start Date</span><strong>{{ sale.warranty_start_date|date:"d/m/Y"|default:"Purchase date" }}</strong></div>
+    <div class="row"><span>Expire Date</span><strong>{{ sale.warranty_expire_date|date:"d/m/Y"|default:"Auto after 3 days" }}</strong></div>
+
+    <div class="warranty-box">
+        <div class="warranty-title">គោលការណ៍ធានា</div>
+
+        <ul class="policy">
+            <li>ការធានាមានសុពលភាព ៣ថ្ងៃ ចាប់ពីថ្ងៃទិញ ឬថ្ងៃទទួលសត្វ។</li>
+            <li>ធានាចំពោះជំងឺធ្ងន់ធ្ងរដែលពាក់ព័ន្ធនឹងសុខភាពសត្វ ដូចជា Parvo និង Distemper បើមានការបញ្ជាក់ពីពេទ្យសត្វ។</li>
+            <li>សូមអតិថិជនរក្សាវិក្កយបត្រ និងទាក់ទងមកហាងភ្លាមៗ ប្រសិនបើសត្វមានអាការៈមិនប្រក្រតី។</li>
+            <li>ការធានាមិនគ្របដណ្តប់លើគ្រោះថ្នាក់ ការថែទាំមិនត្រឹមត្រូវ ការផ្លាស់ប្តូរអាហារខុសរបៀប ឬបញ្ហាដែលកើតឡើងក្រោយរយៈពេលធានា។</li>
+            <li>ការប្តូរ ការសងប្រាក់ ឬដំណោះស្រាយផ្សេងៗ ត្រូវពិនិត្យតាមករណីជាក់ស្តែង និងសម្រេចដោយ BUBU Pet Store។</li>
+        </ul>
+
+        <div class="policy-en">
+            <div class="warranty-title">Warranty Policy</div>
+
+            <ul class="policy">
+                <li>Warranty is valid for 3 days from the purchase date or pet handover date.</li>
+                <li>Warranty covers serious health conditions such as Parvo and Distemper when confirmed by a veterinarian.</li>
+                <li>Please keep this receipt and contact BUBU Pet Store immediately if the pet shows abnormal symptoms.</li>
+                <li>Warranty does not cover accidents, improper care, incorrect food changes, or problems occurring after the warranty period.</li>
+                <li>Exchange, refund, or compensation will be reviewed case by case and decided by BUBU Pet Store.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="signature">
+        <div><div class="sign-line">Customer Signature</div></div>
+        <div><div class="sign-line">Staff Signature</div></div>
+    </div>
+
+    <div class="line"></div>
+
+    <div class="thank">
+        Thank you! សូមអរគុណ 🐾
+        <div class="small muted">Please keep this receipt for warranty claim.</div>
+    </div>
+
+</div>
+
+<script>
+window.addEventListener("load", function(){
+    setTimeout(function(){
+        window.print();
+    }, 300);
+});
+</script>
+
+</body>
+</html>

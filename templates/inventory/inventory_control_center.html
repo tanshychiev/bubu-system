@@ -1,0 +1,1558 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<style>
+a{text-decoration:none!important;}
+
+.control-page{max-width:1250px;margin:auto;}
+.top-bar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
+
+.touch-btn,.touch-btn-soft,.touch-btn-danger{
+    min-height:56px;
+    padding:0 22px;
+    border-radius:999px;
+    border:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-weight:1000;
+    cursor:pointer;
+    font-size:15px;
+}
+
+.touch-btn{
+    color:white;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    box-shadow:0 14px 28px rgba(155,124,246,.24);
+}
+
+.touch-btn-soft{
+    color:#6d617e;
+    background:white;
+    border:1px solid #eaddec;
+}
+
+.touch-btn-danger{
+    color:#ff4d5d;
+    background:#fff0f0;
+    border:1px solid #ffd5d9;
+}
+
+.hero-card{
+    display:grid;
+    grid-template-columns:1.2fr .8fr;
+    gap:20px;
+    align-items:center;
+    background:linear-gradient(135deg,#fff9fc,#faf8ff);
+    border:1px solid #f0e4ef;
+    border-radius:30px;
+    padding:26px;
+    box-shadow:0 18px 46px rgba(111,75,50,.08);
+    margin-bottom:20px;
+}
+
+.hero-title{
+    font-size:40px;
+    font-weight:1000;
+    color:#17152f;
+    margin:0 0 10px;
+}
+
+.hero-sub{
+    color:#7b7288;
+    font-weight:900;
+    line-height:1.7;
+    margin:0;
+}
+
+.hero-img{
+    width:100%;
+    max-height:220px;
+    object-fit:contain;
+}
+
+.summary-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+    margin-bottom:20px;
+}
+
+.summary-card{
+    background:white;
+    border:1px solid #f4e7df;
+    border-radius:24px;
+    padding:18px;
+    box-shadow:0 14px 34px rgba(111,75,50,.06);
+}
+
+.summary-icon{
+    width:52px;
+    height:52px;
+    border-radius:18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    background:#fff4ef;
+    margin-bottom:12px;
+}
+
+.summary-label{
+    color:#7b7288;
+    font-weight:900;
+    font-size:14px;
+}
+
+.summary-value{
+    margin-top:6px;
+    color:#17152f;
+    font-size:28px;
+    font-weight:1000;
+}
+
+.panel{
+    background:white;
+    border:1px solid #f4e7df;
+    border-radius:28px;
+    padding:22px;
+    box-shadow:0 18px 42px rgba(111,75,50,.07);
+    margin-bottom:20px;
+}
+
+.section-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+}
+
+.section-title{
+    margin:0;
+    color:#17152f;
+    font-size:26px;
+    font-weight:1000;
+}
+
+.section-sub{
+    margin:4px 0 0;
+    color:#7b7288;
+    font-weight:800;
+}
+
+.tab-row{
+    display:flex;
+    gap:12px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+}
+
+.tab-btn{
+    min-height:56px;
+    padding:0 24px;
+    border-radius:999px;
+    border:1px solid #eaddec;
+    background:white;
+    color:#6d617e;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.tab-btn.active{
+    color:white;
+    border-color:transparent;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    box-shadow:0 14px 28px rgba(155,124,246,.22);
+}
+
+.search-row{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:12px;
+    margin-bottom:18px;
+}
+
+.search-input{
+    width:100%;
+    min-height:58px;
+    border-radius:999px;
+    border:1.5px solid #eaddec;
+    padding:0 20px;
+    box-sizing:border-box;
+    color:#17152f;
+    font-weight:900;
+    background:white;
+}
+
+.search-input:focus{
+    outline:none;
+    border-color:#9b7cf6;
+    box-shadow:0 0 0 5px rgba(155,124,246,.12);
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+}
+
+.form-grid .full{grid-column:1/-1;}
+
+.field-box{margin-bottom:14px;}
+
+.field-box label{
+    display:block;
+    margin-bottom:8px;
+    color:#17152f;
+    font-weight:1000;
+    font-size:15px;
+}
+
+.field-box input,
+.field-box select{
+    width:100%;
+    min-height:56px;
+    border-radius:18px;
+    border:1.5px solid #eaddec;
+    padding:12px 14px;
+    box-sizing:border-box;
+    font-weight:900;
+    color:#17152f;
+    background:white;
+}
+
+.field-box input[type="checkbox"]{
+    width:22px;
+    height:22px;
+    min-height:auto;
+    padding:0;
+}
+
+.check-row{
+    min-height:56px;
+    border:1.5px solid #eaddec;
+    border-radius:18px;
+    background:#fff9fc;
+    padding:12px 14px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-weight:1000;
+    color:#17152f;
+}
+
+.create-box{
+    display:none;
+    margin-top:16px;
+    padding:18px;
+    border-radius:24px;
+    background:linear-gradient(135deg,#fffdfd,#fff7fb);
+    border:1px solid #f0e5ee;
+}
+
+.create-box.active{display:block;}
+
+.list-wrap{display:grid;gap:12px;}
+
+.list-item{
+    min-height:76px;
+    border-radius:22px;
+    border:1px solid #f0e5ee;
+    background:linear-gradient(135deg,#fffdfd,#fff9fc);
+    padding:14px;
+    display:grid;
+    grid-template-columns:1fr auto;
+    align-items:center;
+    gap:12px;
+}
+
+.item-main{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    min-width:0;
+}
+
+.item-icon{
+    width:52px;
+    height:52px;
+    border-radius:18px;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    box-shadow:0 8px 18px rgba(130,91,60,.07);
+    flex-shrink:0;
+    overflow:hidden;
+}
+
+.item-icon img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.item-name{
+    color:#17152f;
+    font-size:18px;
+    font-weight:1000;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.item-meta{
+    color:#7b7288;
+    font-size:13px;
+    font-weight:800;
+    margin-top:4px;
+}
+
+.item-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+}
+
+.badge{
+    display:inline-flex;
+    min-height:34px;
+    padding:0 12px;
+    border-radius:999px;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+    font-size:13px;
+}
+
+.badge-green{background:#e9fff4;color:#19a974;}
+.badge-red{background:#fff0f0;color:#ff4d5d;}
+.badge-purple{background:#f1ebff;color:#7b5cff;}
+
+.mini-btn,.mini-btn-danger{
+    min-height:48px;
+    padding:0 18px;
+    border-radius:16px;
+    border:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.mini-btn{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+}
+
+.mini-btn-danger{
+    background:#fff0f0;
+    color:#ff4d5d;
+    border:1px solid #ffd7db;
+}
+
+.empty-box{
+    background:#fcfaff;
+    border:1px dashed #e9ddff;
+    border-radius:20px;
+    padding:24px;
+    text-align:center;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.helper-box{
+    margin-top:16px;
+    background:#fffaf0;
+    border:1px dashed #f0dcb3;
+    border-radius:20px;
+    padding:16px;
+    color:#7c6a38;
+    font-weight:900;
+    line-height:1.65;
+}
+
+.history-box{
+    margin-top:18px;
+    padding:16px;
+    border-radius:22px;
+    background:#fbf8ff;
+    border:1px solid #eaddec;
+}
+
+.history-title{
+    color:#17152f;
+    font-weight:1000;
+    margin-bottom:10px;
+}
+
+.history-row{
+    padding:10px 0;
+    border-top:1px dashed #eaddec;
+}
+
+.history-row:first-of-type{border-top:none;}
+
+/* POPUP */
+.popup-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(23,21,47,.42);
+    z-index:7000;
+}
+
+.popup-backdrop.active{display:block;}
+
+.edit-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:560px;
+    max-width:calc(100% - 28px);
+    max-height:86vh;
+    overflow:auto;
+    background:white;
+    border-radius:30px;
+    border:1px solid #f1ddd1;
+    box-shadow:0 30px 90px rgba(23,21,47,.30);
+    z-index:7001;
+    padding:20px;
+}
+
+.edit-popup.active{display:block;}
+
+.popup-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:16px;
+}
+
+.popup-head h3{
+    margin:0;
+    color:#17152f;
+    font-size:26px;
+    font-weight:1000;
+}
+
+.popup-close{
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    border:none;
+    background:#fff0f0;
+    color:#ff4d5d;
+    font-size:20px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.popup-actions{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:12px;
+    margin-top:16px;
+}
+
+/* TOUCH SELECT */
+.mobile-select-btn{
+    width:100%;
+    min-height:58px;
+    border-radius:18px;
+    border:1.5px solid #eaddec;
+    background:white;
+    padding:0 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    font-weight:1000;
+    color:#17152f;
+    cursor:pointer;
+}
+
+.mobile-select-btn:focus{
+    outline:none;
+    border-color:#9b7cf6;
+    box-shadow:0 0 0 5px rgba(155,124,246,.12);
+}
+
+.mobile-select-value{
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+.mobile-select-arrow{
+    font-size:20px;
+    color:#7b5cff;
+}
+
+.option-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:420px;
+    max-width:calc(100% - 28px);
+    max-height:80vh;
+    overflow:auto;
+    background:white;
+    border-radius:28px;
+    border:1px solid #f1ddd1;
+    box-shadow:0 30px 90px rgba(23,21,47,.30);
+    z-index:8005;
+    padding:16px;
+}
+
+.option-popup.active{display:block;}
+
+.option-popup-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:14px;
+}
+
+.option-popup-head h3{
+    margin:0;
+    color:#17152f;
+    font-size:24px;
+    font-weight:1000;
+}
+
+.option-close{
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    border:none;
+    background:#fff0f0;
+    color:#ff4d5d;
+    font-size:20px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.option-list{
+    display:grid;
+    gap:10px;
+}
+
+.option-btn{
+    width:100%;
+    min-height:60px;
+    border-radius:20px;
+    border:1.5px solid #eaddec;
+    background:#fff9fc;
+    color:#17152f;
+    font-weight:1000;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:0 16px;
+    cursor:pointer;
+    text-align:left;
+}
+
+.option-btn:hover,
+.option-btn.active{
+    color:white;
+    border-color:transparent;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+}
+
+.option-left{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.option-emoji{
+    font-size:22px;
+}
+
+.option-check{
+    font-size:18px;
+}
+
+/* IMAGE UPLOAD */
+.upload-box{
+    border:2px dashed #eaddec;
+    border-radius:22px;
+    background:#fff9fc;
+    padding:16px;
+    text-align:center;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.upload-box:hover,
+.upload-box.dragover{
+    border-color:#9b7cf6;
+    background:#fbf8ff;
+    box-shadow:0 0 0 5px rgba(155,124,246,.10);
+}
+
+.upload-title{
+    color:#17152f;
+    font-weight:1000;
+    margin-bottom:6px;
+}
+
+.upload-sub{
+    color:#7b7288;
+    font-size:13px;
+    font-weight:800;
+}
+
+.image-preview-wrap{
+    position:relative;
+    display:inline-block;
+    margin:12px 0;
+}
+
+.image-preview{
+    width:120px;
+    height:120px;
+    object-fit:cover;
+    border-radius:20px;
+    border:1px solid #eaddec;
+    background:white;
+}
+
+.preview-x{
+    position:absolute;
+    top:-10px;
+    right:-10px;
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    border:none;
+    background:#ff4d5d;
+    color:white;
+    font-weight:1000;
+    cursor:pointer;
+    box-shadow:0 10px 20px rgba(255,77,93,.25);
+}
+
+.file-input-hidden{
+    display:none;
+}
+
+.hidden{display:none!important;}
+
+@media(max-width:800px){
+    .top-bar{display:grid;grid-template-columns:1fr;}
+
+    .touch-btn,.touch-btn-soft,.touch-btn-danger{
+        width:100%;
+        min-height:60px;
+        font-size:16px;
+    }
+
+    .hero-card{
+        grid-template-columns:1fr;
+        padding:20px;
+        border-radius:24px;
+    }
+
+    .hero-title{
+        font-size:30px;
+        line-height:1.2;
+    }
+
+    .hero-img{display:none;}
+
+    .summary-grid{grid-template-columns:1fr;}
+
+    .panel{
+        padding:16px;
+        border-radius:22px;
+    }
+
+    .section-title{font-size:22px;}
+
+    .tab-row{display:grid;grid-template-columns:1fr;}
+
+    .tab-btn{
+        width:100%;
+        min-height:56px;
+    }
+
+    .search-row{grid-template-columns:1fr;}
+
+    .form-grid{grid-template-columns:1fr;}
+
+    .list-item{grid-template-columns:1fr;}
+
+    .item-actions{display:grid;grid-template-columns:1fr;}
+
+    .mini-btn,.mini-btn-danger{
+        width:100%;
+        min-height:54px;
+    }
+
+    .edit-popup{
+        left:14px;
+        right:14px;
+        bottom:16px;
+        top:auto;
+        width:auto;
+        max-width:none;
+        max-height:82vh;
+        transform:none;
+        border-radius:28px;
+    }
+
+    .option-popup{
+        left:14px;
+        right:14px;
+        top:auto;
+        bottom:16px;
+        width:auto;
+        max-width:none;
+        max-height:70vh;
+        transform:none;
+        border-radius:28px;
+    }
+
+    .option-btn{
+        min-height:64px;
+        font-size:16px;
+    }
+}
+</style>
+
+<div class="control-page">
+
+    <div class="top-bar">
+        <a href="{% url 'item_list' %}" class="touch-btn-soft">← Back to Inventory</a>
+        <a href="{% url 'item_create' %}" class="touch-btn">＋ Add Item</a>
+    </div>
+
+    <div class="hero-card">
+        <div>
+            <h1 class="hero-title">Inventory Control Center 🐾</h1>
+            <p class="hero-sub">
+                Search first, then click edit. Manage types, units, item name, picture and edit history.
+            </p>
+        </div>
+
+        <img src="{% static 'img/inventory-hero.png' %}" class="hero-img" alt="Inventory Control">
+    </div>
+
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="summary-icon">🏷️</div>
+            <div class="summary-label">Total Types</div>
+            <div class="summary-value">{{ item_types|length }}</div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-icon">📏</div>
+            <div class="summary-label">Total Units</div>
+            <div class="summary-value">{{ units|length }}</div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-icon">📦</div>
+            <div class="summary-label">Total Items</div>
+            <div class="summary-value">{{ items|length }}</div>
+        </div>
+    </div>
+
+    <div class="tab-row">
+        <button type="button" class="tab-btn active" id="typeTabBtn" onclick="showPanel('types')">🏷️ Types</button>
+        <button type="button" class="tab-btn" id="unitTabBtn" onclick="showPanel('units')">📏 Units</button>
+        <button type="button" class="tab-btn" id="itemTabBtn" onclick="showPanel('items')">📦 Items</button>
+    </div>
+
+    <!-- TYPES PANEL -->
+    <div class="panel" id="typesPanel">
+        <div class="section-head">
+            <div>
+                <h2 class="section-title">Type List 🏷️</h2>
+                <p class="section-sub">Search and click edit. Create new type only when needed.</p>
+            </div>
+
+            <button type="button" class="touch-btn" onclick="toggleCreateBox('createTypeBox')">＋ Create Type</button>
+        </div>
+
+        <div class="search-row">
+            <input type="text" class="search-input" id="typeSearch" placeholder="Search type..." oninput="filterList('type')">
+            <button type="button" class="touch-btn-soft" onclick="clearSearch('type')">Clear</button>
+        </div>
+
+        <div class="create-box" id="createTypeBox">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_type">
+
+                <div class="form-grid">
+                    <div class="field-box">
+                        <label>Type Name</label>
+                        {{ type_form.name }}
+                    </div>
+
+                    <div class="field-box">
+                        <label>Emoji</label>
+                        {{ type_form.emoji }}
+                    </div>
+
+                    <div class="field-box full">
+                        <label>Active</label>
+                        <label class="check-row">
+                            {{ type_form.is_active }}
+                            <span>Show this type</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="popup-actions">
+                    <button type="submit" class="touch-btn">💜 Save New Type</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="helper-box">
+            Delete is safe. If already used by items, it will be hidden instead of deleted.
+        </div>
+
+        <div class="list-wrap">
+            {% for item_type in item_types %}
+            <div class="list-item type-row" data-search="{{ item_type.name|lower }} {{ item_type.emoji|default:''|lower }}">
+                <div class="item-main">
+                    <div class="item-icon">{{ item_type.emoji|default:"📦" }}</div>
+                    <div>
+                        <div class="item-name">{{ item_type.name }}</div>
+                        <div class="item-meta">ID: {{ item_type.id }}</div>
+                    </div>
+                </div>
+
+                <div class="item-actions">
+                    {% if item_type.is_active %}
+                        <span class="badge badge-green">Active</span>
+                    {% else %}
+                        <span class="badge badge-red">Hidden</span>
+                    {% endif %}
+                    <button type="button" class="mini-btn" onclick="openTypePopup('{{ item_type.id }}')">✏️ Edit</button>
+                </div>
+            </div>
+
+            <div class="edit-popup" id="typePopup{{ item_type.id }}">
+                <div class="popup-head">
+                    <h3>Edit Type</h3>
+                    <button type="button" class="popup-close" onclick="closePopups()">✕</button>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="rename_type">
+                    <input type="hidden" name="type_id" value="{{ item_type.id }}">
+
+                    <div class="form-grid">
+                        <div class="field-box">
+                            <label>Name</label>
+                            <input type="text" name="name" value="{{ item_type.name }}">
+                        </div>
+
+                        <div class="field-box">
+                            <label>Emoji</label>
+                            <input type="text" name="emoji" value="{{ item_type.emoji }}">
+                        </div>
+
+                        <div class="field-box full">
+                            <label>Visible / Active</label>
+                            <label class="check-row">
+                                <input type="checkbox" name="is_active" {% if item_type.is_active %}checked{% endif %}>
+                                <span>Show this type</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="popup-actions">
+                        <button type="submit" class="touch-btn">💾 Save Type</button>
+                    </div>
+                </form>
+
+                <form method="post" action="{% url 'item_type_delete' item_type.id %}" onsubmit="return confirm('Delete or hide this type?');">
+                    {% csrf_token %}
+                    <div class="popup-actions">
+                        <button type="submit" class="touch-btn-danger">🗑️ Delete / Hide Type</button>
+                    </div>
+                </form>
+            </div>
+            {% empty %}
+            <div class="empty-box">No item types yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- UNITS PANEL -->
+    <div class="panel hidden" id="unitsPanel">
+        <div class="section-head">
+            <div>
+                <h2 class="section-title">Unit List 📏</h2>
+                <p class="section-sub">Search and click edit. Create new unit only when needed.</p>
+            </div>
+
+            <button type="button" class="touch-btn" onclick="toggleCreateBox('createUnitBox')">＋ Create Unit</button>
+        </div>
+
+        <div class="search-row">
+            <input type="text" class="search-input" id="unitSearch" placeholder="Search unit..." oninput="filterList('unit')">
+            <button type="button" class="touch-btn-soft" onclick="clearSearch('unit')">Clear</button>
+        </div>
+
+        <div class="create-box" id="createUnitBox">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_unit">
+
+                <div class="form-grid">
+                    <div class="field-box">
+                        <label>Unit Code</label>
+                        {{ unit_form.code }}
+                    </div>
+
+                    <div class="field-box">
+                        <label>Unit Name</label>
+                        {{ unit_form.name }}
+                    </div>
+
+                    <div class="field-box">
+                        <label>Emoji</label>
+                        {{ unit_form.emoji }}
+                    </div>
+
+                    <div class="field-box full">
+                        <label>Active</label>
+                        <label class="check-row">
+                            {{ unit_form.is_active }}
+                            <span>Show this unit</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="popup-actions">
+                    <button type="submit" class="touch-btn">💜 Save New Unit</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="helper-box">
+            Delete is safe. If already used by items, it will be hidden instead of deleted.
+        </div>
+
+        <div class="list-wrap">
+            {% for unit in units %}
+            <div class="list-item unit-row" data-search="{{ unit.name|lower }} {{ unit.code|lower }} {{ unit.emoji|default:''|lower }}">
+                <div class="item-main">
+                    <div class="item-icon">{{ unit.emoji|default:"📏" }}</div>
+                    <div>
+                        <div class="item-name">{{ unit.name }}</div>
+                        <div class="item-meta">Code: {{ unit.code }}</div>
+                    </div>
+                </div>
+
+                <div class="item-actions">
+                    {% if unit.is_active %}
+                        <span class="badge badge-purple">Active</span>
+                    {% else %}
+                        <span class="badge badge-red">Hidden</span>
+                    {% endif %}
+                    <button type="button" class="mini-btn" onclick="openUnitPopup('{{ unit.id }}')">✏️ Edit</button>
+                </div>
+            </div>
+
+            <div class="edit-popup" id="unitPopup{{ unit.id }}">
+                <div class="popup-head">
+                    <h3>Edit Unit</h3>
+                    <button type="button" class="popup-close" onclick="closePopups()">✕</button>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="rename_unit">
+                    <input type="hidden" name="unit_id" value="{{ unit.id }}">
+
+                    <div class="form-grid">
+                        <div class="field-box">
+                            <label>Code</label>
+                            <input type="text" name="code" value="{{ unit.code }}">
+                        </div>
+
+                        <div class="field-box">
+                            <label>Name</label>
+                            <input type="text" name="name" value="{{ unit.name }}">
+                        </div>
+
+                        <div class="field-box">
+                            <label>Emoji</label>
+                            <input type="text" name="emoji" value="{{ unit.emoji }}">
+                        </div>
+
+                        <div class="field-box full">
+                            <label>Visible / Active</label>
+                            <label class="check-row">
+                                <input type="checkbox" name="is_active" {% if unit.is_active %}checked{% endif %}>
+                                <span>Show this unit</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="popup-actions">
+                        <button type="submit" class="touch-btn">💾 Save Unit</button>
+                    </div>
+                </form>
+
+                <form method="post" action="{% url 'unit_option_delete' unit.id %}" onsubmit="return confirm('Delete or hide this unit?');">
+                    {% csrf_token %}
+                    <div class="popup-actions">
+                        <button type="submit" class="touch-btn-danger">🗑️ Delete / Hide Unit</button>
+                    </div>
+                </form>
+            </div>
+            {% empty %}
+            <div class="empty-box">No units yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ITEMS PANEL -->
+    <div class="panel hidden" id="itemsPanel">
+        <div class="section-head">
+            <div>
+                <h2 class="section-title">Item List 📦</h2>
+                <p class="section-sub">Search item, edit name, brand, type, unit, picture and active status.</p>
+            </div>
+        </div>
+
+        <div class="search-row">
+            <input type="text" class="search-input" id="itemSearch" placeholder="Search item name, brand, type, unit..." oninput="filterList('item')">
+            <button type="button" class="touch-btn-soft" onclick="clearSearch('item')">Clear</button>
+        </div>
+
+        <div class="list-wrap">
+            {% for item in items %}
+            <div
+                class="list-item item-row"
+                data-search="{{ item.name|lower }} {{ item.brand|lower }} {% if item.item_type %}{{ item.item_type.name|lower }}{% endif %} {{ item.unit|lower }}"
+            >
+                <div class="item-main">
+                    <div class="item-icon">
+                        {% if item.image %}
+                            <img src="{{ item.image.url }}">
+                        {% else %}
+                            📦
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <div class="item-name">{{ item.name }}</div>
+                        <div class="item-meta">
+                            {{ item.brand|default:"No brand" }}
+                            · {% if item.item_type %}{{ item.item_type.name }}{% else %}No type{% endif %}
+                            · {{ item.unit }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="item-actions">
+                    {% if item.is_active %}
+                        <span class="badge badge-green">Active</span>
+                    {% else %}
+                        <span class="badge badge-red">Hidden</span>
+                    {% endif %}
+                    <button type="button" class="mini-btn" onclick="openItemPopup('{{ item.id }}')">✏️ Edit</button>
+                </div>
+            </div>
+
+            <div class="edit-popup" id="itemPopup{{ item.id }}">
+                <div class="popup-head">
+                    <h3>Edit Item</h3>
+                    <button type="button" class="popup-close" onclick="closePopups()">✕</button>
+                </div>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="edit_item">
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+
+                    <div class="form-grid">
+                        <div class="field-box">
+                            <label>Item Name</label>
+                            <input type="text" name="name" value="{{ item.name }}">
+                        </div>
+
+                        <div class="field-box">
+                            <label>Brand</label>
+                            <input type="text" name="brand" value="{{ item.brand }}">
+                        </div>
+
+                        <div class="field-box">
+                            <label>Type</label>
+
+                            <input
+                                type="hidden"
+                                name="item_type"
+                                id="itemTypeInput{{ item.id }}"
+                                value="{% if item.item_type_id %}{{ item.item_type_id }}{% endif %}"
+                            >
+
+                            <button type="button" class="mobile-select-btn" onclick="openOptionPopup('type', '{{ item.id }}')">
+                                <span class="mobile-select-value" id="itemTypeLabel{{ item.id }}">
+                                    {% if item.item_type %}
+                                        {{ item.item_type.emoji }} {{ item.item_type.name }}
+                                    {% else %}
+                                        No Type
+                                    {% endif %}
+                                </span>
+                                <span class="mobile-select-arrow">⌄</span>
+                            </button>
+
+                            <div class="option-popup" id="typeOptionPopup{{ item.id }}">
+                                <div class="option-popup-head">
+                                    <h3>Choose Type</h3>
+                                    <button type="button" class="option-close" onclick="closeOptionPopups()">✕</button>
+                                </div>
+
+                                <div class="option-list">
+                                    <button
+                                        type="button"
+                                        class="option-btn {% if not item.item_type_id %}active{% endif %}"
+                                        onclick="chooseType('{{ item.id }}', '', 'No Type')"
+                                    >
+                                        <span class="option-left">
+                                            <span class="option-emoji">📦</span>
+                                            <span>No Type</span>
+                                        </span>
+                                        <span class="option-check">✓</span>
+                                    </button>
+
+                                    {% for type in active_item_types %}
+                                        <button
+                                            type="button"
+                                            class="option-btn {% if item.item_type_id == type.id %}active{% endif %}"
+                                            onclick="chooseType('{{ item.id }}', '{{ type.id }}', '{{ type.emoji|escapejs }} {{ type.name|escapejs }}')"
+                                        >
+                                            <span class="option-left">
+                                                <span class="option-emoji">{{ type.emoji|default:"📦" }}</span>
+                                                <span>{{ type.name }}</span>
+                                            </span>
+                                            <span class="option-check">✓</span>
+                                        </button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field-box">
+                            <label>Unit</label>
+
+                            <input
+                                type="hidden"
+                                name="unit"
+                                id="itemUnitInput{{ item.id }}"
+                                value="{{ item.unit }}"
+                            >
+
+                            <button type="button" class="mobile-select-btn" onclick="openOptionPopup('unit', '{{ item.id }}')">
+                                <span class="mobile-select-value" id="itemUnitLabel{{ item.id }}">
+                                    {% for unit in active_units %}
+                                        {% if item.unit == unit.code %}
+                                            {{ unit.emoji }} {{ unit.name }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                                <span class="mobile-select-arrow">⌄</span>
+                            </button>
+
+                            <div class="option-popup" id="unitOptionPopup{{ item.id }}">
+                                <div class="option-popup-head">
+                                    <h3>Choose Unit</h3>
+                                    <button type="button" class="option-close" onclick="closeOptionPopups()">✕</button>
+                                </div>
+
+                                <div class="option-list">
+                                    {% for unit in active_units %}
+                                        <button
+                                            type="button"
+                                            class="option-btn {% if item.unit == unit.code %}active{% endif %}"
+                                            onclick="chooseUnit('{{ item.id }}', '{{ unit.code|escapejs }}', '{{ unit.emoji|escapejs }} {{ unit.name|escapejs }}')"
+                                        >
+                                            <span class="option-left">
+                                                <span class="option-emoji">{{ unit.emoji|default:"📏" }}</span>
+                                                <span>{{ unit.name }}</span>
+                                            </span>
+                                            <span class="option-check">✓</span>
+                                        </button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field-box full">
+                            <label>Picture</label>
+
+                            {% if item.image %}
+                                <div class="image-preview-wrap current-image-wrap" id="currentImageWrap{{ item.id }}">
+                                    <img src="{{ item.image.url }}" class="image-preview">
+                                </div>
+
+                                <label class="check-row">
+                                    <input type="checkbox" name="remove_image" value="1" id="removeImage{{ item.id }}">
+                                    <span>Remove current picture</span>
+                                </label>
+                            {% endif %}
+
+                            <div
+                                class="upload-box"
+                                id="uploadBox{{ item.id }}"
+                                onclick="document.getElementById('imageInput{{ item.id }}').click()"
+                                ondragover="handleDragOver(event, '{{ item.id }}')"
+                                ondragleave="handleDragLeave(event, '{{ item.id }}')"
+                                ondrop="handleImageDrop(event, '{{ item.id }}')"
+                            >
+                                <div class="upload-title">📸 Drag image here or paste screenshot</div>
+                                <div class="upload-sub">Click to choose file, or click here then Ctrl+V.</div>
+
+                                <div class="image-preview-wrap hidden" id="newPreviewWrap{{ item.id }}">
+                                    <img src="" class="image-preview" id="newPreview{{ item.id }}">
+                                    <button type="button" class="preview-x" onclick="clearNewImage(event, '{{ item.id }}')">×</button>
+                                </div>
+                            </div>
+
+                            <input
+                                type="file"
+                                name="image"
+                                accept="image/*"
+                                class="file-input-hidden"
+                                id="imageInput{{ item.id }}"
+                                onchange="previewImageFile(this, '{{ item.id }}')"
+                            >
+                        </div>
+
+                        <div class="field-box full">
+                            <label>Visible / Active</label>
+                            <label class="check-row">
+                                <input type="checkbox" name="is_active" {% if item.is_active %}checked{% endif %}>
+                                <span>Show this item</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="popup-actions">
+                        <button type="submit" class="touch-btn">💾 Save Item</button>
+                    </div>
+                </form>
+
+                <div class="history-box">
+                    <div class="history-title">Edit History</div>
+
+                    {% for h in item.edit_histories.all|slice:":10" %}
+                        <div class="history-row">
+                            <strong>{{ h.field_name }}</strong><br>
+                            <span class="item-meta">
+                                By {% if h.edited_by %}{{ h.edited_by.username }}{% else %}Unknown{% endif %}
+                                · {{ h.created_at|date:"M d, Y H:i" }}
+                            </span><br>
+                            <span class="item-meta">
+                                From: {{ h.old_value|default:"-" }}<br>
+                                To: {{ h.new_value|default:"-" }}
+                            </span>
+                        </div>
+                    {% empty %}
+                        <div class="item-meta">No edit history yet.</div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-box">No items found.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+<div class="popup-backdrop" id="popupBackdrop" onclick="closePopups()"></div>
+
+<script>
+let activeItemImageId = null;
+
+function showPanel(panel){
+    document.getElementById("typesPanel").classList.add("hidden");
+    document.getElementById("unitsPanel").classList.add("hidden");
+    document.getElementById("itemsPanel").classList.add("hidden");
+
+    document.getElementById("typeTabBtn").classList.remove("active");
+    document.getElementById("unitTabBtn").classList.remove("active");
+    document.getElementById("itemTabBtn").classList.remove("active");
+
+    if(panel === "types"){
+        document.getElementById("typesPanel").classList.remove("hidden");
+        document.getElementById("typeTabBtn").classList.add("active");
+    }else if(panel === "units"){
+        document.getElementById("unitsPanel").classList.remove("hidden");
+        document.getElementById("unitTabBtn").classList.add("active");
+    }else{
+        document.getElementById("itemsPanel").classList.remove("hidden");
+        document.getElementById("itemTabBtn").classList.add("active");
+    }
+}
+
+function toggleCreateBox(id){
+    const box = document.getElementById(id);
+    if(box){
+        box.classList.toggle("active");
+    }
+}
+
+function filterList(kind){
+    const input = document.getElementById(kind + "Search");
+    const rows = document.querySelectorAll("." + kind + "-row");
+    const value = (input.value || "").toLowerCase().trim();
+
+    rows.forEach(function(row){
+        const text = row.getAttribute("data-search") || "";
+
+        if(text.includes(value)){
+            row.classList.remove("hidden");
+        }else{
+            row.classList.add("hidden");
+        }
+    });
+}
+
+function clearSearch(kind){
+    const input = document.getElementById(kind + "Search");
+
+    if(input){
+        input.value = "";
+    }
+
+    filterList(kind);
+}
+
+function openTypePopup(id){
+    closePopups();
+    document.getElementById("typePopup" + id).classList.add("active");
+    document.getElementById("popupBackdrop").classList.add("active");
+}
+
+function openUnitPopup(id){
+    closePopups();
+    document.getElementById("unitPopup" + id).classList.add("active");
+    document.getElementById("popupBackdrop").classList.add("active");
+}
+
+function openItemPopup(id){
+    closePopups();
+    document.getElementById("itemPopup" + id).classList.add("active");
+    document.getElementById("popupBackdrop").classList.add("active");
+    activeItemImageId = id;
+}
+
+function closePopups(){
+    document.querySelectorAll(".edit-popup").forEach(function(popup){
+        popup.classList.remove("active");
+    });
+
+    closeOptionPopups();
+
+    const backdrop = document.getElementById("popupBackdrop");
+    if(backdrop){
+        backdrop.classList.remove("active");
+    }
+}
+
+function openOptionPopup(kind, itemId){
+    document.querySelectorAll(".option-popup").forEach(function(popup){
+        popup.classList.remove("active");
+    });
+
+    const popup = document.getElementById(kind + "OptionPopup" + itemId);
+
+    if(popup){
+        popup.classList.add("active");
+    }
+
+    activeItemImageId = itemId;
+}
+
+function closeOptionPopups(){
+    document.querySelectorAll(".option-popup").forEach(function(popup){
+        popup.classList.remove("active");
+    });
+}
+
+function chooseType(itemId, value, label){
+    document.getElementById("itemTypeInput" + itemId).value = value;
+    document.getElementById("itemTypeLabel" + itemId).innerText = label;
+
+    const popup = document.getElementById("typeOptionPopup" + itemId);
+
+    if(popup){
+        popup.querySelectorAll(".option-btn").forEach(function(btn){
+            btn.classList.remove("active");
+        });
+
+        event.currentTarget.classList.add("active");
+    }
+
+    closeOptionPopups();
+}
+
+function chooseUnit(itemId, value, label){
+    document.getElementById("itemUnitInput" + itemId).value = value;
+    document.getElementById("itemUnitLabel" + itemId).innerText = label;
+
+    const popup = document.getElementById("unitOptionPopup" + itemId);
+
+    if(popup){
+        popup.querySelectorAll(".option-btn").forEach(function(btn){
+            btn.classList.remove("active");
+        });
+
+        event.currentTarget.classList.add("active");
+    }
+
+    closeOptionPopups();
+}
+
+document.addEventListener("click", function(e){
+    const uploadBox = e.target.closest(".upload-box");
+    if(uploadBox){
+        activeItemImageId = uploadBox.id.replace("uploadBox", "");
+    }
+});
+
+document.addEventListener("paste", function(e){
+    if(!activeItemImageId){
+        return;
+    }
+
+    const items = e.clipboardData && e.clipboardData.items;
+
+    if(!items){
+        return;
+    }
+
+    for(let i = 0; i < items.length; i++){
+        const item = items[i];
+
+        if(item.type.indexOf("image") !== -1){
+            const file = item.getAsFile();
+            setImageFile(file, activeItemImageId);
+            break;
+        }
+    }
+});
+
+function handleDragOver(e, itemId){
+    e.preventDefault();
+    activeItemImageId = itemId;
+
+    const box = document.getElementById("uploadBox" + itemId);
+    if(box){
+        box.classList.add("dragover");
+    }
+}
+
+function handleDragLeave(e, itemId){
+    e.preventDefault();
+
+    const box = document.getElementById("uploadBox" + itemId);
+    if(box){
+        box.classList.remove("dragover");
+    }
+}
+
+function handleImageDrop(e, itemId){
+    e.preventDefault();
+    activeItemImageId = itemId;
+
+    const box = document.getElementById("uploadBox" + itemId);
+    if(box){
+        box.classList.remove("dragover");
+    }
+
+    const files = e.dataTransfer.files;
+
+    if(files && files.length > 0){
+        setImageFile(files[0], itemId);
+    }
+}
+
+function previewImageFile(input, itemId){
+    if(input.files && input.files.length > 0){
+        setImageFile(input.files[0], itemId);
+    }
+}
+
+function setImageFile(file, itemId){
+    if(!file || !file.type.startsWith("image/")){
+        alert("Please choose an image file.");
+        return;
+    }
+
+    const input = document.getElementById("imageInput" + itemId);
+    const preview = document.getElementById("newPreview" + itemId);
+    const previewWrap = document.getElementById("newPreviewWrap" + itemId);
+    const removeCheckbox = document.getElementById("removeImage" + itemId);
+
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    input.files = dataTransfer.files;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+        preview.src = e.target.result;
+        previewWrap.classList.remove("hidden");
+    };
+
+    reader.readAsDataURL(file);
+
+    if(removeCheckbox){
+        removeCheckbox.checked = false;
+    }
+}
+
+function clearNewImage(e, itemId){
+    e.preventDefault();
+    e.stopPropagation();
+
+    const input = document.getElementById("imageInput" + itemId);
+    const preview = document.getElementById("newPreview" + itemId);
+    const previewWrap = document.getElementById("newPreviewWrap" + itemId);
+
+    input.value = "";
+    preview.src = "";
+    previewWrap.classList.add("hidden");
+}
+
+document.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){
+        closePopups();
+    }
+});
+</script>
+
+{% endblock %}
