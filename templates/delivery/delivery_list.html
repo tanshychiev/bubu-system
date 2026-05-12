@@ -3,206 +3,1389 @@
 
 {% block content %}
 
-<div class="page-head">
-    <div>
-        <h1>Delivery ✨</h1>
+<style>
+    .delivery-page {
+        padding: 22px;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
 
-        <div class="page-subtitle">
-            Manage COD, delivery fee, lack money, next delivery and shop branch 💗
+    .page-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 18px;
+        margin-bottom: 10px;
+    }
+
+    .page-head h1 {
+        font-size: 28px;
+        margin: 0;
+        color: #12122b;
+    }
+
+    .page-subtitle {
+        margin-top: 8px;
+        color: #6f6680;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    .pet-hero-img {
+        width: 170px;
+        max-width: 28vw;
+        object-fit: contain;
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 7px 11px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .badge-purple {
+        background: #f0e6ff;
+        color: #8d63dd;
+    }
+
+    .badge-green {
+        background: #eafff2;
+        color: #20a867;
+    }
+
+    .badge-blue {
+        background: #e9f0ff;
+        color: #3f70d8;
+        text-decoration: none;
+    }
+
+    .badge-orange {
+        background: #fff2dd;
+        color: #e88918;
+    }
+
+    .badge-red {
+        background: #ffe5ed;
+        color: #ef5574;
+    }
+
+    .tool-row {
+        margin-top: 16px;
+        display: grid;
+        grid-template-columns: 1.4fr 0.8fr 0.8fr 0.9fr auto auto;
+        gap: 10px;
+        align-items: center;
+        width: 100%;
+    }
+
+    .search-input {
+        height: 58px;
+        border: 1px solid #eadff3;
+        border-radius: 22px;
+        padding: 0 18px;
+        background: #fff;
+        color: #302842;
+        font-size: 15px;
+        font-weight: 800;
+        outline: none;
+        width: 100%;
+        min-width: 0;
+        touch-action: manipulation;
+    }
+
+    .search-input:focus {
+        border-color: #b886ff;
+        box-shadow: 0 0 0 4px rgba(184, 134, 255, 0.16);
+    }
+
+    .touch-select-btn {
+        height: 58px;
+        border: 1px solid #eadff3;
+        border-radius: 22px;
+        padding: 0 18px;
+        background: #fff;
+        color: #302842;
+        font-size: 15px;
+        font-weight: 900;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        touch-action: manipulation;
+        text-align: left;
+        gap: 10px;
+    }
+
+    .touch-select-btn span:first-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .touch-select-btn:active,
+    .btn:active,
+    .mini-btn:active,
+    .popup-option:active,
+    .quick-date-btn:active,
+    .day-btn:active,
+    .date-action:active {
+        transform: scale(0.98);
+    }
+
+    .btn {
+        min-height: 58px;
+        border: none;
+        border-radius: 22px;
+        padding: 0 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        font-size: 15px;
+        font-weight: 900;
+        text-decoration: none;
+        cursor: pointer;
+        touch-action: manipulation;
+        white-space: nowrap;
+    }
+
+    .btn-primary,
+    .btn-add,
+    .btn-search {
+        background: linear-gradient(135deg, #b985ff, #ff7f9c);
+        color: white;
+        box-shadow: 0 8px 18px rgba(176, 111, 255, 0.24);
+    }
+
+    .btn-reset {
+        background: #fff;
+        color: #6d5c7d;
+        border: 1px solid #eadff3;
+    }
+
+    .btn-company {
+        background: #fff;
+        color: #8d63dd;
+        border: 1px solid #d9c4ff;
+        box-shadow: 0 8px 18px rgba(176, 111, 255, 0.12);
+    }
+
+    .top-action-row {
+        display: grid;
+        grid-template-columns: 220px 280px;
+        gap: 10px;
+        margin: 14px 0 18px;
+        width: 100%;
+    }
+
+    .create-delivery-btn,
+    .btn-company {
+        min-height: 62px;
+        font-size: 16px;
+    }
+
+    .table-card {
+        width: 100%;
+        background: white;
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: 0 10px 26px rgba(63, 47, 85, 0.08);
+        border: 1px solid #f1e7f5;
+    }
+
+    .table-scroll {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1220px;
+    }
+
+    thead th {
+        background: #f3eafa;
+        color: #15122a;
+        font-size: 12px;
+        text-align: center;
+        padding: 14px 10px;
+        white-space: nowrap;
+    }
+
+    tbody td {
+        padding: 16px 10px;
+        border-top: 1px solid #f4edf7;
+        font-size: 13px;
+        color: #29233b;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .customer-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: center;
+    }
+
+    .customer-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #fff1e7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex: 0 0 auto;
+    }
+
+    .customer-text {
+        text-align: left;
+        min-width: 120px;
+    }
+
+    .customer-text strong {
+        display: block;
+        font-size: 13px;
+    }
+
+    .customer-text small {
+        color: #7b7288;
+        font-size: 11px;
+    }
+
+    .location-cell {
+        max-width: 230px;
+        text-align: left;
+        line-height: 1.35;
+    }
+
+    .action-cell {
+        display: flex;
+        justify-content: center;
+        gap: 7px;
+        flex-wrap: wrap;
+    }
+
+    .mini-btn {
+        min-width: 52px;
+        min-height: 52px;
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        text-decoration: none;
+        font-weight: 900;
+        touch-action: manipulation;
+    }
+
+    .btn-view {
+        background: #eef3ff;
+        color: #3b66d5;
+    }
+
+    .btn-edit {
+        background: #fff3d9;
+        color: #dc8716;
+    }
+
+    .btn-delete {
+        background: #ffe5ed;
+        color: #ef5574;
+    }
+
+    .empty-box {
+        padding: 50px 20px;
+        text-align: center;
+    }
+
+    .empty-icon {
+        font-size: 42px;
+        margin-bottom: 10px;
+    }
+
+    .empty-box h3 {
+        margin: 0 0 8px;
+        color: #1d1830;
+    }
+
+    .empty-box p {
+        color: #7d738f;
+        margin-bottom: 18px;
+    }
+
+    .popup-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(30, 22, 45, 0.38);
+        z-index: 9998;
+        display: none;
+        align-items: flex-end;
+        justify-content: center;
+    }
+
+    .popup-backdrop.show {
+        display: flex;
+    }
+
+    .touch-popup {
+        width: 100%;
+        max-width: 480px;
+        max-height: 88vh;
+        overflow-y: auto;
+        background: #fff;
+        border-radius: 28px 28px 0 0;
+        padding: 18px;
+        box-shadow: 0 -10px 30px rgba(40, 25, 65, 0.22);
+        animation: slideUp 0.18s ease-out;
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(40px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .popup-title {
+        font-size: 18px;
+        font-weight: 900;
+        color: #19132d;
+        margin-bottom: 12px;
+    }
+
+    .popup-option {
+        width: 100%;
+        min-height: 62px;
+        border: 1px solid #f0e5f7;
+        background: #fff;
+        border-radius: 20px;
+        padding: 0 18px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 16px;
+        font-weight: 900;
+        color: #302842;
+        cursor: pointer;
+        touch-action: manipulation;
+    }
+
+    .popup-option.active {
+        background: linear-gradient(135deg, #f0e6ff, #ffe8ef);
+        border-color: #be8dff;
+        color: #8d63dd;
+    }
+
+    .popup-close {
+        width: 100%;
+        min-height: 58px;
+        border: none;
+        border-radius: 20px;
+        background: #f4edf7;
+        color: #6d5c7d;
+        font-size: 16px;
+        font-weight: 900;
+        cursor: pointer;
+        margin-top: 4px;
+    }
+
+    .date-picker-popup {
+        width: 100%;
+        max-width: 430px;
+        background: #fff;
+        border-radius: 28px;
+        padding: 18px;
+        box-shadow: 0 12px 35px rgba(40, 25, 65, 0.25);
+        animation: slideUp 0.18s ease-out;
+        margin-bottom: 18px;
+        max-height: 92vh;
+        overflow-y: auto;
+    }
+
+    .date-top {
+        background: linear-gradient(135deg, #7b5cff, #9b6bff);
+        color: white;
+        border-radius: 24px;
+        padding: 18px;
+        margin-bottom: 14px;
+    }
+
+    .date-small-title {
+        font-size: 13px;
+        font-weight: 900;
+        opacity: 0.9;
+    }
+
+    .date-big-title {
+        margin-top: 6px;
+        font-size: 22px;
+        font-weight: 900;
+        line-height: 1.25;
+    }
+
+    .quick-date-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .quick-date-btn {
+        min-height: 52px;
+        border: none;
+        border-radius: 15px;
+        color: white;
+        font-size: 15px;
+        font-weight: 900;
+        cursor: pointer;
+        touch-action: manipulation;
+    }
+
+    .quick-date-btn.green {
+        background: #2bb878;
+    }
+
+    .quick-date-btn.purple {
+        background: #805de8;
+    }
+
+    .quick-date-btn.blue {
+        background: #42a8ee;
+    }
+
+    .quick-date-btn.orange {
+        background: #ffa666;
+    }
+
+    .month-nav {
+        display: grid;
+        grid-template-columns: 48px 1fr 48px;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    .month-title {
+        text-align: left;
+        font-size: 17px;
+        font-weight: 900;
+        color: #211b35;
+    }
+
+    .nav-circle {
+        width: 44px;
+        height: 44px;
+        border: none;
+        border-radius: 50%;
+        background: #f5efff;
+        color: #7b5cff;
+        font-size: 26px;
+        font-weight: 900;
+        cursor: pointer;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+    }
+
+    .calendar-head {
+        margin-bottom: 8px;
+    }
+
+    .calendar-head div {
+        text-align: center;
+        font-size: 12px;
+        font-weight: 900;
+        color: #8a819b;
+    }
+
+    .day-btn {
+        height: 42px;
+        border: none;
+        border-radius: 14px;
+        background: transparent;
+        color: #211b35;
+        font-size: 14px;
+        font-weight: 900;
+        cursor: pointer;
+        touch-action: manipulation;
+    }
+
+    .day-btn.muted {
+        color: #c2b9ce;
+    }
+
+    .day-btn.selected {
+        background: #7b5cff;
+        color: white;
+    }
+
+    .day-btn.in-range {
+        background: #eee8ff;
+        color: #7b5cff;
+    }
+
+    .range-box {
+        margin-top: 16px;
+        border: 1px solid #f0e3f5;
+        border-radius: 20px;
+        padding: 14px;
+        background: #fffafd;
+    }
+
+    .range-title {
+        font-size: 13px;
+        font-weight: 900;
+        color: #6f6680;
+        margin-bottom: 10px;
+    }
+
+    .range-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .range-item {
+        background: white;
+        border: 1px solid #eadff3;
+        border-radius: 16px;
+        padding: 12px;
+    }
+
+    .range-item span {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+        color: #958ba5;
+    }
+
+    .range-item strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 14px;
+        color: #241c38;
+    }
+
+    .date-action-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .date-action {
+        min-height: 54px;
+        border: none;
+        border-radius: 20px;
+        font-size: 15px;
+        font-weight: 900;
+        cursor: pointer;
+    }
+
+    .date-action.clear,
+    .date-action.cancel {
+        background: #f6f0ff;
+        color: #805de8;
+    }
+
+    .date-action.ok {
+        background: #805de8;
+        color: white;
+    }
+
+    @media (max-width: 1100px) {
+        .tool-row {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .tool-row input[type="text"] {
+            grid-column: 1 / -1;
+        }
+    }
+
+    @media (max-width: 900px) {
+        .delivery-page {
+            padding: 14px;
+        }
+
+        .page-head {
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .pet-hero-img {
+            display: none;
+        }
+
+        .tool-row {
+            grid-template-columns: 1fr 1fr;
+            width: 100%;
+            gap: 10px;
+        }
+
+        .tool-row input[type="text"] {
+            grid-column: 1 / -1;
+        }
+
+        .search-input,
+        .touch-select-btn,
+        .btn {
+            width: 100%;
+            min-height: 62px;
+            height: 62px;
+            font-size: 16px;
+            border-radius: 22px;
+        }
+
+        .top-action-row {
+            grid-template-columns: 1fr 1fr;
+            width: 100%;
+        }
+
+        .create-delivery-btn,
+        .btn-company {
+            width: 100%;
+            min-height: 64px;
+            font-size: 16px;
+        }
+    }
+
+    @media (max-width: 560px) {
+        .delivery-page {
+            padding: 10px;
+        }
+
+        .page-head {
+            margin-bottom: 8px;
+        }
+
+        .page-head h1 {
+            font-size: 25px;
+        }
+
+        .page-subtitle {
+            font-size: 13px;
+        }
+
+        .tool-row {
+            grid-template-columns: 1fr;
+            gap: 9px;
+            margin-top: 14px;
+        }
+
+        .search-input,
+        .touch-select-btn,
+        .btn {
+            width: 100%;
+            min-height: 64px;
+            height: 64px;
+            border-radius: 22px;
+            font-size: 16px;
+        }
+
+        .top-action-row {
+            grid-template-columns: 1fr;
+            gap: 9px;
+            margin-top: 12px;
+        }
+
+        .create-delivery-btn {
+            position: sticky;
+            top: 8px;
+            z-index: 20;
+        }
+
+        .create-delivery-btn,
+        .btn-company {
+            width: 100%;
+            min-height: 66px;
+            font-size: 16px;
+        }
+
+        .table-card {
+            border-radius: 18px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        table {
+            min-width: 1180px;
+        }
+
+        tbody td,
+        thead th {
+            padding: 14px 9px;
+        }
+
+        .mini-btn {
+            min-width: 54px;
+            min-height: 54px;
+            border-radius: 16px;
+            font-size: 18px;
+        }
+
+        .date-picker-popup {
+            max-width: none;
+            width: calc(100% - 20px);
+            border-radius: 28px;
+            margin: 0 10px 16px;
+        }
+
+        .day-btn {
+            height: 44px;
+            font-size: 14px;
+        }
+    }
+</style>
+
+<div class="delivery-page">
+
+    <div class="page-head">
+        <div style="width:100%;">
+            <h1>Delivery ✨</h1>
+
+            <div class="page-subtitle">
+                Manage COD, delivery fee, lack money, next delivery and shop branch 💗
+            </div>
+
+            <div style="margin:12px 0 0;">
+                {% if request.user.is_superuser %}
+                    <span class="badge badge-purple">Admin View · All Shops</span>
+                {% else %}
+                    <span class="badge badge-green">
+                        🔒 Branch Locked:
+                        {% if current_branch %}
+                            {{ current_branch.name }}
+                        {% else %}
+                            No Branch
+                        {% endif %}
+                    </span>
+                {% endif %}
+            </div>
+
+            <form method="get" class="tool-row" id="filterForm">
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ request.GET.q }}"
+                    placeholder="Search customer / phone / location / shop / sale..."
+                    class="search-input"
+                >
+
+                <input type="hidden" name="status" id="statusInput" value="{{ request.GET.status }}">
+                <input type="hidden" name="payment_type" id="paymentInput" value="{{ request.GET.payment_type }}">
+                <input type="hidden" name="date_from" id="dateFromInput" value="{{ date_from }}">
+                <input type="hidden" name="date_to" id="dateToInput" value="{{ date_to }}">
+
+                <button type="button" class="touch-select-btn" onclick="openPopup('statusPopup')">
+                    <span id="statusLabel">All Status</span>
+                    <span>⌄</span>
+                </button>
+
+                <button type="button" class="touch-select-btn" onclick="openPopup('paymentPopup')">
+                    <span id="paymentLabel">All Payment</span>
+                    <span>⌄</span>
+                </button>
+
+                <button type="button" class="touch-select-btn" onclick="openPopup('datePopup')">
+                    <span id="dateLabel">This Month</span>
+                    <span>📅</span>
+                </button>
+
+                <button type="submit" class="btn btn-search">🔍 Search</button>
+                <a href="{% url 'delivery_list' %}" class="btn btn-reset">↻ Reset</a>
+            </form>
+
+            <div class="top-action-row">
+                <a href="{% url 'delivery_create' %}" class="btn btn-primary create-delivery-btn">
+                    ＋ Create Delivery
+                </a>
+
+                <a href="{% url 'delivery_company_create' %}" class="btn btn-company">
+                    🚚 Create Delivery Company
+                </a>
+            </div>
         </div>
 
-        <div style="margin:12px 0 0;">
-            {% if request.user.is_superuser %}
-                <span class="badge badge-purple">Admin View · All Shops</span>
-            {% else %}
-                <span class="badge badge-green">
-                    🔒 Branch Locked:
-                    {% if current_branch %}
-                        {{ current_branch.name }}
-                    {% else %}
-                        No Branch
-                    {% endif %}
-                </span>
-            {% endif %}
-        </div>
-
-        <form method="get" class="tool-row">
-            <input
-                type="text"
-                name="q"
-                value="{{ request.GET.q }}"
-                placeholder="Search customer / phone / location / shop / sale..."
-                class="search-input"
-            >
-
-            <select name="status" class="search-input">
-                <option value="">All Status</option>
-                <option value="pending" {% if request.GET.status == "pending" %}selected{% endif %}>Pending / Next Delivery</option>
-                <option value="out" {% if request.GET.status == "out" %}selected{% endif %}>Out For Delivery</option>
-                <option value="done" {% if request.GET.status == "done" %}selected{% endif %}>Delivered</option>
-                <option value="cancelled" {% if request.GET.status == "cancelled" %}selected{% endif %}>Cancelled</option>
-            </select>
-
-            <select name="payment_type" class="search-input">
-                <option value="">All Payment</option>
-                <option value="paid" {% if request.GET.payment_type == "paid" %}selected{% endif %}>Already Paid</option>
-                <option value="cod_collect" {% if request.GET.payment_type == "cod_collect" %}selected{% endif %}>COD Collect</option>
-                <option value="cod_shop" {% if request.GET.payment_type == "cod_shop" %}selected{% endif %}>COD Pay To Shop</option>
-            </select>
-
-            <button type="submit" class="btn btn-search">🔍 Search</button>
-            <a href="{% url 'delivery_list' %}" class="btn btn-reset">↻ Reset</a>
-        </form>
+        <img src="{% static 'img/delivery-hero.png' %}" class="pet-hero-img" alt="Delivery pets">
     </div>
 
-    <img src="{% static 'img/delivery-hero.png' %}" class="pet-hero-img" alt="Delivery pets">
+    <div class="table-card">
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Shop</th>
+                        <th>POS Sale</th>
+                        <th>Customer</th>
+                        <th>Phone</th>
+                        <th>Location</th>
+                        <th>Total / COD</th>
+                        <th>Payment</th>
+                        <th>Expected</th>
+                        <th>Received</th>
+                        <th>Lack</th>
+                        <th>Delivery Fee</th>
+                        <th>Fee Paid</th>
+                        <th>Delivery Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for delivery in deliveries %}
+                        <tr>
+                            <td>
+                                <strong style="color:#9b7cf6;">
+                                    #DLV-{{ delivery.id|stringformat:"04d" }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {% if delivery.branch %}
+                                    <span class="badge badge-purple">🏪 {{ delivery.branch.name }}</span>
+                                {% else %}
+                                    <span class="badge badge-red">No Branch</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if delivery.sale %}
+                                    <a href="{% url 'sale_detail' delivery.sale.id %}" class="badge badge-blue">
+                                        Sale #{{ delivery.sale.id }}
+                                    </a>
+                                {% else %}
+                                    <span class="badge badge-orange">Manual</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <div class="customer-box">
+                                    <div class="customer-icon">🐶</div>
+                                    <div class="customer-text">
+                                        <strong>{{ delivery.customer_name|default:"-" }}</strong>
+                                        <small>{{ delivery.delivery_note|default:"No note"|truncatechars:35 }}</small>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                📞 {{ delivery.phone|default:"-" }}
+                            </td>
+
+                            <td class="location-cell">
+                                {{ delivery.location|default:"Need add address"|truncatechars:75 }}
+                            </td>
+
+                            <td>
+                                <strong>${{ delivery.total_price|floatformat:2 }}</strong>
+                            </td>
+
+                            <td>
+                                {% if delivery.payment_type == "paid" %}
+                                    <span class="badge badge-green">Already Paid</span>
+                                {% elif delivery.payment_type == "cod_collect" %}
+                                    <span class="badge badge-orange">COD Collect</span>
+                                {% elif delivery.payment_type == "cod_shop" %}
+                                    <span class="badge badge-purple">COD Pay To Shop</span>
+                                {% endif %}
+                            </td>
+
+                            <td>${{ delivery.expected_collect|floatformat:2 }}</td>
+
+                            <td>${{ delivery.actual_received|floatformat:2 }}</td>
+
+                            <td>
+                                {% if delivery.lack_amount > 0 %}
+                                    <span class="badge badge-red">-${{ delivery.lack_amount|floatformat:2 }}</span>
+                                {% else %}
+                                    <span class="badge badge-green">$0.00</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <strong>${{ delivery.delivery_fee|floatformat:2 }}</strong>
+                            </td>
+
+                            <td>
+                                {% if delivery.delivery_fee_paid %}
+                                    <span class="badge badge-green">Paid</span>
+                                {% else %}
+                                    <span class="badge badge-red">Unpaid</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                📅 {{ delivery.delivery_date|date:"M d, Y" }}
+                            </td>
+
+                            <td>
+                                {% if delivery.status == "done" %}
+                                    <span class="badge badge-green">Delivered</span>
+                                {% elif delivery.status == "out" %}
+                                    <span class="badge badge-blue">Out</span>
+                                {% elif delivery.status == "cancelled" %}
+                                    <span class="badge badge-red">Cancelled</span>
+                                {% else %}
+                                    <span class="badge badge-orange">Pending</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <div class="action-cell">
+                                    <a href="{% url 'delivery_detail' delivery.id %}" class="mini-btn btn-view" title="View">
+                                        👁
+                                    </a>
+
+                                    <a href="{% url 'delivery_update' delivery.id %}" class="mini-btn btn-edit" title="Edit">
+                                        ✏️
+                                    </a>
+
+                                    <a href="{% url 'delivery_sticker' delivery.id %}" target="_blank" class="mini-btn btn-view" title="Print Label">
+                                        🏷️
+                                    </a>
+
+                                    <a href="{% url 'delivery_delete' delivery.id %}" class="mini-btn btn-delete" title="Delete">
+                                        🗑️
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="16">
+                                <div class="empty-box">
+                                    <div class="empty-icon">🚚✨</div>
+                                    <h3>No delivery found</h3>
+                                    <p>Create your first delivery order.</p>
+
+                                    <div class="top-action-row" style="justify-content:center;">
+                                        <a href="{% url 'delivery_create' %}" class="btn btn-add">
+                                            ＋ Create Delivery
+                                        </a>
+
+                                        <a href="{% url 'delivery_company_create' %}" class="btn btn-company">
+                                            🚚 Create Delivery Company
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 
-<div style="margin-bottom:18px;">
-    <a href="{% url 'delivery_create' %}" class="btn btn-primary">＋ Create Delivery</a>
+<div class="popup-backdrop" id="statusPopup">
+    <div class="touch-popup">
+        <div class="popup-title">Choose Status</div>
+
+        <button class="popup-option" type="button" onclick="setStatus('', 'All Status')">
+            All Status <span>✓</span>
+        </button>
+
+        <button class="popup-option" type="button" onclick="setStatus('pending', 'Pending / Next Delivery')">
+            Pending / Next Delivery <span>✓</span>
+        </button>
+
+        <button class="popup-option" type="button" onclick="setStatus('out', 'Out For Delivery')">
+            Out For Delivery <span>✓</span>
+        </button>
+
+        <button class="popup-option" type="button" onclick="setStatus('done', 'Delivered')">
+            Delivered <span>✓</span>
+        </button>
+
+        <button class="popup-option" type="button" onclick="setStatus('cancelled', 'Cancelled')">
+            Cancelled <span>✓</span>
+        </button>
+
+        <button class="popup-close" type="button" onclick="closePopup('statusPopup')">Close</button>
+    </div>
 </div>
 
-<div class="table-card">
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Shop</th>
-                <th>POS Sale</th>
-                <th>Customer</th>
-                <th>Phone</th>
-                <th>Location</th>
-                <th>Total / COD</th>
-                <th>Payment</th>
-                <th>Expected</th>
-                <th>Received</th>
-                <th>Lack</th>
-                <th>Delivery Fee</th>
-                <th>Fee Paid</th>
-                <th>Delivery Date</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-        </thead>
+<div class="popup-backdrop" id="paymentPopup">
+    <div class="touch-popup">
+        <div class="popup-title">Choose Payment</div>
 
-        <tbody>
-        {% for delivery in deliveries %}
-            <tr>
-                <td>
-                    <strong style="color:#9b7cf6;">#DLV-{{ delivery.id|stringformat:"04d" }}</strong>
-                </td>
+        <button class="popup-option" type="button" onclick="setPayment('', 'All Payment')">
+            All Payment <span>✓</span>
+        </button>
 
-                <td>
-                    {% if delivery.branch %}
-                        <span class="badge badge-purple">🏪 {{ delivery.branch.name }}</span>
-                    {% else %}
-                        <span class="badge badge-red">No Branch</span>
-                    {% endif %}
-                </td>
+        <button class="popup-option" type="button" onclick="setPayment('paid', 'Already Paid')">
+            Already Paid <span>✓</span>
+        </button>
 
-                <td>
-                    {% if delivery.sale %}
-                        <a href="{% url 'sale_detail' delivery.sale.id %}" class="badge badge-blue">
-                            Sale #{{ delivery.sale.id }}
-                        </a>
-                    {% else %}
-                        <span class="badge badge-orange">Manual</span>
-                    {% endif %}
-                </td>
+        <button class="popup-option" type="button" onclick="setPayment('cod_collect', 'COD Collect')">
+            COD Collect <span>✓</span>
+        </button>
 
-                <td>
-                    <div style="display:flex;align-items:center;gap:10px;justify-content:center;">
-                        <div style="width:42px;height:42px;border-radius:50%;background:#fff1e7;display:flex;align-items:center;justify-content:center;font-size:22px;">
-                            🐶
-                        </div>
-                        <div style="text-align:left;">
-                            <strong>{{ delivery.customer_name|default:"-" }}</strong><br>
-                            <small style="color:#7b7288;">{{ delivery.delivery_note|truncatechars:35 }}</small>
-                        </div>
-                    </div>
-                </td>
+        <button class="popup-option" type="button" onclick="setPayment('cod_shop', 'COD Pay To Shop')">
+            COD Pay To Shop <span>✓</span>
+        </button>
 
-                <td>📞 {{ delivery.phone|default:"-" }}</td>
-
-                <td style="max-width:220px;text-align:left;">
-                    {{ delivery.location|truncatechars:70 }}
-                </td>
-
-                <td>
-                    <strong>${{ delivery.total_price|floatformat:2 }}</strong>
-                </td>
-
-                <td>
-                    {% if delivery.payment_type == "paid" %}
-                        <span class="badge badge-green">Already Paid</span>
-                    {% elif delivery.payment_type == "cod_collect" %}
-                        <span class="badge badge-orange">COD Collect</span>
-                    {% elif delivery.payment_type == "cod_shop" %}
-                        <span class="badge badge-purple">COD Pay To Shop</span>
-                    {% endif %}
-                </td>
-
-                <td>${{ delivery.expected_collect|floatformat:2 }}</td>
-                <td>${{ delivery.actual_received|floatformat:2 }}</td>
-
-                <td>
-                    {% if delivery.lack_amount > 0 %}
-                        <span class="badge badge-red">-${{ delivery.lack_amount|floatformat:2 }}</span>
-                    {% else %}
-                        <span class="badge badge-green">$0.00</span>
-                    {% endif %}
-                </td>
-
-                <td>
-                    <strong>${{ delivery.delivery_fee|floatformat:2 }}</strong>
-                </td>
-
-                <td>
-                    {% if delivery.delivery_fee_paid %}
-                        <span class="badge badge-green">Paid</span>
-                    {% else %}
-                        <span class="badge badge-red">Unpaid</span>
-                    {% endif %}
-                </td>
-
-                <td>
-                    📅 {{ delivery.delivery_date|date:"M d, Y" }}
-                </td>
-
-                <td>
-                    {% if delivery.status == "done" %}
-                        <span class="badge badge-green">Delivered</span>
-                    {% elif delivery.status == "out" %}
-                        <span class="badge badge-blue">Out</span>
-                    {% elif delivery.status == "cancelled" %}
-                        <span class="badge badge-red">Cancelled</span>
-                    {% else %}
-                        <span class="badge badge-orange">Pending</span>
-                    {% endif %}
-                </td>
-
-                <td>
-                    <a href="{% url 'delivery_detail' delivery.id %}" class="mini-btn btn-view">👁</a>
-                    <a href="{% url 'delivery_update' delivery.id %}" class="mini-btn btn-edit">✏️</a>
-                    <a href="{% url 'delivery_sticker' delivery.id %}" target="_blank" class="mini-btn btn-view">🏷️</a>
-                    <a href="{% url 'delivery_delete' delivery.id %}" class="mini-btn btn-delete">🗑️</a>
-                </td>
-            </tr>
-
-        {% empty %}
-            <tr>
-                <td colspan="16">
-                    <div class="empty-box">
-                        <div class="empty-icon">🚚✨</div>
-                        <h3>No delivery found</h3>
-                        <p>Create your first delivery order.</p>
-                        <a href="{% url 'delivery_create' %}" class="btn btn-add">＋ Create Delivery</a>
-                    </div>
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+        <button class="popup-close" type="button" onclick="closePopup('paymentPopup')">Close</button>
+    </div>
 </div>
+
+<div class="popup-backdrop" id="datePopup">
+    <div class="date-picker-popup">
+        <div class="date-top">
+            <div class="date-small-title">Choose date range</div>
+            <div class="date-big-title" id="datePopupTitle">This Month</div>
+        </div>
+
+        <div class="quick-date-row">
+            <button type="button" class="quick-date-btn green" onclick="setThisMonth()">This Month</button>
+            <button type="button" class="quick-date-btn purple" onclick="setTodayOnly()">Today</button>
+            <button type="button" class="quick-date-btn blue" onclick="setYesterdayOnly()">Yesterday</button>
+            <button type="button" class="quick-date-btn orange" onclick="clearDateRange()">All Dates</button>
+        </div>
+
+        <div class="month-nav">
+            <button type="button" class="nav-circle" onclick="changeCalendarMonth(-1)">‹</button>
+            <div class="month-title" id="calendarMonthTitle">May 2026</div>
+            <button type="button" class="nav-circle" onclick="changeCalendarMonth(1)">›</button>
+        </div>
+
+        <div class="calendar-grid calendar-head">
+            <div>Su</div>
+            <div>Mo</div>
+            <div>Tu</div>
+            <div>We</div>
+            <div>Th</div>
+            <div>Fr</div>
+            <div>Sa</div>
+        </div>
+
+        <div class="calendar-grid" id="calendarDays"></div>
+
+        <div class="range-box">
+            <div class="range-title">Selected Range</div>
+
+            <div class="range-row">
+                <div class="range-item">
+                    <span>From</span>
+                    <strong id="fromDateText">-</strong>
+                </div>
+
+                <div class="range-item">
+                    <span>To</span>
+                    <strong id="toDateText">-</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="date-action-row">
+            <button type="button" class="date-action clear" onclick="clearDateRange()">Clear</button>
+            <button type="button" class="date-action cancel" onclick="closePopup('datePopup')">Cancel</button>
+            <button type="button" class="date-action ok" onclick="applyDateRange()">OK</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openPopup(id) {
+        document.getElementById(id).classList.add("show");
+
+        if (id === "datePopup") {
+            renderCalendar();
+        }
+    }
+
+    function closePopup(id) {
+        document.getElementById(id).classList.remove("show");
+    }
+
+    function setStatus(value, label) {
+        document.getElementById("statusInput").value = value;
+        document.getElementById("statusLabel").innerText = label;
+        closePopup("statusPopup");
+    }
+
+    function setPayment(value, label) {
+        document.getElementById("paymentInput").value = value;
+        document.getElementById("paymentLabel").innerText = label;
+        closePopup("paymentPopup");
+    }
+
+    let calendarDate = new Date();
+    let selectedFrom = "";
+    let selectedTo = "";
+
+    function toDateStringLocal(dateObj) {
+        const yyyy = dateObj.getFullYear();
+        const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
+        const dd = String(dateObj.getDate()).padStart(2, "0");
+
+        return yyyy + "-" + mm + "-" + dd;
+    }
+
+    function parseDateSafe(value) {
+        if (!value) {
+            return null;
+        }
+
+        const parts = value.split("-");
+
+        if (parts.length !== 3) {
+            return null;
+        }
+
+        return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    }
+
+    function formatPrettyDate(value) {
+        if (!value) {
+            return "-";
+        }
+
+        const dateObj = parseDateSafe(value);
+
+        if (!dateObj) {
+            return "-";
+        }
+
+        return dateObj.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric"
+        });
+    }
+
+    function formatDateLabel(fromDate, toDate) {
+        if (!fromDate && !toDate) {
+            return "All Dates";
+        }
+
+        if (fromDate && toDate) {
+            return formatPrettyDate(fromDate) + " → " + formatPrettyDate(toDate);
+        }
+
+        if (fromDate) {
+            return "From " + formatPrettyDate(fromDate);
+        }
+
+        return "To " + formatPrettyDate(toDate);
+    }
+
+    function updateRangeText() {
+        document.getElementById("fromDateText").innerText = formatPrettyDate(selectedFrom);
+        document.getElementById("toDateText").innerText = formatPrettyDate(selectedTo);
+        document.getElementById("datePopupTitle").innerText = formatDateLabel(selectedFrom, selectedTo);
+    }
+
+    function renderCalendar() {
+        const year = calendarDate.getFullYear();
+        const month = calendarDate.getMonth();
+
+        const monthTitle = calendarDate.toLocaleDateString("en-US", {
+            month: "long",
+            year: "numeric"
+        });
+
+        document.getElementById("calendarMonthTitle").innerText = monthTitle;
+
+        const calendarDays = document.getElementById("calendarDays");
+        calendarDays.innerHTML = "";
+
+        const firstDay = new Date(year, month, 1);
+        const startDay = firstDay.getDay();
+        const startDate = new Date(year, month, 1 - startDay);
+
+        const fromObj = parseDateSafe(selectedFrom);
+        const toObj = parseDateSafe(selectedTo);
+
+        for (let i = 0; i < 42; i++) {
+            const dayObj = new Date(startDate);
+            dayObj.setDate(startDate.getDate() + i);
+
+            const dayValue = toDateStringLocal(dayObj);
+
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "day-btn";
+            btn.innerText = dayObj.getDate();
+
+            if (dayObj.getMonth() !== month) {
+                btn.classList.add("muted");
+            }
+
+            if (dayValue === selectedFrom || dayValue === selectedTo) {
+                btn.classList.add("selected");
+            }
+
+            if (fromObj && toObj && dayObj > fromObj && dayObj < toObj) {
+                btn.classList.add("in-range");
+            }
+
+            btn.onclick = function () {
+                chooseCalendarDate(dayValue);
+            };
+
+            calendarDays.appendChild(btn);
+        }
+
+        updateRangeText();
+    }
+
+    function chooseCalendarDate(value) {
+        if (!selectedFrom || selectedTo) {
+            selectedFrom = value;
+            selectedTo = "";
+        } else {
+            if (value < selectedFrom) {
+                selectedTo = selectedFrom;
+                selectedFrom = value;
+            } else {
+                selectedTo = value;
+            }
+        }
+
+        renderCalendar();
+    }
+
+    function changeCalendarMonth(offset) {
+        calendarDate.setMonth(calendarDate.getMonth() + offset);
+        renderCalendar();
+    }
+
+    function applyDateRange() {
+        document.getElementById("dateFromInput").value = selectedFrom;
+        document.getElementById("dateToInput").value = selectedTo;
+        document.getElementById("dateLabel").innerText = formatDateLabel(selectedFrom, selectedTo);
+
+        closePopup("datePopup");
+    }
+
+    function clearDateRange() {
+        selectedFrom = "";
+        selectedTo = "";
+
+        document.getElementById("dateFromInput").value = "";
+        document.getElementById("dateToInput").value = "";
+        document.getElementById("dateLabel").innerText = "All Dates";
+
+        renderCalendar();
+        closePopup("datePopup");
+    }
+
+    function setThisMonth() {
+        const today = new Date();
+        const fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+
+        selectedFrom = toDateStringLocal(fromDate);
+        selectedTo = toDateStringLocal(today);
+        calendarDate = new Date(today.getFullYear(), today.getMonth(), 1);
+
+        document.getElementById("dateFromInput").value = selectedFrom;
+        document.getElementById("dateToInput").value = selectedTo;
+        document.getElementById("dateLabel").innerText = formatDateLabel(selectedFrom, selectedTo);
+
+        renderCalendar();
+        closePopup("datePopup");
+    }
+
+    function setTodayOnly() {
+        const today = new Date();
+
+        selectedFrom = toDateStringLocal(today);
+        selectedTo = toDateStringLocal(today);
+        calendarDate = new Date(today.getFullYear(), today.getMonth(), 1);
+
+        document.getElementById("dateFromInput").value = selectedFrom;
+        document.getElementById("dateToInput").value = selectedTo;
+        document.getElementById("dateLabel").innerText = formatDateLabel(selectedFrom, selectedTo);
+
+        renderCalendar();
+        closePopup("datePopup");
+    }
+
+    function setYesterdayOnly() {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        selectedFrom = toDateStringLocal(yesterday);
+        selectedTo = toDateStringLocal(yesterday);
+        calendarDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), 1);
+
+        document.getElementById("dateFromInput").value = selectedFrom;
+        document.getElementById("dateToInput").value = selectedTo;
+        document.getElementById("dateLabel").innerText = formatDateLabel(selectedFrom, selectedTo);
+
+        renderCalendar();
+        closePopup("datePopup");
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const statusValue = document.getElementById("statusInput").value;
+        const paymentValue = document.getElementById("paymentInput").value;
+
+        const statusMap = {
+            "": "All Status",
+            "pending": "Pending / Next Delivery",
+            "out": "Out For Delivery",
+            "done": "Delivered",
+            "cancelled": "Cancelled"
+        };
+
+        const paymentMap = {
+            "": "All Payment",
+            "paid": "Already Paid",
+            "cod_collect": "COD Collect",
+            "cod_shop": "COD Pay To Shop"
+        };
+
+        document.getElementById("statusLabel").innerText = statusMap[statusValue] || "All Status";
+        document.getElementById("paymentLabel").innerText = paymentMap[paymentValue] || "All Payment";
+
+        selectedFrom = document.getElementById("dateFromInput").value;
+        selectedTo = document.getElementById("dateToInput").value;
+
+        const firstDate = parseDateSafe(selectedFrom || selectedTo);
+
+        if (firstDate) {
+            calendarDate = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1);
+        }
+
+        document.getElementById("dateLabel").innerText = formatDateLabel(selectedFrom, selectedTo);
+        renderCalendar();
+    });
+
+    document.querySelectorAll(".popup-backdrop").forEach(function (popup) {
+        popup.addEventListener("click", function (event) {
+            if (event.target === popup) {
+                popup.classList.remove("show");
+            }
+        });
+    });
+</script>
 
 {% endblock %}

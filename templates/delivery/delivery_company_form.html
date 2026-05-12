@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    .company-page {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    .company-card {
+        background: #fff;
+        border-radius: 28px;
+        padding: 26px;
+        box-shadow: 0 10px 28px rgba(63, 47, 85, 0.08);
+        border: 1px solid #f1e7f5;
+    }
+
+    .company-card h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        color: #17142c;
+    }
+
+    .subtitle {
+        color: #746b86;
+        font-size: 14px;
+        margin-bottom: 22px;
+        line-height: 1.5;
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    label {
+        display: block;
+        font-weight: 900;
+        color: #302842;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    input,
+    select,
+    textarea {
+        width: 100%;
+        min-height: 60px;
+        border: 1px solid #eadff3;
+        border-radius: 22px;
+        padding: 0 18px;
+        font-size: 16px;
+        font-weight: 800;
+        outline: none;
+        background: #fff;
+        color: #302842;
+        touch-action: manipulation;
+    }
+
+    textarea {
+        padding-top: 16px;
+        min-height: 130px;
+        resize: vertical;
+        line-height: 1.4;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+        border-color: #b886ff;
+        box-shadow: 0 0 0 4px rgba(184, 134, 255, 0.16);
+    }
+
+    .quick-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .quick-btn {
+        min-height: 56px;
+        border: 1px solid #eadff3;
+        border-radius: 20px;
+        background: #fff;
+        color: #8d63dd;
+        font-size: 14px;
+        font-weight: 900;
+        cursor: pointer;
+        touch-action: manipulation;
+    }
+
+    .quick-btn:active {
+        transform: scale(0.98);
+    }
+
+    .check-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 16px 0;
+        font-weight: 900;
+        color: #302842;
+    }
+
+    .check-row input {
+        width: 26px;
+        height: 26px;
+        min-height: 26px;
+        accent-color: #b985ff;
+    }
+
+    .button-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 24px;
+    }
+
+    .btn {
+        min-height: 64px;
+        border: none;
+        border-radius: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: 900;
+        cursor: pointer;
+        touch-action: manipulation;
+    }
+
+    .btn-save {
+        background: linear-gradient(135deg, #b985ff, #ff7f9c);
+        color: #fff;
+        box-shadow: 0 8px 18px rgba(176, 111, 255, 0.24);
+    }
+
+    .btn-back {
+        background: #fff;
+        color: #6d5c7d;
+        border: 1px solid #eadff3;
+    }
+
+    .help-box {
+        margin-top: 18px;
+        padding: 14px;
+        border-radius: 20px;
+        background: #fff8ec;
+        color: #7a5b22;
+        font-size: 13px;
+        font-weight: 800;
+        line-height: 1.5;
+    }
+
+    @media (max-width: 700px) {
+        .company-page {
+            padding: 12px;
+        }
+
+        .company-card {
+            padding: 18px;
+            border-radius: 24px;
+        }
+
+        .company-card h1 {
+            font-size: 24px;
+        }
+
+        .quick-row {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .button-row {
+            grid-template-columns: 1fr;
+        }
+
+        .btn,
+        input,
+        select {
+            min-height: 66px;
+            font-size: 16px;
+        }
+
+        textarea {
+            min-height: 140px;
+        }
+    }
+
+    @media (max-width: 430px) {
+        .quick-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="company-page">
+    <div class="company-card">
+        <h1>🚚 Create Delivery Company</h1>
+
+        <div class="subtitle">
+            Add delivery service like DS EXPRESS, Grab, J&T, VET. This page is touch-friendly for phone and tablet.
+        </div>
+
+        <div class="quick-row">
+            <button type="button" class="quick-btn" onclick="quickCompany('DS EXPRESS', 'pp')">
+                DS EXPRESS
+            </button>
+
+            <button type="button" class="quick-btn" onclick="quickCompany('Grab', 'pp')">
+                Grab
+            </button>
+
+            <button type="button" class="quick-btn" onclick="quickCompany('J&T', 'province')">
+                J&T
+            </button>
+
+            <button type="button" class="quick-btn" onclick="quickCompany('VET', 'province')">
+                VET
+            </button>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label>Company Name</label>
+                <input
+                    type="text"
+                    name="name"
+                    id="companyName"
+                    placeholder="Example: DS EXPRESS"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Delivery Type</label>
+                <select name="delivery_type" id="deliveryType" required>
+                    <option value="">Choose delivery type</option>
+                    <option value="pp">Phnom Penh</option>
+                    <option value="province">Province</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Phone</label>
+                <input
+                    type="text"
+                    name="phone"
+                    placeholder="Optional phone number"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Note</label>
+                <textarea
+                    name="note"
+                    placeholder="Optional note, example: COD report every month / province delivery / PP delivery..."
+                ></textarea>
+            </div>
+
+            <label class="check-row">
+                <input type="checkbox" name="is_active" checked>
+                Active
+            </label>
+
+            <div class="button-row">
+                <button type="submit" class="btn btn-save">
+                    💾 Save Company
+                </button>
+
+                <a href="{% url 'delivery_list' %}" class="btn btn-back">
+                    ← Back To Delivery
+                </a>
+            </div>
+        </form>
+
+        <div class="help-box">
+            Example: DS EXPRESS and Grab choose Phnom Penh. J&T and VET choose Province.
+        </div>
+    </div>
+</div>
+
+<script>
+    function quickCompany(name, type) {
+        document.getElementById("companyName").value = name;
+        document.getElementById("deliveryType").value = type;
+    }
+</script>
+
+{% endblock %}

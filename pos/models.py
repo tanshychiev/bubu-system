@@ -206,3 +206,5 @@ class CashCount(models.Model):
     def __str__(self):
         branch_name = self.branch.name if self.branch else "No Branch"
         return f"Cash Count {branch_name} - {self.date}"
+    
+    

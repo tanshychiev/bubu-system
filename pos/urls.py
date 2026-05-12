@@ -19,8 +19,14 @@ urlpatterns = [
 
     # Sales
     path("sales/", views.sale_list, name="sale_list"),
+
+    # IMPORTANT: receipt must stay before sale_detail
+    path("sales/<int:pk>/receipt/", views.sale_receipt, name="sale_receipt"),
+
     path("sales/<int:pk>/", views.sale_detail, name="sale_detail"),
     path("sales/<int:pk>/payment/", views.sale_add_payment, name="sale_add_payment"),
+
+    # Cash Count
     path("cash-count/", views.cash_count_dashboard, name="cash_count_dashboard"),
 
     # Settings

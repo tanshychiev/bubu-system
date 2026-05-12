@@ -1,0 +1,414 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Delivery A4 Label #DLV-{{ delivery.id|stringformat:"04d" }}</title>
+
+    <style>
+        @page {
+            size: A4;
+            margin: 10mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #f4f4f4;
+            font-family: Arial, "Khmer OS Battambang", sans-serif;
+            color: #111;
+        }
+
+        .print-btn {
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            min-height: 52px;
+            padding: 0 22px;
+            border: none;
+            border-radius: 16px;
+            background: #111;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 900;
+            cursor: pointer;
+            z-index: 99;
+        }
+
+        .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: #fff;
+            padding: 14mm;
+        }
+
+        .label-card {
+            width: 100%;
+            min-height: 260mm;
+            border: 3px solid #111;
+            border-radius: 10mm;
+            padding: 12mm;
+            display: flex;
+            flex-direction: column;
+            gap: 9mm;
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid #111;
+            padding-bottom: 8mm;
+        }
+
+        .brand {
+            font-size: 34px;
+            font-weight: 900;
+            line-height: 1.1;
+        }
+
+        .brand small {
+            display: block;
+            margin-top: 3mm;
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .code {
+            text-align: right;
+            font-size: 17px;
+            font-weight: 900;
+        }
+
+        .code strong {
+            display: block;
+            margin-top: 2mm;
+            font-size: 34px;
+        }
+
+        .section {
+            border-bottom: 2px dashed #aaa;
+            padding-bottom: 7mm;
+        }
+
+        .label-title {
+            font-size: 15px;
+            font-weight: 900;
+            color: #555;
+            text-transform: uppercase;
+            margin-bottom: 3mm;
+        }
+
+        .customer-name {
+            font-size: 36px;
+            font-weight: 900;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+
+        .phone {
+            font-size: 34px;
+            font-weight: 900;
+            line-height: 1.2;
+        }
+
+        .location {
+            font-size: 28px;
+            font-weight: 900;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8mm;
+        }
+
+        .info-box {
+            border: 3px solid #111;
+            border-radius: 8mm;
+            padding: 8mm;
+            min-height: 55mm;
+        }
+
+        .cod-box {
+            background: #fff2cc;
+        }
+
+        .paid-box {
+            background: #e8fff0;
+        }
+
+        .amount {
+            font-size: 38px;
+            font-weight: 900;
+            line-height: 1.1;
+        }
+
+        .sub-text {
+            margin-top: 3mm;
+            font-size: 20px;
+            font-weight: 900;
+            line-height: 1.25;
+        }
+
+        .service-name {
+            font-size: 30px;
+            font-weight: 900;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+
+        .note-box {
+            border: 2px solid #111;
+            border-radius: 6mm;
+            padding: 7mm;
+            min-height: 35mm;
+        }
+
+        .note-text {
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+
+        .bottom {
+            margin-top: auto;
+            border-top: 3px solid #111;
+            padding-top: 6mm;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 5mm;
+            font-size: 17px;
+            font-weight: 900;
+        }
+
+        .bottom-item {
+            border: 2px solid #111;
+            border-radius: 5mm;
+            padding: 5mm;
+            text-align: center;
+        }
+
+        @media print {
+            body {
+                background: #fff;
+            }
+
+            .print-btn {
+                display: none;
+            }
+
+            .a4-page {
+                margin: 0;
+                width: auto;
+                min-height: auto;
+                padding: 0;
+            }
+
+            .label-card {
+                min-height: 277mm;
+            }
+        }
+
+        @media screen and (max-width: 700px) {
+            body {
+                background: #fff;
+            }
+
+            .a4-page {
+                width: 100%;
+                min-height: 100vh;
+                padding: 14px;
+            }
+
+            .label-card {
+                min-height: calc(100vh - 28px);
+                border-radius: 22px;
+                padding: 18px;
+                gap: 18px;
+            }
+
+            .top {
+                flex-direction: column;
+                gap: 14px;
+            }
+
+            .code {
+                text-align: left;
+            }
+
+            .brand {
+                font-size: 26px;
+            }
+
+            .brand small {
+                font-size: 15px;
+            }
+
+            .code strong {
+                font-size: 26px;
+            }
+
+            .customer-name,
+            .phone {
+                font-size: 25px;
+            }
+
+            .location {
+                font-size: 21px;
+            }
+
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+
+            .amount {
+                font-size: 30px;
+            }
+
+            .service-name {
+                font-size: 24px;
+            }
+
+            .note-text {
+                font-size: 18px;
+            }
+
+            .bottom {
+                grid-template-columns: 1fr;
+            }
+
+            .print-btn {
+                top: auto;
+                left: 12px;
+                right: 12px;
+                bottom: 12px;
+                width: calc(100% - 24px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<button class="print-btn" onclick="window.print()">🖨 Print A4 Label</button>
+
+<div class="a4-page">
+    <div class="label-card">
+
+        <div class="top">
+            <div class="brand">
+                BUBU DELIVERY
+                <small>
+                    {% if delivery.branch %}
+                        Shop: {{ delivery.branch.name }}
+                    {% else %}
+                        Shop: No Branch
+                    {% endif %}
+                </small>
+            </div>
+
+            <div class="code">
+                Delivery Code
+                <strong>#DLV-{{ delivery.id|stringformat:"04d" }}</strong>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="label-title">Customer Name</div>
+            <div class="customer-name">
+                {{ delivery.customer_name|default:"Walk-in Customer" }}
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="label-title">Phone Number</div>
+            <div class="phone">
+                📞 {{ delivery.phone|default:"-" }}
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="label-title">Customer Location</div>
+            <div class="location">
+                {{ delivery.location|default:"Need add address" }}
+            </div>
+        </div>
+
+        <div class="two-col">
+            <div class="info-box {% if delivery.payment_type == 'paid' %}paid-box{% else %}cod-box{% endif %}">
+                <div class="label-title">COD / Payment</div>
+
+                {% if delivery.payment_type == "paid" %}
+                    <div class="amount">PAID</div>
+                    <div class="sub-text">$0.00 COD</div>
+                {% elif delivery.payment_type == "cod_collect" %}
+                    <div class="amount">${{ delivery.expected_collect|floatformat:2 }}</div>
+                    <div class="sub-text">COD Collect</div>
+                {% elif delivery.payment_type == "cod_shop" %}
+                    <div class="amount">${{ delivery.total_price|floatformat:2 }}</div>
+                    <div class="sub-text">COD Pay To Shop</div>
+                {% else %}
+                    <div class="amount">${{ delivery.total_price|floatformat:2 }}</div>
+                    <div class="sub-text">Check Payment</div>
+                {% endif %}
+            </div>
+
+            <div class="info-box">
+                <div class="label-title">Delivery Service</div>
+
+                <div class="service-name">
+                    {% if delivery.delivery_company %}
+                        {{ delivery.delivery_company.name }}
+                    {% else %}
+                        No Service
+                    {% endif %}
+                </div>
+
+                <div class="sub-text">
+                    {% if delivery.delivery_area == "province" %}
+                        Province Delivery
+                    {% else %}
+                        Phnom Penh Delivery
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="note-box">
+            <div class="label-title">Delivery Note</div>
+            <div class="note-text">
+                {{ delivery.delivery_note|default:"-" }}
+            </div>
+        </div>
+
+        <div class="bottom">
+            <div class="bottom-item">
+                Date<br>
+                {{ delivery.delivery_date|date:"M d, Y" }}
+            </div>
+
+            <div class="bottom-item">
+                Delivery Fee<br>
+                ${{ delivery.delivery_fee|floatformat:2 }}
+            </div>
+
+            <div class="bottom-item">
+                Status<br>
+                {{ delivery.get_status_display }}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

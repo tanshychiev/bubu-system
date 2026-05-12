@@ -1,0 +1,340 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Sale Receipt #{{ sale.id }}</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #ffffff;
+            font-family: Arial, sans-serif;
+            color: #000;
+        }
+
+        .screen-actions {
+            width: 80mm;
+            margin: 12px auto;
+            display: flex;
+            gap: 8px;
+        }
+
+        .screen-actions button,
+        .screen-actions a {
+            flex: 1;
+            min-height: 42px;
+            border: none;
+            border-radius: 999px;
+            background: #7b5cff;
+            color: white;
+            font-weight: 900;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .screen-actions a {
+            background: #13a85f;
+        }
+
+        .receipt-page {
+            width: 80mm;
+            margin: 0 auto;
+            padding: 0;
+            background: white;
+        }
+
+        .receipt-paper {
+            width: 72mm;
+            padding: 8mm 4mm;
+            font-size: 12px;
+            background: white;
+        }
+
+        .receipt-logo {
+            width: 42mm;
+            max-height: 22mm;
+            object-fit: contain;
+            margin: 0 auto 5px;
+            display: block;
+        }
+
+        .receipt-center {
+            text-align: center;
+        }
+
+        .receipt-center h2 {
+            margin: 0 0 4px;
+            font-size: 18px;
+            font-weight: 900;
+            line-height: 1.15;
+        }
+
+        .receipt-center p {
+            margin: 2px 0;
+            font-size: 12px;
+        }
+
+        .receipt-line {
+            border-top: 1px dashed #000;
+            margin: 8px 0;
+        }
+
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin: 5px 0;
+            font-size: 12px;
+        }
+
+        .receipt-row span {
+            flex: 1;
+        }
+
+        .receipt-row strong {
+            text-align: right;
+            font-weight: 900;
+        }
+
+        .receipt-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .receipt-item div {
+            max-width: 48mm;
+        }
+
+        .receipt-item strong {
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .receipt-item small {
+            display: block;
+            font-size: 11px;
+            margin-top: 2px;
+            line-height: 1.25;
+        }
+
+        .receipt-total {
+            font-size: 15px;
+            font-weight: 900;
+        }
+
+        .receipt-total span,
+        .receipt-total strong {
+            font-size: 15px;
+            font-weight: 900;
+        }
+
+        .payment-title {
+            font-weight: 900;
+            margin-bottom: 5px;
+        }
+
+        .receipt-thank {
+            margin-top: 10px;
+            font-weight: 900;
+        }
+
+        .receipt-thank p {
+            font-weight: 900;
+            font-size: 12px;
+        }
+
+        @media print {
+            .screen-actions {
+                display: none !important;
+            }
+
+            body {
+                margin: 0;
+                background: white;
+            }
+
+            .receipt-page {
+                width: 80mm;
+                margin: 0;
+                padding: 0;
+            }
+
+            .receipt-paper {
+                width: 72mm;
+                padding: 8mm 4mm;
+            }
+
+            @page {
+                size: 80mm auto;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="screen-actions">
+    <button type="button" onclick="window.print()">🖨️ Print</button>
+    <a href="{% url 'pos' %}">Back POS</a>
+</div>
+
+<div class="receipt-page">
+    <div class="receipt-paper">
+
+        <div class="receipt-center">
+            <img src="{% static 'img/bubu-logo.png' %}" class="receipt-logo" alt="BUBU Logo">
+
+            <h2>BUBU PET STORE</h2>
+            <p>Sale Receipt</p>
+
+            <p>
+                Shop:
+                {% if sale.branch %}
+                    {{ sale.branch.name }}
+                {% else %}
+                    No Branch
+                {% endif %}
+            </p>
+
+            <p>Receipt #{{ sale.id }}</p>
+            <p>{{ sale.created_at|date:"d M Y H:i" }}</p>
+        </div>
+
+        <div class="receipt-line"></div>
+
+        <div class="receipt-row">
+            <span>Customer</span>
+            <strong>
+                {% if sale.customer %}
+                    {{ sale.customer }}
+                {% else %}
+                    Walk-in
+                {% endif %}
+            </strong>
+        </div>
+
+        <div class="receipt-row">
+            <span>Status</span>
+            <strong>
+                {% if sale.paid_amount >= sale.total_amount %}
+                    Paid
+                {% elif sale.paid_amount == 0 %}
+                    Unpaid
+                {% else %}
+                    Partial
+                {% endif %}
+            </strong>
+        </div>
+
+        <div class="receipt-line"></div>
+
+        {% for line in sale.items.all %}
+            <div class="receipt-item">
+                <div>
+                    <strong>{{ line.item.name }}</strong>
+
+                    {% if line.variant %}
+                        <small>{{ line.variant.display_name }}</small>
+                    {% endif %}
+
+                    {% if line.item.item_type %}
+                        <small>{{ line.item.item_type.name }}</small>
+                    {% endif %}
+
+                    <small>{{ line.quantity }} x ${{ line.price|floatformat:2 }}</small>
+                </div>
+
+                <strong>${{ line.total|floatformat:2 }}</strong>
+            </div>
+        {% endfor %}
+
+        <div class="receipt-line"></div>
+
+        <div class="receipt-row">
+            <span>Products</span>
+            <strong>${{ product_total|default:"0.00"|floatformat:2 }}</strong>
+        </div>
+
+        <div class="receipt-row">
+            <span>Grooming</span>
+            <strong>${{ grooming_total|default:"0.00"|floatformat:2 }}</strong>
+        </div>
+
+        <div class="receipt-row">
+            <span>Services</span>
+            <strong>${{ service_total|default:"0.00"|floatformat:2 }}</strong>
+        </div>
+
+        <div class="receipt-row">
+            <span>Pet / Dog / Cat</span>
+            <strong>${{ pet_total|default:"0.00"|floatformat:2 }}</strong>
+        </div>
+
+        <div class="receipt-line"></div>
+
+        <div class="receipt-row receipt-total">
+            <span>Total</span>
+            <strong>${{ sale.total_amount|floatformat:2 }}</strong>
+        </div>
+
+        <div class="receipt-row">
+            <span>Paid</span>
+            <strong>${{ sale.paid_amount|floatformat:2 }}</strong>
+        </div>
+
+        <div class="receipt-row">
+            <span>Balance</span>
+            <strong>${{ balance|floatformat:2 }}</strong>
+        </div>
+
+        <div class="receipt-row">
+            <span>Change</span>
+            <strong>${{ sale.change_amount|floatformat:2 }}</strong>
+        </div>
+
+        <div class="receipt-line"></div>
+
+        {% if sale.payments.all %}
+            <div class="payment-title">Payment Detail</div>
+
+            {% for payment in sale.payments.all %}
+                <div class="receipt-row">
+                    <span>{{ payment.get_method_display }}</span>
+                    <strong>${{ payment.amount|floatformat:2 }}</strong>
+                </div>
+            {% endfor %}
+
+            <div class="receipt-line"></div>
+        {% endif %}
+
+        <div class="receipt-center receipt-thank">
+            <p>Thank you!</p>
+            <p>Please come again 🐾</p>
+        </div>
+
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+    setTimeout(function(){
+        window.print();
+    }, 500);
+});
+</script>
+
+</body>
+</html>

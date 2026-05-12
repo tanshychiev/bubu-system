@@ -4,7 +4,33 @@ from django.db import models
 from django.utils import timezone
 
 
+class DeliveryCompany(models.Model):
+    DELIVERY_TYPE_CHOICES = [
+        ("pp", "Phnom Penh"),
+        ("province", "Province"),
+    ]
+
+    name = models.CharField(max_length=120)
+    delivery_type = models.CharField(max_length=20, choices=DELIVERY_TYPE_CHOICES)
+    phone = models.CharField(max_length=50, blank=True)
+    note = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["delivery_type", "name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.get_delivery_type_display()})"
+
+
 class Delivery(models.Model):
+    DELIVERY_AREA_CHOICES = [
+        ("pp", "Phnom Penh"),
+        ("province", "Province"),
+    ]
+
     PAYMENT_TYPE_CHOICES = [
         ("paid", "Already Paid"),
         ("cod_collect", "COD Collect"),
@@ -16,6 +42,15 @@ class Delivery(models.Model):
         ("out", "Out For Delivery"),
         ("done", "Delivered"),
         ("cancelled", "Cancelled"),
+    ]
+
+    CHAT_SOURCE_CHOICES = [
+        ("facebook", "Facebook"),
+        ("telegram", "Telegram"),
+        ("instagram", "Instagram"),
+        ("tiktok", "TikTok"),
+        ("call", "Call"),
+        ("other", "Other"),
     ]
 
     branch = models.ForeignKey(
@@ -34,11 +69,41 @@ class Delivery(models.Model):
         related_name="delivery",
     )
 
+    delivery_area = models.CharField(
+        max_length=20,
+        choices=DELIVERY_AREA_CHOICES,
+        default="pp",
+    )
+
+    delivery_company = models.ForeignKey(
+        DeliveryCompany,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="deliveries",
+    )
+
     customer_name = models.CharField(max_length=150)
     phone = models.CharField(max_length=50, blank=True)
     location = models.TextField()
 
-    total_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    chat_source = models.CharField(
+        max_length=30,
+        choices=CHAT_SOURCE_CHOICES,
+        blank=True,
+    )
+
+    social_name = models.CharField(
+        max_length=150,
+        blank=True,
+        help_text="Customer Facebook / Telegram / IG / TikTok name",
+    )
+
+    total_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
 
     payment_type = models.CharField(
         max_length=20,
@@ -46,18 +111,42 @@ class Delivery(models.Model):
         default="paid",
     )
 
-    expected_collect = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
-    actual_received = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
-    lack_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    expected_collect = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
 
-    delivery_fee = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    actual_received = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    lack_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    delivery_fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
     delivery_fee_paid = models.BooleanField(default=False)
 
     exchange_rate_note = models.CharField(max_length=150, blank=True)
     delivery_note = models.TextField(blank=True)
 
     delivery_date = models.DateField(default=timezone.localdate)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending",
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -65,6 +154,7 @@ class Delivery(models.Model):
     def calculate_lack(self):
         if self.payment_type == "cod_collect":
             return self.expected_collect - self.actual_received
+
         return Decimal("0.00")
 
     def refresh_total_price(self):
@@ -88,12 +178,17 @@ class Delivery(models.Model):
         if self.payment_type == "cod_collect" and self.expected_collect == Decimal("0.00"):
             self.expected_collect = self.total_price
 
-        self.lack_amount = self.calculate_lack()
+        if self.payment_type != "cod_collect":
+            self.lack_amount = Decimal("0.00")
+        else:
+            self.lack_amount = self.calculate_lack()
+
         super().save(*args, **kwargs)
 
     def __str__(self):
         shop = self.branch.name if self.branch else "No Branch"
-        return f"{self.customer_name} - {shop} - {self.get_payment_type_display()}"
+        company = self.delivery_company.name if self.delivery_company else "No Company"
+        return f"{self.customer_name} - {shop} - {company} - {self.get_payment_type_display()}"
 
 
 class DeliveryItem(models.Model):
@@ -125,7 +220,7 @@ class DeliveryItem(models.Model):
     note = models.CharField(max_length=255, blank=True)
 
     def save(self, *args, **kwargs):
-        self.line_total = self.qty * self.unit_price
+        self.line_total = Decimal(self.qty) * self.unit_price
         super().save(*args, **kwargs)
 
         self.delivery.refresh_total_price()

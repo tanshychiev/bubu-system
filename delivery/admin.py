@@ -1,5 +1,12 @@
 from django.contrib import admin
-from .models import Delivery, DeliveryItem
+from .models import Delivery, DeliveryItem, DeliveryCompany
+
+
+@admin.register(DeliveryCompany)
+class DeliveryCompanyAdmin(admin.ModelAdmin):
+    list_display = ("name", "delivery_type", "phone", "is_active")
+    list_filter = ("delivery_type", "is_active")
+    search_fields = ("name", "phone")
 
 
 class DeliveryItemInline(admin.TabularInline):

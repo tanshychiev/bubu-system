@@ -13,6 +13,55 @@ a {
     text-decoration: none !important;
 }
 
+/* =========================
+   SUCCESS / ERROR ALERT
+========================= */
+.save-alert {
+    position: fixed;
+    top: 22px;
+    right: 22px;
+    z-index: 99999;
+    min-width: 280px;
+    max-width: 420px;
+    padding: 16px 20px;
+    border-radius: 18px;
+    background: #e6fff3;
+    color: #008f5a;
+    font-weight: 1000;
+    box-shadow: 0 14px 36px rgba(0,0,0,.14);
+    border: 2px solid #b7f3d4;
+    animation: slideAlert .25s ease;
+}
+
+.save-alert.success {
+    background: #e6fff3;
+    color: #008f5a;
+    border-color: #b7f3d4;
+}
+
+.save-alert.error {
+    background: #fff0f0;
+    color: #e03131;
+    border-color: #ffc9c9;
+}
+
+.save-alert.warning {
+    background: #fff7df;
+    color: #b86b00;
+    border-color: #ffe0a3;
+}
+
+@keyframes slideAlert {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .top-actions {
     display: flex;
     gap: 12px;
@@ -405,6 +454,35 @@ a {
     text-align: center;
 }
 
+/* =========================
+   PRINT MODE
+========================= */
+@media print {
+    .top-actions,
+    .save-alert,
+    .add-payment-card {
+        display: none !important;
+    }
+
+    body {
+        background: white !important;
+    }
+
+    .detail-container {
+        max-width: 100%;
+        margin: 0;
+    }
+
+    .card,
+    .table-card,
+    .payment-card,
+    .branch-card,
+    .bill-card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+}
+
 @media (max-width: 950px) {
     .detail-header,
     .info-grid,
@@ -446,8 +524,24 @@ a {
     .detail-title h1 {
         font-size: 32px;
     }
+
+    .save-alert {
+        left: 14px;
+        right: 14px;
+        top: 14px;
+        min-width: auto;
+        max-width: none;
+    }
 }
 </style>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="save-alert {{ message.tags }}" id="saveAlert">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
 
 <div class="detail-container">
 
@@ -455,6 +549,7 @@ a {
         <a href="{% url 'sale_list' %}" class="btn-back">← Back to Sales</a>
         <a href="{% url 'pos' %}" class="btn-main">🛒 New Sale</a>
         <a href="{% url 'cash_count_dashboard' %}" class="btn-soft">💵 Cash Count</a>
+        <button type="button" class="btn-soft" onclick="window.print()">🖨️ Print</button>
     </div>
 
     <div class="detail-header">
@@ -463,7 +558,7 @@ a {
             <p>Transaction details, branch, items, customer money and payments.</p>
         </div>
 
-        <img src="{% static 'img/bubu-sales-hero.png' %}" class="hero-img">
+        <img src="{% static 'img/bubu-sales-hero.png' %}" class="hero-img" alt="BUBU Sales">
     </div>
 
     <div class="branch-card">
@@ -620,6 +715,7 @@ a {
                 <div class="payment-box">
                     <small>{{ payment.created_at|date:"d M Y H:i" }}</small>
                     <h3>{{ payment.get_method_display }}: ${{ payment.amount|floatformat:2 }}</h3>
+
                     {% if payment.note %}
                         <div class="item-meta">{{ payment.note }}</div>
                     {% endif %}
@@ -672,6 +768,7 @@ a {
                         <td>
                             {% if line.variant %}
                                 <span class="variant-pill">{{ line.variant.display_name }}</span>
+
                                 {% if line.variant.sku %}
                                     <div class="item-meta">SKU: {{ line.variant.sku }}</div>
                                 {% endif %}
@@ -700,11 +797,52 @@ a {
                         <td colspan="6">CUSTOMER PAY TOTAL</td>
                         <td>${{ sale.total_amount|floatformat:2 }}</td>
                     </tr>
+
+                    <tr class="total-row">
+                        <td colspan="6">PAID</td>
+                        <td>${{ sale.paid_amount|floatformat:2 }}</td>
+                    </tr>
+
+                    <tr class="total-row">
+                        <td colspan="6">BALANCE</td>
+                        <td>${{ balance|floatformat:2 }}</td>
+                    </tr>
+
+                    <tr class="total-row">
+                        <td colspan="6">CHANGE</td>
+                        <td>${{ sale.change_amount|floatformat:2 }}</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
     </div>
 
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+    const alertBox = document.getElementById("saveAlert");
+
+    if(alertBox){
+        setTimeout(function(){
+            alertBox.style.opacity = "0";
+            alertBox.style.transform = "translateY(-10px)";
+            alertBox.style.transition = "0.25s";
+
+            setTimeout(function(){
+                alertBox.remove();
+            }, 300);
+        }, 2500);
+    }
+
+    const params = new URLSearchParams(window.location.search);
+
+    if(params.get("print") === "1"){
+        setTimeout(function(){
+            window.print();
+        }, 600);
+    }
+});
+</script>
 
 {% endblock %}

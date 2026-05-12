@@ -321,10 +321,6 @@
                     <strong>${{ service_total|default:"0.00" }}</strong>
                 </div>
 
-                <div class="bill-row">
-                    <span>🐶 Pet / Dog / Cat</span>
-                    <strong>${{ pet_total|default:"0.00" }}</strong>
-                </div>
             </div>
 
             <div class="summary">
@@ -477,10 +473,6 @@
                     <strong>${{ service_total|default:"0.00" }}</strong>
                 </div>
 
-                <div class="bill-row">
-                    <span>🐶 Pet / Dog / Cat</span>
-                    <strong>${{ pet_total|default:"0.00" }}</strong>
-                </div>
 
                 <div class="bill-total-row">
                     <span>Customer Pay Total</span>
@@ -518,10 +510,6 @@
 
                 <input type="hidden" name="customer_phone" id="customerPhoneHidden">
                 <input type="hidden" name="customer_name" id="customerNameHidden">
-                <input type="hidden" name="delivery_phone" id="deliveryPhoneHidden">
-                <input type="hidden" name="delivery_receiver_name" id="deliveryReceiverNameHidden">
-                <input type="hidden" name="delivery_address" id="deliveryAddressHidden" value="">
-                <input type="hidden" name="delivery_note" id="deliveryNoteHidden" value="POS prepare delivery">
 
                 <datalist id="customerList">
                     {% for customer in customers %}
@@ -531,6 +519,9 @@
                             data-name="{{ customer.name }}"
                             data-phone="{{ customer.phone }}"
                             data-points="{{ customer.points|default:0 }}"
+                            data-address="{{ customer.address|default:'' }}"
+                            data-chat-source="{{ customer.customer_chat_source|default:'' }}"
+                            data-social-name="{{ customer.customer_social_name|default:'' }}"
                         ></option>
                         {% if customer.name %}
                         <option
@@ -539,6 +530,9 @@
                             data-name="{{ customer.name }}"
                             data-phone="{{ customer.phone }}"
                             data-points="{{ customer.points|default:0 }}"
+                            data-address="{{ customer.address|default:'' }}"
+                            data-chat-source="{{ customer.customer_chat_source|default:'' }}"
+                            data-social-name="{{ customer.customer_social_name|default:'' }}"
                         ></option>
                         {% endif %}
                     {% endfor %}
@@ -552,6 +546,138 @@
                 </div>
 
                 <small>Search existing customer or type phone to auto create · $1 = 1 point</small>
+            </div>
+
+            <div class="delivery-customer-box" id="deliveryCustomerBox">
+                <div class="delivery-section-title">🚚 Delivery Customer Detail</div>
+
+                <input type="hidden" name="delivery_area" id="deliveryArea" value="pp">
+                <input type="hidden" name="delivery_company_id" id="deliveryCompanyId" value="">
+
+                <div class="delivery-mini-title">Choose Delivery Area</div>
+                <div class="delivery-choice-grid">
+                    <button type="button" class="delivery-choice-card active" data-area="pp" onclick="setDeliveryAreaCard(this, 'pp')">
+                        <span>🏙️</span>
+                        <strong>Phnom Penh</strong>
+                        <small>Can be COD or paid</small>
+                    </button>
+
+                    <button type="button" class="delivery-choice-card" data-area="province" onclick="setDeliveryAreaCard(this, 'province')">
+                        <span>🚌</span>
+                        <strong>Province</strong>
+                        <small>Better paid first</small>
+                    </button>
+                </div>
+
+                <div class="delivery-mini-title">Choose Delivery Company</div>
+                <div class="delivery-company-grid" id="deliveryCompanyGrid">
+                    {% for company in delivery_companies %}
+                        <button
+                            type="button"
+                            class="delivery-company-card company-area-{{ company.delivery_type }}"
+                            data-area="{{ company.delivery_type }}"
+                            data-company-id="{{ company.id }}"
+                            onclick="selectDeliveryCompany(this)"
+                        >
+                            <span>🚚</span>
+                            <strong>{{ company.name }}</strong>
+                            <small>{{ company.get_delivery_type_display }}</small>
+                        </button>
+                    {% empty %}
+                        <div class="delivery-company-empty">
+                            No delivery company yet. Create DS EXPRESS / Grab / J&T / VET in Delivery Company page.
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="delivery-grid">
+                    <label>
+                        Customer Name
+                        <input
+                            type="text"
+                            name="delivery_receiver_name"
+                            id="deliveryReceiverName"
+                            placeholder="Customer name"
+                        >
+                    </label>
+
+                    <label>
+                        Customer Phone
+                        <input
+                            type="text"
+                            name="delivery_phone"
+                            id="deliveryPhone"
+                            placeholder="Customer phone number"
+                        >
+                    </label>
+                </div>
+
+                <label>
+                    Customer Location
+                    <textarea
+                        name="delivery_address"
+                        id="deliveryAddress"
+                        rows="3"
+                        placeholder="Customer location / address / map note"
+                    ></textarea>
+                </label>
+
+                <div class="delivery-grid">
+                    <label>
+                        Customer Chat From
+                        <input type="hidden" name="customer_chat_source" id="customerChatSource" value="">
+                        <div class="chat-source-options">
+                            <button type="button" class="chat-source-btn" data-value="facebook" onclick="setChatSource(this)">Facebook</button>
+                            <button type="button" class="chat-source-btn" data-value="telegram" onclick="setChatSource(this)">Telegram</button>
+                            <button type="button" class="chat-source-btn" data-value="instagram" onclick="setChatSource(this)">IG</button>
+                            <button type="button" class="chat-source-btn" data-value="tiktok" onclick="setChatSource(this)">TikTok</button>
+                            <button type="button" class="chat-source-btn" data-value="call" onclick="setChatSource(this)">Call</button>
+                            <button type="button" class="chat-source-btn" data-value="other" onclick="setChatSource(this)">Other</button>
+                        </div>
+                    </label>
+
+                    <label>
+                        Social Media Name <em class="optional-text">Optional</em>
+                        <input
+                            type="text"
+                            name="customer_social_name"
+                            id="customerSocialName"
+                            placeholder="FB name / Telegram name / TikTok name..."
+                        >
+                    </label>
+                </div>
+
+                <div class="delivery-payment-type-box">
+                    <div class="delivery-section-title small-title">Payment For Delivery</div>
+
+                    <div class="delivery-pay-options">
+                        <label class="delivery-pay-card active" onclick="setDeliveryPaymentTypeCard(this)">
+                            <input type="radio" name="delivery_payment_type" value="cod" checked>
+                            <span>💵</span>
+                            <strong>COD / Not Paid Yet</strong>
+                            <small>No payment now. Delivery company/customer will pay later.</small>
+                        </label>
+
+                        <label class="delivery-pay-card" onclick="setDeliveryPaymentTypeCard(this)">
+                            <input type="radio" name="delivery_payment_type" value="paid">
+                            <span>🏦</span>
+                            <strong>Already Paid</strong>
+                            <small>Only ABA USD and ABA Riel will show. No cash.</small>
+                        </label>
+                    </div>
+                </div>
+
+                <label>
+                    Delivery Note
+                    <textarea
+                        name="delivery_note"
+                        id="deliveryNote"
+                        rows="3"
+                        placeholder="Note for delivery staff. Example: call before arrive, customer paid already, COD, fragile item..."
+                    >POS prepare delivery</textarea>
+                </label>
+
+                <small>Old customer will auto fill name, phone, and address if saved before.</small>
             </div>
 
             <div class="discount-tax-box">
@@ -587,26 +713,30 @@
                 </div>
             </div>
 
-            <div class="pay-grid">
-                <label>
+            <div class="pay-grid" id="payGrid">
+                <label class="cash-pay-field" id="cashUsdField">
                     Cash USD
                     <input type="number" step="0.01" name="cash_usd" id="cash_usd" value="0" oninput="calcChange()">
                 </label>
 
-                <label>
+                <label class="cash-pay-field" id="cashKhrField">
                     Cash KHR
                     <input type="number" step="1" name="cash_khr" id="cash_khr" value="0" oninput="calcChange()">
                 </label>
 
-                <label>
+                <label class="aba-pay-field" id="abaUsdField">
                     ABA USD
                     <input type="number" step="0.01" name="aba_usd" id="aba_usd" value="0" oninput="calcChange()">
                 </label>
 
-                <label>
+                <label class="aba-pay-field" id="abaKhrField">
                     ABA KHR
                     <input type="number" step="1" name="aba_khr" id="aba_khr" value="0" oninput="calcChange()">
                 </label>
+            </div>
+
+            <div class="delivery-cod-hint" id="deliveryCodHint">
+                COD selected. No payment now. This order will go to delivery list and wait for collection.
             </div>
 
             <div class="change-box">
@@ -693,10 +823,6 @@
             <strong>${{ service_total|default:"0.00" }}</strong>
         </div>
 
-        <div class="receipt-row">
-            <span>Pet / Dog / Cat</span>
-            <strong>${{ pet_total|default:"0.00" }}</strong>
-        </div>
 
         <div class="receipt-line"></div>
 
@@ -1662,6 +1788,259 @@ a{
     font-weight:900;
 }
 
+
+/* =========================
+   DELIVERY CUSTOMER DETAIL
+========================= */
+.delivery-customer-box{
+    display:none;
+    padding:16px;
+    border-radius:22px;
+    background:#f8fbff;
+    border:2px solid #dbeafe;
+    margin-bottom:16px;
+}
+
+.delivery-customer-box.show{
+    display:block;
+}
+
+.delivery-section-title{
+    font-size:18px;
+    font-weight:1000;
+    color:#080634;
+    margin-bottom:14px;
+}
+
+.delivery-section-title.small-title{
+    font-size:16px;
+    margin-bottom:10px;
+}
+
+.delivery-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+}
+
+.delivery-mini-title{
+    font-size:15px;
+    font-weight:1000;
+    color:#080634;
+    margin:12px 0 10px;
+}
+
+.delivery-choice-grid,
+.delivery-company-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-bottom:14px;
+}
+
+.delivery-choice-card,
+.delivery-company-card{
+    min-height:88px;
+    border:2px solid #dbeafe;
+    border-radius:20px;
+    background:white;
+    padding:14px;
+    text-align:left;
+    cursor:pointer;
+    font-weight:1000;
+    color:#080634;
+    touch-action:manipulation;
+}
+
+.delivery-choice-card span,
+.delivery-company-card span{
+    display:block;
+    font-size:26px;
+    margin-bottom:6px;
+}
+
+.delivery-choice-card strong,
+.delivery-company-card strong{
+    display:block;
+    font-size:16px;
+}
+
+.delivery-choice-card small,
+.delivery-company-card small{
+    display:block;
+    margin-top:4px;
+    color:#64748b;
+    font-weight:900;
+}
+
+.delivery-choice-card.active,
+.delivery-company-card.active{
+    border-color:#7b5cff;
+    background:linear-gradient(135deg,#f4f0ff,#fff8fb);
+    box-shadow:0 10px 24px rgba(123,92,255,.14);
+}
+
+.delivery-company-card.hide-company{
+    display:none;
+}
+
+.delivery-company-empty{
+    grid-column:1 / -1;
+    padding:16px;
+    border-radius:18px;
+    background:#fff7ed;
+    border:2px dashed #fed7aa;
+    color:#9a3412;
+    font-weight:1000;
+}
+
+.chat-source-options{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+    margin-top:8px;
+}
+
+.chat-source-btn{
+    min-height:50px;
+    border:2px solid #dbeafe;
+    border-radius:16px;
+    background:white;
+    color:#080634;
+    font-weight:1000;
+    cursor:pointer;
+    touch-action:manipulation;
+}
+
+.chat-source-btn.active{
+    border-color:#7b5cff;
+    background:#f4f0ff;
+    color:#5b21b6;
+}
+
+.optional-text{
+    font-style:normal;
+    color:#64748b;
+    font-size:12px;
+    font-weight:900;
+}
+
+.delivery-customer-box label{
+    display:block;
+    font-weight:1000;
+    color:#080634;
+    margin-bottom:14px;
+}
+
+.delivery-customer-box input,
+.delivery-customer-box select,
+.delivery-customer-box textarea{
+    width:100%;
+    border:2px solid #dbeafe;
+    border-radius:18px;
+    padding:14px 16px;
+    margin-top:8px;
+    font-size:16px;
+    font-weight:900;
+    outline:none;
+    background:white;
+}
+
+.delivery-customer-box input,
+.delivery-customer-box select{
+    height:58px;
+}
+
+.delivery-customer-box textarea{
+    resize:vertical;
+    min-height:86px;
+}
+
+.delivery-customer-box small{
+    display:block;
+    color:#2563eb;
+    font-weight:900;
+}
+
+.delivery-payment-type-box{
+    padding:14px;
+    border-radius:20px;
+    background:white;
+    border:2px solid #dbeafe;
+    margin:4px 0 16px;
+}
+
+.delivery-pay-options{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+}
+
+.delivery-pay-card{
+    min-height:116px;
+    border:2px solid #e0e7ff;
+    border-radius:20px;
+    background:#fbfdff;
+    padding:14px;
+    cursor:pointer;
+    display:flex !important;
+    flex-direction:column;
+    gap:5px;
+    margin:0 !important;
+}
+
+.delivery-pay-card input{
+    display:none;
+}
+
+.delivery-pay-card.active{
+    border-color:#7b5cff;
+    background:linear-gradient(135deg,#f6f2ff,#eff6ff);
+    box-shadow:0 10px 24px rgba(123,92,255,.14);
+}
+
+.delivery-pay-card span{
+    font-size:26px;
+}
+
+.delivery-pay-card strong{
+    font-size:15px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.delivery-pay-card small{
+    font-size:12px;
+    color:#64748b;
+}
+
+.delivery-cod-hint{
+    display:none;
+    padding:14px 16px;
+    border-radius:18px;
+    background:#fff7ed;
+    border:2px solid #fed7aa;
+    color:#c2410c;
+    font-weight:1000;
+    margin-bottom:16px;
+}
+
+.delivery-cod-hint.show{
+    display:block;
+}
+
+.pay-grid.aba-only{
+    grid-template-columns:1fr 1fr;
+}
+
+.pay-grid.hide-payment{
+    display:none;
+}
+
+.cash-pay-field.hide-cash{
+    display:none;
+}
+
 /* =========================
    PAYMENT CONTENT
 ========================= */
@@ -2415,6 +2794,8 @@ a{
     }
 
     .sale-type-options,
+    .delivery-grid,
+    .delivery-pay-options,
     .pay-grid,
     .change-box,
     .discount-tax-row,
@@ -2708,18 +3089,150 @@ function paymentBreakdown(cashUsd, cashKhrRaw, abaUsd, abaKhrRaw){
     return parts.length ? parts.join("<br>") : "No payment yet";
 }
 
-function setDeliveryFieldsFromCustomer(name, phone){
-    const deliveryPhoneHidden = document.getElementById("deliveryPhoneHidden");
-    const deliveryNameHidden = document.getElementById("deliveryReceiverNameHidden");
+function setDeliveryFieldsFromCustomer(name, phone, address, chatSource, socialName){
+    const deliveryPhone = document.getElementById("deliveryPhone");
+    const deliveryName = document.getElementById("deliveryReceiverName");
+    const deliveryAddress = document.getElementById("deliveryAddress");
+    const socialInput = document.getElementById("customerSocialName");
 
-    if(deliveryPhoneHidden) deliveryPhoneHidden.value = phone || "";
-    if(deliveryNameHidden) deliveryNameHidden.value = name || "";
+    if(deliveryPhone) deliveryPhone.value = phone || "";
+    if(deliveryName) deliveryName.value = name || "";
+    if(deliveryAddress && address !== undefined) deliveryAddress.value = address || "";
+    if(socialInput && socialName !== undefined) socialInput.value = socialName || "";
+    if(chatSource !== undefined) setChatSourceValue(chatSource || "");
 }
 
-function updateDeliveryAddressHidden(rawValue){
-    const deliveryAddressHidden = document.getElementById("deliveryAddressHidden");
-    if(deliveryAddressHidden){
-        deliveryAddressHidden.value = rawValue || "";
+function setChatSource(btn){
+    const value = btn.getAttribute("data-value") || "";
+    setChatSourceValue(value);
+}
+
+function setChatSourceValue(value){
+    const input = document.getElementById("customerChatSource");
+    if(input) input.value = value || "";
+
+    document.querySelectorAll(".chat-source-btn").forEach(function(btn){
+        btn.classList.toggle("active", (btn.getAttribute("data-value") || "") === value);
+    });
+}
+
+function setDeliveryAreaCard(card, area){
+    const areaInput = document.getElementById("deliveryArea");
+    if(areaInput) areaInput.value = area || "pp";
+
+    document.querySelectorAll(".delivery-choice-card").forEach(function(item){
+        item.classList.remove("active");
+    });
+    card.classList.add("active");
+
+    filterDeliveryCompanies();
+}
+
+function filterDeliveryCompanies(){
+    const area = valueOf("deliveryArea") || "pp";
+    const companyInput = document.getElementById("deliveryCompanyId");
+    let firstVisible = null;
+    let selectedStillVisible = false;
+
+    document.querySelectorAll(".delivery-company-card").forEach(function(card){
+        const cardArea = card.getAttribute("data-area") || "";
+        const visible = cardArea === area;
+        card.classList.toggle("hide-company", !visible);
+
+        if(visible && !firstVisible){
+            firstVisible = card;
+        }
+
+        if(visible && card.classList.contains("active")){
+            selectedStillVisible = true;
+        }
+    });
+
+    if(!selectedStillVisible){
+        document.querySelectorAll(".delivery-company-card").forEach(function(card){
+            card.classList.remove("active");
+        });
+
+        if(firstVisible){
+            firstVisible.classList.add("active");
+            if(companyInput) companyInput.value = firstVisible.getAttribute("data-company-id") || "";
+        }else if(companyInput){
+            companyInput.value = "";
+        }
+    }
+}
+
+function selectDeliveryCompany(card){
+    document.querySelectorAll(".delivery-company-card").forEach(function(item){
+        item.classList.remove("active");
+    });
+
+    card.classList.add("active");
+
+    const input = document.getElementById("deliveryCompanyId");
+    if(input) input.value = card.getAttribute("data-company-id") || "";
+}
+
+function getSelectedDeliveryPaymentType(){
+    const checked = document.querySelector("input[name='delivery_payment_type']:checked");
+    return checked ? checked.value : "cod";
+}
+
+function setDeliveryPaymentTypeCard(card){
+    document.querySelectorAll(".delivery-pay-card").forEach(function(item){
+        item.classList.remove("active");
+    });
+
+    card.classList.add("active");
+
+    const radio = card.querySelector("input[type='radio']");
+    if(radio){
+        radio.checked = true;
+    }
+
+    filterDeliveryCompanies();
+    updatePaymentFieldVisibility();
+    calcChange();
+}
+
+function updatePaymentFieldVisibility(){
+    const saleType = getSelectedSaleType();
+    const deliveryPaymentType = getSelectedDeliveryPaymentType();
+    const payGrid = document.getElementById("payGrid");
+    const codHint = document.getElementById("deliveryCodHint");
+    const cashFields = document.querySelectorAll(".cash-pay-field");
+
+    if(!payGrid) return;
+
+    payGrid.classList.remove("aba-only", "hide-payment");
+    cashFields.forEach(function(field){
+        field.classList.remove("hide-cash");
+    });
+
+    if(codHint){
+        codHint.classList.remove("show");
+    }
+
+    if(saleType === "prepare_delivery" && deliveryPaymentType === "cod"){
+        payGrid.classList.add("hide-payment");
+        if(codHint) codHint.classList.add("show");
+
+        ["cash_usd", "cash_khr", "aba_usd", "aba_khr"].forEach(function(id){
+            const input = document.getElementById(id);
+            if(input) input.value = 0;
+        });
+    }
+
+    if(saleType === "prepare_delivery" && deliveryPaymentType === "paid"){
+        payGrid.classList.add("aba-only");
+        cashFields.forEach(function(field){
+            field.classList.add("hide-cash");
+        });
+
+        ["cash_usd", "cash_khr"].forEach(function(id){
+            const input = document.getElementById(id);
+            if(input) input.value = 0;
+        });
     }
 }
 
@@ -2761,6 +3274,9 @@ function selectCustomerInfo(){
         const name = selected.dataset.name || "Customer";
         const phone = selected.dataset.phone || "";
         const points = selected.dataset.points || "0";
+        const address = selected.dataset.address || "";
+        const chatSource = selected.dataset.chatSource || "";
+        const socialName = selected.dataset.socialName || "";
 
         text("customerNameShow", name);
         setCustomerBadge("old", "Old customer");
@@ -2770,8 +3286,7 @@ function selectCustomerInfo(){
 
         if(phoneHidden) phoneHidden.value = phone;
         if(nameHidden) nameHidden.value = name;
-        setDeliveryFieldsFromCustomer(name, phone);
-        updateDeliveryAddressHidden(input.value.trim());
+        setDeliveryFieldsFromCustomer(name, phone, address, chatSource, socialName);
         return;
     }
 
@@ -2784,21 +3299,26 @@ function selectCustomerInfo(){
 
         if(phoneHidden) phoneHidden.value = raw;
         if(nameHidden) nameHidden.value = raw;
-        setDeliveryFieldsFromCustomer(raw, raw);
-        updateDeliveryAddressHidden(raw);
+        setDeliveryFieldsFromCustomer(raw, raw, "", "", "");
         return;
     }
 
-    text("customerNameShow", "Walk-in customer");
-    setCustomerBadge("walkin", "Walk-in");
+    if(getSelectedSaleType() === "prepare_delivery"){
+        text("customerNameShow", "Delivery customer");
+        setCustomerBadge("new", "Delivery");
+        text("receiptCustomer", "Delivery customer");
+    }else{
+        text("customerNameShow", "Walk-in customer");
+        setCustomerBadge("walkin", "Walk-in");
+        text("receiptCustomer", "Walk-in");
+    }
+
     text("customerPhoneShow", "No phone selected");
     text("customerPointsShow", "Total points: 0");
-    text("receiptCustomer", "Walk-in");
 
     if(phoneHidden) phoneHidden.value = "";
     if(nameHidden) nameHidden.value = "";
-    setDeliveryFieldsFromCustomer("", "");
-    updateDeliveryAddressHidden("");
+    setDeliveryFieldsFromCustomer("", "", "", "", "");
 }
 
 function getSelectedSaleType(){
@@ -2811,6 +3331,7 @@ function setCurrentSaleType(){
     const hidden = document.getElementById("sale_type_hidden");
     const deliveryBox = document.getElementById("deliveryExpenseBox");
     const deliveryDetail = document.getElementById("deliveryTotalDetail");
+    const deliveryCustomerBox = document.getElementById("deliveryCustomerBox");
     const totalTitle = document.getElementById("totalTitleShow");
     const primaryBtn = document.getElementById("primarySubmitBtn");
     const secondaryBtn = document.getElementById("secondarySubmitBtn");
@@ -2833,9 +3354,24 @@ function setCurrentSaleType(){
         }
     }
 
-    if(totalTitle){
-        totalTitle.innerText = saleType === "prepare_delivery" ? "Total COD" : "Customer Pay Total";
+    if(deliveryCustomerBox){
+        if(saleType === "prepare_delivery"){
+            deliveryCustomerBox.classList.add("show");
+        }else{
+            deliveryCustomerBox.classList.remove("show");
+        }
     }
+
+    if(totalTitle){
+        if(saleType === "prepare_delivery" && getSelectedDeliveryPaymentType() === "cod"){
+            totalTitle.innerText = "Total COD";
+        }else{
+            totalTitle.innerText = "Customer Pay Total";
+        }
+    }
+
+    filterDeliveryCompanies();
+    updatePaymentFieldVisibility();
 
     if(primaryBtn && secondaryBtn){
         if(saleType === "prepare_delivery"){
@@ -2869,12 +3405,27 @@ function calcChange(){
     calcFinalTotal();
     setCurrentSaleType();
 
-    const cashUsd = num("cash_usd");
-    const cashKhrRaw = num("cash_khr");
+    const saleType = getSelectedSaleType();
+    const deliveryPaymentType = getSelectedDeliveryPaymentType();
+
+    let cashUsd = num("cash_usd");
+    let cashKhrRaw = num("cash_khr");
+
+    if(saleType === "prepare_delivery"){
+        cashUsd = 0;
+        cashKhrRaw = 0;
+    }
+
     const cashKhr = cashKhrRaw / payRate;
 
-    const abaUsd = num("aba_usd");
-    const abaKhrRaw = num("aba_khr");
+    let abaUsd = num("aba_usd");
+    let abaKhrRaw = num("aba_khr");
+
+    if(saleType === "prepare_delivery" && deliveryPaymentType === "cod"){
+        abaUsd = 0;
+        abaKhrRaw = 0;
+    }
+
     const abaKhr = abaKhrRaw / payRate;
 
     const paid = cashUsd + cashKhr + abaUsd + abaKhr;
@@ -2945,35 +3496,169 @@ function setCheckoutAction(action){
 }
 
 function validatePrepareDelivery(){
+    const saleType = getSelectedSaleType();
+
+    if(saleType !== "prepare_delivery"){
+        return true;
+    }
+
+    const name = valueOf("deliveryReceiverName").trim();
+    const phone = valueOf("deliveryPhone").trim();
+    const address = valueOf("deliveryAddress").trim();
+    const deliveryPaymentType = getSelectedDeliveryPaymentType();
+    const deliveryCompanyId = valueOf("deliveryCompanyId").trim();
+
+    if(!deliveryCompanyId){
+        alert("Please choose delivery company.");
+        return false;
+    }
+
+    if(!name){
+        alert("Please fill delivery customer name.");
+        const input = document.getElementById("deliveryReceiverName");
+        if(input) input.focus();
+        return false;
+    }
+
+    if(!phone){
+        alert("Please fill delivery customer phone number.");
+        const input = document.getElementById("deliveryPhone");
+        if(input) input.focus();
+        return false;
+    }
+
+    if(!address){
+        alert("Please fill customer location / address.");
+        const input = document.getElementById("deliveryAddress");
+        if(input) input.focus();
+        return false;
+    }
+
+    if(deliveryPaymentType === "paid"){
+        const abaUsd = num("aba_usd");
+        const abaKhr = num("aba_khr");
+
+        if(abaUsd <= 0 && abaKhr <= 0){
+            alert("Already Paid delivery must use ABA USD or ABA KHR. No cash.");
+            const input = document.getElementById("aba_usd");
+            if(input) input.focus();
+            return false;
+        }
+    }
+
     return true;
 }
 
+
+function getPOSPaymentInfo(){
+    const saleType = getSelectedSaleType();
+    const deliveryPaymentType = getSelectedDeliveryPaymentType();
+
+    let cashUsd = num("cash_usd");
+    let cashKhr = num("cash_khr");
+    let abaUsd = num("aba_usd");
+    let abaKhr = num("aba_khr");
+
+    if(saleType === "prepare_delivery"){
+        cashUsd = 0;
+        cashKhr = 0;
+    }
+
+    if(saleType === "prepare_delivery" && deliveryPaymentType === "cod"){
+        abaUsd = 0;
+        abaKhr = 0;
+    }
+
+    const paidUsd = cashUsd + abaUsd + (cashKhr / payRate) + (abaKhr / payRate);
+    const totalUsd = total;
+
+    const lackUsd = Math.max(totalUsd - paidUsd, 0);
+    const changeUsd = Math.max(paidUsd - totalUsd, 0);
+
+    return {
+        paidUsd: paidUsd,
+        totalUsd: totalUsd,
+        lackUsd: lackUsd,
+        changeUsd: changeUsd
+    };
+}
+
 function submitPOSCheckout(e, action){
+    e.preventDefault();
+
     setCheckoutAction(action);
+    calcChange();
 
     if(!validatePrepareDelivery()){
-        e.preventDefault();
         return false;
+    }
+
+    const payInfo = getPOSPaymentInfo();
+
+    if(payInfo.paidUsd <= 0 && !(getSelectedSaleType() === "prepare_delivery" && getSelectedDeliveryPaymentType() === "cod")){
+        const ok = confirm(
+            "Customer has not paid yet.\n\n" +
+            "This sale will be saved as UNPAID.\n\n" +
+            "Do you want to continue?"
+        );
+
+        if(!ok){
+            return false;
+        }
+    }
+
+    if(payInfo.paidUsd > 0 && payInfo.paidUsd < payInfo.totalUsd){
+        const ok = confirm(
+            "Payment is not enough.\n\n" +
+            "Total: $" + payInfo.totalUsd.toFixed(2) + "\n" +
+            "Paid: $" + payInfo.paidUsd.toFixed(2) + "\n" +
+            "Lack / Balance: $" + payInfo.lackUsd.toFixed(2) + "\n\n" +
+            "This sale will be saved as PARTIAL.\n\n" +
+            "Do you want to continue?"
+        );
+
+        if(!ok){
+            return false;
+        }
+    }
+
+    if(payInfo.paidUsd > payInfo.totalUsd){
+        alert(
+            "Customer paid over total.\n\n" +
+            "Total: $" + payInfo.totalUsd.toFixed(2) + "\n" +
+            "Paid: $" + payInfo.paidUsd.toFixed(2) + "\n" +
+            "Change: $" + payInfo.changeUsd.toFixed(2)
+        );
     }
 
     const form = document.getElementById("paymentForm");
-    if(!form) return true;
 
-    const saleType = getSelectedSaleType();
-
-    if(action === "complete_print" && saleType === "walk_in"){
-        e.preventDefault();
-        prepareReceipt();
-        window.print();
-
-        setTimeout(function(){
-            form.submit();
-        }, 350);
-
+    if(!form){
+        alert("Payment form not found.");
         return false;
     }
 
-    return true;
+    const submitButtons = form.querySelectorAll("button[type='submit']");
+
+    submitButtons.forEach(function(btn){
+        btn.disabled = true;
+        btn.style.opacity = "0.7";
+        btn.style.pointerEvents = "none";
+    });
+
+    const primaryBtn = document.getElementById("primarySubmitBtn");
+    const secondaryBtn = document.getElementById("secondarySubmitBtn");
+
+    if(action === "complete" && primaryBtn){
+        primaryBtn.innerText = "Saving...";
+    }
+
+    if(action === "complete_print" && secondaryBtn){
+        secondaryBtn.innerText = "Saving + Printing...";
+    }
+
+    form.submit();
+    return false;
 }
 
 document.addEventListener("keydown", function(e){
@@ -2986,6 +3671,8 @@ document.addEventListener("keydown", function(e){
         });
     }
 });
+
+
 </script>
 
 {% endblock %}
