@@ -1,0 +1,480 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="breed-page">
+    <div class="page-top">
+        <div>
+            <h1>Breed Master 🐶🐱</h1>
+            <p>Create breed/product master with photo, price, colors, sex and special type options.</p>
+        </div>
+
+        <div class="top-actions">
+            <a href="{% url 'pet_list' %}" class="soft-btn">← Pet Stock</a>
+            <a href="{% url 'pet_breed_create' %}" class="main-btn">＋ Add Breed</a>
+            <a href="{% url 'pet_create' %}" class="green-btn">＋ Stock In Pet</a>
+        </div>
+    </div>
+
+    <form method="get" class="filter-card">
+        <div class="filter-grid">
+            <label>
+                Search
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ q|default:'' }}"
+                    placeholder="Breed name, color, special type..."
+                >
+            </label>
+
+            <label>
+                Pet Type
+                <select name="pet_type">
+                    <option value="">All Type</option>
+                    <option value="dog" {% if pet_type == "dog" %}selected{% endif %}>Dog</option>
+                    <option value="cat" {% if pet_type == "cat" %}selected{% endif %}>Cat</option>
+                    <option value="other" {% if pet_type == "other" %}selected{% endif %}>Other</option>
+                </select>
+            </label>
+
+            <button type="submit" class="dark-btn">Search</button>
+            <a href="{% url 'pet_breed_list' %}" class="clear-btn">Clear</a>
+        </div>
+    </form>
+
+    <div class="breed-grid">
+        {% for breed in breeds %}
+            <div class="breed-card">
+                <div class="photo-box">
+                    {% if breed.photo %}
+                        <img src="{{ breed.photo.url }}" alt="{{ breed.name }}">
+                    {% else %}
+                        <div class="no-photo">
+                            {% if breed.pet_type == "cat" %}🐱{% elif breed.pet_type == "dog" %}🐶{% else %}🐾{% endif %}
+                        </div>
+                    {% endif %}
+
+                    <span class="type-badge type-{{ breed.pet_type }}">
+                        {{ breed.get_pet_type_display }}
+                    </span>
+
+                    {% if not breed.is_active %}
+                        <span class="inactive-badge">Inactive</span>
+                    {% endif %}
+                </div>
+
+                <div class="breed-body">
+                    <div class="title-row">
+                        <h3>{{ breed.name }}</h3>
+                        <strong>${{ breed.default_sale_price|floatformat:2 }}</strong>
+                    </div>
+
+                    <div class="money-row">
+                        <div>
+                            <small>Default Cost</small>
+                            <b>${{ breed.default_cost_price|floatformat:2 }}</b>
+                        </div>
+                        <div>
+                            <small>Default Sale</small>
+                            <b>${{ breed.default_sale_price|floatformat:2 }}</b>
+                        </div>
+                    </div>
+
+                    <div class="option-list">
+                        {% if breed.color_options %}
+                            <div>
+                                <span>Colors</span>
+                                <p>{{ breed.color_options }}</p>
+                            </div>
+                        {% endif %}
+
+                        {% if breed.sex_options %}
+                            <div>
+                                <span>Sex</span>
+                                <p>{{ breed.sex_options }}</p>
+                            </div>
+                        {% endif %}
+
+                        {% if breed.special_type_options %}
+                            <div>
+                                <span>Special Type</span>
+                                <p>{{ breed.special_type_options }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {% if breed.note %}
+                        <p class="note">{{ breed.note|truncatechars:110 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="card-actions">
+                    <a href="{% url 'pet_breed_edit' breed.id %}" class="orange-btn">Edit</a>
+                    <a href="{% url 'pet_create' %}" class="green-btn">Stock In</a>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-box">
+                <div>🐾</div>
+                <h2>No breed yet</h2>
+                <p>Create breed master first. Example: Corgi, Pomeranian, British Shorthair.</p>
+                <a href="{% url 'pet_breed_create' %}" class="main-btn">＋ Add First Breed</a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+*{box-sizing:border-box}
+a{text-decoration:none}
+
+.breed-page{
+    padding:24px 28px;
+}
+
+.page-top{
+    display:flex;
+    justify-content:space-between;
+    gap:18px;
+    margin-bottom:22px;
+}
+
+.page-top h1{
+    margin:0;
+    font-size:36px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.page-top p{
+    margin:8px 0 0;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.top-actions{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+.main-btn,
+.soft-btn,
+.green-btn,
+.orange-btn,
+.dark-btn,
+.clear-btn{
+    min-height:56px;
+    padding:0 18px;
+    border-radius:18px;
+    border:0;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.main-btn{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+}
+
+.soft-btn,
+.clear-btn{
+    background:#f1f5f9;
+    color:#334155;
+}
+
+.green-btn{
+    background:#dcfce7;
+    color:#16a34a;
+}
+
+.orange-btn{
+    background:#fff7ed;
+    color:#ea580c;
+}
+
+.dark-btn{
+    background:#080634;
+    color:white;
+}
+
+.filter-card{
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:28px;
+    padding:18px;
+    margin-bottom:18px;
+    box-shadow:0 18px 40px rgba(130,91,60,.08);
+}
+
+.filter-grid{
+    display:grid;
+    grid-template-columns:1.5fr 1fr auto auto;
+    gap:14px;
+    align-items:end;
+}
+
+.filter-grid label{
+    font-weight:1000;
+    color:#080634;
+}
+
+.filter-grid input,
+.filter-grid select{
+    width:100%;
+    height:62px;
+    border:2px solid #eaddec;
+    border-radius:18px;
+    padding:0 16px;
+    margin-top:8px;
+    font-size:17px;
+    font-weight:900;
+    background:white;
+}
+
+.breed-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:18px;
+}
+
+.breed-card{
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:30px;
+    overflow:hidden;
+    box-shadow:0 18px 40px rgba(130,91,60,.08);
+}
+
+.photo-box{
+    position:relative;
+    height:230px;
+    background:#fff8f4;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+}
+
+.photo-box img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    padding:10px;
+    background:#fff8f4;
+}
+
+.no-photo{
+    font-size:78px;
+}
+
+.type-badge,
+.inactive-badge{
+    position:absolute;
+    top:14px;
+    padding:8px 13px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:1000;
+}
+
+.type-badge{
+    left:14px;
+}
+
+.type-dog{
+    background:#dcfce7;
+    color:#16a34a;
+}
+
+.type-cat{
+    background:#f3e8ff;
+    color:#9333ea;
+}
+
+.type-other{
+    background:#e0f2fe;
+    color:#0284c7;
+}
+
+.inactive-badge{
+    right:14px;
+    background:#fee2e2;
+    color:#dc2626;
+}
+
+.breed-body{
+    padding:18px;
+}
+
+.title-row{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+}
+
+.title-row h3{
+    margin:0;
+    font-size:22px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.title-row strong{
+    font-size:22px;
+    color:#ff5d73;
+}
+
+.money-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:14px;
+}
+
+.money-row div{
+    background:#fafafa;
+    border-radius:16px;
+    padding:12px;
+}
+
+.money-row small{
+    display:block;
+    color:#7b7288;
+    font-weight:1000;
+}
+
+.money-row b{
+    display:block;
+    margin-top:4px;
+    color:#080634;
+}
+
+.option-list{
+    display:grid;
+    gap:10px;
+    margin-top:14px;
+}
+
+.option-list div{
+    background:#f8f6ff;
+    border-radius:16px;
+    padding:12px;
+}
+
+.option-list span{
+    display:block;
+    color:#7b5cff;
+    font-weight:1000;
+    font-size:13px;
+    margin-bottom:4px;
+}
+
+.option-list p{
+    margin:0;
+    color:#080634;
+    font-weight:900;
+    line-height:1.45;
+}
+
+.note{
+    margin:14px 0 0;
+    background:#fffaf0;
+    border-radius:16px;
+    padding:12px;
+    color:#625a74;
+    font-weight:900;
+    line-height:1.5;
+}
+
+.card-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    padding:0 18px 18px;
+}
+
+.empty-box{
+    grid-column:1/-1;
+    background:white;
+    border:2px dashed #eaddec;
+    border-radius:28px;
+    padding:48px;
+    text-align:center;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.empty-box div{
+    font-size:82px;
+}
+
+.empty-box h2{
+    margin:10px 0;
+    color:#080634;
+}
+
+@media(max-width:1194px){
+    .page-top{
+        display:block;
+    }
+
+    .top-actions{
+        margin-top:16px;
+    }
+
+    .filter-grid{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .breed-grid{
+        grid-template-columns:1fr 1fr;
+    }
+}
+
+@media(max-width:700px){
+    .breed-page{
+        padding:18px;
+    }
+
+    .page-top h1{
+        font-size:28px;
+    }
+
+    .top-actions,
+    .filter-grid,
+    .breed-grid,
+    .card-actions{
+        display:grid;
+        grid-template-columns:1fr;
+    }
+
+    .main-btn,
+    .soft-btn,
+    .green-btn,
+    .orange-btn,
+    .dark-btn,
+    .clear-btn{
+        width:100%;
+        min-height:70px;
+        font-size:18px;
+    }
+
+    .photo-box{
+        height:250px;
+    }
+
+    .filter-grid input,
+    .filter-grid select{
+        height:66px;
+        font-size:18px;
+    }
+}
+</style>
+
+{% endblock %}

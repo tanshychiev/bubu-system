@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.float-page{
+    max-width:1100px;
+    margin:0 auto;
+}
+
+.float-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    margin-bottom:24px;
+}
+
+.float-head h1{
+    font-size:36px;
+    margin:0;
+    color:#1c143a;
+    font-weight:900;
+}
+
+.float-head p{
+    margin:8px 0 0;
+    color:#7b6f92;
+    font-weight:800;
+}
+
+.btn-main,
+.btn-soft{
+    min-height:48px;
+    padding:0 22px;
+    border-radius:999px;
+    border:none;
+    text-decoration:none;
+    font-weight:900;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+}
+
+.btn-main{
+    background:linear-gradient(135deg,#7b5cff,#b07cff);
+    color:white;
+}
+
+.btn-soft{
+    background:#f8f6ff;
+    color:#7b5cff;
+    border:1.5px solid #e2dbff;
+}
+
+.float-info{
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+    border:1px solid #f0dcd0;
+    border-radius:24px;
+    padding:20px;
+    margin-bottom:22px;
+    box-shadow:0 12px 30px rgba(111,75,50,.06);
+    color:#47366e;
+    font-weight:900;
+    line-height:1.5;
+}
+
+.float-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:18px;
+}
+
+.float-card{
+    background:white;
+    border:1px solid #f0dcd0;
+    border-radius:24px;
+    padding:22px;
+    box-shadow:0 12px 30px rgba(111,75,50,.06);
+}
+
+.float-card h2{
+    margin:0 0 6px;
+    font-size:24px;
+    color:#1c143a;
+    font-weight:900;
+}
+
+.float-card small{
+    color:#7b6f92;
+    font-weight:800;
+}
+
+.form-row{
+    margin-top:16px;
+}
+
+.form-row label{
+    display:block;
+    margin-bottom:8px;
+    color:#1c143a;
+    font-weight:900;
+}
+
+.form-row input,
+.form-row textarea{
+    width:100%;
+    padding:15px 16px;
+    border-radius:16px;
+    border:1.5px solid #eadbd4;
+    font-size:18px;
+    font-weight:900;
+    box-sizing:border-box;
+}
+
+.form-row textarea{
+    min-height:86px;
+    resize:vertical;
+    font-size:15px;
+    font-weight:800;
+}
+
+.current-value{
+    margin-top:14px;
+    padding:14px;
+    border-radius:18px;
+    background:#edfff5;
+    color:#168a3a;
+    font-weight:900;
+}
+
+.updated-info{
+    margin-top:10px;
+    color:#7b6f92;
+    font-weight:800;
+    font-size:13px;
+}
+
+.save-row{
+    margin-top:16px;
+    display:flex;
+    justify-content:flex-end;
+}
+
+@media(max-width:900px){
+    .float-head{
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .float-grid{
+        grid-template-columns:1fr;
+    }
+
+    .btn-main,
+    .btn-soft{
+        width:100%;
+    }
+}
+</style>
+
+<div class="float-page">
+
+    <div class="float-head">
+        <div>
+            <h1>Branch Cash Float 💵</h1>
+            <p>Set default petty cash / change money for each shop.</p>
+        </div>
+
+        <div>
+            <a href="{% url 'cash_count_dashboard' %}" class="btn-soft">← Back Cash Count</a>
+        </div>
+    </div>
+
+    <div class="float-info">
+        This setting is the default change money for each branch.
+        Example: if TK branch keeps 100,000៛ for change, tomorrow Daily Cash Count will auto use 100,000៛.
+        Staff can still adjust the amount on the daily cash count page if needed.
+    </div>
+
+    <div class="float-grid">
+        {% for cash_float in cash_floats %}
+            <form method="post" class="float-card">
+                {% csrf_token %}
+
+                <h2>{{ cash_float.branch.name }}</h2>
+                <small>Default petty cash / change float for this branch</small>
+
+                <input type="hidden" name="branch_id" value="{{ cash_float.branch.id }}">
+
+                <div class="current-value">
+                    Current: {{ cash_float.default_change_khr|floatformat:0 }}៛
+                </div>
+
+                <div class="form-row">
+                    <label>Default Change KHR</label>
+                    <input
+                        type="number"
+                        step="1"
+                        name="default_change_khr"
+                        value="{{ cash_float.default_change_khr|floatformat:0 }}"
+                    >
+                </div>
+
+                <div class="form-row">
+                    <label>Note</label>
+                    <textarea
+                        name="note"
+                        placeholder="Example: Keep 100,000៛ for change every day..."
+                    >{{ cash_float.note }}</textarea>
+                </div>
+
+                {% if cash_float.updated_by %}
+                    <div class="updated-info">
+                        Last updated by {{ cash_float.updated_by.username }} · {{ cash_float.updated_at|date:"d M Y H:i" }}
+                    </div>
+                {% endif %}
+
+                <div class="save-row">
+                    <button type="submit" class="btn-main">Save</button>
+                </div>
+            </form>
+        {% empty %}
+            <div class="float-card">
+                <h2>No branch found</h2>
+                <p>Please create branch first.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+{% endblock %}

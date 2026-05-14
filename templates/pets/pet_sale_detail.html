@@ -7,13 +7,47 @@
     <div class="page-top">
         <div>
             <h1>Pet Sale #{{ sale.id }} 🐾</h1>
-            <p>{{ sale.customer_name }} · {{ sale.phone|default:"No phone" }}</p>
+            <p>
+                {{ sale.customer_name }} · {{ sale.phone|default:"No phone" }}
+                {% if sale.seller_display %}
+                    · Seller: {{ sale.seller_display }}
+                {% endif %}
+            </p>
         </div>
 
         <div class="top-actions">
-            <a href="{% url 'pet_sale_edit' sale.id %}" class="soft-btn">✏️ Edit</a>
+            <a href="{% url 'pet_sale_list' %}" class="soft-btn">← Sale List</a>
+            <a href="{% url 'pet_sale_edit' sale.id %}" class="soft-btn edit-top">✏️ Edit</a>
             <a href="{% url 'pet_sale_receipt_print' sale.id %}" class="print-btn">🖨️ Receipt</a>
             <a href="{% url 'pet_warranty_print' sale.id %}" class="warranty-btn">🛡️ Warranty</a>
+        </div>
+    </div>
+
+    <div class="status-strip">
+        <div class="status-card">
+            <span>Status</span>
+            <strong class="status-pill status-{{ sale.status }}">{{ sale.get_status_display }}</strong>
+        </div>
+
+        <div class="status-card">
+            <span>Sale Type</span>
+            <strong>{{ sale.get_sale_kind_display }}</strong>
+        </div>
+
+        <div class="status-card">
+            <span>Seller / Staff</span>
+            <strong>{{ sale.seller_display|default:"-" }}</strong>
+        </div>
+
+        <div class="status-card">
+            <span>Created By</span>
+            <strong>
+                {% if sale.created_by %}
+                    {{ sale.created_by.get_full_name|default:sale.created_by.username }}
+                {% else %}
+                    -
+                {% endif %}
+            </strong>
         </div>
     </div>
 
@@ -21,10 +55,16 @@
         <div class="left">
             <div class="card pet-card">
                 <div class="pet-photo">
-                    {% if sale.sale_photo %}
+                    {% if sale.photos.all %}
+                        {% for item in sale.photos.all %}
+                            {% if forloop.first and item.photo %}
+                                <img src="{{ item.photo.url }}">
+                            {% endif %}
+                        {% endfor %}
+                    {% elif sale.sale_photo %}
                         <img src="{{ sale.sale_photo.url }}">
-                    {% elif sale.pet and sale.pet.photo %}
-                        <img src="{{ sale.pet.photo.url }}">
+                    {% elif sale.pet and sale.pet.display_photo %}
+                        <img src="{{ sale.pet.display_photo.url }}">
                     {% else %}
                         <div>🐶</div>
                     {% endif %}
@@ -32,21 +72,41 @@
 
                 <div>
                     <h2>{{ sale.pet_type_display }} · {{ sale.breed_display|default:"-" }}</h2>
+
                     <p>
                         {% if sale.pet_name_display %}Name: {{ sale.pet_name_display }} · {% endif %}
-                        Sex: {{ sale.gender_display|default:"-" }}
+                        Sex: {{ sale.gender_display|default:"-" }} ·
+                        Color: {{ sale.color_display|default:"-" }} ·
+                        Type: {{ sale.special_type_display|default:"-" }} ·
+                        Age: {{ sale.age_display }}
                     </p>
 
-                    <span class="badge">{{ sale.get_status_display }}</span>
+                    <span class="badge status-{{ sale.status }}">{{ sale.get_status_display }}</span>
                     <span class="badge mode">{{ sale.get_sale_kind_display }}</span>
                 </div>
             </div>
+
+            {% if sale.photos.all %}
+            <div class="card">
+                <h2>Sale Photos</h2>
+
+                <div class="photo-grid">
+                    {% for item in sale.photos.all %}
+                        {% if item.photo %}
+                            <a href="{{ item.photo.url }}" target="_blank" class="photo-thumb">
+                                <img src="{{ item.photo.url }}">
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
 
             {% if sale.sale_kind == "preorder" %}
             <div class="card">
                 <div class="copy-head">
                     <h2>Copy Pre-order Info</h2>
-                    <button onclick="copyInfo()">Copy</button>
+                    <button type="button" onclick="copyInfo()">Copy</button>
                 </div>
 
                 <textarea id="copyText" readonly>{{ copy_text }}</textarea>
@@ -56,15 +116,59 @@
             <div class="card">
                 <h2>Customer</h2>
 
-                <div class="info-row"><span>Name</span><strong>{{ sale.customer_name }}</strong></div>
-                <div class="info-row"><span>Phone</span><strong>{{ sale.phone|default:"-" }}</strong></div>
-                <div class="info-row"><span>Location</span><strong>{{ sale.address|default:"-" }}</strong></div>
+                <div class="info-row">
+                    <span>Name</span>
+                    <strong>{{ sale.customer_name }}</strong>
+                </div>
+
+                <div class="info-row">
+                    <span>Phone</span>
+                    <strong>{{ sale.phone|default:"-" }}</strong>
+                </div>
+
+                <div class="info-row">
+                    <span>Location</span>
+                    <strong>{{ sale.address|default:"-" }}</strong>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Date Info</h2>
+
+                <div class="info-row">
+                    <span>Deadline</span>
+                    <strong>{{ sale.deadline|date:"d/m/Y"|default:"-" }}</strong>
+                </div>
+
+                <div class="info-row">
+                    <span>Created</span>
+                    <strong>{{ sale.created_at|date:"d/m/Y H:i" }}</strong>
+                </div>
+
+                <div class="info-row">
+                    <span>Completed</span>
+                    <strong>{{ sale.completed_at|date:"d/m/Y H:i"|default:"-" }}</strong>
+                </div>
             </div>
 
             <div class="card">
                 <h2>Remark</h2>
                 <p class="note">{{ sale.note|default:"No remark" }}</p>
             </div>
+
+            {% if sale.cancel_reason %}
+            <div class="card danger-card">
+                <h2>Cancel Reason</h2>
+                <p class="note">{{ sale.cancel_reason }}</p>
+            </div>
+            {% endif %}
+
+            {% if sale.refund_reason %}
+            <div class="card dark-card">
+                <h2>Refund Reason</h2>
+                <p class="note">{{ sale.refund_reason }}</p>
+            </div>
+            {% endif %}
         </div>
 
         <div class="right">
@@ -73,46 +177,74 @@
 
                 <div class="money-row">
                     <span>Full Price</span>
-                    <strong>${{ sale.sale_price }}</strong>
+                    <strong>${{ sale.sale_price|floatformat:2 }}</strong>
                 </div>
 
                 <div class="money-row">
                     <span>Paid / Deposit</span>
-                    <strong>${{ sale.paid_amount }}</strong>
+                    <strong>${{ sale.paid_amount|floatformat:2 }}</strong>
                 </div>
 
                 <div class="money-row total">
                     <span>Remaining</span>
-                    <strong>${{ sale.remaining_amount }}</strong>
+                    <strong>${{ sale.remaining_amount|floatformat:2 }}</strong>
                 </div>
 
                 <div class="line"></div>
 
                 <h2>Warranty</h2>
 
-                <div class="info-row"><span>Days</span><strong>{{ sale.warranty_days|default:"3" }} days</strong></div>
-                <div class="info-row"><span>Start</span><strong>{{ sale.warranty_start_date|date:"d/m/Y"|default:"-" }}</strong></div>
-                <div class="info-row"><span>Expire</span><strong>{{ sale.warranty_expire_date|date:"d/m/Y"|default:"-" }}</strong></div>
+                <div class="info-row">
+                    <span>Days</span>
+                    <strong>{{ sale.warranty_days|default:"3" }} days</strong>
+                </div>
+
+                <div class="info-row">
+                    <span>Start</span>
+                    <strong>{{ sale.warranty_start_date|date:"d/m/Y"|default:"-" }}</strong>
+                </div>
+
+                <div class="info-row">
+                    <span>Expire</span>
+                    <strong>{{ sale.warranty_expire_date|date:"d/m/Y"|default:"-" }}</strong>
+                </div>
+
+                <div class="line"></div>
+
+                <h2>Actions</h2>
+
+                <a href="{% url 'pet_sale_edit' sale.id %}" class="edit-btn">
+                    ✏️ Edit Sale
+                </a>
 
                 {% if sale.sale_kind == "preorder" and sale.status == "deposit" %}
-                <form method="post" action="{% url 'pet_sale_mark_arrived' sale.id %}">
+                <form method="post" action="{% url 'pet_sale_mark_arrived' sale.id %}" class="mini-form">
                     {% csrf_token %}
                     <button class="arrived-btn" type="submit">📦 Mark Arrived</button>
                 </form>
                 {% endif %}
 
                 {% if sale.status != "completed" and sale.status != "cancelled" and sale.status != "refunded" %}
-                <form method="post" action="{% url 'pet_sale_complete' sale.id %}" class="mini-form">
+                <form method="post" action="{% url 'pet_sale_complete' sale.id %}" class="mini-form" onsubmit="return confirmCompleteSale()">
                     {% csrf_token %}
 
                     <label>
                         Add Extra Paid
-                        <input type="number" step="0.01" name="extra_paid" value="{{ sale.remaining_amount }}">
+                        <input
+                            type="number"
+                            step="0.01"
+                            name="extra_paid"
+                            value="{{ sale.remaining_amount }}"
+                        >
                     </label>
 
                     <label>
                         Warranty Days
-                        <input type="number" name="warranty_days" value="{{ sale.warranty_days|default:'3' }}">
+                        <input
+                            type="number"
+                            name="warranty_days"
+                            value="{{ sale.warranty_days|default:'3' }}"
+                        >
                     </label>
 
                     <button class="complete-btn" type="submit">✅ Complete Sale</button>
@@ -120,23 +252,27 @@
                 {% endif %}
 
                 {% if sale.status != "cancelled" and sale.status != "completed" and sale.status != "refunded" %}
-                <form method="post" action="{% url 'pet_sale_cancel' sale.id %}" class="mini-form">
+                <form method="post" action="{% url 'pet_sale_cancel' sale.id %}" class="mini-form" onsubmit="return confirmCancelSale()">
                     {% csrf_token %}
+
                     <label>
                         Cancel Reason
-                        <textarea name="cancel_reason"></textarea>
+                        <textarea name="cancel_reason" id="cancelReason" placeholder="Write cancel reason..." required></textarea>
                     </label>
+
                     <button class="cancel-btn" type="submit">❌ Customer Cancel</button>
                 </form>
                 {% endif %}
 
-                {% if sale.status != "refunded" %}
-                <form method="post" action="{% url 'pet_sale_refund' sale.id %}" class="mini-form">
+                {% if sale.status != "refunded" and sale.status != "cancelled" %}
+                <form method="post" action="{% url 'pet_sale_refund' sale.id %}" class="mini-form" onsubmit="return confirmRefundSale()">
                     {% csrf_token %}
+
                     <label>
                         Refund Reason
-                        <textarea name="refund_reason"></textarea>
+                        <textarea name="refund_reason" id="refundReason" placeholder="Write refund reason..." required></textarea>
                     </label>
+
                     <button class="refund-btn" type="submit">↩️ Refund</button>
                 </form>
                 {% endif %}
@@ -151,13 +287,44 @@
 *{box-sizing:border-box}
 a{text-decoration:none}
 
-.detail-page{padding:24px 28px}
-.page-top{display:flex;justify-content:space-between;gap:18px;margin-bottom:22px}
-.page-top h1{margin:0;font-size:34px;font-weight:1000;color:#080634}
-.page-top p{color:#7b7288;font-weight:900}
-.top-actions{display:flex;gap:10px;flex-wrap:wrap}
+.detail-page{
+    padding:24px 28px;
+}
 
-.soft-btn,.print-btn,.warranty-btn,.arrived-btn,.complete-btn,.cancel-btn,.refund-btn,.claim-btn{
+.page-top{
+    display:flex;
+    justify-content:space-between;
+    gap:18px;
+    margin-bottom:18px;
+}
+
+.page-top h1{
+    margin:0;
+    font-size:34px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.page-top p{
+    color:#7b7288;
+    font-weight:900;
+}
+
+.top-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.soft-btn,
+.print-btn,
+.warranty-btn,
+.arrived-btn,
+.complete-btn,
+.cancel-btn,
+.refund-btn,
+.claim-btn,
+.edit-btn{
     min-height:54px;
     padding:0 18px;
     border-radius:18px;
@@ -170,11 +337,56 @@ a{text-decoration:none}
 }
 
 .soft-btn{background:#f1f5f9;color:#334155}
+.edit-top{background:#fff7ed;color:#ea580c}
 .print-btn{background:linear-gradient(135deg,#ff8c6b,#ff5d73);color:white}
 .warranty-btn{background:linear-gradient(135deg,#34c6ff,#7b5cff);color:white}
 
-.layout{display:grid;grid-template-columns:1fr 430px;gap:22px}
-.left,.right{display:grid;gap:18px}
+.status-strip{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+    margin-bottom:20px;
+}
+
+.status-card{
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:22px;
+    padding:16px;
+    box-shadow:0 12px 28px rgba(130,91,60,.07);
+}
+
+.status-card span{
+    display:block;
+    color:#7b7288;
+    font-weight:1000;
+    margin-bottom:8px;
+}
+
+.status-card strong{
+    color:#080634;
+    font-size:18px;
+    font-weight:1000;
+}
+
+.status-pill{
+    display:inline-flex;
+    padding:8px 12px;
+    border-radius:999px;
+}
+
+.layout{
+    display:grid;
+    grid-template-columns:1fr 430px;
+    gap:22px;
+}
+
+.left,
+.right{
+    display:grid;
+    gap:18px;
+}
+
 .card{
     background:white;
     border:2px solid #f5e0d8;
@@ -182,11 +394,31 @@ a{text-decoration:none}
     padding:20px;
     box-shadow:0 18px 40px rgba(130,91,60,.08);
 }
-.sticky{position:sticky;top:18px}
 
-.pet-card{display:grid;grid-template-columns:160px 1fr;gap:18px;align-items:center}
+.danger-card{
+    border-color:#fecaca;
+    background:#fff7f7;
+}
+
+.dark-card{
+    border-color:#cbd5e1;
+    background:#f8fafc;
+}
+
+.sticky{
+    position:sticky;
+    top:18px;
+}
+
+.pet-card{
+    display:grid;
+    grid-template-columns:180px 1fr;
+    gap:18px;
+    align-items:center;
+}
+
 .pet-photo{
-    height:150px;
+    height:170px;
     border-radius:24px;
     background:#fff8f4;
     overflow:hidden;
@@ -195,10 +427,25 @@ a{text-decoration:none}
     justify-content:center;
     font-size:70px;
 }
-.pet-photo img{width:100%;height:100%;object-fit:cover}
 
-.card h2{margin:0 0 14px;color:#080634}
-.card p{font-weight:900;color:#7b7288}
+.pet-photo img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    padding:8px;
+    background:#fff8f4;
+}
+
+.card h2{
+    margin:0 0 14px;
+    color:#080634;
+}
+
+.card p{
+    font-weight:900;
+    color:#7b7288;
+    line-height:1.5;
+}
 
 .badge{
     display:inline-flex;
@@ -208,10 +455,70 @@ a{text-decoration:none}
     color:#16a05d;
     font-weight:1000;
     margin-right:6px;
+    margin-top:6px;
 }
-.badge.mode{background:#f2edff;color:#7b5cff}
 
-.copy-head{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.badge.mode{
+    background:#f2edff;
+    color:#7b5cff;
+}
+
+.status-deposit{
+    background:#fff7ed!important;
+    color:#ea580c!important;
+}
+
+.status-arrived{
+    background:#e0f2fe!important;
+    color:#0284c7!important;
+}
+
+.status-completed{
+    background:#dcfce7!important;
+    color:#16a34a!important;
+}
+
+.status-cancelled{
+    background:#fee2e2!important;
+    color:#dc2626!important;
+}
+
+.status-refunded{
+    background:#e2e8f0!important;
+    color:#334155!important;
+}
+
+.photo-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+}
+
+.photo-thumb{
+    height:150px;
+    border-radius:18px;
+    background:#fff8f4;
+    border:2px solid #f5e0d8;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.photo-thumb img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    padding:6px;
+}
+
+.copy-head{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    align-items:center;
+}
+
 .copy-head button{
     border:0;
     border-radius:999px;
@@ -221,9 +528,18 @@ a{text-decoration:none}
     font-weight:1000;
     cursor:pointer;
 }
-#copyText{width:100%;min-height:230px;border:2px dashed #f3c987;border-radius:20px;padding:14px;font-weight:900}
 
-.info-row,.money-row{
+#copyText{
+    width:100%;
+    min-height:230px;
+    border:2px dashed #f3c987;
+    border-radius:20px;
+    padding:14px;
+    font-weight:900;
+}
+
+.info-row,
+.money-row{
     display:flex;
     justify-content:space-between;
     gap:12px;
@@ -231,16 +547,47 @@ a{text-decoration:none}
     border-bottom:1px dashed #eaddec;
     font-weight:900;
 }
-.info-row span,.money-row span{color:#7b7288}
-.money-row strong{font-size:21px;color:#080634}
-.money-row.total strong{color:#ff5d73;font-size:25px}
-.line{border-top:2px dashed #eaddec;margin:18px 0}
 
-.note{background:#fffaf0;border-radius:18px;padding:14px;color:#080634!important}
+.info-row span,
+.money-row span{
+    color:#7b7288;
+}
 
-.mini-form{margin-top:16px;padding-top:16px;border-top:1px dashed #eaddec}
-.mini-form label{font-weight:1000;color:#080634}
-.mini-form input,.mini-form textarea{
+.money-row strong{
+    font-size:21px;
+    color:#080634;
+}
+
+.money-row.total strong{
+    color:#ff5d73;
+    font-size:25px;
+}
+
+.line{
+    border-top:2px dashed #eaddec;
+    margin:18px 0;
+}
+
+.note{
+    background:#fffaf0;
+    border-radius:18px;
+    padding:14px;
+    color:#080634!important;
+}
+
+.mini-form{
+    margin-top:16px;
+    padding-top:16px;
+    border-top:1px dashed #eaddec;
+}
+
+.mini-form label{
+    font-weight:1000;
+    color:#080634;
+}
+
+.mini-form input,
+.mini-form textarea{
     width:100%;
     border:2px solid #eaddec;
     border-radius:16px;
@@ -249,10 +596,27 @@ a{text-decoration:none}
     font-size:16px;
     font-weight:900;
 }
-.mini-form input{height:52px}
-.mini-form textarea{min-height:80px}
 
-.arrived-btn,.complete-btn,.cancel-btn,.refund-btn,.claim-btn{width:100%;margin-top:10px;color:white}
+.mini-form input{
+    height:52px;
+}
+
+.mini-form textarea{
+    min-height:80px;
+}
+
+.arrived-btn,
+.complete-btn,
+.cancel-btn,
+.refund-btn,
+.claim-btn,
+.edit-btn{
+    width:100%;
+    margin-top:10px;
+    color:white;
+}
+
+.edit-btn{background:linear-gradient(135deg,#f59e0b,#fb7185)}
 .arrived-btn{background:linear-gradient(135deg,#34c6ff,#7b5cff)}
 .complete-btn{background:linear-gradient(135deg,#13a85f,#7b5cff)}
 .cancel-btn{background:linear-gradient(135deg,#ff8c6b,#ff5d73)}
@@ -260,15 +624,62 @@ a{text-decoration:none}
 .claim-btn{background:linear-gradient(135deg,#f59e0b,#ef4444)}
 
 @media(max-width:1194px){
-    .page-top{display:block}
-    .top-actions{margin-top:14px}
-    .layout{grid-template-columns:1fr}
-    .sticky{position:relative;top:auto}
+    .page-top{
+        display:block;
+    }
+
+    .top-actions{
+        margin-top:14px;
+    }
+
+    .status-strip,
+    .layout{
+        grid-template-columns:1fr;
+    }
+
+    .sticky{
+        position:relative;
+        top:auto;
+    }
 }
+
 @media(max-width:700px){
-    .detail-page{padding:18px}
-    .page-top h1{font-size:28px}
-    .pet-card{grid-template-columns:1fr}
+    .detail-page{
+        padding:18px;
+    }
+
+    .page-top h1{
+        font-size:28px;
+    }
+
+    .top-actions{
+        display:grid;
+        grid-template-columns:1fr;
+    }
+
+    .soft-btn,
+    .print-btn,
+    .warranty-btn{
+        width:100%;
+        min-height:68px;
+        font-size:17px;
+    }
+
+    .pet-card{
+        grid-template-columns:1fr;
+    }
+
+    .pet-photo{
+        height:260px;
+    }
+
+    .photo-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .photo-thumb{
+        height:130px;
+    }
 }
 </style>
 
@@ -276,11 +687,39 @@ a{text-decoration:none}
 function copyInfo(){
     const box = document.getElementById("copyText");
     if(!box) return;
+
     box.select();
     box.setSelectionRange(0, 99999);
+
     navigator.clipboard.writeText(box.value).then(function(){
         alert("Copied ✅");
     });
+}
+
+function confirmCompleteSale(){
+    return confirm("Complete this sale? This will mark the pet as sold and send Telegram complete alert.");
+}
+
+function confirmCancelSale(){
+    const reason = document.getElementById("cancelReason");
+    if(reason && !reason.value.trim()){
+        alert("Please write cancel reason.");
+        reason.focus();
+        return false;
+    }
+
+    return confirm("Cancel this sale? Pet will return to in-stock if linked.");
+}
+
+function confirmRefundSale(){
+    const reason = document.getElementById("refundReason");
+    if(reason && !reason.value.trim()){
+        alert("Please write refund reason.");
+        reason.focus();
+        return false;
+    }
+
+    return confirm("Refund this sale? Pet will return to in-stock if linked.");
 }
 </script>
 

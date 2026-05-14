@@ -5,6 +5,62 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 
+class PetBreed(models.Model):
+    TYPE_CHOICES = [
+        ("dog", "Dog"),
+        ("cat", "Cat"),
+        ("other", "Other"),
+    ]
+
+    pet_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default="dog")
+    name = models.CharField(max_length=120)
+
+    # Breed sample/reference photo
+    photo = models.ImageField(upload_to="pet_breeds/", blank=True, null=True)
+
+    default_cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    default_sale_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    color_options = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Example: White, Cream, Brown, Black",
+    )
+
+    sex_options = models.CharField(
+        max_length=255,
+        blank=True,
+        default="Male,Female",
+        help_text="Example: Male, Female",
+    )
+
+    special_type_options = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Example: Teacup, Mini, Standard, Show Grade",
+    )
+
+    note = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_pet_breeds",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["pet_type", "name"]
+
+    def __str__(self):
+        return f"{self.get_pet_type_display()} - {self.name}"
+
+
 class Pet(models.Model):
     TYPE_CHOICES = [
         ("dog", "Dog"),
@@ -22,15 +78,37 @@ class Pet(models.Model):
         ("cancelled", "Cancelled"),
     ]
 
+    breed_profile = models.ForeignKey(
+        PetBreed,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="pets",
+    )
+
     pet_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default="dog")
-    breed = models.CharField(max_length=120)
+
+    # Keep old breed field for safety / old data
+    breed = models.CharField(max_length=120, blank=True)
+
     name = models.CharField(max_length=120, blank=True)
     gender = models.CharField(max_length=30, blank=True)
     color = models.CharField(max_length=80, blank=True)
+    special_type = models.CharField(max_length=120, blank=True)
 
-    birth_date = models.DateField(null=True, blank=True)
+    age_months_at_stock_in = models.PositiveIntegerField(
+        default=0,
+        help_text="Age in months when this pet was stocked in.",
+    )
+
+    age_recorded_date = models.DateField(
+        default=timezone.localdate,
+        help_text="Date when age was recorded.",
+    )
+
     death_date = models.DateField(null=True, blank=True)
 
+    # Actual real pet photo when stock-in
     photo = models.ImageField(upload_to="pets/", blank=True, null=True)
 
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -51,6 +129,67 @@ class Pet(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     @property
+    def breed_name(self):
+        if self.breed_profile:
+            return self.breed_profile.name
+        return self.breed
+
+    @property
+    def display_photo(self):
+        if self.photo:
+            return self.photo
+        if self.breed_profile and self.breed_profile.photo:
+            return self.breed_profile.photo
+        return None
+
+    @property
+    def current_age_months(self):
+        base_months = int(self.age_months_at_stock_in or 0)
+
+        if not self.age_recorded_date:
+            return base_months
+
+        today = timezone.localdate()
+
+        months_passed = (
+            (today.year - self.age_recorded_date.year) * 12
+            + (today.month - self.age_recorded_date.month)
+        )
+
+        if today.day < self.age_recorded_date.day:
+            months_passed -= 1
+
+        if months_passed < 0:
+            months_passed = 0
+
+        return base_months + months_passed
+
+    @property
+    def current_age_display(self):
+        months = self.current_age_months
+
+        if months <= 0:
+            return "-"
+
+        if months < 12:
+            return f"{months} month" if months == 1 else f"{months} months"
+
+        years = months // 12
+        remain_months = months % 12
+
+        if remain_months == 0:
+            return f"{years} year" if years == 1 else f"{years} years"
+
+        year_text = f"{years} year" if years == 1 else f"{years} years"
+        month_text = (
+            f"{remain_months} month"
+            if remain_months == 1
+            else f"{remain_months} months"
+        )
+
+        return f"{year_text} {month_text}"
+
+    @property
     def latest_vaccine(self):
         return self.vaccines.order_by("-vaccine_date", "-id").first()
 
@@ -65,8 +204,23 @@ class Pet(models.Model):
 
         return None
 
+    def save(self, *args, **kwargs):
+        if self.breed_profile:
+            self.pet_type = self.breed_profile.pet_type
+
+            if not self.breed:
+                self.breed = self.breed_profile.name
+
+            if not self.cost_price:
+                self.cost_price = self.breed_profile.default_cost_price
+
+            if not self.sale_price:
+                self.sale_price = self.breed_profile.default_sale_price
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.get_pet_type_display()} - {self.breed} - {self.get_status_display()}"
+        return f"{self.get_pet_type_display()} - {self.breed_name} - {self.get_status_display()}"
 
 
 class PetVaccine(models.Model):
@@ -144,6 +298,9 @@ class PetSale(models.Model):
     )
     preorder_breed = models.CharField(max_length=120, blank=True)
     preorder_gender = models.CharField(max_length=30, blank=True)
+    preorder_color = models.CharField(max_length=80, blank=True)
+    preorder_special_type = models.CharField(max_length=120, blank=True)
+
     deadline = models.DateField(null=True, blank=True)
 
     customer_name = models.CharField(max_length=120)
@@ -159,6 +316,7 @@ class PetSale(models.Model):
     warranty_start_date = models.DateField(null=True, blank=True)
     warranty_expire_date = models.DateField(null=True, blank=True)
 
+    # Old single photo field kept for old data / fallback
     sale_photo = models.ImageField(upload_to="pet_sales/", blank=True, null=True)
 
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="deposit")
@@ -167,6 +325,7 @@ class PetSale(models.Model):
     cancel_reason = models.TextField(blank=True)
     refund_reason = models.TextField(blank=True)
 
+    # User who recorded the sale in the system
     created_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -175,8 +334,28 @@ class PetSale(models.Model):
         related_name="created_pet_sales",
     )
 
+    # Real seller/staff who sold the pet
+    seller = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="pet_sales_as_seller",
+        help_text="Real seller/staff who sold this pet.",
+    )
+
     completed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def seller_display(self):
+        if self.seller:
+            return self.seller.get_full_name() or self.seller.username
+
+        if self.created_by:
+            return self.created_by.get_full_name() or self.created_by.username
+
+        return "-"
 
     @property
     def pet_type_display(self):
@@ -187,7 +366,7 @@ class PetSale(models.Model):
     @property
     def breed_display(self):
         if self.pet:
-            return self.pet.breed
+            return self.pet.breed_name
         return self.preorder_breed
 
     @property
@@ -197,10 +376,28 @@ class PetSale(models.Model):
         return self.preorder_gender
 
     @property
+    def color_display(self):
+        if self.pet:
+            return self.pet.color
+        return self.preorder_color
+
+    @property
+    def special_type_display(self):
+        if self.pet:
+            return self.pet.special_type
+        return self.preorder_special_type
+
+    @property
     def pet_name_display(self):
         if self.pet and self.pet.name:
             return self.pet.name
         return ""
+
+    @property
+    def age_display(self):
+        if self.pet:
+            return self.pet.current_age_display
+        return "-"
 
     @property
     def balance(self):
@@ -220,6 +417,8 @@ class PetSale(models.Model):
             "🐶 BUBU PET PRE-ORDER\n"
             f"Breed: {self.breed_display or '-'}\n"
             f"Sex: {self.gender_display or '-'}\n"
+            f"Color: {self.color_display or '-'}\n"
+            f"Special Type: {self.special_type_display or '-'}\n"
             f"Remark: {self.note or '-'}\n"
             f"Full Price: ${self.sale_price}\n"
             f"Deposit: ${self.paid_amount}\n"
@@ -227,23 +426,35 @@ class PetSale(models.Model):
             "Customer Info\n"
             f"Name: {self.customer_name}\n"
             f"Phone: {self.phone or '-'}\n"
-            f"Location: {self.address or '-'}"
+            f"Location: {self.address or '-'}\n"
+            f"Seller: {self.seller_display}"
         )
 
     def save(self, *args, **kwargs):
         self.deposit_amount = self.paid_amount
         self.remaining_amount = self.sale_price - self.paid_amount
 
-        if self.status not in ["cancelled", "refunded", "arrived"]:
-            if self.sale_price > 0 and self.paid_amount >= self.sale_price:
-                self.status = "completed"
-            else:
-                self.status = "deposit"
-
+        # Important:
+        # If status is already completed by view button, keep it completed.
+        # Do not change completed back to deposit, even if sale price is $0.
         if self.status == "completed":
             if not self.completed_at:
                 self.completed_at = timezone.now()
             self.set_warranty_dates()
+
+        elif self.status in ["cancelled", "refunded", "arrived"]:
+            pass
+
+        else:
+            if self.sale_price > 0 and self.paid_amount >= self.sale_price:
+                self.status = "completed"
+
+                if not self.completed_at:
+                    self.completed_at = timezone.now()
+
+                self.set_warranty_dates()
+            else:
+                self.status = "deposit"
 
         super().save(*args, **kwargs)
 
@@ -251,15 +462,34 @@ class PetSale(models.Model):
             if self.status == "completed":
                 self.pet.status = "sold"
                 self.pet.save(update_fields=["status"])
+
             elif self.status == "deposit":
                 self.pet.status = "reserved"
                 self.pet.save(update_fields=["status"])
+
             elif self.status in ["cancelled", "refunded"]:
                 self.pet.status = "in_stock"
                 self.pet.save(update_fields=["status"])
 
     def __str__(self):
         return f"{self.customer_name} - {self.pet_type_display} - {self.breed_display}"
+
+
+class PetSalePhoto(models.Model):
+    sale = models.ForeignKey(
+        PetSale,
+        on_delete=models.CASCADE,
+        related_name="photos",
+    )
+
+    photo = models.ImageField(upload_to="pet_sale_photos/")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["id"]
+
+    def __str__(self):
+        return f"Photo for sale #{self.sale_id}"
 
 
 class PetWarrantyClaim(models.Model):

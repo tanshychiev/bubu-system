@@ -1,17 +1,40 @@
 from django import forms
-from .models import Pet, PetSale, PetWarrantyClaim
+from django.db.models import Q
+
+from .models import Pet, PetBreed, PetSale, PetWarrantyClaim
+from .models import Pet, PetBreed, PetSale, PetWarrantyClaim, PetSalePhoto
+
+
+class PetBreedForm(forms.ModelForm):
+    class Meta:
+        model = PetBreed
+        fields = [
+            "pet_type",
+            "name",
+            "photo",
+            "default_cost_price",
+            "default_sale_price",
+            "color_options",
+            "sex_options",
+            "special_type_options",
+            "note",
+            "is_active",
+        ]
 
 
 class PetForm(forms.ModelForm):
     class Meta:
         model = Pet
         fields = [
+            "breed_profile",
             "pet_type",
             "breed",
             "name",
             "gender",
             "color",
-            "birth_date",
+            "special_type",
+            "age_months_at_stock_in",
+            "age_recorded_date",
             "death_date",
             "photo",
             "cost_price",
@@ -19,6 +42,21 @@ class PetForm(forms.ModelForm):
             "status",
             "note",
         ]
+
+    def clean(self):
+        cleaned = super().clean()
+
+        breed_profile = cleaned.get("breed_profile")
+        breed = cleaned.get("breed")
+        age_months = cleaned.get("age_months_at_stock_in") or 0
+
+        if not breed_profile and not breed:
+            raise forms.ValidationError("Please select breed or enter breed name.")
+
+        if age_months < 0:
+            raise forms.ValidationError("Age cannot be negative.")
+
+        return cleaned
 
 
 class PetSaleForm(forms.ModelForm):
@@ -30,6 +68,8 @@ class PetSaleForm(forms.ModelForm):
             "preorder_pet_type",
             "preorder_breed",
             "preorder_gender",
+            "preorder_color",
+            "preorder_special_type",
             "deadline",
             "customer_name",
             "phone",
@@ -41,6 +81,31 @@ class PetSaleForm(forms.ModelForm):
             "sale_photo",
             "note",
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        current_pet_id = None
+
+        if self.instance and self.instance.pk and self.instance.pet_id:
+            current_pet_id = self.instance.pet_id
+
+        pets = (
+            Pet.objects
+            .select_related("breed_profile")
+            .filter(status="in_stock")
+            .order_by("-created_at")
+        )
+
+        if current_pet_id:
+            pets = (
+                Pet.objects
+                .select_related("breed_profile")
+                .filter(Q(status="in_stock") | Q(id=current_pet_id))
+                .order_by("-created_at")
+            )
+
+        self.fields["pet"].queryset = pets
 
     def clean(self):
         cleaned = super().clean()

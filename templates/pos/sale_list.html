@@ -756,6 +756,9 @@ a { text-decoration: none !important; }
             <a href="{% url 'cash_count_dashboard' %}" class="btn-rate">
                 💵 Cash Count
             </a>
+            <a href="{% url 'branch_cash_float_settings' %}" class="btn-orange">
+    💰 Branch Cash Float
+</a>
         </div>
     </div>
 
@@ -902,12 +905,19 @@ a { text-decoration: none !important; }
                     </td>
 
                     <td>
-                        {% if sale.customer %}
-                            {{ sale.customer }}
-                        {% else %}
-                            Walk-in
-                        {% endif %}
-                    </td>
+    {% if sale.customer %}
+        <strong>{{ sale.customer.name|default:"No Name" }}</strong>
+
+        {% if sale.customer.phone %}
+            <br>
+            <small style="color:#7b6f92;font-weight:800;">
+                {{ sale.customer.phone }}
+            </small>
+        {% endif %}
+    {% else %}
+        Walk-in
+    {% endif %}
+</td>
 
                     <td>${{ sale.total_amount|floatformat:2 }}</td>
                     <td>${{ sale.paid_amount|floatformat:2 }}</td>

@@ -145,8 +145,8 @@
                     </button>
 
                     {% if item.variants.all %}
-                    <div class="variant-modal" id="variantModal{{ item.id }}">
-                        <div class="variant-box">
+                    <div class="variant-modal" id="variantModal{{ item.id }}" onclick="closeVariantModal('variantModal{{ item.id }}')">
+                        <div class="variant-box" onclick="event.stopPropagation()">
                             <div class="variant-head">
                                 <h2>Select Variant</h2>
                                 <button type="button" onclick="closeVariantModal('variantModal{{ item.id }}')">×</button>
@@ -343,8 +343,8 @@
 </div>
 
 {% if request.user.is_superuser %}
-<div class="switch-shop-modal" id="switchShopModal">
-    <div class="switch-shop-box">
+<div class="switch-shop-modal" id="switchShopModal" onclick="closeSwitchShopModal()">
+    <div class="switch-shop-box" onclick="event.stopPropagation()">
         <div class="switch-shop-head">
             <div>
                 <h2>Switch POS Shop</h2>
@@ -390,8 +390,8 @@
 </div>
 {% endif %}
 
-<div class="payment-modal" id="paymentModal">
-    <div class="payment-box">
+<div class="payment-modal" id="paymentModal" onclick="closePaymentModal()">
+    <div class="payment-box" onclick="event.stopPropagation()">
         <div class="payment-head">
             <h2>Payment</h2>
             <button type="button" onclick="closePaymentModal()">×</button>
@@ -762,6 +762,10 @@
                     Complete + Print Receipt
                 </button>
             </div>
+
+            <button type="button" class="modal-bottom-close-btn" onclick="closePaymentModal()">
+                ✕ Close Payment
+            </button>
         </form>
     </div>
 </div>
@@ -1619,10 +1623,17 @@ a{
 
 .payment-head,
 .variant-head{
+    position:sticky;
+    top:0;
+    z-index:40;
     display:flex;
     justify-content:space-between;
     align-items:center;
     gap:12px;
+    background:white;
+    margin:-26px -26px 16px;
+    padding:20px 26px 14px;
+    border-bottom:1px solid #f0dcd0;
 }
 
 .payment-head h2,
@@ -1634,13 +1645,28 @@ a{
 
 .payment-head button,
 .variant-head button{
-    width:52px;
-    height:52px;
+    width:58px;
+    height:58px;
     border:none;
     border-radius:50%;
     background:#fff0f0;
     color:#ff4d5d;
-    font-size:28px;
+    font-size:32px;
+    font-weight:1000;
+    cursor:pointer;
+    box-shadow:0 10px 22px rgba(255,77,93,.14);
+}
+
+.modal-bottom-close-btn{
+    width:100%;
+    min-height:64px;
+    margin-top:14px;
+    border:none;
+    border-radius:999px;
+    background:#fff0f0;
+    color:#ff4d5d;
+    font-size:18px;
+    font-weight:1000;
     cursor:pointer;
 }
 
@@ -2045,17 +2071,23 @@ a{
    PAYMENT CONTENT
 ========================= */
 .pay-total{
+    position:sticky;
+    top:86px;
+    z-index:35;
     margin:18px 0;
-    padding:20px;
+    padding:18px 20px;
     border-radius:22px;
-    background:#fff8fb;
+    background:linear-gradient(135deg,#fff8fb,#ffffff);
+    border:2px solid #ffe1ea;
+    box-shadow:0 14px 28px rgba(130,91,60,.12);
     display:flex;
     flex-direction:column;
     gap:6px;
 }
 
 .pay-total strong{
-    font-size:40px;
+    font-size:38px;
+    line-height:1.05;
 }
 
 .pay-total small{
@@ -2847,6 +2879,49 @@ a{
         width:100%;
     }
 }
+
+@media(max-width:700px){
+    .payment-box,
+    .variant-box{
+        width:100%;
+        max-height:calc(100vh - 28px);
+        border-radius:28px;
+        padding:22px;
+    }
+
+    .payment-head,
+    .variant-head{
+        margin:-22px -22px 16px;
+        padding:16px 22px 12px;
+    }
+
+    .payment-head button,
+    .variant-head button{
+        width:62px;
+        height:62px;
+        font-size:34px;
+    }
+
+    .modal-bottom-close-btn{
+        min-height:70px;
+        font-size:20px;
+        margin-bottom:8px;
+    }
+}
+
+@media(max-width:700px){
+    .pay-total{
+        top:82px !important;
+        margin:12px 0 16px;
+        padding:16px;
+        border-radius:20px;
+    }
+
+    .pay-total strong{
+        font-size:34px;
+    }
+}
+
 </style>
 
 <script>
@@ -3504,7 +3579,10 @@ function validatePrepareDelivery(){
 
     const name = valueOf("deliveryReceiverName").trim();
     const phone = valueOf("deliveryPhone").trim();
-    const address = valueOf("deliveryAddress").trim();
+
+    let address = valueOf("deliveryAddress").trim();
+    const deliveryNoteValue = valueOf("deliveryNote").trim();
+
     const deliveryPaymentType = getSelectedDeliveryPaymentType();
     const deliveryCompanyId = valueOf("deliveryCompanyId").trim();
 
@@ -3525,6 +3603,21 @@ function validatePrepareDelivery(){
         const input = document.getElementById("deliveryPhone");
         if(input) input.focus();
         return false;
+    }
+
+    /*
+        If customer location is empty but Delivery Note has text,
+        auto copy Delivery Note into Customer Location.
+        This prevents the error when staff filled note only.
+    */
+    if(!address && deliveryNoteValue){
+        const addressInput = document.getElementById("deliveryAddress");
+
+        if(addressInput){
+            addressInput.value = deliveryNoteValue;
+        }
+
+        address = deliveryNoteValue;
     }
 
     if(!address){
@@ -3548,7 +3641,6 @@ function validatePrepareDelivery(){
 
     return true;
 }
-
 
 function getPOSPaymentInfo(){
     const saleType = getSelectedSaleType();

@@ -7,18 +7,32 @@
     <div class="page-top">
         <div>
             <h1>{% if sale %}Edit Pet Sale{% else %}Pet Sale / Pre-order{% endif %} 🐶🐱</h1>
-            <p>Separate dog & cat selling from POS. Sell in-stock pet or create preorder deposit.</p>
+            <p>Sell in-stock pet or create preorder deposit. Track walk-in, staff chat and simple commission.</p>
         </div>
 
-        <a href="{% url 'pet_list' %}" class="soft-btn">← Back</a>
+        <div class="top-actions">
+            <a href="{% url 'pet_sale_list' %}" class="soft-btn">📋 Sale List</a>
+            <a href="{% url 'pet_list' %}" class="soft-btn">← Back</a>
+        </div>
     </div>
 
-    <form method="post" enctype="multipart/form-data" class="sale-card" id="petSaleForm">
+    <form method="post" enctype="multipart/form-data" class="sale-card" id="petSaleForm" novalidate>
         {% csrf_token %}
 
-        {% if form.non_field_errors %}
+        {% if form.errors %}
             <div class="error-box">
-                {{ form.non_field_errors }}
+                <strong>Cannot save. Please check:</strong>
+                <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
             </div>
         {% endif %}
 
@@ -26,18 +40,26 @@
 
         <div class="mode-tabs">
             <label class="mode-card" id="modeInStock">
-                <input type="radio" name="sale_kind" value="in_stock"
+                <input
+                    type="radio"
+                    name="sale_kind"
+                    value="in_stock"
                     {% if not sale or sale.sale_kind == "in_stock" %}checked{% endif %}
-                    onchange="switchSaleMode()">
+                    onchange="switchSaleMode()"
+                >
                 <span>🐾</span>
                 <strong>Sell In-stock Pet</strong>
-                <small>Select dog/cat from stock and sell now.</small>
+                <small>Select real dog/cat from stock and sell now.</small>
             </label>
 
             <label class="mode-card" id="modePreorder">
-                <input type="radio" name="sale_kind" value="preorder"
+                <input
+                    type="radio"
+                    name="sale_kind"
+                    value="preorder"
                     {% if sale and sale.sale_kind == "preorder" %}checked{% endif %}
-                    onchange="switchSaleMode()">
+                    onchange="switchSaleMode()"
+                >
                 <span>📝</span>
                 <strong>Create Pre-order</strong>
                 <small>No pet stock yet. Save deposit + deadline.</small>
@@ -53,12 +75,128 @@
                     <div class="grid2">
                         <label>
                             Customer Name
-                            <input name="customer_name" id="customerName" value="{{ sale.customer_name|default:'' }}" required>
+                            <input
+                                name="customer_name"
+                                id="customerName"
+                                value="{{ sale.customer_name|default:'' }}"
+                                required
+                            >
                         </label>
 
                         <label>
                             Phone
-                            <input name="phone" id="customerPhone" value="{{ sale.phone|default:'' }}">
+                            <input
+                                name="phone"
+                                id="customerPhone"
+                                value="{{ sale.phone|default:'' }}"
+                            >
+                        </label>
+                    </div>
+
+                    <div class="customer-live-box">
+                        <div class="customer-check-card new-customer" id="customerCheckCard">
+                            <div class="customer-check-left">
+                                <strong id="customerCheckTitle">🆕 New Customer</strong>
+                                <span id="customerCheckDetail">Type phone/name to search. If no match, customer auto creates after save.</span>
+                            </div>
+
+                            <div class="customer-check-right">
+                                <span id="customerPointShow">0 pts</span>
+                                <small id="customerSpentShow">$0.00 spent</small>
+                            </div>
+                        </div>
+
+                        <div class="customer-live-results" id="customerLiveResults"></div>
+                    </div>
+
+                    <input
+                        type="hidden"
+                        name="seller"
+                        id="sellerInput"
+                        value="{% if sale and sale.seller %}{{ sale.seller.id }}{% else %}{{ request.user.id }}{% endif %}"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="customer_source"
+                        id="customerSourceInput"
+                        value="{% if sale and sale.customer_source %}{{ sale.customer_source }}{% else %}staff_chat{% endif %}"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="lead_owner"
+                        id="leadOwnerInput"
+                        value="{% if sale and sale.lead_owner %}{{ sale.lead_owner.id }}{% elif sale and sale.seller %}{{ sale.seller.id }}{% else %}{{ request.user.id }}{% endif %}"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="commission_mode"
+                        id="commissionModeInput"
+                        value="{% if sale and sale.commission_mode %}{{ sale.commission_mode }}{% else %}seller{% endif %}"
+                    >
+
+                    <div class="grid2 seller-line">
+                        <label>
+                            Seller / Staff
+                            <button type="button" class="touch-btn" onclick="openSellerPopup()">
+                                <strong id="sellerLabel">
+                                    {% if sale and sale.seller %}
+                                        {{ sale.seller.get_full_name|default:sale.seller.username }}
+                                    {% else %}
+                                        {{ request.user.get_full_name|default:request.user.username }}
+                                    {% endif %}
+                                </strong>
+                                <em>⌄</em>
+                            </button>
+                        </label>
+
+                        <label>
+                            Customer Source
+                            <button type="button" class="touch-btn" onclick="openSourcePopup()">
+                                <strong id="customerSourceLabel">
+                                    {% if sale and sale.customer_source == "walk_in" %}
+                                        🚶 Walk-in
+                                    {% else %}
+                                        💬 Staff Chat
+                                    {% endif %}
+                                </strong>
+                                <em>⌄</em>
+                            </button>
+                        </label>
+                    </div>
+
+                    <div class="grid2 seller-line" id="leadCommissionRow">
+                        <label id="leadOwnerWrap">
+                            Lead / Chat Owner
+                            <button type="button" class="touch-btn" onclick="openLeadOwnerPopup()">
+                                <strong id="leadOwnerLabel">
+                                    {% if sale and sale.lead_owner %}
+                                        {{ sale.lead_owner.get_full_name|default:sale.lead_owner.username }}
+                                    {% elif sale and sale.seller %}
+                                        {{ sale.seller.get_full_name|default:sale.seller.username }}
+                                    {% else %}
+                                        {{ request.user.get_full_name|default:request.user.username }}
+                                    {% endif %}
+                                </strong>
+                                <em>⌄</em>
+                            </button>
+                            <small class="field-note">Choose the staff who chatted with this customer.</small>
+                        </label>
+
+                        <label>
+                            Commission Mode
+                            <button type="button" class="touch-btn" onclick="openCommissionPopup()">
+                                <strong id="commissionModeLabel">
+                                    {% if sale and sale.commission_mode == "shared" %}
+                                        👥 Shared
+                                    {% else %}
+                                        👤 Seller / Staff
+                                    {% endif %}
+                                </strong>
+                                <em>⌄</em>
+                            </button>
                         </label>
                     </div>
 
@@ -71,66 +209,166 @@
                 <div class="box" id="inStockBox">
                     <h2>Choose In-stock Dog / Cat</h2>
 
-                    <select name="pet" id="petSelect" onchange="updatePetPrice()">
-                        <option value="">Choose pet</option>
+                    <input
+                        type="hidden"
+                        name="pet"
+                        id="petSelect"
+                        value="{% if selected_pet %}{{ selected_pet.id }}{% elif sale and sale.pet %}{{ sale.pet.id }}{% endif %}"
+                    >
 
-                        {% for pet in pets %}
-                            <option
-                                value="{{ pet.id }}"
-                                data-price="{{ pet.sale_price }}"
-                                data-type="{{ pet.pet_type }}"
-                                data-breed="{{ pet.breed }}"
-                                data-gender="{{ pet.gender }}"
-                                data-name="{{ pet.get_pet_type_display }} · {{ pet.breed }}{% if pet.name %} · {{ pet.name }}{% endif %}"
-                                {% if selected_pet and selected_pet.id == pet.id %}selected{% endif %}
-                                {% if sale and sale.pet_id == pet.id %}selected{% endif %}
-                            >
-                                {{ pet.get_pet_type_display }} · {{ pet.breed }}
-                                {% if pet.name %} · {{ pet.name }}{% endif %}
-                                · ${{ pet.sale_price }}
-                                · {{ pet.get_status_display }}
-                            </option>
-                        {% endfor %}
-                    </select>
+                    <button type="button" class="pet-popup-btn" onclick="openPetPopup()">
+                        <div>
+                            <strong id="petNameShow">
+                                {% if selected_pet %}
+                                    {{ selected_pet.get_pet_type_display }} · {{ selected_pet.breed_name }}
+                                    {% if selected_pet.name %} · {{ selected_pet.name }}{% endif %}
+                                {% elif sale and sale.pet %}
+                                    {{ sale.pet.get_pet_type_display }} · {{ sale.pet.breed_name }}
+                                    {% if sale.pet.name %} · {{ sale.pet.name }}{% endif %}
+                                {% else %}
+                                    Choose pet
+                                {% endif %}
+                            </strong>
 
-                    <div class="pet-preview">
-                        <strong id="petNameShow">No pet selected</strong>
-                        <span id="petPriceShow">$0.00</span>
-                    </div>
+                            <small id="petSpecShow">
+                                {% if selected_pet %}
+                                    Sex: {{ selected_pet.gender|default:"-" }} ·
+                                    Color: {{ selected_pet.color|default:"-" }} ·
+                                    Type: {{ selected_pet.special_type|default:"-" }} ·
+                                    Age: {{ selected_pet.current_age_display }}
+                                {% elif sale and sale.pet %}
+                                    Sex: {{ sale.pet.gender|default:"-" }} ·
+                                    Color: {{ sale.pet.color|default:"-" }} ·
+                                    Type: {{ sale.pet.special_type|default:"-" }} ·
+                                    Age: {{ sale.pet.current_age_display }}
+                                {% else %}
+                                    Choose one in-stock pet.
+                                {% endif %}
+                            </small>
+                        </div>
+
+                        <span id="petPriceShow">
+                            {% if selected_pet %}
+                                ${{ selected_pet.sale_price|floatformat:2 }}
+                            {% elif sale and sale.pet %}
+                                ${{ sale.pet.sale_price|floatformat:2 }}
+                            {% else %}
+                                $0.00
+                            {% endif %}
+                        </span>
+                    </button>
                 </div>
 
                 <div class="box" id="preorderBox">
                     <h2>Pre-order Dog / Cat Info</h2>
 
                     <div class="grid2">
-                        <label>
-                            Pet Type
-                            <select name="preorder_pet_type" id="preorderPetType">
-                                <option value="dog" {% if sale and sale.preorder_pet_type == "dog" %}selected{% endif %}>Dog</option>
-                                <option value="cat" {% if sale and sale.preorder_pet_type == "cat" %}selected{% endif %}>Cat</option>
-                                <option value="other" {% if sale and sale.preorder_pet_type == "other" %}selected{% endif %}>Other</option>
-                            </select>
-                        </label>
+                        <div class="touch-field">
+                            <span>Pet Type</span>
+
+                            <input
+                                type="hidden"
+                                name="preorder_pet_type"
+                                id="preorderPetType"
+                                value="{% if sale %}{{ sale.preorder_pet_type|default:'dog' }}{% else %}dog{% endif %}"
+                            >
+
+                            <button type="button" class="touch-btn" onclick="openPopup('petType')">
+                                <strong id="preorderPetTypeLabel">
+                                    {% if sale and sale.preorder_pet_type == "cat" %}
+                                        Cat
+                                    {% elif sale and sale.preorder_pet_type == "other" %}
+                                        Other
+                                    {% else %}
+                                        Dog
+                                    {% endif %}
+                                </strong>
+                                <em>⌄</em>
+                            </button>
+                        </div>
 
                         <label>
                             Breed
-                            <input name="preorder_breed" id="preorderBreed" value="{{ sale.preorder_breed|default:'' }}" placeholder="Example: Poodle">
+                            <input
+                                name="preorder_breed"
+                                id="preorderBreed"
+                                value="{{ sale.preorder_breed|default:'' }}"
+                                placeholder="Example: Poodle"
+                            >
                         </label>
                     </div>
 
                     <div class="grid2">
+                        <div class="touch-field">
+                            <span>Sex</span>
+
+                            <input
+                                type="hidden"
+                                name="preorder_gender"
+                                id="preorderGender"
+                                value="{{ sale.preorder_gender|default:'' }}"
+                            >
+
+                            <button type="button" class="touch-btn" onclick="openPopup('gender')">
+                                <strong id="preorderGenderLabel">
+                                    {% if sale and sale.preorder_gender %}
+                                        {{ sale.preorder_gender }}
+                                    {% else %}
+                                        Choose Sex
+                                    {% endif %}
+                                </strong>
+                                <em>⌄</em>
+                            </button>
+                        </div>
+
+                        <div class="touch-field">
+                            <span>Waiting Deadline</span>
+
+                            <input
+                                type="hidden"
+                                name="deadline"
+                                id="deadlineInput"
+                                value="{{ sale.deadline|date:'Y-m-d' }}"
+                            >
+
+                            <button type="button" class="touch-btn date-open-btn" onclick="openCalendarPicker('deadline')">
+                                <strong id="deadlineLabel">
+                                    {% if sale and sale.deadline %}
+                                        {{ sale.deadline|date:"d M Y" }}
+                                    {% else %}
+                                        Auto final day: +7 days
+                                    {% endif %}
+                                </strong>
+                                <em>📅</em>
+                            </button>
+
+                            <div class="deadline-line">
+                                <button type="button" onclick="setDeadlineDays(5)">+5 days</button>
+                                <button type="button" onclick="setDeadlineDays(6)">+6 days</button>
+                                <button type="button" onclick="setDeadlineDays(7)">+7 days</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid2">
                         <label>
-                            Sex
-                            <select name="preorder_gender" id="preorderGender">
-                                <option value="">Choose</option>
-                                <option value="Male" {% if sale and sale.preorder_gender == "Male" %}selected{% endif %}>Male</option>
-                                <option value="Female" {% if sale and sale.preorder_gender == "Female" %}selected{% endif %}>Female</option>
-                            </select>
+                            Color Wanted
+                            <input
+                                name="preorder_color"
+                                id="preorderColor"
+                                value="{{ sale.preorder_color|default:'' }}"
+                                placeholder="Example: Cream"
+                            >
                         </label>
 
                         <label>
-                            Waiting Deadline
-                            <input type="date" name="deadline" id="deadlineInput" value="{{ sale.deadline|date:'Y-m-d' }}">
+                            Special Type
+                            <input
+                                name="preorder_special_type"
+                                id="preorderSpecialType"
+                                value="{{ sale.preorder_special_type|default:'' }}"
+                                placeholder="Example: Teacup"
+                            >
                         </label>
                     </div>
 
@@ -145,24 +383,39 @@
                 </div>
 
                 <div class="box">
-                    <h2>Sale / Pre-order Photo</h2>
+                    <h2>Sale / Pre-order Photos</h2>
 
                     <div class="photo-preview" id="dropPhotoBox">
-                        {% if sale and sale.sale_photo %}
-                            <img src="{{ sale.sale_photo.url }}" id="salePhotoPreview">
-                            <div id="salePhotoEmpty" style="display:none;">📸</div>
-                        {% else %}
-                            <div id="salePhotoEmpty">📸</div>
-                            <img src="" id="salePhotoPreview" style="display:none">
-                        {% endif %}
+                        <div id="salePhotoEmpty">📸</div>
+                        <img src="" id="salePhotoPreview" style="display:none">
                     </div>
 
                     <label class="upload-btn">
-                        Upload Photo
-                        <input type="file" name="sale_photo" id="salePhotoInput" accept="image/*" onchange="previewSalePhoto(event)">
+                        Upload Photos
+                        <input
+                            type="file"
+                            name="sale_photos"
+                            id="salePhotoInput"
+                            accept="image/*"
+                            multiple
+                            onchange="previewSalePhotos(event)"
+                        >
                     </label>
 
-                    <small class="photo-help">Upload, drag image here, or paste screenshot with Ctrl + V.</small>
+                    <small class="photo-help">Upload up to 6 photos. New photos can remove with X before save.</small>
+
+                    <div class="multi-preview" id="multiPreview">
+                        {% if sale %}
+                            {% for item in sale.photos.all %}
+                                {% if item.photo %}
+                                    <div class="thumb existing-thumb">
+                                        <img src="{{ item.photo.url }}">
+                                        <button type="button" disabled title="Already saved photo">✓</button>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
                 </div>
 
             </div>
@@ -174,16 +427,26 @@
                     <div class="money-grid">
                         <label>
                             Full Price
-                            <input type="number" step="0.01" name="sale_price" id="salePrice"
+                            <input
+                                type="number"
+                                step="0.01"
+                                name="sale_price"
+                                id="salePrice"
                                 value="{% if selected_pet %}{{ selected_pet.sale_price }}{% elif sale %}{{ sale.sale_price }}{% else %}0.00{% endif %}"
-                                oninput="calcSale(); updateCopyBox();">
+                                oninput="calcSale(); updateCopyBox();"
+                            >
                         </label>
 
                         <label>
                             Paid / Deposit
-                            <input type="number" step="0.01" name="paid_amount" id="paidAmount"
+                            <input
+                                type="number"
+                                step="0.01"
+                                name="paid_amount"
+                                id="paidAmount"
                                 value="{{ sale.paid_amount|default:'0.00' }}"
-                                oninput="calcSale(); updateCopyBox();">
+                                oninput="calcSale(); updateCopyBox();"
+                            >
                         </label>
                     </div>
 
@@ -209,14 +472,33 @@
                     <div class="grid2">
                         <label>
                             Warranty Days
-                            <input type="number" name="warranty_days" id="warrantyDays"
-                                value="{{ sale.warranty_days|default:'3' }}">
+                            <input
+                                type="number"
+                                name="warranty_days"
+                                id="warrantyDays"
+                                value="{{ sale.warranty_days|default:'3' }}"
+                            >
                         </label>
 
                         <label>
                             Warranty Start
-                            <input type="date" name="warranty_start_date"
-                                value="{{ sale.warranty_start_date|date:'Y-m-d' }}">
+                            <input
+                                type="hidden"
+                                name="warranty_start_date"
+                                id="warrantyStartInput"
+                                value="{{ sale.warranty_start_date|date:'Y-m-d' }}"
+                            >
+
+                            <button type="button" class="touch-btn date-open-btn" onclick="openCalendarPicker('warranty')">
+                                <strong id="warrantyStartLabel">
+                                    {% if sale and sale.warranty_start_date %}
+                                        {{ sale.warranty_start_date|date:"d M Y" }}
+                                    {% else %}
+                                        Choose warranty date
+                                    {% endif %}
+                                </strong>
+                                <em>📅</em>
+                            </button>
                         </label>
                     </div>
 
@@ -229,12 +511,12 @@
                         💾 Save
                     </button>
 
-                    <button type="submit" class="print-btn" onclick="return submitAction('save_print')">
-                        🖨️ Save + Print Receipt
+                    <button type="submit" class="complete-btn" onclick="return submitAction('save_complete')">
+                        ✅ Save & Complete
                     </button>
 
-                    <button type="submit" class="warranty-btn" onclick="return submitAction('save_warranty')">
-                        🛡️ Save + Print Warranty
+                    <button type="submit" class="print-btn" onclick="return submitAction('save_complete_print')">
+                        🖨️ Save & Complete + Print
                     </button>
                 </div>
             </div>
@@ -242,16 +524,287 @@
     </form>
 </div>
 
+<!-- PET SELECT POPUP -->
+<div class="popup-backdrop" id="petBackdrop" onclick="closePetPopup()"></div>
+
+<div class="pet-select-popup" id="petPopup">
+    <div class="pet-popup-head">
+        <h3>Select Pet</h3>
+        <button type="button" onclick="closePetPopup()">×</button>
+    </div>
+
+    <input
+        type="text"
+        id="petSearchInput"
+        class="popup-search"
+        placeholder="Search pet, breed, color..."
+        oninput="filterPetPopup()"
+    >
+
+    <div class="pet-option-list">
+        {% for pet in pets %}
+            <button
+                type="button"
+                class="pet-select-card pet-option"
+                data-search="{{ pet.get_pet_type_display }} {{ pet.breed_name }} {{ pet.name }} {{ pet.gender }} {{ pet.color }} {{ pet.special_type }} {{ pet.current_age_display }}"
+                onclick="selectPetFromPopup(
+                    '{{ pet.id }}',
+                    '{{ pet.get_pet_type_display|escapejs }} · {{ pet.breed_name|escapejs }}{% if pet.name %} · {{ pet.name|escapejs }}{% endif %}',
+                    '{{ pet.gender|default:"-"|escapejs }}',
+                    '{{ pet.color|default:"-"|escapejs }}',
+                    '{{ pet.special_type|default:"-"|escapejs }}',
+                    '{{ pet.current_age_display|escapejs }}',
+                    '{{ pet.sale_price }}'
+                )"
+            >
+                <div class="pet-popup-photo">
+                    {% if pet.display_photo %}
+                        <img src="{{ pet.display_photo.url }}" alt="{{ pet.breed_name }}">
+                    {% else %}
+                        <span>
+                            {% if pet.pet_type == "cat" %}🐱{% elif pet.pet_type == "dog" %}🐶{% else %}🐾{% endif %}
+                        </span>
+                    {% endif %}
+                </div>
+
+                <div class="pet-popup-info">
+                    <strong>
+                        {{ pet.breed_name }}
+                        {% if pet.name %} · {{ pet.name }}{% endif %}
+                    </strong>
+
+                    <span>
+                        {{ pet.get_pet_type_display }}
+                        {% if pet.gender %} · {{ pet.gender }}{% endif %}
+                        {% if pet.color %} · {{ pet.color }}{% endif %}
+                    </span>
+
+                    <div class="pet-popup-tags">
+                        {% if pet.special_type %}
+                            <em>{{ pet.special_type }}</em>
+                        {% endif %}
+                        <em>Age: {{ pet.current_age_display }}</em>
+                    </div>
+                </div>
+
+                <div class="pet-popup-price">
+                    ${{ pet.sale_price|floatformat:2 }}
+                    <small>In Stock</small>
+                </div>
+            </button>
+        {% empty %}
+            <div class="pet-empty">
+                <div>🐾</div>
+                <strong>No in-stock pet</strong>
+                <p>Please stock in pet first.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- SELLER POPUP -->
+<div class="popup-backdrop" id="sellerBackdrop" onclick="closeSellerPopup()"></div>
+
+<div class="select-popup" id="sellerPopup">
+    <div class="popup-head">
+        <h3>Choose Seller / Staff</h3>
+        <button type="button" onclick="closeSellerPopup()">✕</button>
+    </div>
+
+    <div class="popup-list">
+        {% for seller in sellers %}
+            <button
+                type="button"
+                onclick="selectSeller('{{ seller.id }}', '{{ seller.get_full_name|default:seller.username|escapejs }}')"
+            >
+                👤 {{ seller.get_full_name|default:seller.username }}
+            </button>
+        {% empty %}
+            <button type="button">No active users</button>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- CUSTOMER SOURCE POPUP -->
+<div class="popup-backdrop" id="sourceBackdrop" onclick="closeSourcePopup()"></div>
+
+<div class="select-popup" id="sourcePopup">
+    <div class="popup-head">
+        <h3>Customer Source</h3>
+        <button type="button" onclick="closeSourcePopup()">✕</button>
+    </div>
+
+    <div class="popup-list simple-popup-list">
+        <button type="button" onclick="selectSource('walk_in', '🚶 Walk-in')">
+            🚶 Walk-in
+        </button>
+        <button type="button" onclick="selectSource('staff_chat', '💬 Staff Chat')">
+            💬 Staff Chat
+        </button>
+    </div>
+</div>
+
+<!-- LEAD OWNER POPUP -->
+<div class="popup-backdrop" id="leadOwnerBackdrop" onclick="closeLeadOwnerPopup()"></div>
+
+<div class="select-popup" id="leadOwnerPopup">
+    <div class="popup-head">
+        <h3>Choose Lead / Chat Owner</h3>
+        <button type="button" onclick="closeLeadOwnerPopup()">✕</button>
+    </div>
+
+    <div class="popup-list">
+        <button type="button" onclick="selectLeadOwner('', 'Choose staff')">- No owner</button>
+        {% for seller in sellers %}
+            <button
+                type="button"
+                onclick="selectLeadOwner('{{ seller.id }}', '{{ seller.get_full_name|default:seller.username|escapejs }}')"
+            >
+                💬 {{ seller.get_full_name|default:seller.username }}
+            </button>
+        {% empty %}
+            <button type="button">No active users</button>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- COMMISSION MODE POPUP -->
+<div class="popup-backdrop" id="commissionBackdrop" onclick="closeCommissionPopup()"></div>
+
+<div class="select-popup" id="commissionPopup">
+    <div class="popup-head">
+        <h3>Commission Mode</h3>
+        <button type="button" onclick="closeCommissionPopup()">✕</button>
+    </div>
+
+    <div class="popup-list simple-popup-list">
+        <button type="button" onclick="selectCommissionMode('auto', '⚡ Auto')">
+            ⚡ Auto
+        </button>
+        <button type="button" onclick="selectCommissionMode('shared', '👥 Shared')">
+            👥 Shared
+        </button>
+        <button type="button" onclick="selectCommissionMode('seller', '👤 Seller / Staff')">
+            👤 Seller / Staff
+        </button>
+    </div>
+</div>
+
+<!-- PET TYPE POPUP -->
+<div class="popup-backdrop" id="petTypeBackdrop" onclick="closePopup('petType')"></div>
+
+<div class="select-popup" id="petTypePopup">
+    <div class="popup-head">
+        <h3>Choose Pet Type</h3>
+        <button type="button" onclick="closePopup('petType')">✕</button>
+    </div>
+
+    <div class="popup-list">
+        <button type="button" onclick="selectPetType('dog', 'Dog')">🐶 Dog</button>
+        <button type="button" onclick="selectPetType('cat', 'Cat')">🐱 Cat</button>
+        <button type="button" onclick="selectPetType('other', 'Other')">✨ Other</button>
+    </div>
+</div>
+
+<!-- GENDER POPUP -->
+<div class="popup-backdrop" id="genderBackdrop" onclick="closePopup('gender')"></div>
+
+<div class="select-popup" id="genderPopup">
+    <div class="popup-head">
+        <h3>Choose Sex</h3>
+        <button type="button" onclick="closePopup('gender')">✕</button>
+    </div>
+
+    <div class="popup-list">
+        <button type="button" onclick="selectGender('', 'Choose Sex')">- No select</button>
+        <button type="button" onclick="selectGender('Male', 'Male')">♂ Male</button>
+        <button type="button" onclick="selectGender('Female', 'Female')">♀ Female</button>
+    </div>
+</div>
+
+<!-- SHARED CUSTOM CALENDAR POPUP -->
+<div class="calendar-backdrop" id="calendarBackdrop" onclick="closeCalendarPicker()"></div>
+
+<div class="calendar-popup" id="calendarPopup">
+    <div class="calendar-header">
+        <div class="calendar-header-top">Choose date</div>
+        <div class="calendar-selected" id="calendarSelectedText">Select Date</div>
+    </div>
+
+    <div class="calendar-body">
+        <div class="calendar-quick-actions">
+            <button type="button" class="quick-btn quick-green" onclick="calendarQuickPick('today')">Today</button>
+            <button type="button" class="quick-btn quick-purple" onclick="calendarQuickPick('tomorrow')">Tomorrow</button>
+            <button type="button" class="quick-btn quick-blue" onclick="calendarQuickPick('plus5')">+5 Days</button>
+            <button type="button" class="quick-btn quick-orange" onclick="calendarQuickPick('plus6')">+6 Days</button>
+            <button type="button" class="quick-btn quick-blue" onclick="calendarQuickPick('plus7')">+7 Days</button>
+            <button type="button" class="quick-btn quick-orange" onclick="calendarQuickPick('plus14')">+14 Days</button>
+        </div>
+
+        <div class="calendar-month-nav">
+            <div class="calendar-month-title" id="calendarMonthTitle">Month Year</div>
+
+            <div class="calendar-arrows">
+                <button type="button" onclick="changeCalendarMonth(-1)">‹</button>
+                <button type="button" onclick="changeCalendarMonth(1)">›</button>
+            </div>
+        </div>
+
+        <div class="calendar-weekdays">
+            <span>Su</span>
+            <span>Mo</span>
+            <span>Tu</span>
+            <span>We</span>
+            <span>Th</span>
+            <span>Fr</span>
+            <span>Sa</span>
+        </div>
+
+        <div class="calendar-grid" id="calendarGrid"></div>
+
+        <div class="calendar-bottom-actions">
+            <button type="button" class="calendar-clear-btn" onclick="clearCalendarValue()">Clear</button>
+            <button type="button" class="calendar-ok-btn" onclick="applyCalendarValue()">OK</button>
+        </div>
+    </div>
+</div>
+
 <style>
 *{box-sizing:border-box}
 a{text-decoration:none}
 
 .sale-page{padding:24px 28px}
-.page-top{display:flex;justify-content:space-between;gap:18px;margin-bottom:22px}
-.page-top h1{margin:0;font-size:34px;font-weight:1000;color:#080634}
-.page-top p{color:#7b7288;font-weight:900}
 
-.soft-btn,.upload-btn,.save-btn,.print-btn,.warranty-btn{
+.page-top{
+    display:flex;
+    justify-content:space-between;
+    gap:18px;
+    margin-bottom:22px;
+}
+
+.page-top h1{
+    margin:0;
+    font-size:34px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.page-top p{
+    color:#7b7288;
+    font-weight:900;
+}
+
+.top-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.soft-btn,
+.upload-btn,
+.save-btn,
+.complete-btn,
+.print-btn{
     min-height:60px;
     padding:0 22px;
     border-radius:20px;
@@ -263,9 +816,13 @@ a{text-decoration:none}
     cursor:pointer;
 }
 
-.soft-btn{background:#f1f5f9;color:#334155}
+.soft-btn{
+    background:#f1f5f9;
+    color:#334155;
+}
 
-.sale-card,.box{
+.sale-card,
+.box{
     background:white;
     border:2px solid #f5e0d8;
     border-radius:30px;
@@ -273,7 +830,21 @@ a{text-decoration:none}
 }
 
 .sale-card{padding:22px}
-.error-box{background:#fff0f0;color:#e03131;border-radius:18px;padding:14px;font-weight:900;margin-bottom:14px}
+
+.error-box{
+    background:#fff0f0;
+    color:#e03131;
+    border-radius:18px;
+    padding:14px 18px;
+    font-weight:900;
+    margin-bottom:14px;
+    border:2px solid #ffc9c9;
+}
+
+.error-box ul{
+    margin:8px 0 0;
+    padding-left:18px;
+}
 
 .mode-tabs{
     display:grid;
@@ -303,15 +874,163 @@ a{text-decoration:none}
 .mode-card strong{font-size:19px;color:#080634}
 .mode-card small{font-weight:900;color:#7b7288}
 
-.sale-layout{display:grid;grid-template-columns:1fr 430px;gap:22px}
-.left,.right{display:grid;gap:18px}
+.sale-layout{
+    display:grid;
+    grid-template-columns:1fr 430px;
+    gap:22px;
+}
+
+.left,
+.right{
+    display:grid;
+    gap:18px;
+}
+
 .box{padding:20px}
 .box h2{margin:0 0 16px;color:#080634}
 
-.grid2,.money-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-label{font-weight:1000;color:#080634}
+.grid2,
+.money-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+}
 
-input,select,textarea{
+.seller-line{margin-top:14px}
+
+label,
+.touch-field span{
+    font-weight:1000;
+    color:#080634;
+}
+
+.field-note{
+    display:block;
+    color:#7b7288;
+    font-size:12px;
+    margin-top:7px;
+    font-weight:900;
+}
+
+.customer-live-box{
+    margin-top:14px;
+}
+
+.customer-check-card{
+    padding:14px;
+    border-radius:20px;
+    border:2px solid #eaddec;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+}
+
+.customer-check-card.old-customer{
+    background:#ecfdf5;
+    border-color:#bbf7d0;
+}
+
+.customer-check-card.new-customer{
+    background:#fff7ed;
+    border-color:#fed7aa;
+}
+
+.customer-check-left strong{
+    display:block;
+    color:#080634;
+    font-size:17px;
+    font-weight:1000;
+}
+
+.customer-check-left span{
+    display:block;
+    margin-top:5px;
+    color:#7b7288;
+    font-size:13px;
+    font-weight:900;
+}
+
+.customer-check-right{
+    min-width:118px;
+    text-align:right;
+}
+
+.customer-check-right span{
+    display:block;
+    color:#7b5cff;
+    font-size:20px;
+    font-weight:1000;
+}
+
+.customer-check-right small{
+    display:block;
+    margin-top:4px;
+    color:#7b7288;
+    font-size:12px;
+    font-weight:900;
+}
+
+.customer-live-results{
+    display:none;
+    margin-top:10px;
+    border:2px solid #d9f99d;
+    border-radius:22px;
+    background:#f0fdf4;
+    padding:10px;
+    gap:10px;
+}
+
+.customer-live-results.active{
+    display:grid;
+}
+
+.customer-live-card{
+    width:100%;
+    border:2px solid #bbf7d0;
+    border-radius:18px;
+    background:white;
+    padding:12px;
+    text-align:left;
+    cursor:pointer;
+    display:grid;
+    gap:6px;
+}
+
+.customer-live-card:hover{
+    border-color:#22c55e;
+    box-shadow:0 12px 24px rgba(34,197,94,.12);
+}
+
+.customer-live-card strong{
+    color:#080634;
+    font-size:16px;
+    font-weight:1000;
+}
+
+.customer-live-card span{
+    color:#16a34a;
+    font-size:13px;
+    font-weight:1000;
+}
+
+.customer-live-card small{
+    color:#7b7288;
+    font-size:12px;
+    font-weight:900;
+}
+
+.customer-live-empty{
+    padding:12px;
+    color:#ea580c;
+    font-size:13px;
+    font-weight:1000;
+}
+
+
+input,
+select,
+textarea{
     width:100%;
     border:2px solid #eaddec;
     border-radius:18px;
@@ -323,25 +1042,106 @@ input,select,textarea{
     background:white;
 }
 
-input,select{height:62px}
-textarea{padding:16px;min-height:105px;resize:vertical}
+input,
+select{height:62px}
 
-input:focus,select:focus,textarea:focus{
+textarea{
+    padding:16px;
+    min-height:105px;
+    resize:vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
     border-color:#9b7cf6;
     box-shadow:0 0 0 5px rgba(155,124,246,.12);
 }
 
-.pet-preview{
-    margin-top:14px;
-    padding:16px;
-    border-radius:20px;
-    background:#f8f6ff;
+.touch-btn{
+    width:100%;
+    min-height:62px;
+    border:2px solid #eaddec;
+    border-radius:18px;
+    background:white;
+    padding:0 16px;
+    margin-top:8px;
     display:flex;
+    align-items:center;
     justify-content:space-between;
     gap:12px;
     font-weight:1000;
+    color:#080634;
+    cursor:pointer;
+    text-align:left;
 }
-.pet-preview span{color:#ff5d73;font-size:22px}
+
+.touch-btn strong{
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.touch-btn em{
+    font-style:normal;
+    color:#7b5cff;
+}
+
+.date-open-btn{width:100%}
+
+.deadline-line{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+    margin-top:10px;
+}
+
+.deadline-line button{
+    min-height:46px;
+    border:0;
+    border-radius:14px;
+    background:#f2edff;
+    color:#7b5cff;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.deadline-line button:hover{background:#e8ddff}
+
+.pet-popup-btn{
+    width:100%;
+    min-height:82px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    background:#f8f6ff;
+    padding:14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    cursor:pointer;
+    text-align:left;
+}
+
+.pet-popup-btn strong{
+    display:block;
+    color:#080634;
+    font-size:16px;
+    font-weight:1000;
+}
+
+.pet-popup-btn small{
+    display:block;
+    margin-top:5px;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.pet-popup-btn span{
+    color:#ff5d73;
+    font-size:22px;
+    font-weight:1000;
+    white-space:nowrap;
+}
 
 .copy-card{
     margin-top:16px;
@@ -350,7 +1150,15 @@ input:focus,select:focus,textarea:focus{
     border-radius:22px;
     padding:14px;
 }
-.copy-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+
+.copy-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+}
+
 .copy-head button{
     border:0;
     border-radius:999px;
@@ -360,7 +1168,13 @@ input:focus,select:focus,textarea:focus{
     font-weight:1000;
     cursor:pointer;
 }
-#copyBox{min-height:220px;background:white;font-size:15px;line-height:1.5}
+
+#copyBox{
+    min-height:220px;
+    background:white;
+    font-size:15px;
+    line-height:1.5;
+}
 
 .photo-preview{
     height:280px;
@@ -373,43 +1187,797 @@ input:focus,select:focus,textarea:focus{
     overflow:hidden;
     font-size:70px;
     transition:.15s;
+    position:relative;
 }
-.photo-preview img{width:100%;height:100%;object-fit:cover}
-.photo-preview.dragging{border-color:#9b7cf6;background:#f4f0ff;transform:scale(.99)}
 
-.upload-btn{width:100%;margin-top:14px;background:linear-gradient(135deg,#9b7cf6,#ff8c6b);color:white}
+.photo-preview img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    padding:10px;
+    background:#fff8f4;
+}
+
+.photo-preview.dragging{
+    border-color:#9b7cf6;
+    background:#f4f0ff;
+    transform:scale(.99);
+}
+
+.upload-btn{
+    width:100%;
+    margin-top:14px;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+}
+
 .upload-btn input{display:none}
-.photo-help{display:block;margin-top:10px;color:#7b7288;font-weight:900;text-align:center}
 
-.sticky{position:sticky;top:18px}
-.result{display:grid;gap:10px;margin:16px 0}
-.result div{padding:15px;border-radius:18px;background:#f8f6ff;display:flex;justify-content:space-between;gap:12px}
+.photo-help{
+    display:block;
+    margin-top:10px;
+    color:#7b7288;
+    font-weight:900;
+    text-align:center;
+}
+
+.multi-preview{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin-top:14px;
+}
+
+.thumb{
+    position:relative;
+    height:120px;
+    border-radius:16px;
+    overflow:hidden;
+    border:2px solid #f5e0d8;
+    background:#fff8f4;
+}
+
+.thumb img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    padding:6px;
+}
+
+.thumb button{
+    position:absolute;
+    top:6px;
+    right:6px;
+    width:32px;
+    height:32px;
+    border:0;
+    border-radius:50%;
+    background:#ff4d5d;
+    color:white;
+    font-size:20px;
+    font-weight:1000;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.existing-thumb button{
+    background:#16a34a;
+    cursor:not-allowed;
+}
+
+.sticky{
+    position:sticky;
+    top:18px;
+}
+
+.result{
+    display:grid;
+    gap:10px;
+    margin:16px 0;
+}
+
+.result div{
+    padding:15px;
+    border-radius:18px;
+    background:#f8f6ff;
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+}
+
 .result strong{font-size:22px}
-#remainCard.paid-ok{background:#dcfce7;color:#16a34a}
-#remainCard.remain-left{background:#fff7ed;color:#ea580c}
-#remainCard.overpaid{background:#e0f2fe;color:#0284c7}
 
-.save-btn,.print-btn,.warranty-btn{width:100%;margin-top:10px;color:white}
+#remainCard.paid-ok{
+    background:#dcfce7;
+    color:#16a34a;
+}
+
+#remainCard.remain-left{
+    background:#fff7ed;
+    color:#ea580c;
+}
+
+#remainCard.overpaid{
+    background:#e0f2fe;
+    color:#0284c7;
+}
+
+.save-btn,
+.complete-btn,
+.print-btn{
+    width:100%;
+    margin-top:10px;
+    color:white;
+}
+
 .save-btn{background:linear-gradient(135deg,#13a85f,#7b5cff)}
+.complete-btn{background:linear-gradient(135deg,#22c55e,#16a34a)}
 .print-btn{background:linear-gradient(135deg,#ff8c6b,#ff5d73)}
-.warranty-btn{background:linear-gradient(135deg,#34c6ff,#7b5cff)}
+
+.popup-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(28,20,58,.42);
+    z-index:9000;
+}
+
+.popup-backdrop.active{display:block}
+
+.select-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:420px;
+    max-width:calc(100% - 28px);
+    background:white;
+    border-radius:28px;
+    overflow:hidden;
+    box-shadow:0 28px 80px rgba(28,20,58,.30);
+    z-index:9001;
+}
+
+.select-popup.active{display:block}
+
+.popup-head{
+    background:linear-gradient(135deg,#7b5cff,#ff8c6b);
+    color:white;
+    padding:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.popup-head h3{
+    margin:0;
+    font-weight:1000;
+}
+
+.popup-head button{
+    width:42px;
+    height:42px;
+    border:0;
+    border-radius:50%;
+    background:rgba(255,255,255,.25);
+    color:white;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.popup-list{
+    display:grid;
+    gap:10px;
+    padding:14px;
+    max-height:420px;
+    overflow:auto;
+}
+
+.popup-list button{
+    min-height:64px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    background:#fff8fb;
+    text-align:left;
+    padding:10px 16px;
+    color:#080634;
+    font-size:16px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.simple-popup-list button{
+    min-height:64px;
+    display:flex;
+    align-items:center;
+}
+
+.pet-select-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:560px;
+    max-width:calc(100% - 28px);
+    max-height:84vh;
+    overflow:auto;
+    background:white;
+    border-radius:30px;
+    padding:20px;
+    box-shadow:0 30px 90px rgba(8,6,52,.28);
+    z-index:9001;
+}
+
+.pet-select-popup.active{display:block}
+
+.pet-popup-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:16px;
+}
+
+.pet-popup-head h3{
+    margin:0;
+    font-size:28px;
+    color:#080634;
+    font-weight:1000;
+}
+
+.pet-popup-head button{
+    width:48px;
+    height:48px;
+    border:0;
+    border-radius:50%;
+    background:#fff0f0;
+    color:#ff5d73;
+    font-size:28px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.popup-search{
+    width:100%;
+    height:58px;
+    border:2px solid #eaddec;
+    border-radius:18px;
+    padding:0 16px;
+    margin:0 0 14px;
+    font-weight:900;
+}
+
+.pet-option-list{display:grid;gap:14px}
+
+.pet-select-card{
+    width:100%;
+    border:0;
+    border-radius:24px;
+    background:linear-gradient(135deg,#fff8f4,#fbf8ff);
+    padding:14px;
+    display:grid;
+    grid-template-columns:74px 1fr auto;
+    gap:14px;
+    align-items:center;
+    text-align:left;
+    cursor:pointer;
+    transition:.15s;
+}
+
+.pet-select-card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 16px 36px rgba(123,92,255,.16);
+}
+
+.pet-popup-photo{
+    width:74px;
+    height:74px;
+    border-radius:16px;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    font-size:34px;
+}
+
+.pet-popup-photo img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    padding:4px;
+    background:white;
+}
+
+.pet-popup-info strong{
+    display:block;
+    color:#080634;
+    font-size:20px;
+    font-weight:1000;
+}
+
+.pet-popup-info span{
+    display:block;
+    margin-top:4px;
+    color:#7b7288;
+    font-size:13px;
+    font-weight:1000;
+}
+
+.pet-popup-tags{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    margin-top:8px;
+}
+
+.pet-popup-tags em{
+    font-style:normal;
+    padding:6px 10px;
+    border-radius:999px;
+    background:white;
+    color:#7b5cff;
+    font-size:12px;
+    font-weight:1000;
+}
+
+.pet-popup-price{
+    min-width:92px;
+    min-height:58px;
+    padding:10px 12px;
+    border-radius:18px;
+    background:linear-gradient(135deg,#ff8c6b,#ff5d73);
+    color:white;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    font-size:20px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+
+.pet-popup-price small{
+    display:block;
+    margin-top:3px;
+    font-size:11px;
+    color:white;
+    opacity:.9;
+    font-weight:900;
+}
+
+.pet-empty{
+    padding:28px;
+    border-radius:22px;
+    background:#fff8f4;
+    text-align:center;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.pet-empty div{font-size:58px}
+
+.calendar-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(20,18,45,.45);
+    z-index:9998;
+}
+
+.calendar-backdrop.active{display:block}
+
+.calendar-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:420px;
+    max-width:calc(100% - 24px);
+    background:#fff;
+    border-radius:26px;
+    overflow:hidden;
+    box-shadow:0 30px 80px rgba(0,0,0,.18);
+    z-index:9999;
+}
+
+.calendar-popup.active{display:block}
+
+.calendar-header{
+    padding:18px 20px 16px;
+    background:linear-gradient(135deg,#7a5cff,#f18f77);
+    color:#fff;
+}
+
+.calendar-header-top{
+    font-size:14px;
+    font-weight:800;
+    opacity:.95;
+    margin-bottom:8px;
+}
+
+.calendar-selected{
+    font-size:32px;
+    line-height:1.1;
+    font-weight:1000;
+}
+
+.calendar-body{padding:16px 16px 18px}
+
+.calendar-quick-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-bottom:16px;
+}
+
+.quick-btn{
+    border:0;
+    min-height:52px;
+    border-radius:16px;
+    color:#fff;
+    font-size:16px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.quick-green{background:linear-gradient(135deg,#22b36e,#5bd18f)}
+.quick-purple{background:linear-gradient(135deg,#8e6cff,#e08a80)}
+.quick-blue{background:linear-gradient(135deg,#3cbcff,#6a5bff)}
+.quick-orange{background:linear-gradient(135deg,#ffbb55,#f08d55)}
+
+.calendar-month-nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:14px;
+}
+
+.calendar-month-title{
+    font-size:22px;
+    font-weight:1000;
+    color:#14124b;
+}
+
+.calendar-arrows{display:flex;gap:10px}
+
+.calendar-arrows button{
+    width:42px;
+    height:42px;
+    border:0;
+    border-radius:50%;
+    background:#f1edff;
+    color:#7b5cff;
+    font-size:24px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.calendar-weekdays{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:6px;
+    margin-bottom:10px;
+}
+
+.calendar-weekdays span{
+    text-align:center;
+    font-size:13px;
+    font-weight:900;
+    color:#8d84a7;
+    padding:6px 0;
+}
+
+.calendar-grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:6px;
+}
+
+.calendar-day{
+    height:48px;
+    border:0;
+    border-radius:50%;
+    background:transparent;
+    color:#1a184a;
+    font-size:16px;
+    font-weight:900;
+    cursor:pointer;
+    transition:.15s;
+}
+
+.calendar-day:hover{background:#f2ecff}
+.calendar-day.muted{color:#c0b8d8}
+
+.calendar-day.selected{
+    background:linear-gradient(135deg,#6a5bff,#8f57ff);
+    color:#fff;
+    box-shadow:0 10px 20px rgba(106,91,255,.28);
+}
+
+.calendar-day.today{border:2px solid #9f90ff}
+
+.calendar-bottom-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:18px;
+}
+
+.calendar-clear-btn,
+.calendar-ok-btn{
+    border:0;
+    min-height:54px;
+    border-radius:16px;
+    font-size:16px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.calendar-clear-btn{background:#f1f5f9;color:#475569}
+.calendar-ok-btn{background:linear-gradient(135deg,#13a85f,#6d5cff);color:#fff}
 
 @media(max-width:1194px){
     .page-top{display:block}
-    .soft-btn{margin-top:16px}
+    .top-actions{margin-top:16px}
     .sale-layout{grid-template-columns:1fr}
     .sticky{position:relative;top:auto}
 }
+
 @media(max-width:700px){
     .sale-page{padding:18px}
     .page-top h1{font-size:28px}
-    .mode-tabs,.grid2,.money-grid{grid-template-columns:1fr}
-    .soft-btn,.upload-btn,.save-btn,.print-btn,.warranty-btn{width:100%;min-height:70px;font-size:18px}
-    .photo-preview{height:300px}
+
+    .mode-tabs,
+    .grid2,
+    .money-grid{
+        grid-template-columns:1fr;
+    }
+
+    .customer-check-card{
+        display:block;
+    }
+
+    .customer-check-right{
+        text-align:left;
+        margin-top:10px;
+    }
+
+    .deadline-line{grid-template-columns:1fr}
+
+    .soft-btn,
+    .upload-btn,
+    .save-btn,
+    .complete-btn,
+    .print-btn{
+        width:100%;
+        min-height:70px;
+        font-size:18px;
+    }
+
+    .photo-preview{height:260px}
+
+    .multi-preview{grid-template-columns:repeat(2,1fr)}
+    .thumb{height:120px}
+
+    .select-popup,
+    .pet-select-popup{
+        left:14px;
+        right:14px;
+        bottom:16px;
+        top:auto;
+        width:auto;
+        max-width:none;
+        max-height:82vh;
+        transform:none;
+        border-radius:28px;
+    }
+
+    .pet-select-card{grid-template-columns:64px 1fr}
+
+    .pet-popup-price{
+        grid-column:1 / -1;
+        width:100%;
+        min-height:54px;
+    }
+
+    .pet-popup-photo{width:64px;height:64px}
+
+    .calendar-popup{
+        left:14px;
+        right:14px;
+        top:auto;
+        bottom:14px;
+        width:auto;
+        max-width:none;
+        transform:none;
+        border-radius:24px;
+    }
+
+    .calendar-selected{font-size:26px}
+    .calendar-day{height:44px;font-size:15px}
 }
 </style>
 
 <script>
+const knownCustomers = [
+    {% for customer in customers %}
+        {
+            id: "{{ customer.id }}",
+            name: "{{ customer.name|default:''|escapejs }}",
+            phone: "{{ customer.phone|default:''|escapejs }}",
+            address: "{{ customer.address|default:''|escapejs }}",
+            points: Number("{{ customer.points|default:0 }}"),
+            totalSpent: Number("{{ customer.total_spent|default:0 }}")
+        }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+
+function cleanText(value){
+    return String(value || "").trim().toLowerCase();
+}
+
+function customerSearchQuery(){
+    const phone = cleanText(val("customerPhone"));
+    const name = cleanText(val("customerName"));
+    return phone || name;
+}
+
+function findBestCustomerMatch(){
+    const name = cleanText(val("customerName"));
+    const phone = cleanText(val("customerPhone"));
+
+    let found = null;
+
+    if(phone){
+        found = knownCustomers.find(function(customer){
+            return cleanText(customer.phone) === phone;
+        });
+    }
+
+    if(!found && name){
+        found = knownCustomers.find(function(customer){
+            return cleanText(customer.name) === name;
+        });
+    }
+
+    return found;
+}
+
+function getCustomerMatches(){
+    const name = cleanText(val("customerName"));
+    const phone = cleanText(val("customerPhone"));
+
+    if(!name && !phone){
+        return [];
+    }
+
+    return knownCustomers.filter(function(customer){
+        const cName = cleanText(customer.name);
+        const cPhone = cleanText(customer.phone);
+
+        return (
+            (phone && cPhone.includes(phone)) ||
+            (name && cName.includes(name))
+        );
+    }).slice(0, 6);
+}
+
+function selectCustomerFromLive(id){
+    const customer = knownCustomers.find(function(item){
+        return String(item.id) === String(id);
+    });
+
+    if(!customer){
+        return;
+    }
+
+    const nameInput = document.getElementById("customerName");
+    const phoneInput = document.getElementById("customerPhone");
+    const addressInput = document.getElementById("customerAddress");
+
+    if(nameInput){ nameInput.value = customer.name || ""; }
+    if(phoneInput){ phoneInput.value = customer.phone || ""; }
+    if(addressInput && !addressInput.value){ addressInput.value = customer.address || ""; }
+
+    updateCustomerBadge();
+    updateCopyBox();
+
+    const results = document.getElementById("customerLiveResults");
+    if(results){
+        results.classList.remove("active");
+    }
+}
+
+function renderCustomerMatches(){
+    const results = document.getElementById("customerLiveResults");
+
+    if(!results){
+        return;
+    }
+
+    const query = customerSearchQuery();
+    const matches = getCustomerMatches();
+    const exact = findBestCustomerMatch();
+
+    results.innerHTML = "";
+
+    if(!query){
+        results.classList.remove("active");
+        return;
+    }
+
+    if(exact){
+        results.classList.remove("active");
+        return;
+    }
+
+    results.classList.add("active");
+
+    if(matches.length === 0){
+        results.innerHTML = `
+            <div class="customer-live-empty">
+                🆕 New customer will auto create after save.
+            </div>
+        `;
+        return;
+    }
+
+    matches.forEach(function(customer){
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "customer-live-card";
+        btn.onclick = function(){
+            selectCustomerFromLive(customer.id);
+        };
+
+        btn.innerHTML = `
+            <strong>✅ Old Customer: ${customer.name || "-"}</strong>
+            <span>Phone: ${customer.phone || "-"}</span>
+            <small>${Number(customer.points || 0)} pts · ${money(customer.totalSpent || 0)} spent</small>
+        `;
+
+        results.appendChild(btn);
+    });
+}
+
+function updateCustomerBadge(){
+    const found = findBestCustomerMatch();
+
+    const card = document.getElementById("customerCheckCard");
+    const title = document.getElementById("customerCheckTitle");
+    const detail = document.getElementById("customerCheckDetail");
+    const point = document.getElementById("customerPointShow");
+    const spent = document.getElementById("customerSpentShow");
+
+    if(!card || !title || !detail || !point || !spent){
+        return;
+    }
+
+    card.classList.remove("old-customer", "new-customer");
+
+    if(found){
+        card.classList.add("old-customer");
+        title.innerText = "✅ Old Customer";
+        detail.innerText = `${found.name || "-"} · ${found.phone || "No phone"} · already in customer list`;
+        point.innerText = `${Number(found.points || 0)} pts`;
+        spent.innerText = money(found.totalSpent || 0) + " spent";
+    }else{
+        card.classList.add("new-customer");
+        title.innerText = "🆕 New Customer";
+        detail.innerText = "No matching phone/name yet. Customer will auto create after save.";
+        point.innerText = "0 pts";
+        spent.innerText = "$0.00 spent";
+    }
+
+    renderCustomerMatches();
+}
+
 function money(value){
     return "$" + Number(value || 0).toFixed(2);
 }
@@ -450,37 +2018,20 @@ function switchSaleMode(){
         preorderBox.style.display = "block";
         modePreorder.classList.add("active");
         modeInStock.classList.remove("active");
-        if(petSelect) petSelect.required = false;
+
+        if(petSelect){ petSelect.required = false; }
+
+        const deadlineInputAuto = document.getElementById("deadlineInput");
+        if(deadlineInputAuto && !deadlineInputAuto.value){ setDeadlineDays(7); }
     }else{
         inStockBox.style.display = "block";
         preorderBox.style.display = "none";
         modeInStock.classList.add("active");
         modePreorder.classList.remove("active");
-        if(petSelect) petSelect.required = true;
+
+        if(petSelect){ petSelect.required = false; }
     }
 
-    updateCopyBox();
-}
-
-function updatePetPrice(){
-    const select = document.getElementById("petSelect");
-    if(!select) return;
-
-    const option = select.options[select.selectedIndex];
-    if(!option) return;
-
-    const price = option.dataset.price || 0;
-    const name = option.dataset.name || "No pet selected";
-
-    const priceInput = document.getElementById("salePrice");
-    if(priceInput){
-        priceInput.value = Number(price).toFixed(2);
-    }
-
-    setText("petNameShow", name);
-    setText("petPriceShow", money(price));
-
-    calcSale();
     updateCopyBox();
 }
 
@@ -493,31 +2044,192 @@ function calcSale(){
     setText("paidShow", money(paid));
 
     const remainCard = document.getElementById("remainCard");
-    if(remainCard){
-        remainCard.classList.remove("paid-ok", "remain-left", "overpaid");
-    }
+
+    if(remainCard){ remainCard.classList.remove("paid-ok", "remain-left", "overpaid"); }
 
     if(remain > 0){
         setText("remainTitle", "Remaining");
         setText("remainShow", money(remain));
-        if(remainCard) remainCard.classList.add("remain-left");
+        if(remainCard){ remainCard.classList.add("remain-left"); }
     }else if(remain < 0){
         setText("remainTitle", "Overpaid");
         setText("remainShow", money(Math.abs(remain)));
-        if(remainCard) remainCard.classList.add("overpaid");
+        if(remainCard){ remainCard.classList.add("overpaid"); }
     }else{
         setText("remainTitle", "Paid Full");
         setText("remainShow", money(0));
-        if(remainCard) remainCard.classList.add("paid-ok");
+        if(remainCard){ remainCard.classList.add("paid-ok"); }
     }
+}
+
+function openPetPopup(){
+    document.getElementById("petPopup")?.classList.add("active");
+    document.getElementById("petBackdrop")?.classList.add("active");
+
+    const search = document.getElementById("petSearchInput");
+    if(search){ setTimeout(function(){ search.focus(); }, 100); }
+}
+
+function closePetPopup(){
+    document.getElementById("petPopup")?.classList.remove("active");
+    document.getElementById("petBackdrop")?.classList.remove("active");
+}
+
+function selectPetFromPopup(id, name, gender, color, special, age, price){
+    const petInput = document.getElementById("petSelect");
+    const nameShow = document.getElementById("petNameShow");
+    const specShow = document.getElementById("petSpecShow");
+    const priceShow = document.getElementById("petPriceShow");
+    const salePrice = document.getElementById("salePrice");
+
+    if(petInput){ petInput.value = id; }
+    if(nameShow){ nameShow.innerText = name; }
+    if(specShow){ specShow.innerText = `Sex: ${gender} · Color: ${color} · Type: ${special} · Age: ${age}`; }
+    if(priceShow){ priceShow.innerText = money(price); }
+
+    if(salePrice && Number(salePrice.value || 0) <= 0){
+        salePrice.value = Number(price || 0).toFixed(2);
+    }
+
+    calcSale();
+    updateCopyBox();
+    closePetPopup();
+}
+
+function filterPetPopup(){
+    const input = document.getElementById("petSearchInput");
+    const q = input ? input.value.toLowerCase().trim() : "";
+
+    document.querySelectorAll(".pet-option").forEach(function(btn){
+        const text = (btn.dataset.search || "").toLowerCase();
+        btn.style.display = (!q || text.includes(q)) ? "grid" : "none";
+    });
+}
+
+function openSellerPopup(){
+    document.getElementById("sellerPopup")?.classList.add("active");
+    document.getElementById("sellerBackdrop")?.classList.add("active");
+}
+
+function closeSellerPopup(){
+    document.getElementById("sellerPopup")?.classList.remove("active");
+    document.getElementById("sellerBackdrop")?.classList.remove("active");
+}
+
+function selectSeller(id, label){
+    const input = document.getElementById("sellerInput");
+    const labelEl = document.getElementById("sellerLabel");
+
+    if(input){ input.value = id; }
+    if(labelEl){ labelEl.innerText = label; }
+
+    const source = val("customerSourceInput") || "staff_chat";
+    const leadInput = document.getElementById("leadOwnerInput");
+    const leadLabel = document.getElementById("leadOwnerLabel");
+
+    if(source === "staff_chat" && leadInput && leadLabel){
+        leadInput.value = id;
+        leadLabel.innerText = label;
+    }
+
+    closeSellerPopup();
+}
+
+function openSourcePopup(){
+    document.getElementById("sourcePopup")?.classList.add("active");
+    document.getElementById("sourceBackdrop")?.classList.add("active");
+}
+
+function closeSourcePopup(){
+    document.getElementById("sourcePopup")?.classList.remove("active");
+    document.getElementById("sourceBackdrop")?.classList.remove("active");
+}
+
+function selectSource(value, label){
+    document.getElementById("customerSourceInput").value = value;
+    document.getElementById("customerSourceLabel").innerText = label;
+
+    if(value === "walk_in"){
+        selectCommissionMode("shared", "👥 Shared");
+    }else if(value === "staff_chat"){
+        selectCommissionMode("seller", "👤 Seller / Staff");
+    }else{
+        selectCommissionMode("seller", "👤 Seller / Staff");
+    }
+
+    updateLeadOwnerVisibility();
+    closeSourcePopup();
+}
+
+function updateLeadOwnerVisibility(){
+    const source = val("customerSourceInput") || "staff_chat";
+    const wrap = document.getElementById("leadOwnerWrap");
+
+    if(!wrap){ return; }
+
+    if(source === "staff_chat"){
+        wrap.style.display = "block";
+
+        const leadInput = document.getElementById("leadOwnerInput");
+        const leadLabel = document.getElementById("leadOwnerLabel");
+        const sellerInput = document.getElementById("sellerInput");
+        const sellerLabel = document.getElementById("sellerLabel");
+
+        if(leadInput && !leadInput.value && sellerInput){
+            leadInput.value = sellerInput.value;
+        }
+
+        if(leadLabel && leadLabel.innerText.trim() === "Choose staff" && sellerLabel){
+            leadLabel.innerText = sellerLabel.innerText;
+        }
+    }else{
+        wrap.style.display = "none";
+        const input = document.getElementById("leadOwnerInput");
+        const label = document.getElementById("leadOwnerLabel");
+        if(input){ input.value = ""; }
+        if(label){ label.innerText = "Choose staff"; }
+    }
+}
+
+function openLeadOwnerPopup(){
+    document.getElementById("leadOwnerPopup")?.classList.add("active");
+    document.getElementById("leadOwnerBackdrop")?.classList.add("active");
+}
+
+function closeLeadOwnerPopup(){
+    document.getElementById("leadOwnerPopup")?.classList.remove("active");
+    document.getElementById("leadOwnerBackdrop")?.classList.remove("active");
+}
+
+function selectLeadOwner(id, label){
+    document.getElementById("leadOwnerInput").value = id;
+    document.getElementById("leadOwnerLabel").innerText = label;
+    closeLeadOwnerPopup();
+}
+
+function openCommissionPopup(){
+    document.getElementById("commissionPopup")?.classList.add("active");
+    document.getElementById("commissionBackdrop")?.classList.add("active");
+}
+
+function closeCommissionPopup(){
+    document.getElementById("commissionPopup")?.classList.remove("active");
+    document.getElementById("commissionBackdrop")?.classList.remove("active");
+}
+
+function selectCommissionMode(value, label){
+    document.getElementById("commissionModeInput").value = value;
+    document.getElementById("commissionModeLabel").innerText = label;
 }
 
 function updateCopyBox(){
     const box = document.getElementById("copyBox");
-    if(!box) return;
+    if(!box){ return; }
 
     const breed = val("preorderBreed") || "-";
     const sex = val("preorderGender") || "-";
+    const color = val("preorderColor") || "-";
+    const special = val("preorderSpecialType") || "-";
     const note = val("noteInput") || "-";
     const fullPrice = val("salePrice") || "0.00";
     const deposit = val("paidAmount") || "0.00";
@@ -525,11 +2237,14 @@ function updateCopyBox(){
     const name = val("customerName") || "-";
     const phone = val("customerPhone") || "-";
     const location = val("customerAddress") || "-";
+    const seller = document.getElementById("sellerLabel") ? document.getElementById("sellerLabel").innerText : "-";
 
     box.value =
 `🐶 BUBU PET PRE-ORDER
 Breed: ${breed}
 Sex: ${sex}
+Color: ${color}
+Special Type: ${special}
 Remark: ${note}
 Full Price: $${fullPrice}
 Deposit: $${deposit}
@@ -538,16 +2253,18 @@ Deadline: ${deadline}
 Customer Info
 Name: ${name}
 Phone: ${phone}
-Location: ${location}`;
+Location: ${location}
+Seller: ${seller}`;
 }
 
 function copyPreorderInfo(){
     updateCopyBox();
     const box = document.getElementById("copyBox");
-    if(!box) return;
+    if(!box){ return; }
 
     box.select();
     box.setSelectionRange(0, 99999);
+
     navigator.clipboard.writeText(box.value).then(function(){
         alert("Copied preorder info ✅");
     });
@@ -555,39 +2272,130 @@ function copyPreorderInfo(){
 
 function submitAction(action){
     const input = document.getElementById("submitAction");
-    if(input) input.value = action;
+    if(input){ input.value = action; }
+
+    const mode = activeSaleMode();
+    const petInput = document.getElementById("petSelect");
+    const customerName = val("customerName").trim();
+    const source = val("customerSourceInput");
+    const leadOwner = val("leadOwnerInput");
+
+    if(!customerName){
+        alert("Please fill customer name.");
+        document.getElementById("customerName").focus();
+        return false;
+    }
+
+    if(mode === "in_stock" && petInput && !petInput.value){
+        alert("Please choose pet.");
+        openPetPopup();
+        return false;
+    }
+
+    if(mode === "preorder" && !val("preorderBreed").trim()){
+        alert("Please fill preorder breed.");
+        document.getElementById("preorderBreed").focus();
+        return false;
+    }
+
+    if(mode === "preorder" && !val("deadlineInput")){
+        alert("Please choose waiting deadline.");
+        openCalendarPicker("deadline");
+        return false;
+    }
+
+    if(source === "staff_chat" && !leadOwner){
+        alert("Please choose Lead / Chat Owner for this customer source.");
+        openLeadOwnerPopup();
+        return false;
+    }
+
     return true;
 }
 
-function showSalePhotoFile(file){
-    if(!file || !file.type || !file.type.startsWith("image/")) return;
+let selectedSaleFiles = [];
 
+function refreshSalePhotoInput(){
     const input = document.getElementById("salePhotoInput");
-    const img = document.getElementById("salePhotoPreview");
+    const preview = document.getElementById("multiPreview");
+    const mainImg = document.getElementById("salePhotoPreview");
     const empty = document.getElementById("salePhotoEmpty");
 
-    if(input){
-        const dataTransfer = new DataTransfer();
+    const dataTransfer = new DataTransfer();
+
+    selectedSaleFiles.slice(0, 6).forEach(function(file){
         dataTransfer.items.add(file);
-        input.files = dataTransfer.files;
+    });
+
+    if(input){ input.files = dataTransfer.files; }
+
+    if(preview){
+        preview.querySelectorAll(".new-thumb").forEach(function(el){ el.remove(); });
     }
 
-    const reader = new FileReader();
-    reader.onload = function(e){
-        if(img){
+    if(selectedSaleFiles.length > 0){
+        const firstReader = new FileReader();
+
+        firstReader.onload = function(e){
+            if(mainImg){
+                mainImg.src = e.target.result;
+                mainImg.style.display = "block";
+            }
+            if(empty){ empty.style.display = "none"; }
+        };
+
+        firstReader.readAsDataURL(selectedSaleFiles[0]);
+    }else{
+        if(mainImg){
+            mainImg.src = "";
+            mainImg.style.display = "none";
+        }
+        if(empty){ empty.style.display = "block"; }
+    }
+
+    selectedSaleFiles.slice(0, 6).forEach(function(file, index){
+        const reader = new FileReader();
+
+        reader.onload = function(e){
+            const box = document.createElement("div");
+            box.className = "thumb new-thumb";
+
+            const img = document.createElement("img");
             img.src = e.target.result;
-            img.style.display = "block";
-        }
-        if(empty){
-            empty.style.display = "none";
-        }
-    };
-    reader.readAsDataURL(file);
+
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.innerText = "×";
+            btn.onclick = function(){
+                selectedSaleFiles.splice(index, 1);
+                refreshSalePhotoInput();
+            };
+
+            box.appendChild(img);
+            box.appendChild(btn);
+
+            if(preview){ preview.appendChild(box); }
+        };
+
+        reader.readAsDataURL(file);
+    });
 }
 
-function previewSalePhoto(event){
-    const file = event.target.files && event.target.files[0];
-    showSalePhotoFile(file);
+function showSalePhotoFiles(files){
+    if(!files || files.length === 0){ return; }
+
+    Array.from(files).forEach(function(file){
+        if(file && file.type && file.type.startsWith("image/")){
+            selectedSaleFiles.push(file);
+        }
+    });
+
+    selectedSaleFiles = selectedSaleFiles.slice(0, 6);
+    refreshSalePhotoInput();
+}
+
+function previewSalePhotos(event){
+    showSalePhotoFiles(event.target.files);
 }
 
 const dropBox = document.getElementById("dropPhotoBox");
@@ -605,38 +2413,356 @@ if(dropBox){
     dropBox.addEventListener("drop", function(e){
         e.preventDefault();
         dropBox.classList.remove("dragging");
-
-        const file = e.dataTransfer.files && e.dataTransfer.files[0];
-        showSalePhotoFile(file);
+        showSalePhotoFiles(e.dataTransfer.files);
     });
 }
 
 document.addEventListener("paste", function(e){
     const items = e.clipboardData && e.clipboardData.items;
-    if(!items) return;
+    if(!items){ return; }
 
     for(let i = 0; i < items.length; i++){
         const item = items[i];
         if(item.type.indexOf("image") !== -1){
-            showSalePhotoFile(item.getAsFile());
+            showSalePhotoFiles([item.getAsFile()]);
             break;
         }
     }
 });
 
-["preorderBreed","preorderGender","deadlineInput","customerName","customerPhone","customerAddress","noteInput"].forEach(function(id){
+function openPopup(type){
+    document.getElementById(type + "Popup")?.classList.add("active");
+    document.getElementById(type + "Backdrop")?.classList.add("active");
+}
+
+function closePopup(type){
+    document.getElementById(type + "Popup")?.classList.remove("active");
+    document.getElementById(type + "Backdrop")?.classList.remove("active");
+}
+
+function selectPetType(value, label){
+    document.getElementById("preorderPetType").value = value;
+    document.getElementById("preorderPetTypeLabel").innerText = label;
+    closePopup("petType");
+    updateCopyBox();
+}
+
+function selectGender(value, label){
+    document.getElementById("preorderGender").value = value;
+    document.getElementById("preorderGenderLabel").innerText = label;
+    closePopup("gender");
+    updateCopyBox();
+}
+
+let calendarTarget = null;
+let calendarCurrentDate = new Date();
+let calendarSelectedDate = null;
+
+function formatYMD(date){
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+}
+
+function parseYMD(value){
+    if(!value){ return null; }
+    const parts = value.split("-");
+    if(parts.length !== 3){ return null; }
+    return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+}
+
+function formatDateLabel(date){
+    if(!date){ return "Choose date"; }
+    return date.toLocaleDateString("en-US", {
+        weekday:"short",
+        month:"short",
+        day:"numeric",
+        year:"numeric"
+    });
+}
+
+function formatShortLabel(date){
+    if(!date){ return "Choose date"; }
+    return date.toLocaleDateString("en-GB", {
+        day:"2-digit",
+        month:"short",
+        year:"numeric"
+    });
+}
+
+function setDeadlineDays(days){
+    const d = new Date();
+    d.setDate(d.getDate() + Number(days));
+
+    const ymd = formatYMD(d);
+    const label = formatShortLabel(d);
+
+    const deadlineInput = document.getElementById("deadlineInput");
+    const deadlineLabel = document.getElementById("deadlineLabel");
+
+    if(deadlineInput){ deadlineInput.value = ymd; }
+    if(deadlineLabel){ deadlineLabel.innerText = label; }
+
+    updateCopyBox();
+}
+
+function openCalendarPicker(target){
+    calendarTarget = target;
+
+    let currentValue = "";
+    if(target === "warranty"){
+        currentValue = document.getElementById("warrantyStartInput").value;
+    }else if(target === "deadline"){
+        currentValue = document.getElementById("deadlineInput").value;
+    }
+
+    const parsed = parseYMD(currentValue);
+
+    calendarSelectedDate = parsed || new Date();
+    calendarCurrentDate = new Date(
+        calendarSelectedDate.getFullYear(),
+        calendarSelectedDate.getMonth(),
+        1
+    );
+
+    document.getElementById("calendarBackdrop").classList.add("active");
+    document.getElementById("calendarPopup").classList.add("active");
+
+    renderCalendar();
+}
+
+function closeCalendarPicker(){
+    document.getElementById("calendarBackdrop")?.classList.remove("active");
+    document.getElementById("calendarPopup")?.classList.remove("active");
+}
+
+function changeCalendarMonth(step){
+    calendarCurrentDate = new Date(
+        calendarCurrentDate.getFullYear(),
+        calendarCurrentDate.getMonth() + step,
+        1
+    );
+    renderCalendar();
+}
+
+function calendarQuickPick(type){
+    const d = new Date();
+
+    if(type === "today"){
+        d.setDate(d.getDate());
+    }else if(type === "tomorrow"){
+        d.setDate(d.getDate() + 1);
+    }else if(type === "yesterday"){
+        d.setDate(d.getDate() - 1);
+    }else if(type === "plus5"){
+        d.setDate(d.getDate() + 5);
+    }else if(type === "plus6"){
+        d.setDate(d.getDate() + 6);
+    }else if(type === "plus7"){
+        d.setDate(d.getDate() + 7);
+    }else if(type === "plus14"){
+        d.setDate(d.getDate() + 14);
+    }else if(type === "plus30"){
+        d.setDate(d.getDate() + 30);
+    }
+
+    calendarSelectedDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    calendarCurrentDate = new Date(
+        calendarSelectedDate.getFullYear(),
+        calendarSelectedDate.getMonth(),
+        1
+    );
+
+    renderCalendar();
+}
+
+function renderCalendar(){
+    const monthTitle = document.getElementById("calendarMonthTitle");
+    const selectedText = document.getElementById("calendarSelectedText");
+    const grid = document.getElementById("calendarGrid");
+
+    if(!monthTitle || !selectedText || !grid){ return; }
+
+    const year = calendarCurrentDate.getFullYear();
+    const month = calendarCurrentDate.getMonth();
+
+    monthTitle.innerText = calendarCurrentDate.toLocaleDateString("en-US", {
+        month:"long",
+        year:"numeric"
+    });
+
+    selectedText.innerText = formatDateLabel(calendarSelectedDate);
+    grid.innerHTML = "";
+
+    const firstDay = new Date(year, month, 1);
+    const startDay = firstDay.getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const prevMonthDays = new Date(year, month, 0).getDate();
+
+    const today = new Date();
+    const todayY = today.getFullYear();
+    const todayM = today.getMonth();
+    const todayD = today.getDate();
+
+    for(let i = startDay - 1; i >= 0; i--){
+        const dayNum = prevMonthDays - i;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "calendar-day muted";
+        btn.innerText = dayNum;
+        btn.onclick = function(){
+            calendarSelectedDate = new Date(year, month - 1, dayNum);
+            calendarCurrentDate = new Date(calendarSelectedDate.getFullYear(), calendarSelectedDate.getMonth(), 1);
+            renderCalendar();
+        };
+        grid.appendChild(btn);
+    }
+
+    for(let d = 1; d <= daysInMonth; d++){
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "calendar-day";
+        btn.innerText = d;
+
+        const isSelected =
+            calendarSelectedDate &&
+            calendarSelectedDate.getFullYear() === year &&
+            calendarSelectedDate.getMonth() === month &&
+            calendarSelectedDate.getDate() === d;
+
+        const isToday = todayY === year && todayM === month && todayD === d;
+
+        if(isSelected){ btn.classList.add("selected"); }
+        if(isToday){ btn.classList.add("today"); }
+
+        btn.onclick = function(){
+            calendarSelectedDate = new Date(year, month, d);
+            renderCalendar();
+        };
+
+        grid.appendChild(btn);
+    }
+
+    const totalCells = grid.children.length;
+    const remain = totalCells % 7 === 0 ? 0 : (7 - (totalCells % 7));
+
+    for(let i = 1; i <= remain; i++){
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "calendar-day muted";
+        btn.innerText = i;
+        btn.onclick = function(){
+            calendarSelectedDate = new Date(year, month + 1, i);
+            calendarCurrentDate = new Date(calendarSelectedDate.getFullYear(), calendarSelectedDate.getMonth(), 1);
+            renderCalendar();
+        };
+        grid.appendChild(btn);
+    }
+}
+
+function applyCalendarValue(){
+    if(!calendarSelectedDate){ return; }
+
+    const ymd = formatYMD(calendarSelectedDate);
+    const label = formatShortLabel(calendarSelectedDate);
+
+    if(calendarTarget === "warranty"){
+        document.getElementById("warrantyStartInput").value = ymd;
+        document.getElementById("warrantyStartLabel").innerText = label;
+    }else if(calendarTarget === "deadline"){
+        document.getElementById("deadlineInput").value = ymd;
+        document.getElementById("deadlineLabel").innerText = label;
+        updateCopyBox();
+    }
+
+    closeCalendarPicker();
+}
+
+function clearCalendarValue(){
+    if(calendarTarget === "warranty"){
+        document.getElementById("warrantyStartInput").value = "";
+        document.getElementById("warrantyStartLabel").innerText = "Choose warranty date";
+    }else if(calendarTarget === "deadline"){
+        document.getElementById("deadlineInput").value = "";
+        document.getElementById("deadlineLabel").innerText = "Choose deadline";
+        updateCopyBox();
+    }
+
+    closeCalendarPicker();
+}
+
+[
+    "preorderBreed",
+    "preorderColor",
+    "preorderSpecialType",
+    "customerName",
+    "customerPhone",
+    "customerAddress",
+    "noteInput"
+].forEach(function(id){
     const el = document.getElementById(id);
     if(el){
-        el.addEventListener("input", updateCopyBox);
-        el.addEventListener("change", updateCopyBox);
+        el.addEventListener("input", function(){
+            updateCopyBox();
+            updateCustomerBadge();
+        });
+        el.addEventListener("change", function(){
+            updateCopyBox();
+            updateCustomerBadge();
+        });
+    }
+});
+
+document.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){
+        closePetPopup();
+        closeSellerPopup();
+        closeSourcePopup();
+        closeLeadOwnerPopup();
+        closeCommissionPopup();
+        closeCalendarPicker();
+
+        ["petType", "gender"].forEach(function(type){
+            document.getElementById(type + "Popup")?.classList.remove("active");
+            document.getElementById(type + "Backdrop")?.classList.remove("active");
+        });
     }
 });
 
 window.addEventListener("load", function(){
     switchSaleMode();
-    updatePetPrice();
     calcSale();
+    updateLeadOwnerVisibility();
     updateCopyBox();
+    updateCustomerBadge();
+
+    const deadlineInput = document.getElementById("deadlineInput");
+    const deadlineLabel = document.getElementById("deadlineLabel");
+
+    if(deadlineInput && deadlineLabel && deadlineInput.value){
+        const d = parseYMD(deadlineInput.value);
+        deadlineLabel.innerText = d ? formatShortLabel(d) : "Choose deadline";
+    }
+
+    const warrantyStartInput = document.getElementById("warrantyStartInput");
+    const warrantyStartLabel = document.getElementById("warrantyStartLabel");
+
+    if(warrantyStartInput && warrantyStartLabel){
+        if(warrantyStartInput.value){
+            const d = parseYMD(warrantyStartInput.value);
+            warrantyStartLabel.innerText = d ? formatShortLabel(d) : "Choose warranty date";
+        }else{
+            warrantyStartLabel.innerText = "Choose warranty date";
+        }
+    }
+
+    const mode = activeSaleMode();
+    const deadlineInputAuto = document.getElementById("deadlineInput");
+
+    if(mode === "preorder" && deadlineInputAuto && !deadlineInputAuto.value){
+        setDeadlineDays(7);
+    }
 });
 </script>
 

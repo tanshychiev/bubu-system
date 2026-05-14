@@ -7,23 +7,40 @@
 
     <div class="page-top">
         <div>
-            <h1>{% if pet %}Edit Pet{% else %}Add Pet{% endif %} 🐾</h1>
-            <p>Create or update pet stock, vaccine history, and pet health record.</p>
+            <h1>{% if pet %}Edit Pet Stock{% else %}Stock In Pet{% endif %} 🐾</h1>
+            <p>Choose breed master, upload real pet photo, record current age, price and health record.</p>
         </div>
 
         <a href="{% url 'pet_list' %}" class="soft-btn">← Back</a>
     </div>
 
-    <form method="post" enctype="multipart/form-data" class="form-card">
+    <form method="post" enctype="multipart/form-data" class="form-card" id="petForm" novalidate>
         {% csrf_token %}
+
+        {% if form.errors %}
+            <div class="error-box">
+                <strong>Cannot save. Please check these fields:</strong>
+                <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
 
         <div class="layout">
 
             <!-- PHOTO PANEL -->
             <div class="photo-panel">
                 <div class="preview" id="previewBox">
-                    {% if pet and pet.photo %}
-                        <img src="{{ pet.photo.url }}" id="photoPreview">
+                    {% if pet and pet.display_photo %}
+                        <img src="{{ pet.display_photo.url }}" id="photoPreview">
                         <button type="button" class="photo-x" onclick="removeCurrentPhoto()">×</button>
                     {% else %}
                         <div id="photoEmpty">🐾</div>
@@ -42,9 +59,9 @@
                     ondragleave="handleDragLeave(event)"
                     ondrop="handleDrop(event)"
                 >
-                    <div class="drop-title">📸 Upload Photo</div>
+                    <div class="drop-title">📸 Upload Real Pet Photo</div>
                     <div class="drop-sub">
-                        Click to choose, drag image here, or copy screenshot then Ctrl + V.
+                        This is actual pet photo. Click, drag image, or paste screenshot with Ctrl + V.
                     </div>
                 </div>
 
@@ -63,8 +80,44 @@
 
                 <div class="grid">
 
+                    <!-- BREED MASTER POPUP -->
+                    <label class="{% if form.breed_profile.errors %}field-error{% endif %}" id="breedMasterWrap">
+                        Breed Master
+                        <input
+                            type="hidden"
+                            name="breed_profile"
+                            id="breedProfileInput"
+                            value="{% if pet and pet.breed_profile %}{{ pet.breed_profile.id }}{% elif form.breed_profile.value %}{{ form.breed_profile.value }}{% endif %}"
+                        >
+
+                        <button type="button" class="touch-select" onclick="openOptionPopup('breed')">
+                            <span id="breedProfileLabel">
+                                {% if pet and pet.breed_profile %}
+                                    {{ pet.breed_profile.get_pet_type_display }} - {{ pet.breed_profile.name }}
+                                {% elif form.breed_profile.value %}
+                                    Breed selected
+                                {% else %}
+                                    Choose Breed Master
+                                {% endif %}
+                            </span>
+                            <b>⌄</b>
+                        </button>
+
+                        <small class="field-help">Choose from Breed Master. If no breed, fill manual breed.</small>
+                    </label>
+
+                    <label class="{% if form.breed.errors %}field-error{% endif %}" id="manualBreedWrap">
+                        Manual Breed / Old Data
+                        <input
+                            name="breed"
+                            id="manualBreedInput"
+                            value="{{ pet.breed|default:'' }}"
+                            placeholder="Only fill if no breed master"
+                        >
+                    </label>
+
                     <!-- TYPE -->
-                    <label>
+                    <label class="{% if form.pet_type.errors %}field-error{% endif %}">
                         Type
                         <input type="hidden" name="pet_type" id="petTypeInput" value="{% if pet %}{{ pet.pet_type }}{% else %}dog{% endif %}">
 
@@ -82,18 +135,13 @@
                         </button>
                     </label>
 
-                    <label>
-                        Breed
-                        <input name="breed" value="{{ pet.breed|default:'' }}" required placeholder="Example: Poodle">
-                    </label>
-
-                    <label>
+                    <label class="{% if form.name.errors %}field-error{% endif %}">
                         Name / Code
-                        <input name="name" value="{{ pet.name|default:'' }}" placeholder="Example: Bear">
+                        <input name="name" value="{{ pet.name|default:'' }}" placeholder="Example: Bear / POM-001">
                     </label>
 
                     <!-- GENDER -->
-                    <label>
+                    <label class="{% if form.gender.errors %}field-error{% endif %}">
                         Gender
                         <input type="hidden" name="gender" id="genderInput" value="{{ pet.gender|default:'' }}">
 
@@ -109,49 +157,43 @@
                         </button>
                     </label>
 
-                    <label>
+                    <label class="{% if form.color.errors %}field-error{% endif %}">
                         Color
-                        <input name="color" value="{{ pet.color|default:'' }}" placeholder="Example: Brown">
+                        <input name="color" value="{{ pet.color|default:'' }}" placeholder="Example: Cream">
                     </label>
 
-                    <!-- STATUS -->
-                    <label>
-                        Stock Status
-                        <input type="hidden" name="status" id="statusInput" value="{% if pet %}{{ pet.status }}{% else %}in_stock{% endif %}">
-
-                        <button type="button" class="touch-select" onclick="openOptionPopup('status')">
-                            <span id="statusLabel">
-                                {% if pet.status == "reserved" %}
-                                    🟡 Reserved / Deposit
-                                {% elif pet.status == "sold" %}
-                                    🔴 Sold
-                                {% elif pet.status == "preorder" %}
-                                    🔵 Preorder
-                                {% elif pet.status == "sick" %}
-                                    🏥 Sick
-                                {% elif pet.status == "dead" %}
-                                    ⚫ Dead
-                                {% elif pet.status == "cancelled" %}
-                                    ❌ Cancelled
-                                {% else %}
-                                    🟢 In Stock
-                                {% endif %}
-                            </span>
-                            <b>⌄</b>
-                        </button>
+                    <label class="{% if form.special_type.errors %}field-error{% endif %}">
+                        Special Type
+                        <input name="special_type" value="{{ pet.special_type|default:'' }}" placeholder="Example: Teacup / Mini / Show Grade">
                     </label>
 
-                    <!-- BIRTH DATE -->
-                    <label>
-                        Birth Date
-                        <input type="hidden" name="birth_date" id="birthDateInput" value="{{ pet.birth_date|date:'Y-m-d' }}">
+                    <label class="{% if form.age_months_at_stock_in.errors %}field-error{% endif %}" id="ageWrap">
+                        Age Now / Stock In Age <small class="inline-small">(month)</small>
+                        <div class="age-input-wrap">
+                            <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                name="age_months_at_stock_in"
+                                id="ageMonthsInput"
+                                value="{{ pet.age_months_at_stock_in|default:0 }}"
+                                placeholder="Example: 3"
+                            >
+                            <span>months</span>
+                        </div>
+                    </label>
 
-                        <button type="button" class="touch-date-btn" onclick="openDatePicker('birthDateInput','birthDateLabel')">
-                            <span id="birthDateLabel">
-                                {% if pet.birth_date %}
-                                    {{ pet.birth_date|date:"M d, Y" }}
+                    <!-- AGE RECORDED DATE -->
+                    <label class="{% if form.age_recorded_date.errors %}field-error{% endif %}">
+                        Age Recorded Date
+                        <input type="hidden" name="age_recorded_date" id="ageRecordedDateInput" value="{{ pet.age_recorded_date|date:'Y-m-d' }}">
+
+                        <button type="button" class="touch-date-btn" onclick="openDatePicker('ageRecordedDateInput','ageRecordedDateLabel')">
+                            <span id="ageRecordedDateLabel">
+                                {% if pet.age_recorded_date %}
+                                    {{ pet.age_recorded_date|date:"M d, Y" }}
                                 {% else %}
-                                    Choose date
+                                    Today
                                 {% endif %}
                             </span>
                             <b>📅</b>
@@ -159,7 +201,7 @@
                     </label>
 
                     <!-- DEATH DATE -->
-                    <label>
+                    <label class="{% if form.death_date.errors %}field-error{% endif %}">
                         Death Date
                         <input type="hidden" name="death_date" id="deathDateInput" value="{{ pet.death_date|date:'Y-m-d' }}">
 
@@ -175,24 +217,56 @@
                         </button>
                     </label>
 
-                    <label>
-                        Cost Price
-                        <input type="number" step="0.01" name="cost_price" value="{{ pet.cost_price|default:'0.00' }}">
+                    <!-- STATUS -->
+                    <label class="{% if form.status.errors %}field-error{% endif %}">
+                        Stock Status
+                        <input type="hidden" name="status" id="statusInput" value="{% if pet %}{{ pet.status }}{% else %}in_stock{% endif %}">
+
+                        <button type="button" class="touch-select" onclick="openOptionPopup('status')">
+                            <span id="statusLabel">
+                                {% if pet.status == "reserved" %}
+                                    🟡 Reserved / Deposit
+                                {% elif pet.status == "sold" %}
+                                    🔴 Sold
+                                {% elif pet.status == "sick" %}
+                                    🏥 Sick
+                                {% elif pet.status == "dead" %}
+                                    ⚫ Dead
+                                {% elif pet.status == "cancelled" %}
+                                    ❌ Cancelled
+                                {% else %}
+                                    🟢 In Stock
+                                {% endif %}
+                            </span>
+                            <b>⌄</b>
+                        </button>
                     </label>
 
-                    <label>
+                    <label class="{% if form.cost_price.errors %}field-error{% endif %}">
+                        Cost Price
+                        <input type="number" step="0.01" name="cost_price" id="costPriceInput" value="{{ pet.cost_price|default:'0.00' }}">
+                    </label>
+
+                    <label class="{% if form.sale_price.errors %}field-error{% endif %}">
                         Sale Price
-                        <input type="number" step="0.01" name="sale_price" value="{{ pet.sale_price|default:'0.00' }}">
+                        <input type="number" step="0.01" name="sale_price" id="salePriceInput" value="{{ pet.sale_price|default:'0.00' }}">
                     </label>
 
                 </div>
+
+                {% if pet %}
+                    <div class="age-box">
+                        Current Age Auto Show:
+                        <strong>{{ pet.current_age_display }}</strong>
+                    </div>
+                {% endif %}
 
                 <!-- VACCINE SECTION -->
                 <div class="vaccine-section">
                     <div class="vaccine-head">
                         <div>
                             <h3>💉 Vaccine History</h3>
-                            <p>Vaccine 1, Vaccine 2, and next recommended vaccine date. You can add more later.</p>
+                            <p>Vaccine 1, Vaccine 2, and next recommended vaccine date.</p>
                         </div>
 
                         <button type="button" class="add-vaccine-btn" onclick="addVaccineRow()">＋ Add Vaccine</button>
@@ -321,6 +395,79 @@
 <!-- SELECT BACKDROP -->
 <div class="select-backdrop" id="selectBackdrop" onclick="closeOptionPopups()"></div>
 
+<!-- BREED POPUP -->
+<div class="option-popup breed-popup breed-style-popup" id="breedPopup">
+    <div class="breed-popup-head">
+        <h3>Select Breed</h3>
+        <button type="button" onclick="closeOptionPopups()">×</button>
+    </div>
+
+    <input
+        type="text"
+        id="breedSearchInput"
+        class="popup-search"
+        placeholder="Search breed..."
+        oninput="filterBreedButtons()"
+    >
+
+    <div class="breed-option-list" id="breedOptionList">
+        <button
+            type="button"
+            class="breed-select-card breed-option"
+            data-search="no breed manual old data"
+            onclick="chooseBreed('', 'Choose Breed Master', '', '', '', '')"
+        >
+            <div class="breed-icon">🐾</div>
+
+            <div class="breed-info">
+                <strong>No Breed Master</strong>
+                <span>Use manual breed / old data</span>
+            </div>
+
+            <div class="breed-price">$0.00</div>
+        </button>
+
+        {% for breed in form.breed_profile.field.queryset %}
+            <button
+                type="button"
+                class="breed-select-card breed-option"
+                data-search="{{ breed.get_pet_type_display }} {{ breed.name }} {{ breed.color_options }} {{ breed.special_type_options }}"
+                onclick="chooseBreed('{{ breed.id }}', '{{ breed.get_pet_type_display }} - {{ breed.name|escapejs }}', '{{ breed.pet_type }}', '{{ breed.default_cost_price }}', '{{ breed.default_sale_price }}', '{{ breed.name|escapejs }}')"
+            >
+                <div class="breed-photo">
+                    {% if breed.photo %}
+                        <img src="{{ breed.photo.url }}" alt="{{ breed.name }}">
+                    {% else %}
+                        <span>
+                            {% if breed.pet_type == "cat" %}🐱{% elif breed.pet_type == "dog" %}🐶{% else %}🐾{% endif %}
+                        </span>
+                    {% endif %}
+                </div>
+
+                <div class="breed-info">
+                    <strong>{{ breed.name }}</strong>
+                    <span>{{ breed.get_pet_type_display }}</span>
+
+                    <div class="breed-tags">
+                        {% if breed.color_options %}
+                            <em>{{ breed.color_options|truncatechars:22 }}</em>
+                        {% endif %}
+
+                        {% if breed.special_type_options %}
+                            <em>{{ breed.special_type_options|truncatechars:22 }}</em>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="breed-price">
+                    ${{ breed.default_sale_price|floatformat:2 }}
+                    <small>Cost ${{ breed.default_cost_price|floatformat:2 }}</small>
+                </div>
+            </button>
+        {% endfor %}
+    </div>
+</div>
+
 <!-- TYPE POPUP -->
 <div class="option-popup" id="typePopup">
     <div class="option-head">
@@ -385,10 +532,6 @@
             <span>🔴 Sold</span><b>✓</b>
         </button>
 
-        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','preorder','🔵 Preorder')">
-            <span>🔵 Preorder</span><b>✓</b>
-        </button>
-
         <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','sick','🏥 Sick')">
             <span>🏥 Sick</span><b>✓</b>
         </button>
@@ -431,13 +574,7 @@
     </div>
 
     <div class="week-row">
-        <span>Su</span>
-        <span>Mo</span>
-        <span>Tu</span>
-        <span>We</span>
-        <span>Th</span>
-        <span>Fr</span>
-        <span>Sa</span>
+        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
     </div>
 
     <div class="calendar-grid" id="calendarGrid"></div>
@@ -452,9 +589,7 @@
 *{box-sizing:border-box}
 a{text-decoration:none}
 
-.form-page{
-    padding:24px 28px;
-}
+.form-page{padding:24px 28px}
 
 .page-top{
     display:flex;
@@ -490,10 +625,7 @@ a{text-decoration:none}
     cursor:pointer;
 }
 
-.soft-btn{
-    background:#f1f5f9;
-    color:#334155;
-}
+.soft-btn{background:#f1f5f9;color:#334155}
 
 .form-card{
     background:white;
@@ -501,6 +633,21 @@ a{text-decoration:none}
     border-radius:30px;
     padding:22px;
     box-shadow:0 18px 40px rgba(130,91,60,.08);
+}
+
+.error-box{
+    background:#fff0f0;
+    color:#e03131;
+    border-radius:18px;
+    padding:14px 18px;
+    font-weight:900;
+    margin-bottom:16px;
+    border:2px solid #ffc9c9;
+}
+
+.error-box ul{
+    margin:8px 0 0;
+    padding-left:18px;
 }
 
 .layout{
@@ -531,7 +678,9 @@ a{text-decoration:none}
 .preview img{
     width:100%;
     height:100%;
-    object-fit:cover;
+    object-fit:contain;
+    padding:10px;
+    background:white;
 }
 
 .photo-x{
@@ -582,9 +731,7 @@ a{text-decoration:none}
     line-height:1.5;
 }
 
-.hidden-file{
-    display:none;
-}
+.hidden-file{display:none}
 
 .grid{
     display:grid;
@@ -598,6 +745,7 @@ label{
 }
 
 input,
+select,
 textarea{
     width:100%;
     border:2px solid #eaddec;
@@ -610,7 +758,8 @@ textarea{
     outline:0;
 }
 
-input{
+input,
+select{
     height:62px;
 }
 
@@ -620,14 +769,78 @@ textarea{
 }
 
 input:focus,
+select:focus,
 textarea:focus{
     border-color:#9b7cf6;
     box-shadow:0 0 0 5px rgba(155,124,246,.12);
 }
 
+.field-error input,
+.field-error select,
+.field-error textarea,
+.field-error .touch-select,
+.field-error .touch-date-btn{
+    border-color:#ff4d5d !important;
+    background:#fff6f7 !important;
+    box-shadow:0 0 0 5px rgba(255,77,93,.12) !important;
+}
+
+.field-help{
+    display:block;
+    margin-top:6px;
+    color:#7b7288;
+    font-size:12px;
+    font-weight:900;
+}
+
+.inline-small{
+    color:#7b5cff;
+    font-size:12px;
+    font-weight:1000;
+}
+
+.age-input-wrap{
+    position:relative;
+}
+
+.age-input-wrap input{
+    padding-right:88px;
+}
+
+.age-input-wrap span{
+    position:absolute;
+    right:12px;
+    bottom:13px;
+    min-width:66px;
+    height:36px;
+    border-radius:999px;
+    background:#f4f0ff;
+    color:#7b5cff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:13px;
+    font-weight:1000;
+}
+
 .full{
     display:block;
     margin-top:16px;
+}
+
+.age-box{
+    margin-top:16px;
+    background:#f8f6ff;
+    border:2px solid #e6dcff;
+    border-radius:22px;
+    padding:16px;
+    color:#7b7288;
+    font-weight:1000;
+}
+
+.age-box strong{
+    color:#7b5cff;
+    font-size:20px;
 }
 
 .actions{
@@ -663,18 +876,10 @@ textarea:focus{
     align-items:center;
     justify-content:space-between;
     cursor:pointer;
+    text-align:left;
 }
 
-.touch-select:focus,
-.touch-date-btn:focus{
-    outline:0;
-    border-color:#9b7cf6;
-    box-shadow:0 0 0 5px rgba(155,124,246,.12);
-}
-
-.small-date-btn{
-    font-size:15px;
-}
+.small-date-btn{font-size:15px}
 
 /* SELECT POPUP */
 .select-backdrop,
@@ -687,9 +892,7 @@ textarea:focus{
 }
 
 .select-backdrop.active,
-.date-backdrop.active{
-    display:block;
-}
+.date-backdrop.active{display:block}
 
 .option-popup{
     display:none;
@@ -709,9 +912,7 @@ textarea:focus{
     box-shadow:0 30px 90px rgba(8,6,52,.25);
 }
 
-.option-popup.active{
-    display:block;
-}
+.option-popup.active{display:block}
 
 .option-head{
     display:flex;
@@ -740,6 +941,16 @@ textarea:focus{
     cursor:pointer;
 }
 
+.popup-search{
+    width:100%;
+    height:58px;
+    border:2px solid #eaddec;
+    border-radius:18px;
+    padding:0 16px;
+    margin:0 0 12px;
+    font-weight:900;
+}
+
 .option-list{
     display:grid;
     gap:10px;
@@ -761,10 +972,166 @@ textarea:focus{
     cursor:pointer;
 }
 
+.option-btn small{
+    display:block;
+    margin-top:5px;
+    color:#7b7288;
+    font-size:12px;
+    font-weight:900;
+}
+
 .option-btn:hover{
     border-color:transparent;
     color:white;
     background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+}
+
+.option-btn:hover small{
+    color:white;
+}
+
+/* BREED POPUP - POS VARIANT STYLE */
+.breed-style-popup{
+    width:560px;
+    max-width:calc(100% - 28px);
+    padding:20px;
+    border-radius:28px;
+    border:0;
+    background:white;
+    box-shadow:0 30px 90px rgba(8,6,52,.28);
+}
+
+.breed-popup-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:16px;
+}
+
+.breed-popup-head h3{
+    margin:0;
+    font-size:28px;
+    color:#080634;
+    font-weight:1000;
+}
+
+.breed-popup-head button{
+    width:48px;
+    height:48px;
+    border:0;
+    border-radius:50%;
+    background:#fff0f0;
+    color:#ff5d73;
+    font-size:28px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.breed-option-list{
+    display:grid;
+    gap:14px;
+    max-height:58vh;
+    overflow:auto;
+    padding-right:4px;
+}
+
+.breed-select-card{
+    width:100%;
+    border:0;
+    border-radius:24px;
+    background:linear-gradient(135deg,#fff8f4,#fbf8ff);
+    padding:14px;
+    display:grid;
+    grid-template-columns:74px 1fr auto;
+    gap:14px;
+    align-items:center;
+    text-align:left;
+    cursor:pointer;
+    transition:.15s;
+}
+
+.breed-select-card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 16px 36px rgba(123,92,255,.16);
+}
+
+.breed-photo,
+.breed-icon{
+    width:74px;
+    height:74px;
+    border-radius:16px;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    font-size:34px;
+}
+
+.breed-photo img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    padding:4px;
+    background:white;
+}
+
+.breed-info strong{
+    display:block;
+    color:#080634;
+    font-size:20px;
+    font-weight:1000;
+}
+
+.breed-info span{
+    display:block;
+    margin-top:4px;
+    color:#7b7288;
+    font-size:13px;
+    font-weight:1000;
+}
+
+.breed-tags{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    margin-top:8px;
+}
+
+.breed-tags em{
+    font-style:normal;
+    padding:6px 10px;
+    border-radius:999px;
+    background:white;
+    color:#7b5cff;
+    font-size:12px;
+    font-weight:1000;
+}
+
+.breed-price{
+    min-width:92px;
+    min-height:58px;
+    padding:10px 12px;
+    border-radius:18px;
+    background:linear-gradient(135deg,#ff8c6b,#ff5d73);
+    color:white;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    font-size:20px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+
+.breed-price small{
+    display:block;
+    margin-top:3px;
+    font-size:11px;
+    color:white;
+    opacity:.9;
+    font-weight:900;
 }
 
 /* VACCINE */
@@ -861,9 +1228,7 @@ textarea:focus{
     box-shadow:0 30px 90px rgba(8,6,52,.25);
 }
 
-.date-popup.active{
-    display:block;
-}
+.date-popup.active{display:block}
 
 .date-top{
     background:linear-gradient(135deg,#7b5cff,#9b7cf6);
@@ -916,18 +1281,9 @@ textarea:focus{
     cursor:pointer;
 }
 
-.date-shortcuts button:nth-child(1){
-    background:#25b879;
-}
-
-.date-shortcuts button:nth-child(2){
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
-}
-
-.date-shortcuts button:nth-child(3){
-    background:#f1eafe;
-    color:#7b5cff;
-}
+.date-shortcuts button:nth-child(1){background:#25b879}
+.date-shortcuts button:nth-child(2){background:linear-gradient(135deg,#9b7cf6,#ff8c6b)}
+.date-shortcuts button:nth-child(3){background:#f1eafe;color:#7b5cff}
 
 .calendar-head{
     display:flex;
@@ -981,9 +1337,7 @@ textarea:focus{
     cursor:pointer;
 }
 
-.date-cell.muted{
-    color:#c7bdd7;
-}
+.date-cell.muted{color:#c7bdd7}
 
 .date-cell.active{
     color:white;
@@ -1006,46 +1360,20 @@ textarea:focus{
     cursor:pointer;
 }
 
-.date-cancel{
-    background:#f3ecff;
-    color:#7b5cff;
-}
-
-.date-ok{
-    background:#7b5cff;
-    color:white;
-}
+.date-cancel{background:#f3ecff;color:#7b5cff}
+.date-ok{background:#7b5cff;color:white}
 
 @media(max-width:1194px){
-    .page-top{
-        display:block;
-    }
-
-    .soft-btn{
-        margin-top:16px;
-    }
-
-    .layout{
-        grid-template-columns:1fr;
-    }
-
-    .grid{
-        grid-template-columns:1fr 1fr;
-    }
-
-    .vaccine-grid{
-        grid-template-columns:1fr 1fr;
-    }
+    .page-top{display:block}
+    .soft-btn{margin-top:16px}
+    .layout{grid-template-columns:1fr}
+    .grid{grid-template-columns:1fr 1fr}
+    .vaccine-grid{grid-template-columns:1fr 1fr}
 }
 
 @media(max-width:700px){
-    .form-page{
-        padding:18px;
-    }
-
-    .page-top h1{
-        font-size:28px;
-    }
+    .form-page{padding:18px}
+    .page-top h1{font-size:28px}
 
     .grid,
     .actions,
@@ -1065,11 +1393,10 @@ textarea:focus{
         font-size:19px;
     }
 
-    .preview{
-        height:300px;
-    }
+    .preview{height:280px}
 
     input,
+    select,
     .touch-select,
     .touch-date-btn{
         height:66px;
@@ -1089,6 +1416,26 @@ textarea:focus{
         border-radius:28px;
     }
 
+    .breed-style-popup{
+        max-height:82vh;
+    }
+
+    .breed-select-card{
+        grid-template-columns:64px 1fr;
+    }
+
+    .breed-price{
+        grid-column:1 / -1;
+        width:100%;
+        min-height:54px;
+    }
+
+    .breed-photo,
+    .breed-icon{
+        width:64px;
+        height:64px;
+    }
+
     .option-btn{
         min-height:70px;
         font-size:18px;
@@ -1102,18 +1449,101 @@ let activeDateLabelId = null;
 let calendarDate = new Date();
 let selectedDate = null;
 
+document.addEventListener("DOMContentLoaded", function(){
+    const form = document.getElementById("petForm");
+
+    setDefaultAgeRecordedDate();
+
+    if(form){
+        form.addEventListener("submit", function(e){
+            if(!validatePetForm()){
+                e.preventDefault();
+            }
+        });
+    }
+});
+
+function todayYMD(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+}
+
+function setDefaultAgeRecordedDate(){
+    const input = document.getElementById("ageRecordedDateInput");
+    const label = document.getElementById("ageRecordedDateLabel");
+
+    if(input && !input.value){
+        input.value = todayYMD();
+    }
+
+    if(label && (!label.innerText || label.innerText.trim() === "Today")){
+        label.innerText = formatNice(parseYMD(input.value));
+    }
+}
+
+function markInvalid(elementId){
+    const el = document.getElementById(elementId);
+    if(!el) return;
+
+    const wrap = el.closest("label") || el.closest(".touch-field") || el.parentElement;
+    if(wrap){
+        wrap.classList.add("field-error");
+        wrap.scrollIntoView({behavior:"smooth", block:"center"});
+    }
+}
+
+function clearInvalid(){
+    document.querySelectorAll(".field-error").forEach(function(el){
+        el.classList.remove("field-error");
+    });
+}
+
+function validatePetForm(){
+    clearInvalid();
+
+    const breedProfile = document.getElementById("breedProfileInput").value.trim();
+    const manualBreed = document.getElementById("manualBreedInput").value.trim();
+    const age = Number(document.getElementById("ageMonthsInput").value || 0);
+    const salePrice = Number(document.getElementById("salePriceInput").value || 0);
+
+    if(!breedProfile && !manualBreed){
+        alert("Please choose Breed Master or fill Manual Breed.");
+        markInvalid("breedProfileInput");
+        return false;
+    }
+
+    if(age < 0){
+        alert("Age cannot be negative.");
+        markInvalid("ageMonthsInput");
+        return false;
+    }
+
+    if(salePrice <= 0){
+        alert("Please fill Sale Price.");
+        markInvalid("salePriceInput");
+        return false;
+    }
+
+    return true;
+}
+
 function openOptionPopup(type){
     closeOptionPopups();
 
     const backdrop = document.getElementById("selectBackdrop");
     const popup = document.getElementById(type + "Popup");
 
-    if(backdrop){
-        backdrop.classList.add("active");
-    }
+    if(backdrop){ backdrop.classList.add("active"); }
+    if(popup){ popup.classList.add("active"); }
 
-    if(popup){
-        popup.classList.add("active");
+    if(type === "breed"){
+        const search = document.getElementById("breedSearchInput");
+        if(search){
+            setTimeout(function(){ search.focus(); }, 100);
+        }
     }
 }
 
@@ -1123,16 +1553,60 @@ function closeOptionPopups(){
     });
 
     const backdrop = document.getElementById("selectBackdrop");
-
-    if(backdrop){
-        backdrop.classList.remove("active");
-    }
+    if(backdrop){ backdrop.classList.remove("active"); }
 }
 
 function chooseOption(inputId, labelId, value, label){
     document.getElementById(inputId).value = value;
     document.getElementById(labelId).innerText = label;
     closeOptionPopups();
+}
+
+function chooseBreed(id, label, petType, costPrice, salePrice, breedName){
+    document.getElementById("breedProfileInput").value = id;
+    document.getElementById("breedProfileLabel").innerText = label;
+
+    if(id){
+        const manualBreed = document.getElementById("manualBreedInput");
+        const costInput = document.getElementById("costPriceInput");
+        const saleInput = document.getElementById("salePriceInput");
+
+        if(manualBreed && !manualBreed.value){
+            manualBreed.value = breedName || "";
+        }
+
+        if(costInput && Number(costInput.value || 0) <= 0){
+            costInput.value = Number(costPrice || 0).toFixed(2);
+        }
+
+        if(saleInput && Number(saleInput.value || 0) <= 0){
+            saleInput.value = Number(salePrice || 0).toFixed(2);
+        }
+
+        if(petType === "dog"){
+            chooseOption("petTypeInput", "petTypeLabel", "dog", "🐶 Dog");
+        }else if(petType === "cat"){
+            chooseOption("petTypeInput", "petTypeLabel", "cat", "🐱 Cat");
+        }else if(petType === "other"){
+            chooseOption("petTypeInput", "petTypeLabel", "other", "🐾 Other");
+        }
+    }
+
+    closeOptionPopups();
+}
+
+function filterBreedButtons(){
+    const q = document.getElementById("breedSearchInput").value.toLowerCase().trim();
+
+    document.querySelectorAll(".breed-option").forEach(function(btn){
+        const text = (btn.dataset.search || "").toLowerCase();
+
+        if(!q || text.includes(q)){
+            btn.style.display = "grid";
+        }else{
+            btn.style.display = "none";
+        }
+    });
 }
 
 /* PHOTO UPLOAD */
@@ -1163,9 +1637,7 @@ function setPhotoFile(file){
         preview.src = e.target.result;
         preview.style.display = "block";
 
-        if(empty){
-            empty.style.display = "none";
-        }
+        if(empty){ empty.style.display = "none"; }
 
         let xBtn = document.querySelector(".photo-x");
 
@@ -1183,9 +1655,7 @@ function setPhotoFile(file){
 
     reader.readAsDataURL(file);
 
-    if(removeInput){
-        removeInput.value = "0";
-    }
+    if(removeInput){ removeInput.value = "0"; }
 }
 
 function clearNewPhoto(e){
@@ -1199,22 +1669,16 @@ function clearNewPhoto(e){
     const empty = document.getElementById("photoEmpty");
     const removeInput = document.getElementById("removePhotoInput");
 
-    if(input){
-        input.value = "";
-    }
+    if(input){ input.value = ""; }
 
     if(preview){
         preview.src = "";
         preview.style.display = "none";
     }
 
-    if(empty){
-        empty.style.display = "block";
-    }
+    if(empty){ empty.style.display = "block"; }
 
-    if(removeInput){
-        removeInput.value = "0";
-    }
+    if(removeInput){ removeInput.value = "0"; }
 
     document.querySelectorAll(".photo-x").forEach(function(btn){
         btn.style.display = "none";
@@ -1227,9 +1691,7 @@ function removeCurrentPhoto(){
     const removeInput = document.getElementById("removePhotoInput");
     const input = document.getElementById("photoInput");
 
-    if(input){
-        input.value = "";
-    }
+    if(input){ input.value = ""; }
 
     if(preview){
         preview.src = "";
@@ -1245,9 +1707,7 @@ function removeCurrentPhoto(){
         empty.style.display = "block";
     }
 
-    if(removeInput){
-        removeInput.value = "1";
-    }
+    if(removeInput){ removeInput.value = "1"; }
 
     document.querySelectorAll(".photo-x").forEach(function(btn){
         btn.style.display = "none";
@@ -1256,32 +1716,21 @@ function removeCurrentPhoto(){
 
 function handleDragOver(e){
     e.preventDefault();
-
     const zone = document.getElementById("dropZone");
-
-    if(zone){
-        zone.classList.add("dragover");
-    }
+    if(zone){ zone.classList.add("dragover"); }
 }
 
 function handleDragLeave(e){
     e.preventDefault();
-
     const zone = document.getElementById("dropZone");
-
-    if(zone){
-        zone.classList.remove("dragover");
-    }
+    if(zone){ zone.classList.remove("dragover"); }
 }
 
 function handleDrop(e){
     e.preventDefault();
 
     const zone = document.getElementById("dropZone");
-
-    if(zone){
-        zone.classList.remove("dragover");
-    }
+    if(zone){ zone.classList.remove("dragover"); }
 
     const files = e.dataTransfer.files;
 
@@ -1292,10 +1741,7 @@ function handleDrop(e){
 
 document.addEventListener("paste", function(e){
     const items = e.clipboardData && e.clipboardData.items;
-
-    if(!items){
-        return;
-    }
+    if(!items){ return; }
 
     for(let i = 0; i < items.length; i++){
         const item = items[i];
@@ -1415,13 +1861,11 @@ function formatYMD(date){
 }
 
 function formatNice(date){
-    const options = {
+    return date.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric"
-    };
-
-    return date.toLocaleDateString("en-US", options);
+    });
 }
 
 function renderCalendar(){

@@ -829,18 +829,33 @@ tbody tr:hover{
     </a>
 
 
-    <!-- PETS (🔥 NEW MAIN MODULE) -->
-    <div class="menu-group-title">Pets</div>
+    <!-- PETS -->
+<div class="menu-group-title">Pets</div>
 
-    <a href="{% url 'pet_list' %}" onclick="closeSidebar()"
-       class="{% if request.resolver_match.url_name|slice:':4' == 'pet_' %}active{% endif %}">
-        <span>🐾</span><span>Pets Stock</span>
-    </a>
+<a href="{% url 'pet_list' %}" onclick="closeSidebar()"
+   class="{% if request.resolver_match.url_name == 'pet_list' or request.resolver_match.url_name == 'pet_create' or request.resolver_match.url_name == 'pet_detail' or request.resolver_match.url_name == 'pet_edit' %}active{% endif %}">
+    <span>🐾</span><span>Pets Stock</span>
+</a>
 
-    <a href="{% url 'pet_sale_create' %}" onclick="closeSidebar()"
-       class="{% if request.resolver_match.url_name == 'pet_sale_create' %}active{% endif %}">
-        <span>💰</span><span>Pet Sale</span>
-    </a>
+<a href="{% url 'pet_breed_list' %}" onclick="closeSidebar()"
+   class="{% if request.resolver_match.url_name == 'pet_breed_list' or request.resolver_match.url_name == 'pet_breed_create' or request.resolver_match.url_name == 'pet_breed_edit' %}active{% endif %}">
+    <span>🐕</span><span>Breed Master</span>
+</a>
+
+<a href="{% url 'pet_sale_list' %}" onclick="closeSidebar()"
+   class="{% if request.resolver_match.url_name == 'pet_sale_list' or request.resolver_match.url_name == 'pet_sale_detail' or request.resolver_match.url_name == 'pet_sale_edit' %}active{% endif %}">
+    <span>📋</span><span>Pet Sale List</span>
+</a>
+
+<a href="{% url 'pet_available_for_sale' %}" onclick="closeSidebar()"
+   class="{% if request.resolver_match.url_name == 'pet_available_for_sale' %}active{% endif %}">
+    <span>🐶</span><span>Sell In-stock</span>
+</a>
+
+<a href="{% url 'pet_sale_create' %}" onclick="closeSidebar()"
+   class="{% if request.resolver_match.url_name == 'pet_sale_create' %}active{% endif %}">
+    <span>💰</span><span>New Pet Sale</span>
+</a>
 
 
     <!-- INVENTORY -->

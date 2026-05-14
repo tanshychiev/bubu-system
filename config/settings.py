@@ -4,7 +4,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "django-insecure-change-this-later"
 DEBUG = True
-ALLOWED_HOSTS = ["5.223.90.183", "localhost", "127.0.0.1"]
+
+ALLOWED_HOSTS = [
+    "5.223.90.183",
+    "localhost",
+    "127.0.0.1",
+]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -14,6 +19,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    # Project apps
     "core",
     "users",
     "inventory",
@@ -23,7 +29,6 @@ INSTALLED_APPS = [
     "purchases",
     "services",
     "pets",
-
 ]
 
 MIDDLEWARE = [
@@ -41,7 +46,9 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [
+            BASE_DIR / "templates",
+        ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -63,10 +70,18 @@ DATABASES = {
 }
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
 ]
 
 LANGUAGE_CODE = "en-us"
@@ -76,7 +91,9 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -86,3 +103,17 @@ LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# ============================================================
+# Telegram Bot Alert
+# Used for BUBU pet sale / preorder notification
+# ============================================================
+
+TELEGRAM_BOT_TOKEN = "8846065896:AAEudLU50XNCzAnCp0DzOtLAq3Gl4F5yfqQ"
+
+TELEGRAM_CHAT_ID = "-1003776345220"
+
+TELEGRAM_PET_INSTOCK_TOPIC_ID = "12"
+TELEGRAM_PET_PREORDER_TOPIC_ID = "5"
+TELEGRAM_PET_COMPLETE_TOPIC_ID = "17"

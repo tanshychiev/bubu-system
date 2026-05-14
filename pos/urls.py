@@ -8,7 +8,11 @@ urlpatterns = [
 
     # Cart
     path("add/<int:item_id>/", views.pos_add_cart, name="pos_add_cart"),
-    path("add-variant/<int:item_id>/<int:variant_id>/", views.pos_add_variant_cart, name="pos_add_variant_cart"),
+    path(
+        "add-variant/<int:item_id>/<int:variant_id>/",
+        views.pos_add_variant_cart,
+        name="pos_add_variant_cart",
+    ),
 
     path("plus/<str:cart_key>/", views.pos_plus_cart, name="pos_plus_cart"),
     path("minus/<str:cart_key>/", views.pos_minus_cart, name="pos_minus_cart"),
@@ -31,4 +35,9 @@ urlpatterns = [
 
     # Settings
     path("settings/exchange-rate/", views.pos_exchange_rate, name="pos_exchange_rate"),
+    path(
+        "settings/cash-float/",
+        views.branch_cash_float_settings,
+        name="branch_cash_float_settings",
+    ),
 ]

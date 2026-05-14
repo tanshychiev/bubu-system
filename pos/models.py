@@ -18,6 +18,7 @@ class Sale(models.Model):
         blank=True,
         related_name="sales",
     )
+
     customer = models.ForeignKey(
         Customer,
         on_delete=models.SET_NULL,
@@ -30,11 +31,35 @@ class Sale(models.Model):
         choices=SALE_TYPE_CHOICES,
         default="walk_in",
     )
+
     delivery_created = models.BooleanField(default=False)
 
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    change_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
+
+    paid_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
+
+    change_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
+
+    discount_type = models.CharField(max_length=20, default="percent")
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    tax_type = models.CharField(max_length=20, default="percent")
+    tax_value = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     @property
@@ -45,8 +70,10 @@ class Sale(models.Model):
     def status(self):
         if self.paid_amount >= self.total_amount:
             return "Paid"
+
         if self.paid_amount == 0:
             return "Unpaid"
+
         return "Partial"
 
     def clean(self):
@@ -59,6 +86,18 @@ class Sale(models.Model):
         if self.change_amount < 0:
             raise ValidationError("Change amount cannot be negative.")
 
+        if self.discount_value < 0:
+            raise ValidationError("Discount value cannot be negative.")
+
+        if self.discount_amount < 0:
+            raise ValidationError("Discount amount cannot be negative.")
+
+        if self.tax_value < 0:
+            raise ValidationError("Tax value cannot be negative.")
+
+        if self.tax_amount < 0:
+            raise ValidationError("Tax amount cannot be negative.")
+
     def __str__(self):
         branch_name = self.branch.name if self.branch else "No Branch"
         return f"Sale #{self.id} - {branch_name}"
@@ -70,6 +109,7 @@ class SaleItem(models.Model):
         on_delete=models.CASCADE,
         related_name="items",
     )
+
     branch = models.ForeignKey(
         Branch,
         on_delete=models.PROTECT,
@@ -77,10 +117,12 @@ class SaleItem(models.Model):
         blank=True,
         related_name="sale_items",
     )
+
     item = models.ForeignKey(
         Item,
         on_delete=models.PROTECT,
     )
+
     variant = models.ForeignKey(
         ItemVariant,
         on_delete=models.PROTECT,
@@ -88,8 +130,13 @@ class SaleItem(models.Model):
         blank=True,
         related_name="sale_items",
     )
+
     quantity = models.PositiveIntegerField(default=1)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+    )
 
     @property
     def total(self):
@@ -109,6 +156,7 @@ class SaleItem(models.Model):
     def __str__(self):
         if self.variant:
             return f"{self.variant} x {self.quantity}"
+
         return f"{self.item} x {self.quantity}"
 
 
@@ -129,9 +177,24 @@ class SalePayment(models.Model):
         on_delete=models.CASCADE,
         related_name="payments",
     )
-    method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default="cash")
-    amount = models.DecimalField(max_digits=14, decimal_places=2)
-    note = models.CharField(max_length=255, blank=True, default="")
+
+    method = models.CharField(
+        max_length=20,
+        choices=PAYMENT_METHODS,
+        default="cash",
+    )
+
+    amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+
+    note = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def clean(self):
@@ -143,11 +206,56 @@ class SalePayment(models.Model):
 
 
 class POSSetting(models.Model):
-    exchange_rate = models.DecimalField(max_digits=10, decimal_places=2, default=4100)
+    exchange_rate = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=4100,
+    )
+
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Exchange Rate: {self.exchange_rate}"
+
+
+class BranchCashFloat(models.Model):
+    branch = models.OneToOneField(
+        Branch,
+        on_delete=models.CASCADE,
+        related_name="cash_float",
+    )
+
+    default_change_khr = models.DecimalField(
+        max_digits=14,
+        decimal_places=0,
+        default=100000,
+    )
+
+    note = models.TextField(
+        blank=True,
+        default="",
+    )
+
+    updated_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="updated_branch_cash_floats",
+    )
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["branch__name"]
+
+    def clean(self):
+        if self.default_change_khr < 0:
+            raise ValidationError("Default change KHR cannot be negative.")
+
+    def __str__(self):
+        branch_name = self.branch.name if self.branch else "No Branch"
+        return f"{branch_name} - {self.default_change_khr} KHR"
 
 
 class CashCount(models.Model):
@@ -161,24 +269,71 @@ class CashCount(models.Model):
 
     date = models.DateField()
 
-    system_cash_usd = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    system_cash_khr = models.DecimalField(max_digits=14, decimal_places=0, default=0)
-    system_aba_usd = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    system_cash_usd = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
 
-    counted_cash_usd = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    counted_cash_khr = models.DecimalField(max_digits=14, decimal_places=0, default=0)
-    counted_aba_usd = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    system_cash_khr = models.DecimalField(
+        max_digits=14,
+        decimal_places=0,
+        default=0,
+    )
 
-    note = models.TextField(blank=True, default="")
+    system_aba_usd = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
+
+    opening_change_khr = models.DecimalField(
+        max_digits=14,
+        decimal_places=0,
+        default=100000,
+    )
+
+    expected_cash_khr = models.DecimalField(
+        max_digits=14,
+        decimal_places=0,
+        default=0,
+    )
+
+    counted_cash_usd = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
+
+    counted_cash_khr = models.DecimalField(
+        max_digits=14,
+        decimal_places=0,
+        default=0,
+    )
+
+    counted_aba_usd = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
+
+    note = models.TextField(
+        blank=True,
+        default="",
+    )
 
     counted_by = models.ForeignKey(
         "auth.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+        related_name="cash_counts_counted",
     )
 
-    counted_at = models.DateTimeField(null=True, blank=True)
+    counted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         unique_together = ("branch", "date")
@@ -194,6 +349,12 @@ class CashCount(models.Model):
         if self.system_aba_usd < 0:
             raise ValidationError("System ABA USD cannot be negative.")
 
+        if self.opening_change_khr < 0:
+            raise ValidationError("Opening change KHR cannot be negative.")
+
+        if self.expected_cash_khr < 0:
+            raise ValidationError("Expected cash KHR cannot be negative.")
+
         if self.counted_cash_usd < 0:
             raise ValidationError("Counted cash USD cannot be negative.")
 
@@ -203,8 +364,13 @@ class CashCount(models.Model):
         if self.counted_aba_usd < 0:
             raise ValidationError("Counted ABA USD cannot be negative.")
 
+    def save(self, *args, **kwargs):
+        self.expected_cash_khr = (
+            (self.opening_change_khr or 0)
+            + (self.system_cash_khr or 0)
+        )
+        super().save(*args, **kwargs)
+
     def __str__(self):
         branch_name = self.branch.name if self.branch else "No Branch"
         return f"Cash Count {branch_name} - {self.date}"
-    
-    

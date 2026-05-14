@@ -1,0 +1,786 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="sale-list-page">
+    <div class="page-top">
+        <div>
+            <h1>Pet Sale List 🐾</h1>
+            <p>View all in-stock pet sales, deposits, completed sales and pre-orders.</p>
+        </div>
+
+        <div class="top-actions">
+            <a href="{% url 'pet_list' %}" class="soft-btn">← Pet Stock</a>
+            <a href="{% url 'pet_available_for_sale' %}" class="green-btn">🐾 Sell In-stock</a>
+            <a href="{% url 'pet_sale_create' %}" class="main-btn">＋ New Sale / Pre-order</a>
+        </div>
+    </div>
+
+    <form method="get" class="filter-card" id="filterForm">
+        <div class="filter-grid">
+            <label>
+                Search
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ q|default:'' }}"
+                    placeholder="Customer, phone, breed, color..."
+                >
+            </label>
+
+            <div class="touch-field">
+                <span>Sale Type</span>
+                <input type="hidden" name="sale_kind" id="saleKindInput" value="{{ sale_kind|default:'' }}">
+
+                <button type="button" class="touch-btn" onclick="openPopup('kind')">
+                    <strong id="saleKindLabel">
+                        {% if sale_kind == "in_stock" %}
+                            🐾 In-stock Sale
+                        {% elif sale_kind == "preorder" %}
+                            📝 Pre-order
+                        {% else %}
+                            All Type
+                        {% endif %}
+                    </strong>
+                    <em>⌄</em>
+                </button>
+            </div>
+
+            <div class="touch-field">
+                <span>Status</span>
+                <input type="hidden" name="status" id="statusInput" value="{{ status|default:'' }}">
+
+                <button type="button" class="touch-btn" onclick="openPopup('status')">
+                    <strong id="statusLabel">
+                        {% if status == "deposit" %}
+                            Deposit / Waiting
+                        {% elif status == "arrived" %}
+                            Arrived
+                        {% elif status == "completed" %}
+                            Completed
+                        {% elif status == "cancelled" %}
+                            Cancelled
+                        {% elif status == "refunded" %}
+                            Refunded
+                        {% else %}
+                            All Status
+                        {% endif %}
+                    </strong>
+                    <em>⌄</em>
+                </button>
+            </div>
+
+            <button type="submit" class="dark-btn">Search</button>
+            <a href="{% url 'pet_sale_list' %}" class="clear-btn">Clear</a>
+        </div>
+    </form>
+
+    <div class="summary-grid">
+        <div>
+            <span>Total Sales</span>
+            <strong>{{ total_sales|default:0 }}</strong>
+        </div>
+
+        <div>
+            <span>Total Amount</span>
+            <strong>${{ total_amount|floatformat:2 }}</strong>
+        </div>
+
+        <div>
+            <span>Total Paid</span>
+            <strong>${{ total_paid|floatformat:2 }}</strong>
+        </div>
+
+        <div class="danger">
+            <span>Total Balance</span>
+            <strong>${{ total_balance|floatformat:2 }}</strong>
+        </div>
+    </div>
+
+    <div class="sale-table-card">
+        <div class="desktop-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Pet</th>
+                        <th>Customer</th>
+                        <th>Price</th>
+                        <th>Paid</th>
+                        <th>Balance</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for sale in sales %}
+                        <tr>
+                            <td>#{{ sale.id }}</td>
+
+                            <td>
+                                <div class="pet-info">
+                                    <div class="mini-photo">
+                                        {% if sale.sale_photo %}
+                                            <img src="{{ sale.sale_photo.url }}">
+                                        {% elif sale.pet and sale.pet.display_photo %}
+                                            <img src="{{ sale.pet.display_photo.url }}">
+                                        {% else %}
+                                            <span>🐾</span>
+                                        {% endif %}
+                                    </div>
+
+                                    <div>
+                                        <strong>{{ sale.breed_display|default:"-" }}</strong>
+                                        <small>
+                                            {{ sale.pet_type_display }}
+                                            {% if sale.gender_display %} · {{ sale.gender_display }}{% endif %}
+                                            {% if sale.color_display %} · {{ sale.color_display }}{% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                <strong>{{ sale.customer_name }}</strong>
+                                <small>{{ sale.phone|default:"No phone" }}</small>
+                            </td>
+
+                            <td>${{ sale.sale_price|floatformat:2 }}</td>
+                            <td>${{ sale.paid_amount|floatformat:2 }}</td>
+                            <td>${{ sale.remaining_amount|floatformat:2 }}</td>
+
+                            <td>
+                                <span class="status status-{{ sale.status }}">
+                                    {{ sale.get_status_display }}
+                                </span>
+                                <span class="kind">
+                                    {{ sale.get_sale_kind_display }}
+                                </span>
+                            </td>
+
+                            <td>{{ sale.created_at|date:"d M Y H:i" }}</td>
+
+                            <td>
+                                <a href="{% url 'pet_sale_detail' sale.id %}" class="view-btn">View</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="9">
+                                <div class="empty-box">
+                                    <h2>No pet sale yet</h2>
+                                    <p>Create sale or pre-order first.</p>
+                                    <a href="{% url 'pet_sale_create' %}" class="main-btn">＋ New Sale</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mobile-list">
+            {% for sale in sales %}
+                <div class="sale-card">
+                    <div class="sale-card-top">
+                        <div class="mini-photo">
+                            {% if sale.sale_photo %}
+                                <img src="{{ sale.sale_photo.url }}">
+                            {% elif sale.pet and sale.pet.display_photo %}
+                                <img src="{{ sale.pet.display_photo.url }}">
+                            {% else %}
+                                <span>🐾</span>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <h3>#{{ sale.id }} · {{ sale.breed_display|default:"-" }}</h3>
+                            <p>{{ sale.customer_name }} · {{ sale.phone|default:"No phone" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="mobile-money">
+                        <div>
+                            <span>Price</span>
+                            <strong>${{ sale.sale_price|floatformat:2 }}</strong>
+                        </div>
+
+                        <div>
+                            <span>Paid</span>
+                            <strong>${{ sale.paid_amount|floatformat:2 }}</strong>
+                        </div>
+
+                        <div>
+                            <span>Balance</span>
+                            <strong>${{ sale.remaining_amount|floatformat:2 }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="mobile-tags">
+                        <span class="status status-{{ sale.status }}">{{ sale.get_status_display }}</span>
+                        <span class="kind">{{ sale.get_sale_kind_display }}</span>
+                    </div>
+
+                    <a href="{% url 'pet_sale_detail' sale.id %}" class="view-btn full-view">View Detail</a>
+                </div>
+            {% empty %}
+                <div class="empty-box">
+                    <h2>No pet sale yet</h2>
+                    <p>Create sale or pre-order first.</p>
+                    <a href="{% url 'pet_sale_create' %}" class="main-btn">＋ New Sale</a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="popup-backdrop" id="kindBackdrop" onclick="closePopup('kind')"></div>
+<div class="select-popup" id="kindPopup">
+    <div class="popup-head">
+        <h3>Choose Sale Type</h3>
+        <button type="button" onclick="closePopup('kind')">✕</button>
+    </div>
+
+    <div class="popup-list">
+        <button type="button" onclick="selectKind('', 'All Type')">📋 All Type</button>
+        <button type="button" onclick="selectKind('in_stock', '🐾 In-stock Sale')">🐾 In-stock Sale</button>
+        <button type="button" onclick="selectKind('preorder', '📝 Pre-order')">📝 Pre-order</button>
+    </div>
+</div>
+
+<div class="popup-backdrop" id="statusBackdrop" onclick="closePopup('status')"></div>
+<div class="select-popup" id="statusPopup">
+    <div class="popup-head">
+        <h3>Choose Status</h3>
+        <button type="button" onclick="closePopup('status')">✕</button>
+    </div>
+
+    <div class="popup-list">
+        <button type="button" onclick="selectStatus('', 'All Status')">📋 All Status</button>
+        <button type="button" onclick="selectStatus('deposit', 'Deposit / Waiting')">🟡 Deposit / Waiting</button>
+        <button type="button" onclick="selectStatus('arrived', 'Arrived')">📦 Arrived</button>
+        <button type="button" onclick="selectStatus('completed', 'Completed')">✅ Completed</button>
+        <button type="button" onclick="selectStatus('cancelled', 'Cancelled')">❌ Cancelled</button>
+        <button type="button" onclick="selectStatus('refunded', 'Refunded')">↩️ Refunded</button>
+    </div>
+</div>
+
+<style>
+*{box-sizing:border-box}
+a{text-decoration:none}
+
+.sale-list-page{
+    padding:24px 28px;
+}
+
+.page-top{
+    display:flex;
+    justify-content:space-between;
+    gap:18px;
+    margin-bottom:22px;
+}
+
+.page-top h1{
+    margin:0;
+    font-size:34px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.page-top p{
+    margin:8px 0 0;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.top-actions{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+.main-btn,
+.green-btn,
+.dark-btn,
+.soft-btn,
+.clear-btn,
+.view-btn{
+    min-height:54px;
+    padding:0 18px;
+    border-radius:18px;
+    border:0;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.main-btn{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+}
+
+.green-btn{
+    background:#dcfce7;
+    color:#16a34a;
+}
+
+.dark-btn{
+    background:#080634;
+    color:white;
+}
+
+.soft-btn,
+.clear-btn{
+    background:#f1f5f9;
+    color:#334155;
+}
+
+.view-btn{
+    background:#f4f0ff;
+    color:#7b5cff;
+}
+
+.filter-card,
+.sale-table-card{
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:28px;
+    padding:18px;
+    margin-bottom:18px;
+    box-shadow:0 18px 40px rgba(130,91,60,.08);
+}
+
+.filter-grid{
+    display:grid;
+    grid-template-columns:1.5fr 1fr 1fr auto auto;
+    gap:14px;
+    align-items:end;
+}
+
+.filter-grid label,
+.touch-field{
+    font-weight:1000;
+    color:#080634;
+}
+
+.filter-grid input{
+    width:100%;
+    height:62px;
+    border:2px solid #eaddec;
+    border-radius:18px;
+    padding:0 16px;
+    margin-top:8px;
+    font-size:17px;
+    font-weight:900;
+    background:white;
+}
+
+.touch-field span{
+    display:block;
+    margin-bottom:8px;
+}
+
+.touch-btn{
+    width:100%;
+    height:62px;
+    border:2px solid #eaddec;
+    border-radius:18px;
+    background:white;
+    padding:0 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    color:#080634;
+    font-weight:1000;
+    font-size:16px;
+    cursor:pointer;
+}
+
+.touch-btn em{
+    font-style:normal;
+    color:#7b5cff;
+    font-size:20px;
+}
+
+.summary-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+    margin-bottom:20px;
+}
+
+.summary-grid div{
+    background:#f8f6ff;
+    border:2px solid #e6dcff;
+    border-radius:24px;
+    padding:18px;
+}
+
+.summary-grid span{
+    display:block;
+    color:#7b7288;
+    font-weight:1000;
+}
+
+.summary-grid strong{
+    display:block;
+    margin-top:6px;
+    font-size:30px;
+    color:#7b5cff;
+}
+
+.summary-grid .danger{
+    background:#fff0f0;
+    border-color:#ffc9c9;
+}
+
+.summary-grid .danger strong{
+    color:#ff3d4f;
+}
+
+.desktop-table table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+}
+
+.desktop-table th{
+    text-align:left;
+    color:#080634;
+    font-size:13px;
+    padding:14px;
+    background:#fff8fb;
+    border-bottom:1px solid #f5e0d8;
+}
+
+.desktop-table td{
+    padding:14px;
+    border-bottom:1px solid #f5e0d8;
+    color:#080634;
+    font-weight:900;
+    vertical-align:middle;
+}
+
+.desktop-table small{
+    display:block;
+    margin-top:4px;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.pet-info{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.mini-photo{
+    width:54px;
+    height:54px;
+    border-radius:16px;
+    background:#fff8f4;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    font-size:26px;
+}
+
+.mini-photo img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    padding:4px;
+}
+
+.status,
+.kind{
+    display:inline-flex;
+    padding:7px 11px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:1000;
+    margin:2px;
+}
+
+.status-deposit{
+    background:#fff7ed;
+    color:#ea580c;
+}
+
+.status-arrived{
+    background:#e0f2fe;
+    color:#0284c7;
+}
+
+.status-completed{
+    background:#dcfce7;
+    color:#16a34a;
+}
+
+.status-cancelled{
+    background:#fee2e2;
+    color:#dc2626;
+}
+
+.status-refunded{
+    background:#e5e7eb;
+    color:#374151;
+}
+
+.kind{
+    background:#f3e8ff;
+    color:#9333ea;
+}
+
+.mobile-list{
+    display:none;
+}
+
+.empty-box{
+    padding:36px;
+    text-align:center;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.empty-box h2{
+    color:#080634;
+}
+
+.popup-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(28,20,58,.4);
+    z-index:9000;
+}
+
+.popup-backdrop.active{
+    display:block;
+}
+
+.select-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:390px;
+    max-width:calc(100% - 28px);
+    background:white;
+    border-radius:28px;
+    overflow:hidden;
+    box-shadow:0 28px 80px rgba(28,20,58,.3);
+    z-index:9001;
+}
+
+.select-popup.active{
+    display:block;
+}
+
+.popup-head{
+    background:linear-gradient(135deg,#7b5cff,#ff8c6b);
+    color:white;
+    padding:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.popup-head h3{
+    margin:0;
+    font-weight:1000;
+}
+
+.popup-head button{
+    width:42px;
+    height:42px;
+    border:0;
+    border-radius:50%;
+    background:rgba(255,255,255,.25);
+    color:white;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.popup-list{
+    display:grid;
+    gap:10px;
+    padding:14px;
+}
+
+.popup-list button{
+    min-height:64px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    background:#fff8fb;
+    text-align:left;
+    padding:0 16px;
+    color:#080634;
+    font-size:16px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+@media(max-width:1194px){
+    .page-top{
+        display:block;
+    }
+
+    .top-actions{
+        margin-top:16px;
+    }
+
+    .filter-grid,
+    .summary-grid{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .desktop-table{
+        display:none;
+    }
+
+    .mobile-list{
+        display:grid;
+        gap:14px;
+    }
+
+    .sale-card{
+        border:2px solid #f5e0d8;
+        border-radius:24px;
+        padding:16px;
+        background:white;
+    }
+
+    .sale-card-top{
+        display:flex;
+        gap:12px;
+        align-items:center;
+    }
+
+    .sale-card h3{
+        margin:0;
+        color:#080634;
+    }
+
+    .sale-card p{
+        margin:5px 0 0;
+        color:#7b7288;
+        font-weight:900;
+    }
+
+    .mobile-money{
+        display:grid;
+        grid-template-columns:repeat(3,1fr);
+        gap:8px;
+        margin:14px 0;
+    }
+
+    .mobile-money div{
+        background:#f8f6ff;
+        border-radius:16px;
+        padding:12px;
+    }
+
+    .mobile-money span{
+        display:block;
+        color:#7b7288;
+        font-size:12px;
+        font-weight:1000;
+    }
+
+    .mobile-money strong{
+        display:block;
+        margin-top:4px;
+        color:#080634;
+    }
+
+    .mobile-tags{
+        margin-bottom:12px;
+    }
+
+    .full-view{
+        width:100%;
+    }
+}
+
+@media(max-width:700px){
+    .sale-list-page{
+        padding:18px;
+    }
+
+    .page-top h1{
+        font-size:28px;
+    }
+
+    .top-actions,
+    .filter-grid,
+    .summary-grid{
+        display:grid;
+        grid-template-columns:1fr;
+    }
+
+    .main-btn,
+    .green-btn,
+    .dark-btn,
+    .soft-btn,
+    .clear-btn,
+    .view-btn{
+        width:100%;
+        min-height:68px;
+        font-size:18px;
+    }
+
+    .mobile-money{
+        grid-template-columns:1fr;
+    }
+
+    .select-popup{
+        left:14px;
+        right:14px;
+        bottom:16px;
+        top:auto;
+        width:auto;
+        max-width:none;
+        transform:none;
+        border-radius:26px;
+    }
+
+    .popup-list button{
+        min-height:70px;
+        font-size:18px;
+    }
+}
+</style>
+
+<script>
+function openPopup(type){
+    document.getElementById(type + "Popup").classList.add("active");
+    document.getElementById(type + "Backdrop").classList.add("active");
+}
+
+function closePopup(type){
+    document.getElementById(type + "Popup").classList.remove("active");
+    document.getElementById(type + "Backdrop").classList.remove("active");
+}
+
+function selectKind(value, label){
+    document.getElementById("saleKindInput").value = value;
+    document.getElementById("saleKindLabel").innerText = label;
+    closePopup("kind");
+}
+
+function selectStatus(value, label){
+    document.getElementById("statusInput").value = value;
+    document.getElementById("statusLabel").innerText = label;
+    closePopup("status");
+}
+</script>
+
+{% endblock %}

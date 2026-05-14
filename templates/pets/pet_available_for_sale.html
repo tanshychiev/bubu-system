@@ -1,0 +1,662 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="available-page">
+    <div class="page-top">
+        <div>
+            <h1>Available Pets for Sale 🐾</h1>
+            <p>Select only in-stock pets and sell directly.</p>
+        </div>
+
+        <div class="top-actions">
+            <a href="{% url 'pet_list' %}" class="soft-btn">← Pet Stock</a>
+            <a href="{% url 'pet_create' %}" class="main-btn">＋ Stock In Pet</a>
+            <a href="{% url 'pet_sale_create' %}" class="purple-btn">📝 Pre-order</a>
+        </div>
+    </div>
+
+    <form method="get" class="filter-card" id="filterForm">
+        <div class="filter-grid">
+            <label class="search-box">
+                Search
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ q|default:'' }}"
+                    placeholder="Breed, color, sex, special type..."
+                >
+            </label>
+
+            <div class="touch-field">
+                <span>Pet Type</span>
+                <input type="hidden" name="pet_type" id="petTypeInput" value="{{ pet_type|default:'' }}">
+
+                <button type="button" onclick="openPopup('type')" class="touch-btn">
+                    <strong id="petTypeLabel">
+                        {% if pet_type == "dog" %}
+                            Dog
+                        {% elif pet_type == "cat" %}
+                            Cat
+                        {% elif pet_type == "other" %}
+                            Other
+                        {% else %}
+                            All Type
+                        {% endif %}
+                    </strong>
+                    <em>⌄</em>
+                </button>
+            </div>
+
+            <button type="submit" class="dark-btn">Search</button>
+            <a href="{% url 'pet_available_for_sale' %}" class="clear-btn">Clear</a>
+        </div>
+    </form>
+
+    <div class="info-card">
+        <div>
+            <strong>{{ pets.count }}</strong>
+            <span>in-stock pets ready for sale</span>
+        </div>
+
+        <p>
+            Only pets with status <b>In Stock</b> show here. Reserved, sold, sick, dead and cancelled pets are hidden.
+        </p>
+    </div>
+
+    <div class="pet-grid">
+        {% for pet in pets %}
+            <div class="pet-card">
+                <div class="photo-box">
+                    {% if pet.display_photo %}
+                        <img src="{{ pet.display_photo.url }}" alt="{{ pet.breed_name }}">
+                    {% else %}
+                        <div class="no-photo">
+                            {% if pet.pet_type == "cat" %}🐱{% elif pet.pet_type == "dog" %}🐶{% else %}🐾{% endif %}
+                        </div>
+                    {% endif %}
+
+                    <span class="status">In Stock</span>
+                </div>
+
+                <div class="pet-body">
+                    <div class="title-row">
+                        <h3>{{ pet.get_pet_type_display }} · {{ pet.breed_name|default:"No Breed" }}</h3>
+                        <strong>${{ pet.sale_price|floatformat:2 }}</strong>
+                    </div>
+
+                    <div class="meta-row">
+                        {% if pet.name %}
+                            <span>{{ pet.name }}</span>
+                        {% endif %}
+
+                        {% if pet.gender %}
+                            <span>{{ pet.gender }}</span>
+                        {% endif %}
+
+                        {% if pet.color %}
+                            <span>{{ pet.color }}</span>
+                        {% endif %}
+
+                        {% if pet.special_type %}
+                            <span>{{ pet.special_type }}</span>
+                        {% endif %}
+
+                        <span>Age: {{ pet.current_age_display }}</span>
+                    </div>
+
+                    <div class="money-row">
+                        <div>
+                            <small>Cost</small>
+                            <b>${{ pet.cost_price|floatformat:2 }}</b>
+                        </div>
+
+                        <div>
+                            <small>Sale</small>
+                            <b>${{ pet.sale_price|floatformat:2 }}</b>
+                        </div>
+                    </div>
+
+                    {% if pet.note %}
+                        <p class="note">{{ pet.note|truncatechars:90 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="card-actions">
+                    <a href="{% url 'pet_sale_create' %}?pet={{ pet.id }}" class="sell-btn">Sell This Pet</a>
+                    <a href="{% url 'pet_detail' pet.id %}" class="soft-btn">View</a>
+                    <a href="{% url 'pet_edit' pet.id %}" class="orange-btn">Edit</a>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-box">
+                <div>🐾</div>
+                <h2>No in-stock pets found</h2>
+                <p>Stock in a pet first, or change your search filter.</p>
+                <a href="{% url 'pet_create' %}" class="main-btn">＋ Stock In Pet</a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- TYPE POPUP -->
+<div class="popup-backdrop" id="typeBackdrop" onclick="closePopup('type')"></div>
+
+<div class="select-popup" id="typePopup">
+    <div class="popup-head">
+        <h3>Choose Pet Type</h3>
+        <button type="button" onclick="closePopup('type')">✕</button>
+    </div>
+
+    <div class="popup-list">
+        <button type="button" onclick="selectType('', 'All Type')">🐾 All Type</button>
+        <button type="button" onclick="selectType('dog', 'Dog')">🐶 Dog</button>
+        <button type="button" onclick="selectType('cat', 'Cat')">🐱 Cat</button>
+        <button type="button" onclick="selectType('other', 'Other')">✨ Other</button>
+    </div>
+</div>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+a{
+    text-decoration:none;
+}
+
+.available-page{
+    padding:24px 28px;
+}
+
+.page-top{
+    display:flex;
+    justify-content:space-between;
+    gap:18px;
+    margin-bottom:22px;
+}
+
+.page-top h1{
+    margin:0;
+    font-size:36px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.page-top p{
+    margin:8px 0 0;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.top-actions{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+.main-btn,
+.soft-btn,
+.purple-btn,
+.dark-btn,
+.clear-btn,
+.sell-btn,
+.orange-btn{
+    min-height:56px;
+    padding:0 18px;
+    border-radius:18px;
+    border:0;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.main-btn{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+}
+
+.purple-btn{
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    color:white;
+}
+
+.soft-btn,
+.clear-btn{
+    background:#f1f5f9;
+    color:#334155;
+}
+
+.orange-btn{
+    background:#fff7ed;
+    color:#ea580c;
+}
+
+.dark-btn{
+    background:#080634;
+    color:white;
+}
+
+.sell-btn{
+    background:linear-gradient(135deg,#13a85f,#7b5cff);
+    color:white;
+}
+
+.filter-card,
+.info-card{
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:28px;
+    padding:18px;
+    margin-bottom:18px;
+    box-shadow:0 18px 40px rgba(130,91,60,.08);
+}
+
+.filter-grid{
+    display:grid;
+    grid-template-columns:1.5fr 1fr auto auto;
+    gap:14px;
+    align-items:end;
+}
+
+.search-box,
+.touch-field{
+    font-weight:1000;
+    color:#080634;
+}
+
+.search-box input{
+    width:100%;
+    height:62px;
+    border:2px solid #eaddec;
+    border-radius:18px;
+    padding:0 16px;
+    margin-top:8px;
+    font-size:17px;
+    font-weight:900;
+    background:white;
+}
+
+.touch-field span{
+    display:block;
+    margin-bottom:8px;
+}
+
+.touch-btn{
+    width:100%;
+    height:62px;
+    border:2px solid #eaddec;
+    border-radius:18px;
+    background:white;
+    padding:0 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    color:#080634;
+    font-weight:1000;
+    font-size:16px;
+}
+
+.touch-btn em{
+    font-style:normal;
+    color:#7b5cff;
+    font-size:20px;
+}
+
+.info-card{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+}
+
+.info-card strong{
+    font-size:36px;
+    color:#7b5cff;
+    font-weight:1000;
+}
+
+.info-card span{
+    color:#080634;
+    font-weight:1000;
+    margin-left:6px;
+}
+
+.info-card p{
+    margin:0;
+    color:#7b7288;
+    font-weight:900;
+    text-align:right;
+}
+
+.pet-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:18px;
+}
+
+.pet-card{
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:30px;
+    overflow:hidden;
+    box-shadow:0 18px 40px rgba(130,91,60,.08);
+}
+
+.photo-box{
+    position:relative;
+    height:240px;
+    background:#fff8f4;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+}
+
+.photo-box img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    padding:10px;
+    background:#fff8f4;
+}
+
+.no-photo{
+    font-size:78px;
+}
+
+.status{
+    position:absolute;
+    top:14px;
+    left:14px;
+    padding:9px 13px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:1000;
+    background:#dcfce7;
+    color:#16a34a;
+}
+
+.pet-body{
+    padding:18px;
+}
+
+.title-row{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+}
+
+.title-row h3{
+    margin:0;
+    font-size:20px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.title-row strong{
+    font-size:22px;
+    color:#ff5d73;
+    white-space:nowrap;
+}
+
+.meta-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:12px;
+}
+
+.meta-row span{
+    padding:7px 11px;
+    border-radius:999px;
+    background:#f4f0ff;
+    color:#6f57d9;
+    font-weight:1000;
+    font-size:13px;
+}
+
+.money-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:14px;
+}
+
+.money-row div{
+    background:#fafafa;
+    border-radius:16px;
+    padding:12px;
+}
+
+.money-row small{
+    display:block;
+    color:#7b7288;
+    font-weight:1000;
+}
+
+.money-row b{
+    display:block;
+    margin-top:4px;
+    color:#080634;
+}
+
+.note{
+    color:#625a74;
+    font-weight:900;
+    line-height:1.5;
+    background:#fffaf0;
+    padding:12px;
+    border-radius:16px;
+}
+
+.card-actions{
+    display:grid;
+    grid-template-columns:1.3fr 1fr 1fr;
+    gap:8px;
+    padding:0 18px 18px;
+}
+
+.empty-box{
+    grid-column:1/-1;
+    background:white;
+    border:2px dashed #eaddec;
+    border-radius:28px;
+    padding:48px;
+    text-align:center;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.empty-box div{
+    font-size:82px;
+}
+
+.empty-box h2{
+    margin:10px 0;
+    color:#080634;
+}
+
+/* POPUP */
+.popup-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(28,20,58,.4);
+    z-index:9000;
+}
+
+.popup-backdrop.active{
+    display:block;
+}
+
+.select-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:390px;
+    max-width:calc(100% - 28px);
+    background:white;
+    border-radius:28px;
+    overflow:hidden;
+    box-shadow:0 28px 80px rgba(28,20,58,.3);
+    z-index:9001;
+}
+
+.select-popup.active{
+    display:block;
+}
+
+.popup-head{
+    background:linear-gradient(135deg,#7b5cff,#ff8c6b);
+    color:white;
+    padding:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.popup-head h3{
+    margin:0;
+    font-weight:1000;
+}
+
+.popup-head button{
+    width:42px;
+    height:42px;
+    border:0;
+    border-radius:50%;
+    background:rgba(255,255,255,.25);
+    color:white;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.popup-list{
+    display:grid;
+    gap:10px;
+    padding:14px;
+}
+
+.popup-list button{
+    min-height:64px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    background:#fff8fb;
+    text-align:left;
+    padding:0 16px;
+    color:#080634;
+    font-size:16px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+@media(max-width:1194px){
+    .page-top{
+        display:block;
+    }
+
+    .top-actions{
+        margin-top:16px;
+    }
+
+    .filter-grid{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .pet-grid{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .info-card{
+        display:block;
+    }
+
+    .info-card p{
+        text-align:left;
+        margin-top:8px;
+    }
+}
+
+@media(max-width:700px){
+    .available-page{
+        padding:18px;
+    }
+
+    .page-top h1{
+        font-size:28px;
+    }
+
+    .top-actions,
+    .filter-grid,
+    .pet-grid,
+    .card-actions{
+        display:grid;
+        grid-template-columns:1fr;
+    }
+
+    .main-btn,
+    .soft-btn,
+    .purple-btn,
+    .dark-btn,
+    .clear-btn,
+    .sell-btn,
+    .orange-btn{
+        width:100%;
+        min-height:70px;
+        font-size:18px;
+    }
+
+    .photo-box{
+        height:260px;
+    }
+
+    .search-box input,
+    .touch-btn{
+        height:66px;
+        font-size:18px;
+    }
+
+    .select-popup{
+        left:14px;
+        right:14px;
+        bottom:16px;
+        top:auto;
+        width:auto;
+        max-width:none;
+        transform:none;
+        border-radius:26px;
+    }
+
+    .popup-list button{
+        min-height:70px;
+        font-size:18px;
+    }
+}
+</style>
+
+<script>
+function openPopup(type){
+    document.getElementById(type + "Popup").classList.add("active");
+    document.getElementById(type + "Backdrop").classList.add("active");
+}
+
+function closePopup(type){
+    document.getElementById(type + "Popup").classList.remove("active");
+    document.getElementById(type + "Backdrop").classList.remove("active");
+}
+
+function selectType(value, label){
+    document.getElementById("petTypeInput").value = value;
+    document.getElementById("petTypeLabel").innerText = label;
+    closePopup("type");
+}
+</script>
+
+{% endblock %}

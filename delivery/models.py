@@ -15,7 +15,6 @@ class DeliveryCompany(models.Model):
     phone = models.CharField(max_length=50, blank=True)
     note = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -83,6 +82,14 @@ class Delivery(models.Model):
         related_name="deliveries",
     )
 
+    shipper = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="bubu_delivery_orders",
+    )
+
     customer_name = models.CharField(max_length=150)
     phone = models.CharField(max_length=50, blank=True)
     location = models.TextField()
@@ -96,7 +103,6 @@ class Delivery(models.Model):
     social_name = models.CharField(
         max_length=150,
         blank=True,
-        help_text="Customer Facebook / Telegram / IG / TikTok name",
     )
 
     total_price = models.DecimalField(
@@ -136,10 +142,8 @@ class Delivery(models.Model):
     )
 
     delivery_fee_paid = models.BooleanField(default=False)
-
     exchange_rate_note = models.CharField(max_length=150, blank=True)
     delivery_note = models.TextField(blank=True)
-
     delivery_date = models.DateField(default=timezone.localdate)
 
     status = models.CharField(
@@ -154,7 +158,6 @@ class Delivery(models.Model):
     def calculate_lack(self):
         if self.payment_type == "cod_collect":
             return self.expected_collect - self.actual_received
-
         return Decimal("0.00")
 
     def refresh_total_price(self):
@@ -188,7 +191,13 @@ class Delivery(models.Model):
     def __str__(self):
         shop = self.branch.name if self.branch else "No Branch"
         company = self.delivery_company.name if self.delivery_company else "No Company"
-        return f"{self.customer_name} - {shop} - {company} - {self.get_payment_type_display()}"
+
+        if self.shipper:
+            shipper_name = self.shipper.get_full_name() or self.shipper.username
+        else:
+            shipper_name = "No Shipper"
+
+        return f"{self.customer_name} - {shop} - {company} - {shipper_name}"
 
 
 class DeliveryItem(models.Model):
@@ -222,13 +231,11 @@ class DeliveryItem(models.Model):
     def save(self, *args, **kwargs):
         self.line_total = Decimal(self.qty) * self.unit_price
         super().save(*args, **kwargs)
-
         self.delivery.refresh_total_price()
 
     def delete(self, *args, **kwargs):
         delivery = self.delivery
         super().delete(*args, **kwargs)
-
         delivery.refresh_total_price()
 
     def __str__(self):

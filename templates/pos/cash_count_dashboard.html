@@ -134,7 +134,7 @@
 
 .summary-grid{
     display:grid;
-    grid-template-columns:repeat(5,1fr);
+    grid-template-columns:repeat(7,1fr);
     gap:16px;
 }
 
@@ -142,6 +142,16 @@
     background:#fff8fb;
     border-radius:20px;
     padding:20px;
+}
+
+.summary-box.warning{
+    background:#fff8e8;
+    border:1.5px solid #ffe0a6;
+}
+
+.summary-box.success{
+    background:#edfff5;
+    border:1.5px solid #c3f2d6;
 }
 
 .summary-box .label{
@@ -152,9 +162,13 @@
 }
 
 .summary-box .value{
-    font-size:26px;
+    font-size:24px;
     font-weight:900;
     color:#1c143a;
+}
+
+.summary-box .value.khr{
+    font-size:22px;
 }
 
 .count-card h2,
@@ -165,16 +179,44 @@
     font-weight:900;
 }
 
+.cash-help-box{
+    margin-bottom:18px;
+    padding:16px;
+    border-radius:20px;
+    background:#f8f6ff;
+    border:1.5px dashed #b9a8ff;
+    color:#47366e;
+    font-weight:900;
+    line-height:1.5;
+}
+
 .count-grid{
     display:grid;
     grid-template-columns:1fr 1fr 1fr;
     gap:18px;
 }
 
+.float-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+    margin-bottom:18px;
+}
+
 .count-box{
     background:#fff8fb;
     border-radius:20px;
     padding:18px;
+}
+
+.count-box.float-box{
+    background:#fff8e8;
+    border:1.5px solid #ffe0a6;
+}
+
+.count-box.expected-box{
+    background:#edfff5;
+    border:1.5px solid #c3f2d6;
 }
 
 .count-box label{
@@ -191,6 +233,18 @@
     border:1.5px solid #eadbd4;
     font-size:20px;
     font-weight:900;
+    box-sizing:border-box;
+}
+
+.readonly-value{
+    width:100%;
+    padding:16px;
+    border-radius:16px;
+    background:white;
+    border:1.5px solid #d7f1df;
+    font-size:22px;
+    font-weight:900;
+    color:#168a3a;
     box-sizing:border-box;
 }
 
@@ -214,6 +268,11 @@
 .diff.zero{
     background:#f4f1ff;
     color:#7b5cff;
+}
+
+.diff.warning{
+    background:#fff7df;
+    color:#b86b00;
 }
 
 .note-box{
@@ -250,7 +309,7 @@
 .sales-table{
     width:100%;
     border-collapse:collapse;
-    min-width:900px;
+    min-width:980px;
 }
 
 .sales-table th{
@@ -266,6 +325,11 @@
     border-top:1px solid #f4e3d8;
     font-weight:800;
     white-space:nowrap;
+}
+
+.sales-table small{
+    color:#7b6f92;
+    font-weight:800;
 }
 
 .status-pill{
@@ -471,9 +535,9 @@
     color:white;
 }
 
-@media (max-width:1100px){
+@media (max-width:1250px){
     .summary-grid{
-        grid-template-columns:repeat(2,1fr);
+        grid-template-columns:repeat(3,1fr);
     }
 }
 
@@ -491,7 +555,8 @@
     }
 
     .summary-grid,
-    .count-grid{
+    .count-grid,
+    .float-grid{
         grid-template-columns:1fr;
     }
 
@@ -591,19 +656,29 @@
             <div class="value">${{ total_paid|floatformat:2 }}</div>
         </div>
 
+        <div class="summary-box warning">
+            <div class="label">Change Given Today</div>
+            <div class="value">${{ total_change|default:"0.00"|floatformat:2 }}</div>
+        </div>
+
         <div class="summary-box">
             <div class="label">Cash USD Should Have</div>
             <div class="value">${{ system_cash_usd|floatformat:2 }}</div>
         </div>
 
-        <div class="summary-box">
-            <div class="label">Cash KHR Should Have</div>
-            <div class="value">{{ system_cash_khr|floatformat:0 }}៛</div>
+        <div class="summary-box warning">
+            <div class="label">Start Change / Float</div>
+            <div class="value khr">{{ opening_change_khr|floatformat:0 }}៛</div>
         </div>
 
         <div class="summary-box">
-            <div class="label">ABA USD Should Have</div>
-            <div class="value">${{ system_aba_usd|floatformat:2 }}</div>
+            <div class="label">Cash KHR Sales</div>
+            <div class="value khr">{{ system_cash_khr|floatformat:0 }}៛</div>
+        </div>
+
+        <div class="summary-box success">
+            <div class="label">Cash KHR Should Have</div>
+            <div class="value khr">{{ expected_cash_khr|floatformat:0 }}៛</div>
         </div>
     </div>
 
@@ -611,6 +686,38 @@
         {% csrf_token %}
 
         <h2>Staff Count Money</h2>
+
+        <div class="cash-help-box">
+            KHR Count Rule: Start Change / Float + Cash KHR Sales = Cash KHR Should Have.
+            Example: 100,000៛ + 20,000៛ = 120,000៛.
+        </div>
+
+        <div class="float-grid">
+            <div class="count-box float-box">
+                <label>Start Change / Float KHR</label>
+                <input
+                    type="number"
+                    step="1"
+                    name="opening_change_khr"
+                    value="{{ cash_count.opening_change_khr|default:100000|floatformat:0 }}"
+                >
+
+                <div class="diff warning">
+                    Petty cash/change money for staff drawer. Default is 100,000៛, but you can change it here.
+                </div>
+            </div>
+
+            <div class="count-box expected-box">
+                <label>Cash KHR Should Have</label>
+                <div class="readonly-value">
+                    {{ expected_cash_khr|floatformat:0 }}៛
+                </div>
+
+                <div class="diff zero">
+                    This includes start change + KHR cash sales.
+                </div>
+            </div>
+        </div>
 
         <div class="count-grid">
 
@@ -633,7 +740,7 @@
             </div>
 
             <div class="count-box">
-                <label>Cash KHR Counted</label>
+                <label>Cash KHR Counted Including Start Change</label>
                 <input
                     type="number"
                     step="1"
@@ -706,7 +813,11 @@
                         <td>{{ sale.created_at|date:"H:i" }}</td>
                         <td>
                             {% if sale.customer %}
-                                {{ sale.customer }}
+                                <strong>{{ sale.customer.name|default:"No Name" }}</strong>
+                                {% if sale.customer.phone %}
+                                    <br>
+                                    <small>{{ sale.customer.phone }}</small>
+                                {% endif %}
                             {% else %}
                                 Walk-in
                             {% endif %}

@@ -7,9 +7,9 @@ from django.db.models import Q, Sum, F, Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
-from delivery.models import Delivery, DeliveryItem
 
 from customers.models import Customer
+from delivery.models import Delivery, DeliveryItem, DeliveryCompany
 from inventory.models import (
     Item,
     ItemType,
@@ -18,7 +18,14 @@ from inventory.models import (
     Branch,
     BranchStock,
 )
-from .models import Sale, SaleItem, SalePayment, POSSetting, CashCount
+from .models import (
+    Sale,
+    SaleItem,
+    SalePayment,
+    POSSetting,
+    CashCount,
+    BranchCashFloat,
+)
 
 
 # ==================================================
@@ -29,6 +36,15 @@ def money(value, default="0"):
     try:
         return Decimal(str(value or default))
     except (InvalidOperation, TypeError, ValueError):
+        return Decimal(default)
+
+
+def to_decimal(value, default="0"):
+    try:
+        if value in [None, ""]:
+            return Decimal(default)
+        return Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError):
         return Decimal(default)
 
 
@@ -136,15 +152,6 @@ def _get_item_branch_stock(item, branch):
         .aggregate(total=Sum("quantity"))["total"]
         or 0
     )
-def to_decimal(value, default="0"):
-    try:
-        if value in [None, ""]:
-            return Decimal(default)
-        return Decimal(str(value))
-    except (InvalidOperation, ValueError, TypeError):
-        return Decimal(default)
-
-
 
 
 def _build_cart_items(cart, branch=None):
@@ -220,6 +227,7 @@ def _build_cart_items(cart, branch=None):
         })
 
     return cart_items, subtotal
+
 
 def _add_to_cart(request, item, variant=None):
     cart = _get_cart(request)
@@ -318,6 +326,7 @@ def pos_switch_branch(request):
     messages.success(request, f"POS switched to {branch.name}. Cart cleared for safety.")
     return redirect("pos")
 
+
 @login_required
 def pos(request):
     current_branch = get_pos_branch(request)
@@ -330,6 +339,10 @@ def pos(request):
         return redirect("dashboard")
 
     branches = Branch.objects.filter(is_active=True).order_by("name")
+    delivery_companies = DeliveryCompany.objects.filter(is_active=True).order_by(
+        "delivery_type",
+        "name",
+    )
 
     raw_q = request.GET.get("q", "").strip()
     q = raw_q
@@ -430,7 +443,6 @@ def pos(request):
         item_stock_map[item_id] = item_stock_map.get(item_id, 0) + qty
         variant_stock_map[variant_id] = qty
 
-    # Coming Soon = bought already, but supplier not yet received.
     try:
         from purchases.models import PurchaseItem
 
@@ -512,9 +524,11 @@ def pos(request):
         "selected_type": type_id,
         "q": raw_q,
         "customers": customers,
+        "delivery_companies": delivery_companies,
         "current_branch": current_branch,
         "branches": branches,
     })
+
 
 # ==================================================
 # CART ACTIONS
@@ -652,7 +666,32 @@ def pos_checkout(request):
     checkout_action = request.POST.get("checkout_action", "complete")
     sale_type = request.POST.get("sale_type", "walk_in")
 
-    final_total = to_decimal(request.POST.get("final_total"), subtotal)
+    discount_type = request.POST.get("discount_type", "percent")
+    discount_value = to_decimal(request.POST.get("discount_value"), "0")
+    tax_type = request.POST.get("tax_type", "percent")
+    tax_value = to_decimal(request.POST.get("tax_value"), "0")
+
+    discount_amount = Decimal("0.00")
+    tax_amount = Decimal("0.00")
+
+    if discount_value > 0:
+        if discount_type == "percent":
+            discount_amount = subtotal * discount_value / Decimal("100")
+        else:
+            discount_amount = discount_value
+
+    if discount_amount > subtotal:
+        discount_amount = subtotal
+
+    after_discount = subtotal - discount_amount
+
+    if tax_value > 0:
+        if tax_type == "percent":
+            tax_amount = after_discount * tax_value / Decimal("100")
+        else:
+            tax_amount = tax_value
+
+    final_total = after_discount + tax_amount
 
     cash_usd = to_decimal(request.POST.get("cash_usd"))
     cash_khr = to_decimal(request.POST.get("cash_khr"))
@@ -680,25 +719,68 @@ def pos_checkout(request):
 
     balance_amount = final_total - paid_amount
 
+    # ==================================================
+    # CUSTOMER RECORD FIX
+    # ==================================================
     customer = None
+
     customer_phone = request.POST.get("customer_phone", "").strip()
     customer_name = request.POST.get("customer_name", "").strip()
     customer_search = request.POST.get("customer_search", "").strip()
 
-    if customer_phone or customer_name or customer_search:
-        phone = customer_phone or customer_search
-        name = customer_name or customer_search
+    delivery_receiver_name_for_customer = request.POST.get(
+        "delivery_receiver_name",
+        "",
+    ).strip()
 
-        customer, created = Customer.objects.get_or_create(
-            phone=phone,
-            defaults={
-                "name": name or phone,
-            },
+    delivery_phone_for_customer = request.POST.get(
+        "delivery_phone",
+        "",
+    ).strip()
+
+    # If normal POS customer fields are empty,
+    # use delivery customer fields too.
+    if not customer_name and delivery_receiver_name_for_customer:
+        customer_name = delivery_receiver_name_for_customer
+
+    if not customer_phone and delivery_phone_for_customer:
+        customer_phone = delivery_phone_for_customer
+
+    if not customer_name and customer_search:
+        customer_name = customer_search
+
+    if not customer_phone and customer_search:
+        customer_phone = customer_search
+
+    if customer_phone:
+        customer = Customer.objects.filter(phone=customer_phone).first()
+
+        if not customer:
+            customer = Customer.objects.create(
+                name=customer_name or customer_phone,
+                phone=customer_phone,
+                created_by=request.user,
+                updated_by=request.user,
+            )
+        else:
+            update_fields = []
+
+            if customer_name and customer.name != customer_name:
+                customer.name = customer_name
+                update_fields.append("name")
+
+            customer.updated_by = request.user
+            update_fields.append("updated_by")
+
+            customer.save(update_fields=update_fields + ["updated_at"])
+
+    elif customer_name:
+        customer = Customer.objects.create(
+            name=customer_name,
+            phone="",
+            created_by=request.user,
+            updated_by=request.user,
         )
-
-        if name and customer.name != name:
-            customer.name = name
-            customer.save(update_fields=["name"])
 
     sale = Sale.objects.create(
         branch=branch,
@@ -707,7 +789,25 @@ def pos_checkout(request):
         total_amount=final_total,
         paid_amount=paid_amount,
         change_amount=change_amount,
+        discount_type=discount_type,
+        discount_value=discount_value,
+        discount_amount=discount_amount,
+        tax_type=tax_type,
+        tax_value=tax_value,
+        tax_amount=tax_amount,
     )
+
+    if customer:
+        earned_points = int(final_total)
+        customer.points = int(customer.points or 0) + earned_points
+        customer.total_spent = (customer.total_spent or Decimal("0.00")) + final_total
+        customer.updated_by = request.user
+        customer.save(update_fields=[
+            "points",
+            "total_spent",
+            "updated_by",
+            "updated_at",
+        ])
 
     for cart_item in cart_items:
         item = cart_item["item"]
@@ -770,14 +870,24 @@ def pos_checkout(request):
             note="POS ABA KHR",
         )
 
-    # ==================================================
-    # CREATE DELIVERY FROM POS
-    # ==================================================
     if sale_type == "prepare_delivery":
         receiver_name = request.POST.get("delivery_receiver_name", "").strip()
         delivery_phone = request.POST.get("delivery_phone", "").strip()
         delivery_address = request.POST.get("delivery_address", "").strip()
         delivery_note = request.POST.get("delivery_note", "").strip()
+
+        delivery_area = request.POST.get("delivery_area", "pp").strip() or "pp"
+        delivery_company_id = request.POST.get("delivery_company_id", "").strip()
+        customer_chat_source = request.POST.get("customer_chat_source", "").strip()
+        customer_social_name = request.POST.get("customer_social_name", "").strip()
+
+        delivery_company = None
+
+        if delivery_company_id:
+            delivery_company = DeliveryCompany.objects.filter(
+                id=delivery_company_id,
+                is_active=True,
+            ).first()
 
         if not receiver_name:
             if customer:
@@ -810,9 +920,13 @@ def pos_checkout(request):
         delivery = Delivery.objects.create(
             branch=branch,
             sale=sale,
+            delivery_area=delivery_area,
+            delivery_company=delivery_company,
             customer_name=receiver_name,
             phone=delivery_phone,
             location=delivery_address,
+            chat_source=customer_chat_source,
+            social_name=customer_social_name,
             total_price=final_total,
             payment_type=payment_type,
             expected_collect=expected_collect,
@@ -837,10 +951,6 @@ def pos_checkout(request):
                 note=f"From POS Sale #{sale.id}",
             )
 
-        # IMPORTANT:
-        # DeliveryItem.save() calls delivery.refresh_total_price().
-        # That can overwrite total_price / expected_collect.
-        # So set POS delivery money again after creating items.
         delivery.total_price = final_total
 
         if balance_amount > 0:
@@ -852,6 +962,10 @@ def pos_checkout(request):
 
         delivery.actual_received = Decimal("0.00")
         delivery.delivery_fee = delivery_fee
+        delivery.delivery_area = delivery_area
+        delivery.delivery_company = delivery_company
+        delivery.chat_source = customer_chat_source
+        delivery.social_name = customer_social_name
         delivery.lack_amount = delivery.calculate_lack()
 
         delivery.save(update_fields=[
@@ -860,12 +974,15 @@ def pos_checkout(request):
             "expected_collect",
             "actual_received",
             "delivery_fee",
+            "delivery_area",
+            "delivery_company",
+            "chat_source",
+            "social_name",
             "lack_amount",
         ])
 
-        if hasattr(sale, "delivery_created"):
-            sale.delivery_created = True
-            sale.save(update_fields=["delivery_created"])
+        sale.delivery_created = True
+        sale.save(update_fields=["delivery_created"])
 
     _save_cart(request, {})
 
@@ -918,8 +1035,11 @@ def pos_checkout(request):
 def sale_list(request):
     user_branch = get_user_branch(request.user)
 
+    # Sales page shows POS walk-in sales only.
+    # Prepare Delivery sales should go to Delivery page.
     sales = (
         Sale.objects
+        .filter(sale_type="walk_in")
         .select_related("customer", "branch")
         .order_by("-created_at")
     )
@@ -968,10 +1088,12 @@ def sale_list(request):
         sales.aggregate(total=Sum("total_amount"))["total"]
         or Decimal("0.00")
     )
+
     total_paid = (
         sales.aggregate(total=Sum("paid_amount"))["total"]
         or Decimal("0.00")
     )
+
     total_balance = total_amount - total_paid
 
     branches = Branch.objects.filter(is_active=True).order_by("name")
@@ -1159,17 +1281,23 @@ def cash_count_dashboard(request):
         )
         return redirect("pos")
 
+    # Cash count only counts POS walk-in sales.
+    # Prepare Delivery sales should be handled in Delivery page.
     sales = (
         Sale.objects
         .filter(
             branch=current_branch,
+            sale_type="walk_in",
             created_at__date=count_date,
         )
+        .select_related("customer", "branch")
+        .prefetch_related("payments")
         .order_by("-created_at")
     )
 
     payments = SalePayment.objects.filter(
         sale__branch=current_branch,
+        sale__sale_type="walk_in",
         sale__created_at__date=count_date,
     )
 
@@ -1203,6 +1331,22 @@ def cash_count_dashboard(request):
         or Decimal("0")
     )
 
+    total_change = (
+        sales.aggregate(total=Sum("change_amount"))["total"]
+        or Decimal("0")
+    )
+
+    # This is the branch default petty cash / change float.
+    # Example: BUBU TK = 100,000៛, BUBU PP = 150,000៛
+    branch_float, _ = BranchCashFloat.objects.get_or_create(
+        branch=current_branch,
+        defaults={
+            "default_change_khr": Decimal("100000"),
+        },
+    )
+
+    # When a new date cash count is created,
+    # it auto uses this branch's petty cash setting.
     cash_count, created = CashCount.objects.get_or_create(
         branch=current_branch,
         date=count_date,
@@ -1210,31 +1354,38 @@ def cash_count_dashboard(request):
             "system_cash_usd": system_cash_usd,
             "system_cash_khr": system_cash_khr,
             "system_aba_usd": system_aba_usd,
+            "opening_change_khr": branch_float.default_change_khr,
         },
     )
 
-    cash_count.system_cash_usd = system_cash_usd
-    cash_count.system_cash_khr = system_cash_khr
-    cash_count.system_aba_usd = system_aba_usd
-    cash_count.save(update_fields=[
-        "system_cash_usd",
-        "system_cash_khr",
-        "system_aba_usd",
-    ])
-
     if request.method == "POST":
+        cash_count.opening_change_khr = money(
+            request.POST.get("opening_change_khr"),
+            str(branch_float.default_change_khr or Decimal("100000")),
+        )
         cash_count.counted_cash_usd = money(request.POST.get("counted_cash_usd"))
         cash_count.counted_cash_khr = money(request.POST.get("counted_cash_khr"))
         cash_count.counted_aba_usd = money(request.POST.get("counted_aba_usd"))
         cash_count.note = request.POST.get("note", "")
         cash_count.counted_by = request.user
         cash_count.counted_at = timezone.now()
-        cash_count.save()
 
+    # Always refresh system money from sales/payment records.
+    cash_count.system_cash_usd = system_cash_usd
+    cash_count.system_cash_khr = system_cash_khr
+    cash_count.system_aba_usd = system_aba_usd
+
+    opening_change_khr = cash_count.opening_change_khr or branch_float.default_change_khr or Decimal("100000")
+    expected_cash_khr = opening_change_khr + system_cash_khr
+
+    cash_count.expected_cash_khr = expected_cash_khr
+    cash_count.save()
+
+    if request.method == "POST":
         return redirect(f"{request.path}?date={count_date}")
 
     diff_usd = cash_count.counted_cash_usd - system_cash_usd
-    diff_khr = cash_count.counted_cash_khr - system_cash_khr
+    diff_khr = cash_count.counted_cash_khr - expected_cash_khr
     diff_aba = cash_count.counted_aba_usd - system_aba_usd
 
     return render(request, "pos/cash_count_dashboard.html", {
@@ -1242,12 +1393,20 @@ def cash_count_dashboard(request):
         "current_branch": current_branch,
         "sales": sales,
         "cash_count": cash_count,
+
         "total_sales": total_sales,
         "total_paid": total_paid,
+        "total_change": total_change,
+
         "system_cash_usd": system_cash_usd,
         "system_cash_khr": system_cash_khr,
         "system_aba_usd": system_aba_usd,
         "system_aba_khr": system_aba_khr,
+
+        "branch_float": branch_float,
+        "opening_change_khr": opening_change_khr,
+        "expected_cash_khr": expected_cash_khr,
+
         "diff_usd": diff_usd,
         "diff_khr": diff_khr,
         "diff_aba": diff_aba,
@@ -1314,4 +1473,84 @@ def sale_receipt(request, pk):
         "service_total": service_total,
         "pet_total": pet_total,
         "khr_rate": get_khr_rate(),
+    })
+
+@login_required
+def branch_cash_float_settings(request):
+    current_branch = get_pos_branch(request)
+
+    if not current_branch:
+        messages.error(
+            request,
+            "No branch assigned. Please ask admin to set your shop.",
+        )
+        return redirect("pos")
+
+    if request.user.is_superuser:
+        branches = Branch.objects.filter(is_active=True).order_by("name")
+    else:
+        branches = Branch.objects.filter(id=current_branch.id)
+
+    for branch in branches:
+        BranchCashFloat.objects.get_or_create(
+            branch=branch,
+            defaults={
+                "default_change_khr": Decimal("100000"),
+            },
+        )
+
+    cash_floats = (
+        BranchCashFloat.objects
+        .select_related("branch", "updated_by")
+        .filter(branch__in=branches)
+        .order_by("branch__name")
+    )
+
+    if request.method == "POST":
+        branch_id = request.POST.get("branch_id", "").strip()
+        default_change_khr = money(
+            request.POST.get("default_change_khr"),
+            "100000",
+        )
+        note = request.POST.get("note", "").strip()
+
+        if request.user.is_superuser:
+            branch = Branch.objects.filter(
+                id=branch_id,
+                is_active=True,
+            ).first()
+        else:
+            branch = current_branch
+
+        if not branch:
+            messages.error(request, "Invalid branch selected.")
+            return redirect("branch_cash_float_settings")
+
+        cash_float, _ = BranchCashFloat.objects.get_or_create(
+            branch=branch,
+            defaults={
+                "default_change_khr": Decimal("100000"),
+            },
+        )
+
+        cash_float.default_change_khr = default_change_khr
+        cash_float.note = note
+        cash_float.updated_by = request.user
+        cash_float.save(update_fields=[
+            "default_change_khr",
+            "note",
+            "updated_by",
+            "updated_at",
+        ])
+
+        messages.success(
+            request,
+            f"Cash float updated for {branch.name}: {default_change_khr:,.0f}៛",
+        )
+        return redirect("branch_cash_float_settings")
+
+    return render(request, "pos/branch_cash_float_settings.html", {
+        "cash_floats": cash_floats,
+        "branches": branches,
+        "current_branch": current_branch,
     })

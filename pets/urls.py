@@ -4,10 +4,19 @@ from . import views
 urlpatterns = [
     path("", views.pet_list, name="pet_list"),
 
+    # Breed master
+    path("breeds/", views.pet_breed_list, name="pet_breed_list"),
+    path("breeds/create/", views.pet_breed_create, name="pet_breed_create"),
+    path("breeds/<int:pk>/edit/", views.pet_breed_edit, name="pet_breed_edit"),
+
+    # Stock in pet
     path("create/", views.pet_create, name="pet_create"),
     path("<int:pk>/", views.pet_detail, name="pet_detail"),
     path("<int:pk>/edit/", views.pet_edit, name="pet_edit"),
 
+    # Pet sales
+    path("sales/", views.pet_sale_list, name="pet_sale_list"),
+    path("sales/available/", views.pet_available_for_sale, name="pet_available_for_sale"),
     path("sales/create/", views.pet_sale_create, name="pet_sale_create"),
     path("sales/<int:pk>/", views.pet_sale_detail, name="pet_sale_detail"),
     path("sales/<int:pk>/edit/", views.pet_sale_edit, name="pet_sale_edit"),
