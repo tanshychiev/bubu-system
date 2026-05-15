@@ -1,188 +1,253 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Receipt #{{ sale.id }}</title>
+    <title>BUBU Receipt #{{ sale.id }}</title>
 
     <style>
-        @page {
-            size: 58mm auto;
-            margin: 0;
-        }
-
         * {
             box-sizing: border-box;
+            color: #000 !important;
+            background: transparent !important;
         }
 
         html, body {
-            width: 58mm;
             margin: 0;
             padding: 0;
-            background: #fff;
-            color: #000;
-            font-family: Arial, sans-serif;
-            font-size: 10.5px;
+            background: #fff !important;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #000 !important;
+        }
+
+        .screen-actions {
+            width: 80mm;
+            margin: 10px auto;
+            display: flex;
+            gap: 8px;
+        }
+
+        .screen-actions button,
+        .screen-actions a {
+            flex: 1;
+            min-height: 40px;
+            border: 2px solid #000;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 900;
+            color: #000 !important;
+            background: #fff !important;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
         }
 
         .receipt-wrap {
-            width: 58mm;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
+            width: 80mm;
+            margin: 0 auto;
+            background: #fff !important;
         }
 
         .receipt {
-            width: 46mm;
-            margin: 0 auto;
-            padding: 3mm 0 5mm 0;
-            overflow: hidden;
+            width: 72mm;
+            margin-left: 0mm;
+            margin-right: auto;
+            padding: 5mm 2mm 8mm;
+            background: #fff !important;
         }
 
-        .center {
-            text-align: center;
-        }
+        .center { text-align: center; }
 
         .logo {
-            width: 19mm;
-            height: auto;
+            width: 24mm;
+            max-height: 18mm;
+            object-fit: contain;
             display: block;
-            margin: 0 auto 2mm auto;
+            margin: 0 auto 4px;
+            filter: grayscale(100%) contrast(200%);
         }
 
-        .store-name {
-            font-size: 15px;
+        .brand-title {
+            margin: 0;
+            font-size: 18px;
             font-weight: 900;
             line-height: 1.1;
         }
 
-        .small {
-            font-size: 10px;
-            font-weight: 700;
+        .sub {
+            margin: 2px 0;
+            font-size: 12px;
             line-height: 1.25;
+            font-weight: 700;
         }
 
         .dash {
             border-top: 1px dashed #000;
-            margin: 5px 0;
+            margin: 8px 0;
         }
 
-        .line {
+        .row {
             display: flex;
             justify-content: space-between;
-            gap: 3px;
-            width: 100%;
+            align-items: flex-start;
+            gap: 8px;
+            margin: 5px 0;
+            font-size: 12px;
+            line-height: 1.25;
         }
 
-        .left {
-            max-width: 31mm;
-            word-break: break-word;
+        .label {
+            flex: 1;
+            font-weight: 700;
         }
 
-        .right {
-            min-width: 12mm;
+        .value {
             text-align: right;
-            font-weight: 800;
+            font-weight: 900;
             white-space: nowrap;
+        }
+
+        .item {
+            margin: 8px 0 10px;
+        }
+
+        .item-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
         }
 
         .item-name {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 900;
             line-height: 1.25;
+            max-width: 47mm;
         }
 
-        .item-sub {
-            font-size: 10px;
-            font-weight: 700;
-            line-height: 1.25;
-        }
-
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-top: 2px solid #000;
-            border-bottom: 2px solid #000;
-            padding: 4px 0;
-            margin: 5px 0;
-        }
-
-        .total-label {
-            font-size: 15px;
-            font-weight: 900;
-        }
-
-        .total-price {
-            font-size: 18px;
+        .item-price {
+            font-size: 12px;
             font-weight: 900;
             white-space: nowrap;
         }
 
-        .section-title {
-            font-weight: 900;
-            font-size: 12px;
-            margin-top: 5px;
-        }
-
-        .member-box {
-            border: 1px dashed #000;
-            text-align: center;
-            padding: 5px 2px;
-            margin-top: 5px;
-            font-size: 9.5px;
-            font-weight: 800;
-            line-height: 1.25;
-        }
-
-        .footer {
-            text-align: center;
-            font-size: 9.5px;
-            font-weight: 800;
-            line-height: 1.35;
-            margin-top: 7px;
-        }
-
-        .dog-bottom {
-            width: 14mm;
-            height: auto;
-            display: block;
-            margin: 5px auto 2px auto;
-        }
-
-        .btn-print {
-            display: block;
-            width: 160px;
-            margin: 20px auto;
-            padding: 12px;
-            border: 0;
-            border-radius: 8px;
-            background: #111;
-            color: #fff;
-            font-size: 16px;
+        .item-meta {
+            margin-top: 2px;
+            font-size: 11px;
+            line-height: 1.3;
             font-weight: 700;
         }
 
+        .final-box {
+            border-top: 2px solid #000;
+            border-bottom: 2px solid #000;
+            margin: 8px 0;
+            padding: 8px 0 7px;
+        }
+
+        .final-box .row {
+            margin: 0;
+            align-items: center;
+        }
+
+        .final-box .label {
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .final-box .value {
+            font-size: 22px;
+            font-weight: 900;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 900;
+            margin: 0 0 4px;
+        }
+
+        .member-invite {
+            margin: 8px auto;
+            padding: 6px;
+            border: 1px dashed #000;
+            font-size: 10.5px;
+            line-height: 1.35;
+            font-weight: 900;
+            text-align: center;
+            width: 100%;
+            background: #fff !important;
+        }
+
+        .footer-banner {
+            margin: 8px auto 0;
+            width: 60mm;
+            text-align: center;
+        }
+
+        .footer-dog {
+            width: 11mm;
+            max-width: 11mm;
+            height: auto;
+            display: block;
+            margin: 0 auto 3px;
+            filter: grayscale(100%) contrast(220%);
+        }
+
+        .footer-kh {
+            font-size: 9px;
+            line-height: 1.45;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .thank-center {
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .thank-main {
+            font-size: 12px;
+            font-weight: 900;
+            line-height: 1.3;
+        }
+
+        .thank-sub {
+            font-size: 11px;
+            font-weight: 900;
+            line-height: 1.3;
+        }
+
+        @page {
+            size: 80mm auto;
+            margin: 0;
+        }
+
         @media print {
-            .btn-print {
-                display: none;
+            html, body {
+                width: 80mm;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
             }
 
-            html, body {
-                width: 58mm;
-                margin: 0;
-                padding: 0;
+            .screen-actions {
+                display: none !important;
             }
 
             .receipt-wrap {
-                width: 58mm;
-                justify-content: center;
+                width: 80mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
 
             .receipt {
-                width: 46mm;
-                margin: 0 auto;
+                width: 72mm !important;
+                margin-left: 0mm !important;
+                margin-right: auto !important;
+                padding: 5mm 2mm 8mm !important;
             }
         }
     </style>
@@ -190,154 +255,233 @@
 
 <body>
 
-<button class="btn-print" onclick="window.print()">Print Receipt</button>
+<div class="screen-actions">
+    <button type="button" onclick="window.print()">Print</button>
+    <a href="{% url 'pos' %}">Back POS</a>
+</div>
 
 <div class="receipt-wrap">
     <div class="receipt">
 
         <div class="center">
-            <img class="logo" src="{% static 'images/bubu_receipt_logo.png' %}" alt="BUBU Logo">
+            <img src="{% static 'img/bubu-logo.png' %}" alt="BUBU Logo" class="logo">
+            <h1 class="brand-title">BUBU PET STORE</h1>
+            <div class="sub">Sale Receipt</div>
 
-            <div class="store-name">BUBU PET STORE</div>
-            <div class="small">Sale Receipt</div>
-
-            <div class="small">
+            <div class="sub">
                 Shop:
                 {% if sale.branch %}
                     {{ sale.branch.name }}
                 {% else %}
-                    BUBU PET STORE
+                    No Branch
                 {% endif %}
             </div>
 
-            <div class="small">Receipt #{{ sale.id }}</div>
-            <div class="small">{{ sale.created_at|date:"d M Y H:i" }}</div>
+            <div class="sub">Receipt #{{ sale.id }}</div>
+            <div class="sub">{{ sale.created_at|date:"d M Y H:i" }}</div>
         </div>
-
-        <div class="dash"></div>
-
-        <div class="line">
-            <div class="left"><b>Status</b></div>
-            <div class="right">
-                {% if sale.status %}
-                    {{ sale.status|title }}
-                {% else %}
-                    Paid
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="dash"></div>
-
-        {% for item in sale.items.all %}
-            <div class="line">
-                <div class="left item-name">
-                    {{ item.name|default:item.item.name }}
-                </div>
-                <div class="right">
-                    ${{ item.line_total|default:item.total_price|default:item.subtotal|default:"0"|floatformat:2 }}
-                </div>
-            </div>
-
-            <div class="item-sub">
-                {% if item.variant %}
-                    {{ item.variant }}
-                {% endif %}
-            </div>
-
-            <div class="item-sub">
-                {{ item.quantity }} x ${{ item.price|default:item.unit_price|default:"0"|floatformat:2 }}
-            </div>
-
-            <div class="dash"></div>
-        {% endfor %}
-
-        <div class="total-row">
-            <div class="total-label">Final Total</div>
-            <div class="total-price">
-                ${{ sale.total_amount|default:sale.final_total|default:sale.grand_total|default:sale.total|default:"0"|floatformat:2 }}
-            </div>
-        </div>
-
-        <div class="line">
-            <div class="left"><b>Paid</b></div>
-            <div class="right">
-                ${{ sale.paid_amount|default:sale.amount_paid|default:"0"|floatformat:2 }}
-            </div>
-        </div>
-
-        <div class="line">
-            <div class="left"><b>Balance</b></div>
-            <div class="right">
-                ${{ sale.balance|default:sale.change_amount|default:"0"|floatformat:2 }}
-            </div>
-        </div>
-
-        <div class="dash"></div>
-
-        <div class="section-title">Payment Detail</div>
-
-        {% for payment in sale.payments.all %}
-            <div class="line">
-                <div class="left">
-                    {{ payment.get_method_display|default:payment.method }}
-                </div>
-                <div class="right">
-                    ${{ payment.amount_usd|default:payment.amount|default:"0"|floatformat:2 }}
-                </div>
-            </div>
-        {% empty %}
-            <div class="line">
-                <div class="left">Cash USD</div>
-                <div class="right">
-                    ${{ sale.paid_amount|default:sale.amount_paid|default:"0"|floatformat:2 }}
-                </div>
-            </div>
-        {% endfor %}
 
         <div class="dash"></div>
 
         {% if sale.customer %}
-            {% if sale.customer.points and sale.customer.points > 0 %}
-                <div class="member-box">
-                    Member Customer<br>
-                    {{ sale.customer.name }}<br>
-                    Point: {{ sale.customer.points|default:"0" }}
+            <div class="row">
+                <div class="label">Customer</div>
+                <div class="value">
+                    {% if sale.customer.phone %}
+                        {{ sale.customer.phone }}
+                    {% else %}
+                        {{ sale.customer.name }}
+                    {% endif %}
                 </div>
-            {% else %}
-                <div class="member-box">
-                    Membership Program<br>
-                    Now we have membership program.<br>
-                    Please join us to collect points.
-                </div>
-            {% endif %}
+            </div>
+
+            <div class="row">
+                <div class="label">Customer Point</div>
+                <div class="value">{{ sale.customer.points|default:0 }}</div>
+            </div>
         {% else %}
-            <div class="member-box">
+            <div class="row">
+                <div class="label">Customer</div>
+                <div class="value">Walk-in</div>
+            </div>
+        {% endif %}
+
+        <div class="row">
+            <div class="label">Status</div>
+            <div class="value">{{ sale.status }}</div>
+        </div>
+
+        <div class="dash"></div>
+
+        {% for line in sale.items.all %}
+            <div class="item">
+                <div class="item-head">
+                    <div class="item-name">{{ line.item.name }}</div>
+                    <div class="item-price">
+                        {% if line.total %}
+                            ${{ line.total|floatformat:2 }}
+                        {% elif line.line_total %}
+                            ${{ line.line_total|floatformat:2 }}
+                        {% else %}
+                            $0.00
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if line.item.item_type %}
+                    <div class="item-meta">{{ line.item.item_type.name }}</div>
+                {% endif %}
+
+                <div class="item-meta">
+                    {{ line.quantity }} x ${{ line.price|floatformat:2 }}
+                </div>
+            </div>
+        {% empty %}
+            <div class="row">
+                <div class="label">No items</div>
+                <div class="value">$0.00</div>
+            </div>
+        {% endfor %}
+
+        <div class="dash"></div>
+
+        {% if product_total and product_total > 0 %}
+            <div class="row">
+                <div class="label">Products</div>
+                <div class="value">${{ product_total|floatformat:2 }}</div>
+            </div>
+        {% endif %}
+
+        {% if grooming_total and grooming_total > 0 %}
+            <div class="row">
+                <div class="label">Grooming</div>
+                <div class="value">${{ grooming_total|floatformat:2 }}</div>
+            </div>
+        {% endif %}
+
+        {% if service_total and service_total > 0 %}
+            <div class="row">
+                <div class="label">Services</div>
+                <div class="value">${{ service_total|floatformat:2 }}</div>
+            </div>
+        {% endif %}
+
+        {% if pet_total and pet_total > 0 %}
+            <div class="row">
+                <div class="label">Pet / Dog / Cat</div>
+                <div class="value">${{ pet_total|floatformat:2 }}</div>
+            </div>
+        {% endif %}
+
+        {% if sale.discount_amount and sale.discount_amount > 0 %}
+            <div class="row">
+                <div class="label">Discount</div>
+                <div class="value">-${{ sale.discount_amount|floatformat:2 }}</div>
+            </div>
+        {% endif %}
+
+        {% if sale.tax_amount and sale.tax_amount > 0 %}
+            <div class="row">
+                <div class="label">Tax</div>
+                <div class="value">${{ sale.tax_amount|floatformat:2 }}</div>
+            </div>
+        {% endif %}
+
+        <div class="final-box">
+            <div class="row">
+                <div class="label">Final Total</div>
+                <div class="value">
+                    {% if sale.total_amount %}
+                        ${{ sale.total_amount|floatformat:2 }}
+                    {% elif sale.final_total %}
+                        ${{ sale.final_total|floatformat:2 }}
+                    {% elif sale.total %}
+                        ${{ sale.total|floatformat:2 }}
+                    {% elif sale.grand_total %}
+                        ${{ sale.grand_total|floatformat:2 }}
+                    {% else %}
+                        $0.00
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="label">Paid</div>
+            <div class="value">
+                {% if sale.paid_amount %}
+                    ${{ sale.paid_amount|floatformat:2 }}
+                {% elif sale.amount_paid %}
+                    ${{ sale.amount_paid|floatformat:2 }}
+                {% else %}
+                    $0.00
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="label">Balance</div>
+            <div class="value">
+                {% if balance %}
+                    ${{ balance|floatformat:2 }}
+                {% else %}
+                    $0.00
+                {% endif %}
+            </div>
+        </div>
+
+        {% if sale.change_amount and sale.change_amount > 0 %}
+            <div class="row">
+                <div class="label">Change</div>
+                <div class="value">${{ sale.change_amount|floatformat:2 }}</div>
+            </div>
+        {% endif %}
+
+        <div class="dash"></div>
+
+        {% if sale.payments.all %}
+            <div class="section-title">Payment Detail</div>
+
+            {% for payment in sale.payments.all %}
+                <div class="row">
+                    <div class="label">{{ payment.get_method_display }}</div>
+                    <div class="value">${{ payment.amount|floatformat:2 }}</div>
+                </div>
+            {% endfor %}
+
+            <div class="dash"></div>
+        {% endif %}
+
+        {% if not sale.customer or not sale.customer.points or sale.customer.points <= 0 %}
+            <div class="member-invite">
                 Membership Program<br>
                 Now we have membership program.<br>
                 Please join us to collect points.
             </div>
         {% endif %}
 
-        <div class="dash"></div>
+        <div class="footer-banner">
+            <img src="{% static 'img/bubu-receipt-thankyou.png' %}" alt="Dog" class="footer-dog">
+            <div class="footer-kh">
+                សូមអរគុណសម្រាប់ការគាំទ្រ និងជឿជាក់លើហាង<br>
+                Bubu Pet Store
+            </div>
+        </div>
 
-        <div class="footer">
-            <img class="dog-bottom" src="{% static 'images/bubu_dog_bottom.png' %}" alt="Dog">
-            សូមអរគុណសម្រាប់ការទិញទំនិញជាមួយពួកយើង<br>
-            Bubu Pet Store<br><br>
-            Thank you!<br>
-            Please come again
+        <div class="thank-center">
+            <div class="thank-main">Thank you!</div>
+            <div class="thank-sub">Please come again</div>
         </div>
 
     </div>
 </div>
 
 <script>
-    window.onload = function () {
-        setTimeout(function () {
-            window.print();
-        }, 300);
-    };
+document.addEventListener("DOMContentLoaded", function () {
+    setTimeout(function () {
+        window.print();
+    }, 400);
+});
 </script>
 
 </body>
