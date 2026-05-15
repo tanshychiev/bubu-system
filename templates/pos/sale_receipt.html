@@ -34,7 +34,7 @@
         }
 
         .receipt {
-            width: 46mm;      /* IMPORTANT: printer printable area is 48mm */
+            width: 46mm;
             margin: 0 auto;
             padding: 3mm 0 5mm 0;
             overflow: hidden;
@@ -235,7 +235,7 @@
                     {{ item.name|default:item.item.name }}
                 </div>
                 <div class="right">
-                    ${{ item.line_total|floatformat:2 }}
+                    ${{ item.line_total|default:item.total_price|default:item.subtotal|default:"0"|floatformat:2 }}
                 </div>
             </div>
 
@@ -246,7 +246,7 @@
             </div>
 
             <div class="item-sub">
-                {{ item.quantity }} x ${{ item.price|floatformat:2 }}
+                {{ item.quantity }} x ${{ item.price|default:item.unit_price|default:"0"|floatformat:2 }}
             </div>
 
             <div class="dash"></div>
@@ -254,17 +254,23 @@
 
         <div class="total-row">
             <div class="total-label">Final Total</div>
-            <div class="total-price">${{ sale.final_total|floatformat:2 }}</div>
+            <div class="total-price">
+                ${{ sale.total_amount|default:sale.final_total|default:sale.grand_total|default:sale.total|default:"0"|floatformat:2 }}
+            </div>
         </div>
 
         <div class="line">
             <div class="left"><b>Paid</b></div>
-            <div class="right">${{ sale.paid_amount|floatformat:2 }}</div>
+            <div class="right">
+                ${{ sale.paid_amount|default:sale.amount_paid|default:"0"|floatformat:2 }}
+            </div>
         </div>
 
         <div class="line">
             <div class="left"><b>Balance</b></div>
-            <div class="right">${{ sale.balance|floatformat:2 }}</div>
+            <div class="right">
+                ${{ sale.balance|default:sale.change_amount|default:"0"|floatformat:2 }}
+            </div>
         </div>
 
         <div class="dash"></div>
@@ -277,23 +283,41 @@
                     {{ payment.get_method_display|default:payment.method }}
                 </div>
                 <div class="right">
-                    ${{ payment.amount_usd|floatformat:2 }}
+                    ${{ payment.amount_usd|default:payment.amount|default:"0"|floatformat:2 }}
                 </div>
             </div>
         {% empty %}
             <div class="line">
                 <div class="left">Cash USD</div>
-                <div class="right">${{ sale.paid_amount|floatformat:2 }}</div>
+                <div class="right">
+                    ${{ sale.paid_amount|default:sale.amount_paid|default:"0"|floatformat:2 }}
+                </div>
             </div>
         {% endfor %}
 
         <div class="dash"></div>
 
-        <div class="member-box">
-            Membership Program<br>
-            Now we have membership program.<br>
-            Please join us to collect points.
-        </div>
+        {% if sale.customer %}
+            {% if sale.customer.points and sale.customer.points > 0 %}
+                <div class="member-box">
+                    Member Customer<br>
+                    {{ sale.customer.name }}<br>
+                    Point: {{ sale.customer.points|default:"0" }}
+                </div>
+            {% else %}
+                <div class="member-box">
+                    Membership Program<br>
+                    Now we have membership program.<br>
+                    Please join us to collect points.
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="member-box">
+                Membership Program<br>
+                Now we have membership program.<br>
+                Please join us to collect points.
+            </div>
+        {% endif %}
 
         <div class="dash"></div>
 
