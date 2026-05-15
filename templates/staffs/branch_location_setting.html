@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="gps-page">
+    <div class="gps-card">
+        <div class="page-head">
+            <div>
+                <h1>Branch GPS Setting 📍</h1>
+                <p>Set branch location for staff attendance scan. Staff must scan within allowed radius.</p>
+            </div>
+
+            <a href="{% url 'staff_qr_list' %}" class="soft-btn">← Back to QR</a>
+        </div>
+
+        {% if messages %}
+            <div class="message-box">
+                {% for message in messages %}
+                    <p class="{{ message.tags }}">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" class="gps-form">
+            {% csrf_token %}
+
+            <label>
+                Branch
+                <select name="branch" id="branchSelect" required onchange="fillBranchGPS()">
+                    <option value="">Select Branch</option>
+                    {% for branch in branches %}
+                        <option
+                            value="{{ branch.id }}"
+                            data-latitude="{{ branch.latitude|default:'' }}"
+                            data-longitude="{{ branch.longitude|default:'' }}"
+                            data-radius="{{ branch.allowed_radius_meters|default:'100' }}"
+                        >
+                            {{ branch.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <div class="grid-2">
+                <label>
+                    Latitude
+                    <input type="text" name="latitude" id="latitudeInput" placeholder="Example: 11.5889323" required>
+                </label>
+
+                <label>
+                    Longitude
+                    <input type="text" name="longitude" id="longitudeInput" placeholder="Example: 104.8821274" required>
+                </label>
+            </div>
+
+            <label>
+                Allowed Radius Meters
+                <input type="number" name="allowed_radius_meters" id="radiusInput" value="100" min="10" max="2000">
+            </label>
+
+            <div class="quick-box">
+                <h3>Quick Set</h3>
+
+                <button type="button" onclick="setGPS('11.5889323', '104.8821274', '100')">
+                    📍 BUBU SENSOK
+                </button>
+
+                <button type="button" onclick="setGPS('11.5629479', '104.8977060', '100')">
+                    📍 BUBU STM
+                </button>
+
+                <button type="button" onclick="useCurrentLocation()">
+                    📱 Use Current Location
+                </button>
+            </div>
+
+            <div class="hint-box">
+                <strong>Recommended:</strong>
+                Use 100 meters around shop. If phone GPS jumps too much, use 150 meters.
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="save-btn">Save Branch GPS</button>
+                <a href="{% url 'staff_qr_list' %}" class="cancel-btn">Cancel</a>
+            </div>
+        </form>
+
+        <div class="branch-list">
+            <h2>Current Branch GPS</h2>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Branch</th>
+                            <th>Latitude</th>
+                            <th>Longitude</th>
+                            <th>Radius</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for branch in branches %}
+                            <tr>
+                                <td>{{ branch.name }}</td>
+                                <td>{{ branch.latitude|default:"Not set" }}</td>
+                                <td>{{ branch.longitude|default:"Not set" }}</td>
+                                <td>{{ branch.allowed_radius_meters }}m</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4">No branch found.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.gps-page{
+    padding:24px;
+    display:flex;
+    justify-content:center;
+}
+
+.gps-card{
+    width:900px;
+    max-width:100%;
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:34px;
+    padding:24px;
+    box-shadow:0 24px 70px rgba(130,91,60,.12);
+}
+
+.page-head{
+    display:flex;
+    justify-content:space-between;
+    gap:16px;
+    align-items:flex-start;
+    margin-bottom:20px;
+}
+
+.page-head h1{
+    margin:0;
+    font-size:34px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.page-head p{
+    margin:8px 0 0;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.soft-btn,
+.save-btn,
+.cancel-btn{
+    min-height:56px;
+    padding:0 20px;
+    border-radius:20px;
+    border:0;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+    text-decoration:none;
+}
+
+.soft-btn,
+.cancel-btn{
+    background:#f1f5f9;
+    color:#334155;
+}
+
+.gps-form{
+    display:grid;
+    gap:16px;
+}
+
+.grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+}
+
+.gps-form label{
+    color:#080634;
+    font-weight:1000;
+}
+
+.gps-form input,
+.gps-form select{
+    width:100%;
+    height:64px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    padding:0 16px;
+    margin-top:8px;
+    color:#080634;
+    font-size:17px;
+    font-weight:900;
+    background:white;
+}
+
+.quick-box{
+    background:#f8f6ff;
+    border:2px solid #e6dcff;
+    border-radius:24px;
+    padding:16px;
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:12px;
+}
+
+.quick-box h3{
+    grid-column:1 / -1;
+    margin:0;
+    color:#080634;
+    font-weight:1000;
+}
+
+.quick-box button{
+    min-height:60px;
+    border:0;
+    border-radius:20px;
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    color:white;
+    font-weight:1000;
+}
+
+.hint-box{
+    background:#fff7ed;
+    border:2px solid #fed7aa;
+    border-radius:20px;
+    padding:14px;
+    color:#9a3412;
+    font-weight:900;
+}
+
+.form-actions{
+    display:grid;
+    grid-template-columns:1.4fr 1fr;
+    gap:12px;
+}
+
+.save-btn{
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    color:white;
+}
+
+.message-box p{
+    padding:12px 14px;
+    border-radius:16px;
+    font-weight:1000;
+}
+
+.message-box .success{
+    background:#dcfce7;
+    color:#16a34a;
+}
+
+.message-box .error{
+    background:#fee2e2;
+    color:#dc2626;
+}
+
+.branch-list{
+    margin-top:24px;
+}
+
+.branch-list h2{
+    color:#080634;
+    font-weight:1000;
+}
+
+.table-wrap{
+    overflow:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0 10px;
+}
+
+th{
+    text-align:left;
+    color:#7b7288;
+    font-size:13px;
+    font-weight:1000;
+    padding:0 12px;
+}
+
+td{
+    background:#fafafa;
+    padding:14px 12px;
+    color:#080634;
+    font-weight:900;
+}
+
+td:first-child{
+    border-radius:16px 0 0 16px;
+}
+
+td:last-child{
+    border-radius:0 16px 16px 0;
+}
+
+@media(max-width:700px){
+    .gps-page{
+        padding:16px;
+    }
+
+    .page-head{
+        display:block;
+    }
+
+    .soft-btn{
+        margin-top:14px;
+        width:100%;
+    }
+
+    .grid-2,
+    .quick-box,
+    .form-actions{
+        grid-template-columns:1fr;
+    }
+
+    .gps-form input,
+    .gps-form select,
+    .save-btn,
+    .cancel-btn,
+    .quick-box button{
+        min-height:72px;
+        font-size:18px;
+    }
+}
+</style>
+
+<script>
+function setGPS(latitude, longitude, radius){
+    document.getElementById("latitudeInput").value = latitude;
+    document.getElementById("longitudeInput").value = longitude;
+    document.getElementById("radiusInput").value = radius || "100";
+}
+
+function fillBranchGPS(){
+    const select = document.getElementById("branchSelect");
+    const option = select.options[select.selectedIndex];
+
+    if(!option || !option.value){
+        return;
+    }
+
+    document.getElementById("latitudeInput").value = option.dataset.latitude || "";
+    document.getElementById("longitudeInput").value = option.dataset.longitude || "";
+    document.getElementById("radiusInput").value = option.dataset.radius || "100";
+}
+
+function useCurrentLocation(){
+    if(!navigator.geolocation){
+        alert("Your browser does not support GPS.");
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function(position){
+            document.getElementById("latitudeInput").value = position.coords.latitude.toFixed(7);
+            document.getElementById("longitudeInput").value = position.coords.longitude.toFixed(7);
+            document.getElementById("radiusInput").value = "100";
+        },
+        function(){
+            alert("Cannot get GPS. Please allow location.");
+        },
+        {
+            enableHighAccuracy:true,
+            timeout:10000,
+            maximumAge:0
+        }
+    );
+}
+</script>
+
+{% endblock %}

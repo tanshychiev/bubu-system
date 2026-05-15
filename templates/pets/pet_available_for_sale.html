@@ -6,8 +6,8 @@
 <div class="available-page">
     <div class="page-top">
         <div>
-            <h1>Available Pets for Sale 🐾</h1>
-            <p>Select only in-stock pets and sell directly.</p>
+            <h1>Pet Stock List 🐾</h1>
+            <p>Default shows In Stock pets. Search by branch, date, status, breed, color, and sex.</p>
         </div>
 
         <div class="top-actions">
@@ -25,9 +25,53 @@
                     type="text"
                     name="q"
                     value="{{ q|default:'' }}"
-                    placeholder="Breed, color, sex, special type..."
+                    placeholder="Breed, name, color, sex, special type, branch..."
                 >
             </label>
+
+            <div class="touch-field">
+                <span>Status</span>
+                <input type="hidden" name="status" id="statusInput" value="{{ status|default:'in_stock' }}">
+
+                <button type="button" onclick="openPopup('status')" class="touch-btn">
+                    <strong id="statusLabel">
+                        {% if status == "in_stock" %}
+                            In Stock
+                        {% elif status == "reserved" %}
+                            Reserved
+                        {% elif status == "sold" %}
+                            Sold
+                        {% elif status == "preorder" %}
+                            Preorder
+                        {% elif status == "sick_dead" %}
+                            Sick / Dead
+                        {% elif status == "cancelled" %}
+                            Cancelled
+                        {% elif status == "all" %}
+                            All Status
+                        {% else %}
+                            In Stock
+                        {% endif %}
+                    </strong>
+                    <em>⌄</em>
+                </button>
+            </div>
+
+            <div class="touch-field">
+                <span>Branch / Shop</span>
+                <input type="hidden" name="branch" id="branchInput" value="{{ branch_id|default:'' }}">
+
+                <button type="button" onclick="openPopup('branch')" class="touch-btn">
+                    <strong id="branchLabel">
+                        {% if selected_branch %}
+                            {{ selected_branch.name }}
+                        {% else %}
+                            All Branch
+                        {% endif %}
+                    </strong>
+                    <em>⌄</em>
+                </button>
+            </div>
 
             <div class="touch-field">
                 <span>Pet Type</span>
@@ -49,19 +93,63 @@
                 </button>
             </div>
 
+            <label class="date-box">
+                From Date
+                <input type="date" name="date_from" value="{{ date_from|default:'' }}">
+            </label>
+
+            <label class="date-box">
+                To Date
+                <input type="date" name="date_to" value="{{ date_to|default:'' }}">
+            </label>
+
             <button type="submit" class="dark-btn">Search</button>
             <a href="{% url 'pet_available_for_sale' %}" class="clear-btn">Clear</a>
         </div>
     </form>
 
+    <div class="summary-grid">
+        <button type="button" onclick="quickStatus('in_stock','In Stock')" class="summary-card green">
+            <strong>{{ in_stock_count }}</strong>
+            <span>In Stock</span>
+        </button>
+
+        <button type="button" onclick="quickStatus('reserved','Reserved')" class="summary-card purple">
+            <strong>{{ reserved_count }}</strong>
+            <span>Reserved</span>
+        </button>
+
+        <button type="button" onclick="quickStatus('sold','Sold')" class="summary-card red">
+            <strong>{{ sold_count }}</strong>
+            <span>Sold</span>
+        </button>
+
+        <button type="button" onclick="quickStatus('all','All Status')" class="summary-card dark">
+            <strong>{{ all_count }}</strong>
+            <span>All Pets</span>
+        </button>
+    </div>
+
     <div class="info-card">
         <div>
             <strong>{{ pets.count }}</strong>
-            <span>in-stock pets ready for sale</span>
+            <span>pets found</span>
         </div>
 
         <p>
-            Only pets with status <b>In Stock</b> show here. Reserved, sold, sick, dead and cancelled pets are hidden.
+            Current filter:
+            <b>
+                {% if status == "in_stock" %}
+                    In Stock
+                {% elif status == "all" %}
+                    All Status
+                {% else %}
+                    {{ status }}
+                {% endif %}
+            </b>
+            {% if selected_branch %}
+                · Branch: <b>{{ selected_branch.name }}</b>
+            {% endif %}
         </p>
     </div>
 
@@ -77,7 +165,11 @@
                         </div>
                     {% endif %}
 
-                    <span class="status">In Stock</span>
+                    <span class="status status-{{ pet.status }}">{{ pet.get_status_display }}</span>
+
+                    <span class="branch-badge">
+                        📍 {{ pet.branch_name }}
+                    </span>
                 </div>
 
                 <div class="pet-body">
@@ -88,22 +180,23 @@
 
                     <div class="meta-row">
                         {% if pet.name %}
-                            <span>{{ pet.name }}</span>
+                            <span>🏷 {{ pet.name }}</span>
                         {% endif %}
 
                         {% if pet.gender %}
-                            <span>{{ pet.gender }}</span>
+                            <span>⚧ {{ pet.gender }}</span>
                         {% endif %}
 
                         {% if pet.color %}
-                            <span>{{ pet.color }}</span>
+                            <span>🎨 {{ pet.color }}</span>
                         {% endif %}
 
                         {% if pet.special_type %}
-                            <span>{{ pet.special_type }}</span>
+                            <span>✨ {{ pet.special_type }}</span>
                         {% endif %}
 
-                        <span>Age: {{ pet.current_age_display }}</span>
+                        <span>🎂 {{ pet.current_age_display }}</span>
+                        <span>📅 {{ pet.created_at|date:"d/m/Y" }}</span>
                     </div>
 
                     <div class="money-row">
@@ -116,6 +209,11 @@
                             <small>Sale</small>
                             <b>${{ pet.sale_price|floatformat:2 }}</b>
                         </div>
+
+                        <div>
+                            <small>Branch</small>
+                            <b>{{ pet.branch_name }}</b>
+                        </div>
                     </div>
 
                     {% if pet.note %}
@@ -124,18 +222,94 @@
                 </div>
 
                 <div class="card-actions">
-                    <a href="{% url 'pet_sale_create' %}?pet={{ pet.id }}" class="sell-btn">Sell This Pet</a>
-                    <a href="{% url 'pet_detail' pet.id %}" class="soft-btn">View</a>
-                    <a href="{% url 'pet_edit' pet.id %}" class="orange-btn">Edit</a>
+                    <button type="button" class="action-open-btn" onclick="openAction('{{ pet.id }}')">
+                        Open Actions
+                    </button>
+                </div>
+            </div>
+
+            <div class="popup-backdrop" id="actionBackdrop{{ pet.id }}" onclick="closeAction('{{ pet.id }}')"></div>
+
+            <div class="action-popup" id="actionPopup{{ pet.id }}">
+                <div class="popup-head">
+                    <h3>{{ pet.breed_name|default:"Pet" }}</h3>
+                    <button type="button" onclick="closeAction('{{ pet.id }}')">✕</button>
+                </div>
+
+                <div class="action-info">
+                    <div>
+                        <small>Branch</small>
+                        <b>{{ pet.branch_name }}</b>
+                    </div>
+
+                    <div>
+                        <small>Status</small>
+                        <b>{{ pet.get_status_display }}</b>
+                    </div>
+
+                    <div>
+                        <small>Price</small>
+                        <b>${{ pet.sale_price|floatformat:2 }}</b>
+                    </div>
+                </div>
+
+                <div class="popup-list">
+                    {% if pet.status == "in_stock" %}
+                        <a href="{% url 'pet_sale_create' %}?pet={{ pet.id }}" class="popup-action sell">🛒 Sell This Pet</a>
+                    {% endif %}
+
+                    <a href="{% url 'pet_detail' pet.id %}" class="popup-action view">👁 View Detail</a>
+                    <a href="{% url 'pet_edit' pet.id %}" class="popup-action edit">✏️ Edit Pet</a>
+                    <button type="button" onclick="closeAction('{{ pet.id }}')" class="popup-action cancel">Cancel</button>
                 </div>
             </div>
         {% empty %}
             <div class="empty-box">
                 <div>🐾</div>
-                <h2>No in-stock pets found</h2>
-                <p>Stock in a pet first, or change your search filter.</p>
+                <h2>No pets found</h2>
+                <p>Try changing status, branch, date, or search text.</p>
                 <a href="{% url 'pet_create' %}" class="main-btn">＋ Stock In Pet</a>
             </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- STATUS POPUP -->
+<div class="popup-backdrop" id="statusBackdrop" onclick="closePopup('status')"></div>
+
+<div class="select-popup" id="statusPopup">
+    <div class="popup-head">
+        <h3>Choose Status</h3>
+        <button type="button" onclick="closePopup('status')">✕</button>
+    </div>
+
+    <div class="popup-list">
+        <button type="button" onclick="selectStatus('in_stock', 'In Stock')">✅ In Stock</button>
+        <button type="button" onclick="selectStatus('reserved', 'Reserved')">🟣 Reserved / Deposit</button>
+        <button type="button" onclick="selectStatus('sold', 'Sold')">🔴 Sold</button>
+        <button type="button" onclick="selectStatus('preorder', 'Preorder')">📝 Preorder</button>
+        <button type="button" onclick="selectStatus('sick_dead', 'Sick / Dead')">⚠️ Sick / Dead</button>
+        <button type="button" onclick="selectStatus('cancelled', 'Cancelled')">🚫 Cancelled</button>
+        <button type="button" onclick="selectStatus('all', 'All Status')">🐾 All Status</button>
+    </div>
+</div>
+
+<!-- BRANCH POPUP -->
+<div class="popup-backdrop" id="branchBackdrop" onclick="closePopup('branch')"></div>
+
+<div class="select-popup" id="branchPopup">
+    <div class="popup-head">
+        <h3>Choose Branch</h3>
+        <button type="button" onclick="closePopup('branch')">✕</button>
+    </div>
+
+    <div class="popup-list">
+        <button type="button" onclick="selectBranch('', 'All Branch')">🏪 All Branch</button>
+
+        {% for branch in branches %}
+            <button type="button" onclick="selectBranch('{{ branch.id }}', '{{ branch.name|escapejs }}')">
+                📍 {{ branch.name }}
+            </button>
         {% endfor %}
     </div>
 </div>
@@ -201,8 +375,7 @@ a{
 .purple-btn,
 .dark-btn,
 .clear-btn,
-.sell-btn,
-.orange-btn{
+.action-open-btn{
     min-height:56px;
     padding:0 18px;
     border-radius:18px;
@@ -230,19 +403,16 @@ a{
     color:#334155;
 }
 
-.orange-btn{
-    background:#fff7ed;
-    color:#ea580c;
-}
-
 .dark-btn{
     background:#080634;
     color:white;
 }
 
-.sell-btn{
+.action-open-btn{
+    width:100%;
     background:linear-gradient(135deg,#13a85f,#7b5cff);
     color:white;
+    font-size:16px;
 }
 
 .filter-card,
@@ -257,18 +427,20 @@ a{
 
 .filter-grid{
     display:grid;
-    grid-template-columns:1.5fr 1fr auto auto;
+    grid-template-columns:1.4fr 1fr 1fr 1fr 1fr 1fr auto auto;
     gap:14px;
     align-items:end;
 }
 
 .search-box,
+.date-box,
 .touch-field{
     font-weight:1000;
     color:#080634;
 }
 
-.search-box input{
+.search-box input,
+.date-box input{
     width:100%;
     height:62px;
     border:2px solid #eaddec;
@@ -304,6 +476,54 @@ a{
     font-style:normal;
     color:#7b5cff;
     font-size:20px;
+}
+
+.summary-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:14px;
+    margin-bottom:18px;
+}
+
+.summary-card{
+    border:0;
+    border-radius:24px;
+    padding:18px;
+    text-align:left;
+    cursor:pointer;
+    box-shadow:0 16px 35px rgba(130,91,60,.08);
+}
+
+.summary-card strong{
+    display:block;
+    font-size:30px;
+    font-weight:1000;
+}
+
+.summary-card span{
+    display:block;
+    margin-top:4px;
+    font-weight:1000;
+}
+
+.summary-card.green{
+    background:#ecfdf5;
+    color:#059669;
+}
+
+.summary-card.purple{
+    background:#f4f0ff;
+    color:#7b5cff;
+}
+
+.summary-card.red{
+    background:#fff1f2;
+    color:#e11d48;
+}
+
+.summary-card.dark{
+    background:#080634;
+    color:white;
 }
 
 .info-card{
@@ -369,16 +589,57 @@ a{
     font-size:78px;
 }
 
-.status{
+.status,
+.branch-badge{
     position:absolute;
-    top:14px;
-    left:14px;
     padding:9px 13px;
     border-radius:999px;
     font-size:13px;
     font-weight:1000;
+}
+
+.status{
+    top:14px;
+    left:14px;
+}
+
+.status-in_stock{
     background:#dcfce7;
     color:#16a34a;
+}
+
+.status-reserved{
+    background:#f4f0ff;
+    color:#7b5cff;
+}
+
+.status-sold{
+    background:#ffe4e6;
+    color:#e11d48;
+}
+
+.status-sick,
+.status-dead{
+    background:#fef3c7;
+    color:#d97706;
+}
+
+.status-cancelled{
+    background:#f1f5f9;
+    color:#64748b;
+}
+
+.status-preorder{
+    background:#e0f2fe;
+    color:#0284c7;
+}
+
+.branch-badge{
+    right:14px;
+    bottom:14px;
+    background:white;
+    color:#080634;
+    box-shadow:0 10px 25px rgba(15,23,42,.12);
 }
 
 .pet-body{
@@ -422,7 +683,7 @@ a{
 
 .money-row{
     display:grid;
-    grid-template-columns:1fr 1fr;
+    grid-template-columns:1fr 1fr 1fr;
     gap:10px;
     margin-top:14px;
 }
@@ -455,9 +716,6 @@ a{
 }
 
 .card-actions{
-    display:grid;
-    grid-template-columns:1.3fr 1fr 1fr;
-    gap:8px;
     padding:0 18px 18px;
 }
 
@@ -486,7 +744,7 @@ a{
     display:none;
     position:fixed;
     inset:0;
-    background:rgba(28,20,58,.4);
+    background:rgba(28,20,58,.42);
     z-index:9000;
 }
 
@@ -494,13 +752,14 @@ a{
     display:block;
 }
 
-.select-popup{
+.select-popup,
+.action-popup{
     display:none;
     position:fixed;
     left:50%;
     top:50%;
     transform:translate(-50%,-50%);
-    width:390px;
+    width:420px;
     max-width:calc(100% - 28px);
     background:white;
     border-radius:28px;
@@ -509,7 +768,8 @@ a{
     z-index:9001;
 }
 
-.select-popup.active{
+.select-popup.active,
+.action-popup.active{
     display:block;
 }
 
@@ -528,14 +788,15 @@ a{
 }
 
 .popup-head button{
-    width:42px;
-    height:42px;
+    width:46px;
+    height:46px;
     border:0;
     border-radius:50%;
     background:rgba(255,255,255,.25);
     color:white;
     font-weight:1000;
     cursor:pointer;
+    font-size:18px;
 }
 
 .popup-list{
@@ -544,8 +805,9 @@ a{
     padding:14px;
 }
 
-.popup-list button{
-    min-height:64px;
+.popup-list button,
+.popup-action{
+    min-height:66px;
     border:2px solid #eaddec;
     border-radius:20px;
     background:#fff8fb;
@@ -555,6 +817,59 @@ a{
     font-size:16px;
     font-weight:1000;
     cursor:pointer;
+    display:flex;
+    align-items:center;
+}
+
+.popup-action.sell{
+    background:#ecfdf5;
+    color:#059669;
+}
+
+.popup-action.view{
+    background:#f4f0ff;
+    color:#7b5cff;
+}
+
+.popup-action.edit{
+    background:#fff7ed;
+    color:#ea580c;
+}
+
+.popup-action.cancel{
+    background:#f1f5f9;
+    color:#64748b;
+}
+
+.action-info{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
+    padding:14px 14px 0;
+}
+
+.action-info div{
+    background:#fafafa;
+    border-radius:16px;
+    padding:12px;
+}
+
+.action-info small{
+    display:block;
+    color:#7b7288;
+    font-weight:1000;
+}
+
+.action-info b{
+    display:block;
+    margin-top:4px;
+    color:#080634;
+}
+
+@media(max-width:1350px){
+    .filter-grid{
+        grid-template-columns:1fr 1fr 1fr 1fr;
+    }
 }
 
 @media(max-width:1194px){
@@ -571,6 +886,10 @@ a{
     }
 
     .pet-grid{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .summary-grid{
         grid-template-columns:1fr 1fr;
     }
 
@@ -596,7 +915,7 @@ a{
     .top-actions,
     .filter-grid,
     .pet-grid,
-    .card-actions{
+    .summary-grid{
         display:grid;
         grid-template-columns:1fr;
     }
@@ -606,8 +925,7 @@ a{
     .purple-btn,
     .dark-btn,
     .clear-btn,
-    .sell-btn,
-    .orange-btn{
+    .action-open-btn{
         width:100%;
         min-height:70px;
         font-size:18px;
@@ -618,12 +936,18 @@ a{
     }
 
     .search-box input,
+    .date-box input,
     .touch-btn{
         height:66px;
         font-size:18px;
     }
 
-    .select-popup{
+    .money-row{
+        grid-template-columns:1fr;
+    }
+
+    .select-popup,
+    .action-popup{
         left:14px;
         right:14px;
         bottom:16px;
@@ -634,9 +958,14 @@ a{
         border-radius:26px;
     }
 
-    .popup-list button{
-        min-height:70px;
+    .popup-list button,
+    .popup-action{
+        min-height:72px;
         font-size:18px;
+    }
+
+    .action-info{
+        grid-template-columns:1fr;
     }
 }
 </style>
@@ -656,6 +985,34 @@ function selectType(value, label){
     document.getElementById("petTypeInput").value = value;
     document.getElementById("petTypeLabel").innerText = label;
     closePopup("type");
+}
+
+function selectStatus(value, label){
+    document.getElementById("statusInput").value = value;
+    document.getElementById("statusLabel").innerText = label;
+    closePopup("status");
+}
+
+function selectBranch(value, label){
+    document.getElementById("branchInput").value = value;
+    document.getElementById("branchLabel").innerText = label;
+    closePopup("branch");
+}
+
+function quickStatus(value, label){
+    document.getElementById("statusInput").value = value;
+    document.getElementById("statusLabel").innerText = label;
+    document.getElementById("filterForm").submit();
+}
+
+function openAction(id){
+    document.getElementById("actionPopup" + id).classList.add("active");
+    document.getElementById("actionBackdrop" + id).classList.add("active");
+}
+
+function closeAction(id){
+    document.getElementById("actionPopup" + id).classList.remove("active");
+    document.getElementById("actionBackdrop" + id).classList.remove("active");
 }
 </script>
 

@@ -1,0 +1,916 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="scan-page">
+    <div class="scan-card">
+        <div class="logo-circle">🐾</div>
+
+        <h1>Staff Attendance</h1>
+
+        <div class="branch-box">
+            <small>Branch QR</small>
+            <h2>{{ qr.branch.name }}</h2>
+            <p>{{ today|date:"d M Y" }}</p>
+        </div>
+
+        {% if messages %}
+            <div class="message-box">
+                {% for message in messages %}
+                    <p class="{{ message.tags }}">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'staff_scan_submit' qr.token %}" id="scanForm" class="scan-form">
+            {% csrf_token %}
+
+            <input type="hidden" name="latitude" id="latitudeInput">
+            <input type="hidden" name="longitude" id="longitudeInput">
+            <input type="hidden" name="location_accuracy" id="accuracyInput">
+            <input type="hidden" name="action" id="actionInput" value="check_in">
+            <input type="hidden" name="staff_id" id="staffInput" value="">
+            <input type="hidden" name="late_reason" id="lateReasonInput" value="">
+
+            <div class="fake-label">
+                Staff
+                <button type="button" class="popup-field-btn" onclick="openStaffPopup()">
+                    <span id="staffLabel">Select your name</span>
+                    <b>👤</b>
+                </button>
+            </div>
+
+            <label>
+                PIN
+                <input
+                    type="password"
+                    name="pin"
+                    id="pinInput"
+                    placeholder="Enter your attendance PIN"
+                    required
+                    inputmode="numeric"
+                >
+            </label>
+
+            <div class="gps-box" id="gpsBox">
+                <strong>📍 Location Required</strong>
+                <p>Please allow location. System will check if you are near branch.</p>
+            </div>
+
+            <div class="scan-actions">
+                <button type="button" onclick="openLatePopup()" class="checkin-btn">
+                    ✅ Check In
+                </button>
+
+                <button type="button" onclick="submitWithLocation('check_out', this)" class="checkout-btn">
+                    👋 Check Out
+                </button>
+            </div>
+        </form>
+
+        <p class="small-note">
+            Telegram will receive attendance result and GPS warning only if location is wrong.
+        </p>
+
+        <!-- POPUP BACKDROP INSIDE CARD -->
+        <div class="popup-bg" id="staffPopupBg" onclick="closeStaffPopup()"></div>
+        <div class="popup-bg" id="latePopupBg" onclick="closeLatePopup()"></div>
+
+        <!-- STAFF POPUP INSIDE CARD -->
+        <div class="staff-popup" id="staffPopup">
+            <div class="popup-head">
+                <h2>Select Staff</h2>
+                <button type="button" onclick="closeStaffPopup()">×</button>
+            </div>
+
+            <div class="popup-body">
+                <input type="text" id="staffSearchInput" placeholder="Search your name..." oninput="filterStaffList()">
+
+                <div class="staff-list">
+                    {% for staff in staffs %}
+                        <button
+                            type="button"
+                            class="staff-option"
+                            data-name="{{ staff.user.get_full_name|default:staff.user.username }} {% if staff.branch %}{{ staff.branch.name }}{% endif %}"
+                            onclick="selectStaff('{{ staff.id }}', '{{ staff.user.get_full_name|default:staff.user.username|escapejs }}{% if staff.branch %} - {{ staff.branch.name|escapejs }}{% endif %}')"
+                        >
+                            <span>👤</span>
+                            <div>
+                                <strong>{{ staff.user.get_full_name|default:staff.user.username }}</strong>
+                                <small>
+                                    {% if staff.branch %}
+                                        {{ staff.branch.name }}
+                                    {% else %}
+                                        No Branch
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </button>
+                    {% empty %}
+                        <div class="empty-staff">No staff found.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- LATE REASON POPUP INSIDE CARD -->
+        <div class="late-popup" id="latePopup">
+            <button type="button" class="late-close" onclick="closeLatePopup()">×</button>
+
+            <div class="late-icon">⏰</div>
+
+            <h2>Why are you late?</h2>
+            <p>If you are late, write the reason before check in.</p>
+
+            <textarea id="lateReasonText" rows="4" placeholder="Example: ស្ទះផ្លូវ"></textarea>
+
+            <div class="late-actions">
+                <button type="button" class="skip-btn" onclick="submitCheckInWithoutReason()">
+                    Not Late / Submit
+                </button>
+
+                <button type="button" class="submit-late-btn" onclick="submitLateReason()">
+                    Submit Reason
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+body{
+    -webkit-tap-highlight-color:transparent;
+}
+
+.scan-page{
+    min-height:100vh;
+    padding:24px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(135deg,#fff8f4,#f8f6ff);
+}
+
+.scan-card{
+    width:480px;
+    max-width:100%;
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:34px;
+    padding:24px;
+    box-shadow:0 24px 70px rgba(130,91,60,.16);
+    position:relative;
+    overflow:hidden;
+}
+
+.logo-circle{
+    width:86px;
+    height:86px;
+    border-radius:50%;
+    margin:0 auto 14px;
+    background:linear-gradient(135deg,#7b5cff,#ff8c6b);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:42px;
+}
+
+.scan-card h1{
+    margin:0;
+    color:#080634;
+    text-align:center;
+    font-size:30px;
+    font-weight:1000;
+}
+
+.branch-box{
+    margin-top:18px;
+    background:#fff8f4;
+    border-radius:24px;
+    padding:18px;
+    text-align:center;
+}
+
+.branch-box small{
+    display:block;
+    color:#7b7288;
+    font-weight:1000;
+}
+
+.branch-box h2{
+    margin:6px 0;
+    color:#080634;
+    font-size:26px;
+    font-weight:1000;
+}
+
+.branch-box p{
+    margin:0;
+    color:#7b5cff;
+    font-weight:1000;
+}
+
+.message-box{
+    margin-top:14px;
+}
+
+.message-box p{
+    margin:0 0 8px;
+    padding:12px 14px;
+    border-radius:16px;
+    font-weight:1000;
+}
+
+.message-box .success{
+    background:#dcfce7;
+    color:#16a34a;
+}
+
+.message-box .error{
+    background:#fee2e2;
+    color:#dc2626;
+}
+
+.message-box .warning{
+    background:#fef3c7;
+    color:#d97706;
+}
+
+.scan-form{
+    display:grid;
+    gap:14px;
+    margin-top:18px;
+}
+
+.scan-form label,
+.fake-label{
+    display:block;
+    color:#080634;
+    font-weight:1000;
+}
+
+.scan-form input,
+.popup-field-btn{
+    width:100%;
+    height:64px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    padding:0 16px;
+    margin-top:8px;
+    color:#080634;
+    font-size:17px;
+    font-weight:900;
+    background:white;
+}
+
+.popup-field-btn{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    cursor:pointer;
+    text-align:left;
+}
+
+.popup-field-btn:hover{
+    border-color:#9b7cf6;
+    box-shadow:0 10px 24px rgba(123,92,255,.12);
+}
+
+.gps-box{
+    background:#f4f0ff;
+    border:2px solid #e6dcff;
+    border-radius:20px;
+    padding:14px;
+    color:#6f57d9;
+}
+
+.gps-box strong{
+    display:block;
+    font-weight:1000;
+}
+
+.gps-box p{
+    margin:6px 0 0;
+    color:#7b7288;
+    font-weight:900;
+    line-height:1.4;
+}
+
+.gps-box.ok{
+    background:#dcfce7;
+    border-color:#bbf7d0;
+    color:#16a34a;
+}
+
+.gps-box.bad{
+    background:#fee2e2;
+    border-color:#fecaca;
+    color:#dc2626;
+}
+
+.scan-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+}
+
+.checkin-btn,
+.checkout-btn{
+    min-height:76px;
+    border:0;
+    border-radius:24px;
+    color:white;
+    font-size:20px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.checkin-btn{
+    background:linear-gradient(135deg,#13a85f,#7b5cff);
+}
+
+.checkout-btn{
+    background:linear-gradient(135deg,#ff8c6b,#ff5d73);
+}
+
+.checkin-btn:disabled,
+.checkout-btn:disabled,
+.skip-btn:disabled,
+.submit-late-btn:disabled{
+    opacity:.65;
+    cursor:not-allowed;
+}
+
+.small-note{
+    margin:16px 0 0;
+    color:#7b7288;
+    text-align:center;
+    font-weight:900;
+    line-height:1.5;
+}
+
+/* POPUP BACKDROP CENTERED INSIDE CARD */
+.popup-bg{
+    display:none;
+    position:absolute;
+    inset:0;
+    background:rgba(20,16,45,.52);
+    z-index:50;
+    backdrop-filter:blur(3px);
+}
+
+.popup-bg.active{
+    display:block;
+}
+
+/* POPUPS CENTERED INSIDE CARD */
+.staff-popup,
+.late-popup{
+    display:none;
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%, -50%);
+    width:calc(100% - 32px);
+    max-width:430px;
+    max-height:88%;
+    background:white;
+    border-radius:30px;
+    overflow:hidden;
+    box-shadow:0 30px 90px rgba(20,16,45,.28);
+    z-index:60;
+}
+
+.staff-popup.active,
+.late-popup.active{
+    display:block;
+}
+
+.popup-head{
+    background:linear-gradient(135deg,#7b5cff,#ff8c6b);
+    color:white;
+    padding:18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.popup-head h2{
+    margin:0;
+    font-size:22px;
+    font-weight:1000;
+}
+
+.popup-head button{
+    width:44px;
+    height:44px;
+    border:0;
+    border-radius:50%;
+    background:rgba(255,255,255,.22);
+    color:white;
+    font-size:26px;
+    font-weight:1000;
+}
+
+.popup-body{
+    padding:16px;
+}
+
+.popup-body input{
+    width:100%;
+    height:60px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    padding:0 16px;
+    color:#080634;
+    font-size:17px;
+    font-weight:900;
+    margin-bottom:14px;
+}
+
+.staff-list{
+    display:grid;
+    gap:10px;
+    max-height:340px;
+    overflow:auto;
+    padding-right:2px;
+}
+
+.staff-option{
+    min-height:78px;
+    width:100%;
+    border:2px solid #f0e7ff;
+    border-radius:22px;
+    background:#faf8ff;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px;
+    text-align:left;
+    cursor:pointer;
+}
+
+.staff-option span{
+    width:46px;
+    height:46px;
+    border-radius:18px;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    font-size:22px;
+}
+
+.staff-option strong{
+    display:block;
+    color:#080634;
+    font-size:16px;
+    font-weight:1000;
+}
+
+.staff-option small{
+    display:block;
+    margin-top:4px;
+    color:#7b7288;
+    font-size:13px;
+    font-weight:900;
+}
+
+.empty-staff{
+    padding:18px;
+    background:#f8fafc;
+    border-radius:18px;
+    color:#64748b;
+    text-align:center;
+    font-weight:1000;
+}
+
+/* LATE POPUP */
+.late-popup{
+    padding:26px;
+    text-align:center;
+    overflow:visible;
+}
+
+.late-close{
+    position:absolute;
+    right:14px;
+    top:14px;
+    width:42px;
+    height:42px;
+    border:0;
+    border-radius:50%;
+    background:#fff1f2;
+    color:#ff3d5a;
+    font-size:24px;
+    font-weight:1000;
+}
+
+.late-icon{
+    width:76px;
+    height:76px;
+    border-radius:50%;
+    margin:0 auto 14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:36px;
+    background:linear-gradient(135deg,#fff7ed,#fee2e2);
+}
+
+.late-popup h2{
+    margin:0;
+    color:#080634;
+    font-size:26px;
+    font-weight:1000;
+}
+
+.late-popup p{
+    margin:8px 0 16px;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.late-popup textarea{
+    width:100%;
+    min-height:132px;
+    border:2px solid #fed7aa;
+    border-radius:22px;
+    padding:16px;
+    font-size:17px;
+    font-weight:900;
+    color:#080634;
+    outline:none;
+    resize:vertical;
+    background:#fffaf6;
+}
+
+.late-popup textarea:focus{
+    border-color:#ff8c6b;
+    box-shadow:0 0 0 4px rgba(255,140,107,.15);
+}
+
+.late-actions{
+    display:grid;
+    grid-template-columns:1fr 1.4fr;
+    gap:12px;
+    margin-top:16px;
+}
+
+.skip-btn,
+.submit-late-btn{
+    min-height:60px;
+    border:0;
+    border-radius:20px;
+    font-size:16px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.skip-btn{
+    background:#f1f5f9;
+    color:#334155;
+}
+
+.submit-late-btn{
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    color:white;
+}
+
+/* PHONE SUPPORT */
+@media(max-width:700px){
+    .scan-page{
+        min-height:100svh;
+        padding:14px;
+        align-items:flex-start;
+    }
+
+    .scan-card{
+        width:100%;
+        margin-top:10px;
+        padding:18px;
+        border-radius:30px;
+    }
+
+    .logo-circle{
+        width:74px;
+        height:74px;
+        font-size:34px;
+        margin-bottom:10px;
+    }
+
+    .scan-card h1{
+        font-size:25px;
+    }
+
+    .branch-box{
+        margin-top:14px;
+        padding:16px;
+        border-radius:22px;
+    }
+
+    .branch-box h2{
+        font-size:23px;
+    }
+
+    .scan-form{
+        gap:12px;
+        margin-top:16px;
+    }
+
+    .scan-form input,
+    .popup-field-btn{
+        height:70px;
+        font-size:18px;
+        border-radius:22px;
+    }
+
+    .scan-actions{
+        grid-template-columns:1fr;
+    }
+
+    .checkin-btn,
+    .checkout-btn{
+        min-height:78px;
+        font-size:22px;
+    }
+
+    .small-note{
+        font-size:14px;
+    }
+
+    .staff-popup,
+    .late-popup{
+        width:calc(100% - 24px);
+        max-width:420px;
+        max-height:88%;
+        border-radius:28px;
+    }
+
+    .popup-head{
+        padding:16px;
+    }
+
+    .popup-head h2{
+        font-size:20px;
+    }
+
+    .popup-body{
+        padding:14px;
+    }
+
+    .popup-body input{
+        height:64px;
+        font-size:17px;
+        border-radius:20px;
+    }
+
+    .staff-list{
+        max-height:300px;
+    }
+
+    .staff-option{
+        min-height:82px;
+        border-radius:20px;
+    }
+
+    .late-popup{
+        padding:22px;
+    }
+
+    .late-icon{
+        width:68px;
+        height:68px;
+        font-size:32px;
+    }
+
+    .late-popup h2{
+        font-size:24px;
+    }
+
+    .late-popup textarea{
+        min-height:130px;
+        font-size:17px;
+    }
+
+    .late-actions{
+        grid-template-columns:1fr;
+    }
+
+    .skip-btn,
+    .submit-late-btn{
+        min-height:66px;
+        font-size:18px;
+    }
+}
+
+@media(max-width:380px){
+    .scan-card{
+        padding:16px;
+    }
+
+    .branch-box h2{
+        font-size:20px;
+    }
+
+    .checkin-btn,
+    .checkout-btn{
+        min-height:72px;
+        font-size:20px;
+    }
+
+    .staff-popup,
+    .late-popup{
+        width:calc(100% - 18px);
+    }
+}
+</style>
+
+<script>
+function setGpsBox(type, title, text){
+    const box = document.getElementById("gpsBox");
+    box.classList.remove("ok", "bad");
+
+    if(type){
+        box.classList.add(type);
+    }
+
+    box.innerHTML = "<strong>" + title + "</strong><p>" + text + "</p>";
+}
+
+/* STAFF POPUP */
+function openStaffPopup(){
+    document.getElementById("staffPopupBg").classList.add("active");
+    document.getElementById("staffPopup").classList.add("active");
+
+    setTimeout(function(){
+        const input = document.getElementById("staffSearchInput");
+        if(input){
+            input.focus();
+        }
+    }, 150);
+}
+
+function closeStaffPopup(){
+    document.getElementById("staffPopupBg").classList.remove("active");
+    document.getElementById("staffPopup").classList.remove("active");
+}
+
+function selectStaff(id, label){
+    document.getElementById("staffInput").value = id;
+    document.getElementById("staffLabel").innerText = label;
+    closeStaffPopup();
+
+    setTimeout(function(){
+        const pin = document.getElementById("pinInput");
+        if(pin){
+            pin.focus();
+        }
+    }, 120);
+}
+
+function filterStaffList(){
+    const query = document.getElementById("staffSearchInput").value.toLowerCase();
+    const options = document.querySelectorAll(".staff-option");
+
+    options.forEach(function(option){
+        const name = option.getAttribute("data-name").toLowerCase();
+        option.style.display = name.includes(query) ? "flex" : "none";
+    });
+}
+
+/* LATE POPUP */
+function openLatePopup(){
+    const staffId = document.getElementById("staffInput").value;
+    const pin = document.getElementById("pinInput").value.trim();
+
+    if(!staffId){
+        alert("Please select your name first.");
+        openStaffPopup();
+        return;
+    }
+
+    if(!pin){
+        alert("Please enter your PIN first.");
+        document.getElementById("pinInput").focus();
+        return;
+    }
+
+    document.getElementById("latePopupBg").classList.add("active");
+    document.getElementById("latePopup").classList.add("active");
+
+    setTimeout(function(){
+        const input = document.getElementById("lateReasonText");
+        if(input){
+            input.focus();
+        }
+    }, 150);
+}
+
+function closeLatePopup(){
+    document.getElementById("latePopupBg").classList.remove("active");
+    document.getElementById("latePopup").classList.remove("active");
+}
+
+function submitLateReason(){
+    const reason = document.getElementById("lateReasonText").value.trim();
+
+    if(!reason){
+        alert("Please write why you are late.");
+        return;
+    }
+
+    document.getElementById("lateReasonInput").value = reason;
+
+    const btn = document.querySelector(".submit-late-btn");
+    submitWithLocation("check_in", btn);
+}
+
+function submitCheckInWithoutReason(){
+    document.getElementById("lateReasonInput").value = "";
+
+    const btn = document.querySelector(".skip-btn");
+    submitWithLocation("check_in", btn);
+}
+
+/* GPS + SUBMIT */
+function submitWithLocation(action, button){
+    const form = document.getElementById("scanForm");
+    const actionInput = document.getElementById("actionInput");
+    const staffId = document.getElementById("staffInput").value;
+    const pin = document.getElementById("pinInput").value.trim();
+
+    if(!staffId){
+        alert("Please select your name first.");
+        openStaffPopup();
+        return;
+    }
+
+    if(!pin){
+        alert("Please enter your PIN first.");
+        document.getElementById("pinInput").focus();
+        return;
+    }
+
+    actionInput.value = action;
+
+    button.disabled = true;
+    const oldText = button.innerText;
+    button.innerText = "Getting GPS...";
+
+    if(!navigator.geolocation){
+        setGpsBox("bad", "GPS Not Supported", "Your phone/browser does not support location.");
+        button.disabled = false;
+        button.innerText = oldText;
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function(position){
+            document.getElementById("latitudeInput").value = position.coords.latitude;
+            document.getElementById("longitudeInput").value = position.coords.longitude;
+            document.getElementById("accuracyInput").value = position.coords.accuracy;
+
+            setGpsBox(
+                "ok",
+                "GPS Ready",
+                "Location captured. Accuracy: " + Math.round(position.coords.accuracy) + "m"
+            );
+
+            button.innerText = "Submitting...";
+            form.submit();
+        },
+        function(error){
+            setGpsBox(
+                "bad",
+                "Location Required",
+                "Please allow location permission to scan attendance."
+            );
+
+            button.disabled = false;
+            button.innerText = oldText;
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 12000,
+            maximumAge: 0
+        }
+    );
+}
+
+document.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){
+        closeStaffPopup();
+        closeLatePopup();
+    }
+});
+</script>
+
+{% endblock %}

@@ -8,7 +8,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
-
+from inventory.models import Branch
 from core.telegram import send_telegram_message, send_telegram_photos
 from customers.models import Customer, CustomerPet, CustomerHistory
 
@@ -677,16 +677,31 @@ def _save_pet_vaccines(request, pet):
 
 @login_required
 def pet_list(request):
-    pets = (
-        Pet.objects
-        .select_related("breed_profile", "created_by")
-        .all()
-        .order_by("-created_at")
-    )
+    today = timezone.localdate()
+    first_day_this_month = today.replace(day=1)
 
     q = request.GET.get("q", "").strip()
     pet_type = request.GET.get("pet_type", "").strip()
-    status = request.GET.get("status", "").strip()
+
+    # Default status = In Stock
+    status = request.GET.get("status", "in_stock").strip() or "in_stock"
+
+    # Default date = current month
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
+
+    if not date_from:
+        date_from = first_day_this_month.strftime("%Y-%m-%d")
+
+    if not date_to:
+        date_to = today.strftime("%Y-%m-%d")
+
+    pets = (
+        Pet.objects
+        .select_related("breed_profile", "branch", "created_by")
+        .all()
+        .order_by("-created_at")
+    )
 
     if q:
         pets = pets.filter(
@@ -697,26 +712,46 @@ def pet_list(request):
             | Q(gender__icontains=q)
             | Q(special_type__icontains=q)
             | Q(note__icontains=q)
+            | Q(branch__name__icontains=q)
         )
 
     if pet_type:
         pets = pets.filter(pet_type=pet_type)
 
     if status:
-        pets = pets.filter(status=status)
+        if status == "all":
+            pass
+        elif status == "sick_dead":
+            pets = pets.filter(status__in=["sick", "dead"])
+        else:
+            pets = pets.filter(status=status)
+
+    parsed_from = parse_date(date_from)
+    if parsed_from:
+        pets = pets.filter(created_at__date__gte=parsed_from)
+
+    parsed_to = parse_date(date_to)
+    if parsed_to:
+        pets = pets.filter(created_at__date__lte=parsed_to)
 
     all_pets = Pet.objects.all()
 
     return render(request, "pets/pet_list.html", {
         "pets": pets,
+
+        "q": q,
+        "pet_type": pet_type,
+        "status": status,
+        "date_from": date_from,
+        "date_to": date_to,
+
         "in_stock_count": all_pets.filter(status="in_stock").count(),
         "reserved_count": all_pets.filter(status="reserved").count(),
         "sold_count": all_pets.filter(status="sold").count(),
         "preorder_count": all_pets.filter(status="preorder").count(),
         "sick_dead_count": all_pets.filter(status__in=["sick", "dead"]).count(),
+        "all_count": all_pets.count(),
     })
-
-
 @login_required
 def pet_create(request):
     if request.method == "POST":
@@ -869,15 +904,22 @@ def pet_breed_edit(request, pk):
 
 @login_required
 def pet_available_for_sale(request):
-    pets = (
-        Pet.objects
-        .select_related("breed_profile")
-        .filter(status="in_stock")
-        .order_by("pet_type", "breed_profile__name", "breed", "name")
-    )
-
     q = request.GET.get("q", "").strip()
     pet_type = request.GET.get("pet_type", "").strip()
+
+    # Default status must be In Stock
+    status = request.GET.get("status", "in_stock").strip() or "in_stock"
+
+    branch_id = request.GET.get("branch", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
+
+    pets = (
+        Pet.objects
+        .select_related("breed_profile", "branch", "created_by")
+        .all()
+        .order_by("-created_at")
+    )
 
     if q:
         pets = pets.filter(
@@ -888,17 +930,59 @@ def pet_available_for_sale(request):
             | Q(gender__icontains=q)
             | Q(special_type__icontains=q)
             | Q(note__icontains=q)
+            | Q(branch__name__icontains=q)
         )
 
     if pet_type:
         pets = pets.filter(pet_type=pet_type)
 
+    if status:
+        if status == "sick_dead":
+            pets = pets.filter(status__in=["sick", "dead"])
+        elif status == "all":
+            pass
+        else:
+            pets = pets.filter(status=status)
+
+    if branch_id:
+        pets = pets.filter(branch_id=branch_id)
+
+    if date_from:
+        parsed_from = parse_date(date_from)
+        if parsed_from:
+            pets = pets.filter(created_at__date__gte=parsed_from)
+
+    if date_to:
+        parsed_to = parse_date(date_to)
+        if parsed_to:
+            pets = pets.filter(created_at__date__lte=parsed_to)
+
+    all_pets = Pet.objects.all()
+    branches = Branch.objects.filter(is_active=True).order_by("name")
+
+    selected_branch = None
+    if branch_id:
+        selected_branch = branches.filter(id=branch_id).first()
+
     return render(request, "pets/pet_available_for_sale.html", {
         "pets": pets,
+        "branches": branches,
+        "selected_branch": selected_branch,
+
         "q": q,
         "pet_type": pet_type,
-    })
+        "status": status,
+        "branch_id": branch_id,
+        "date_from": date_from,
+        "date_to": date_to,
 
+        "in_stock_count": all_pets.filter(status="in_stock").count(),
+        "reserved_count": all_pets.filter(status="reserved").count(),
+        "sold_count": all_pets.filter(status="sold").count(),
+        "preorder_count": all_pets.filter(status="preorder").count(),
+        "sick_dead_count": all_pets.filter(status__in=["sick", "dead"]).count(),
+        "all_count": all_pets.count(),
+    })
 
 @login_required
 def pet_sale_list(request):

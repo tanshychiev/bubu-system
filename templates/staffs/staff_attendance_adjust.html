@@ -1,0 +1,1061 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="adjust-page">
+    <div class="form-card">
+        <div class="page-top">
+            <div>
+                <h1>Adjust Attendance 🛠</h1>
+                <p>Use this when staff forgot to scan. Mark that staff came to work manually.</p>
+            </div>
+
+            <a href="{% url 'staff_attendance_report' %}" class="soft-btn">← Back to Report</a>
+        </div>
+
+        {% if messages %}
+            <div class="message-box">
+                {% for message in messages %}
+                    <p class="{{ message.tags }}">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" class="adjust-form">
+            {% csrf_token %}
+
+            <input type="hidden" name="staff" id="staffInput">
+            <input type="hidden" name="date" id="dateInput" value="{{ today|date:'Y-m-d' }}">
+            <input type="hidden" name="status" id="statusInput" value="present">
+            <input type="hidden" name="check_in_time" id="checkInInput">
+            <input type="hidden" name="check_out_time" id="checkOutInput">
+
+            <div class="fake-label">
+                Staff
+                <button type="button" class="popup-field-btn" onclick="openStaffPopup()">
+                    <span id="staffLabel">Select Staff</span>
+                    <b>👤</b>
+                </button>
+            </div>
+
+            <div class="grid-3">
+                <div class="fake-label">
+                    Date
+                    <button type="button" class="popup-field-btn" onclick="openDatePopup()">
+                        <span id="dateLabel">{{ today|date:'Y-m-d' }}</span>
+                        <b>📅</b>
+                    </button>
+                </div>
+
+                <div class="fake-label">
+                    Status
+                    <button type="button" class="popup-field-btn" onclick="openStatusPopup()">
+                        <span id="statusLabel">Present</span>
+                        <b>✅</b>
+                    </button>
+                </div>
+
+                <label>
+                    Late Minutes
+                    <input type="number" name="late_minutes" value="0" min="0">
+                </label>
+            </div>
+
+            <div class="grid-2">
+                <div class="fake-label">
+                    Check In Time
+                    <button type="button" class="popup-field-btn" onclick="openTimePopup('check_in')">
+                        <span id="checkInLabel">Select Time</span>
+                        <b>🕘</b>
+                    </button>
+                </div>
+
+                <div class="fake-label">
+                    Check Out Time
+                    <button type="button" class="popup-field-btn" onclick="openTimePopup('check_out')">
+                        <span id="checkOutLabel">Select Time</span>
+                        <b>🕕</b>
+                    </button>
+                </div>
+            </div>
+
+            <label>
+                Note
+                <textarea name="note" rows="4" placeholder="Example: Staff forgot to scan but came to work."></textarea>
+            </label>
+
+            <div class="hint-box">
+                <strong>Manual adjustment</strong>
+                <p>If staff came but forgot scan, choose Present. If you leave check-in empty, system will use staff shift start time if shift exists.</p>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="submit-btn">Save Adjustment</button>
+                <a href="{% url 'staff_attendance_report' %}" class="cancel-btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- STAFF POPUP -->
+<div class="popup-backdrop" id="staffBackdrop" onclick="closeStaffPopup()"></div>
+
+<div class="picker-popup staff-popup" id="staffPopup">
+    <div class="popup-head">
+        <h3>Select Staff</h3>
+        <button type="button" onclick="closeStaffPopup()">✕</button>
+    </div>
+
+    <div class="staff-picker-box">
+        <input type="text" id="staffSearchInput" placeholder="Search staff..." oninput="filterStaffList()">
+
+        <div class="staff-list">
+            {% for staff in staffs %}
+                <button
+                    type="button"
+                    class="staff-option"
+                    data-name="{{ staff.user.get_full_name|default:staff.user.username }} {% if staff.branch %}{{ staff.branch.name }}{% endif %}"
+                    onclick="selectStaff('{{ staff.id }}', '{{ staff.user.get_full_name|default:staff.user.username|escapejs }}{% if staff.branch %} - {{ staff.branch.name|escapejs }}{% endif %}')"
+                >
+                    <span>👤</span>
+                    <div>
+                        <strong>{{ staff.user.get_full_name|default:staff.user.username }}</strong>
+                        <small>
+                            {% if staff.branch %}
+                                {{ staff.branch.name }}
+                            {% else %}
+                                No Branch
+                            {% endif %}
+                        </small>
+                    </div>
+                </button>
+            {% empty %}
+                <div class="empty-popup">No staff found.</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- STATUS POPUP -->
+<div class="popup-backdrop" id="statusBackdrop" onclick="closeStatusPopup()"></div>
+
+<div class="picker-popup status-popup" id="statusPopup">
+    <div class="popup-head">
+        <h3>Select Status</h3>
+        <button type="button" onclick="closeStatusPopup()">✕</button>
+    </div>
+
+    <div class="status-grid">
+        <button type="button" onclick="selectStatus('present', 'Present', '✅')" class="status-option green">
+            <span>✅</span>
+            <strong>Present</strong>
+            <small>Staff came to work</small>
+        </button>
+
+        <button type="button" onclick="selectStatus('late', 'Late', '⚠️')" class="status-option orange">
+            <span>⚠️</span>
+            <strong>Late</strong>
+            <small>Staff came late</small>
+        </button>
+
+        <button type="button" onclick="selectStatus('absent', 'Absent', '❌')" class="status-option red">
+            <span>❌</span>
+            <strong>Absent</strong>
+            <small>Did not come</small>
+        </button>
+
+        <button type="button" onclick="selectStatus('permission', 'Permission', '📝')" class="status-option purple">
+            <span>📝</span>
+            <strong>Permission</strong>
+            <small>Approved permission</small>
+        </button>
+
+        <button type="button" onclick="selectStatus('leave', 'Leave', '🌴')" class="status-option blue">
+            <span>🌴</span>
+            <strong>Leave</strong>
+            <small>Leave day</small>
+        </button>
+
+        <button type="button" onclick="selectStatus('half_day', 'Half Day', '🌓')" class="status-option gray">
+            <span>🌓</span>
+            <strong>Half Day</strong>
+            <small>Half work day</small>
+        </button>
+    </div>
+</div>
+
+<!-- DATE POPUP -->
+<div class="popup-backdrop" id="dateBackdrop" onclick="closeDatePopup()"></div>
+
+<div class="picker-popup" id="datePopup">
+    <div class="popup-head">
+        <h3>Select Attendance Date</h3>
+        <button type="button" onclick="closeDatePopup()">✕</button>
+    </div>
+
+    <div class="date-picker-box">
+        <div class="month-nav">
+            <button type="button" onclick="changeMonth(-1)">‹</button>
+            <strong id="monthTitle">Month Year</strong>
+            <button type="button" onclick="changeMonth(1)">›</button>
+        </div>
+
+        <div class="weekday-row">
+            <span>Su</span>
+            <span>Mo</span>
+            <span>Tu</span>
+            <span>We</span>
+            <span>Th</span>
+            <span>Fr</span>
+            <span>Sa</span>
+        </div>
+
+        <div class="calendar-grid" id="calendarGrid"></div>
+
+        <div class="quick-grid">
+            <button type="button" onclick="setTodayDate()">Today</button>
+            <button type="button" onclick="clearDateValue()">Clear</button>
+        </div>
+    </div>
+</div>
+
+<!-- TIME POPUP -->
+<div class="popup-backdrop" id="timeBackdrop" onclick="closeTimePopup()"></div>
+
+<div class="picker-popup time-popup" id="timePopup">
+    <div class="popup-head">
+        <h3 id="timePopupTitle">Select Time</h3>
+        <button type="button" onclick="closeTimePopup()">✕</button>
+    </div>
+
+    <div class="time-picker-box">
+        <div class="time-columns">
+            <div>
+                <span>Hour</span>
+                <select id="hourSelect"></select>
+            </div>
+
+            <div>
+                <span>Minute</span>
+                <select id="minuteSelect"></select>
+            </div>
+        </div>
+
+        <div class="quick-time-grid">
+            <button type="button" onclick="setQuickTime('08:00')">08:00</button>
+            <button type="button" onclick="setQuickTime('09:00')">09:00</button>
+            <button type="button" onclick="setQuickTime('12:00')">12:00</button>
+            <button type="button" onclick="setQuickTime('13:00')">13:00</button>
+            <button type="button" onclick="setQuickTime('19:00')">19:00</button>
+            <button type="button" onclick="setQuickTime('20:00')">20:00</button>
+        </div>
+
+        <div class="time-action-grid">
+            <button type="button" class="clear-time-btn" onclick="clearTime()">Clear</button>
+            <button type="button" class="apply-time-btn" onclick="applyTime()">Apply Time</button>
+        </div>
+    </div>
+</div>
+
+<style>
+*{box-sizing:border-box}
+a{text-decoration:none}
+
+.adjust-page{
+    min-height:100vh;
+    padding:24px;
+    display:flex;
+    justify-content:center;
+    background:linear-gradient(135deg,#fff8f4,#f8f6ff);
+}
+
+.form-card{
+    width:860px;
+    max-width:100%;
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:34px;
+    padding:24px;
+    box-shadow:0 24px 70px rgba(130,91,60,.12);
+}
+
+.page-top{
+    display:flex;
+    justify-content:space-between;
+    gap:16px;
+    align-items:flex-start;
+}
+
+.page-top h1{
+    margin:0;
+    color:#080634;
+    font-size:34px;
+    font-weight:1000;
+}
+
+.page-top p{
+    margin:8px 0 0;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.soft-btn,
+.submit-btn,
+.cancel-btn{
+    min-height:58px;
+    padding:0 18px;
+    border-radius:20px;
+    border:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+}
+
+.soft-btn,
+.cancel-btn{
+    background:#f1f5f9;
+    color:#334155;
+}
+
+.message-box{
+    margin-top:14px;
+}
+
+.message-box p{
+    margin:0 0 8px;
+    padding:12px 14px;
+    border-radius:16px;
+    font-weight:1000;
+}
+
+.message-box .success{
+    background:#dcfce7;
+    color:#16a34a;
+}
+
+.message-box .error{
+    background:#fee2e2;
+    color:#dc2626;
+}
+
+.adjust-form{
+    display:grid;
+    gap:16px;
+    margin-top:22px;
+}
+
+.grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+}
+
+.grid-3{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:14px;
+}
+
+.adjust-form label,
+.fake-label{
+    color:#080634;
+    font-weight:1000;
+}
+
+.adjust-form input,
+.adjust-form select,
+.adjust-form textarea{
+    width:100%;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    padding:0 16px;
+    margin-top:8px;
+    color:#080634;
+    font-size:17px;
+    font-weight:900;
+    background:white;
+}
+
+.adjust-form input,
+.adjust-form select{
+    height:64px;
+}
+
+.adjust-form textarea{
+    padding-top:14px;
+    resize:vertical;
+}
+
+.popup-field-btn{
+    width:100%;
+    height:64px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    padding:0 16px;
+    margin-top:8px;
+    color:#080634;
+    font-size:17px;
+    font-weight:900;
+    background:white;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    transition:.2s;
+}
+
+.popup-field-btn:hover{
+    border-color:#b99cff;
+    box-shadow:0 10px 24px rgba(123,92,255,.10);
+}
+
+.hint-box{
+    background:#f4f0ff;
+    border:2px solid #e6dcff;
+    border-radius:20px;
+    padding:14px;
+}
+
+.hint-box strong{
+    color:#7b5cff;
+    font-weight:1000;
+}
+
+.hint-box p{
+    margin:6px 0 0;
+    color:#7b7288;
+    font-weight:900;
+    line-height:1.5;
+}
+
+.form-actions{
+    display:grid;
+    grid-template-columns:1.4fr 1fr;
+    gap:12px;
+}
+
+.submit-btn{
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    color:white;
+    cursor:pointer;
+}
+
+/* POPUP */
+.popup-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(28,20,58,.42);
+    z-index:9000;
+}
+
+.popup-backdrop.active{
+    display:block;
+}
+
+.picker-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:430px;
+    max-width:calc(100% - 28px);
+    background:white;
+    border-radius:30px;
+    overflow:hidden;
+    box-shadow:0 28px 80px rgba(28,20,58,.30);
+    z-index:9001;
+}
+
+.picker-popup.active{
+    display:block;
+}
+
+.popup-head{
+    background:linear-gradient(135deg,#7b5cff,#ff8c6b);
+    color:white;
+    padding:18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.popup-head h3{
+    margin:0;
+    font-size:20px;
+    font-weight:1000;
+}
+
+.popup-head button{
+    width:44px;
+    height:44px;
+    border:0;
+    border-radius:50%;
+    background:rgba(255,255,255,.22);
+    color:white;
+    font-size:18px;
+    font-weight:1000;
+}
+
+.staff-picker-box,
+.date-picker-box,
+.time-picker-box{
+    padding:16px;
+}
+
+.staff-picker-box input{
+    width:100%;
+    height:58px;
+    border:2px solid #eaddec;
+    border-radius:18px;
+    padding:0 16px;
+    color:#080634;
+    font-weight:900;
+    margin-bottom:12px;
+}
+
+.staff-list{
+    display:grid;
+    gap:10px;
+    max-height:420px;
+    overflow:auto;
+}
+
+.staff-option{
+    width:100%;
+    min-height:72px;
+    border:2px solid #f0e7ff;
+    border-radius:20px;
+    background:#faf8ff;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px;
+    text-align:left;
+}
+
+.staff-option span{
+    width:42px;
+    height:42px;
+    border-radius:16px;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+}
+
+.staff-option strong{
+    display:block;
+    color:#080634;
+    font-weight:1000;
+}
+
+.staff-option small{
+    display:block;
+    color:#7b7288;
+    font-weight:900;
+    margin-top:3px;
+}
+
+.empty-popup{
+    padding:18px;
+    border-radius:18px;
+    background:#f8fafc;
+    color:#64748b;
+    font-weight:1000;
+    text-align:center;
+}
+
+.status-grid{
+    padding:16px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+}
+
+.status-option{
+    min-height:96px;
+    border-radius:22px;
+    border:2px solid #f0e7ff;
+    padding:14px;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:center;
+    text-align:left;
+    background:#faf8ff;
+}
+
+.status-option span{
+    font-size:26px;
+    margin-bottom:6px;
+}
+
+.status-option strong{
+    color:#080634;
+    font-size:17px;
+    font-weight:1000;
+}
+
+.status-option small{
+    color:#7b7288;
+    font-size:12px;
+    font-weight:900;
+    margin-top:3px;
+}
+
+.status-option.green{background:#ecfdf5;border-color:#bbf7d0;}
+.status-option.orange{background:#fff7ed;border-color:#fed7aa;}
+.status-option.red{background:#fff1f2;border-color:#fecdd3;}
+.status-option.purple{background:#f4f0ff;border-color:#ddd6fe;}
+.status-option.blue{background:#eff6ff;border-color:#bfdbfe;}
+.status-option.gray{background:#f8fafc;border-color:#e2e8f0;}
+
+.month-nav{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+}
+
+.month-nav button{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background:#f4f0ff;
+    color:#7b5cff;
+    font-size:24px;
+    font-weight:1000;
+}
+
+.month-nav strong{
+    color:#080634;
+    font-size:20px;
+    font-weight:1000;
+}
+
+.weekday-row,
+.calendar-grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    text-align:center;
+}
+
+.weekday-row span{
+    color:#9a91a7;
+    font-size:13px;
+    font-weight:1000;
+    padding:8px 0;
+}
+
+.calendar-day{
+    height:44px;
+    border-radius:999px;
+    border:0;
+    background:white;
+    color:#080634;
+    font-weight:1000;
+    padding:0;
+    margin:2px;
+}
+
+.calendar-day.muted{
+    color:#c7bfd4;
+}
+
+.calendar-day.selected{
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    color:white;
+}
+
+.calendar-day.today{
+    border:2px solid #7b5cff;
+}
+
+.quick-grid,
+.quick-time-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:16px;
+}
+
+.quick-grid button,
+.quick-time-grid button{
+    min-height:58px;
+    border-radius:20px;
+    border:0;
+    background:linear-gradient(135deg,#f6f1ff,#ece4ff);
+    color:#6b4dff;
+    font-weight:1000;
+    font-size:16px;
+}
+
+.time-columns{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+}
+
+.time-columns span{
+    display:block;
+    color:#7b7288;
+    font-weight:1000;
+    margin-bottom:8px;
+}
+
+.time-columns select{
+    width:100%;
+    height:64px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    padding:0 16px;
+    color:#080634;
+    font-size:20px;
+    font-weight:1000;
+    background:white;
+}
+
+.time-action-grid{
+    display:grid;
+    grid-template-columns:1fr 1.4fr;
+    gap:12px;
+    margin-top:16px;
+}
+
+.clear-time-btn,
+.apply-time-btn{
+    min-height:62px;
+    border-radius:22px;
+    font-size:17px;
+    font-weight:1000;
+}
+
+.clear-time-btn{
+    background:#f1f5f9;
+    color:#334155;
+}
+
+.apply-time-btn{
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    color:white;
+    box-shadow:0 14px 30px rgba(72,165,255,.22);
+}
+
+@media(max-width:700px){
+    .adjust-page{
+        padding:16px;
+    }
+
+    .form-card{
+        padding:20px;
+        border-radius:30px;
+    }
+
+    .page-top{
+        display:block;
+    }
+
+    .soft-btn{
+        margin-top:14px;
+    }
+
+    .page-top h1{
+        font-size:28px;
+    }
+
+    .grid-2,
+    .grid-3,
+    .form-actions,
+    .status-grid{
+        grid-template-columns:1fr;
+    }
+
+    .adjust-form input,
+    .adjust-form select,
+    .submit-btn,
+    .cancel-btn,
+    .soft-btn,
+    .popup-field-btn{
+        min-height:72px;
+        font-size:18px;
+    }
+
+    .picker-popup{
+        left:14px;
+        right:14px;
+        bottom:16px;
+        top:auto;
+        width:auto;
+        max-width:none;
+        transform:none;
+        border-radius:28px;
+    }
+
+    .calendar-day{
+        height:48px;
+    }
+
+    .quick-grid button,
+    .quick-time-grid button,
+    .clear-time-btn,
+    .apply-time-btn{
+        min-height:68px;
+        font-size:18px;
+    }
+}
+</style>
+
+<script>
+let calendarDate = new Date();
+let selectedDate = document.getElementById("dateInput").value || "";
+let activeTimeType = "check_in";
+
+function pad(number){
+    return String(number).padStart(2, "0");
+}
+
+function formatDateValue(date){
+    return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate());
+}
+
+/* STAFF */
+function openStaffPopup(){
+    document.getElementById("staffBackdrop").classList.add("active");
+    document.getElementById("staffPopup").classList.add("active");
+
+    setTimeout(function(){
+        const input = document.getElementById("staffSearchInput");
+        if(input){
+            input.focus();
+        }
+    }, 150);
+}
+
+function closeStaffPopup(){
+    document.getElementById("staffBackdrop").classList.remove("active");
+    document.getElementById("staffPopup").classList.remove("active");
+}
+
+function selectStaff(id, label){
+    document.getElementById("staffInput").value = id;
+    document.getElementById("staffLabel").innerText = label;
+    closeStaffPopup();
+}
+
+function filterStaffList(){
+    const query = document.getElementById("staffSearchInput").value.toLowerCase();
+    const options = document.querySelectorAll(".staff-option");
+
+    options.forEach(function(option){
+        const name = option.getAttribute("data-name").toLowerCase();
+        option.style.display = name.includes(query) ? "flex" : "none";
+    });
+}
+
+/* STATUS */
+function openStatusPopup(){
+    document.getElementById("statusBackdrop").classList.add("active");
+    document.getElementById("statusPopup").classList.add("active");
+}
+
+function closeStatusPopup(){
+    document.getElementById("statusBackdrop").classList.remove("active");
+    document.getElementById("statusPopup").classList.remove("active");
+}
+
+function selectStatus(value, label, icon){
+    document.getElementById("statusInput").value = value;
+    document.getElementById("statusLabel").innerText = icon + " " + label;
+    closeStatusPopup();
+}
+
+/* DATE */
+function openDatePopup(){
+    const currentValue = document.getElementById("dateInput").value;
+
+    if(currentValue){
+        const parts = currentValue.split("-");
+        calendarDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        selectedDate = currentValue;
+    }else{
+        calendarDate = new Date();
+        selectedDate = "";
+    }
+
+    renderCalendar();
+    document.getElementById("dateBackdrop").classList.add("active");
+    document.getElementById("datePopup").classList.add("active");
+}
+
+function closeDatePopup(){
+    document.getElementById("dateBackdrop").classList.remove("active");
+    document.getElementById("datePopup").classList.remove("active");
+}
+
+function changeMonth(step){
+    calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + step, 1);
+    renderCalendar();
+}
+
+function renderCalendar(){
+    const monthTitle = document.getElementById("monthTitle");
+    const calendarGrid = document.getElementById("calendarGrid");
+
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+
+    monthTitle.innerText = calendarDate.toLocaleDateString("en-US", {
+        month:"long",
+        year:"numeric"
+    });
+
+    calendarGrid.innerHTML = "";
+
+    const firstDay = new Date(year, month, 1);
+    const startDay = firstDay.getDay();
+    const firstGridDate = new Date(year, month, 1 - startDay);
+    const todayValue = formatDateValue(new Date());
+
+    for(let i = 0; i < 42; i++){
+        const day = new Date(firstGridDate);
+        day.setDate(firstGridDate.getDate() + i);
+
+        const value = formatDateValue(day);
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "calendar-day";
+        btn.innerText = day.getDate();
+
+        if(day.getMonth() !== month){
+            btn.classList.add("muted");
+        }
+
+        if(value === selectedDate){
+            btn.classList.add("selected");
+        }
+
+        if(value === todayValue){
+            btn.classList.add("today");
+        }
+
+        btn.onclick = function(){
+            selectedDate = value;
+            document.getElementById("dateInput").value = value;
+            document.getElementById("dateLabel").innerText = value;
+            closeDatePopup();
+        };
+
+        calendarGrid.appendChild(btn);
+    }
+}
+
+function setTodayDate(){
+    const value = formatDateValue(new Date());
+    selectedDate = value;
+    document.getElementById("dateInput").value = value;
+    document.getElementById("dateLabel").innerText = value;
+    closeDatePopup();
+}
+
+function clearDateValue(){
+    selectedDate = "";
+    document.getElementById("dateInput").value = "";
+    document.getElementById("dateLabel").innerText = "Select Date";
+    closeDatePopup();
+}
+
+/* TIME */
+function setupTimeOptions(){
+    const hourSelect = document.getElementById("hourSelect");
+    const minuteSelect = document.getElementById("minuteSelect");
+
+    hourSelect.innerHTML = "";
+    minuteSelect.innerHTML = "";
+
+    for(let h = 0; h < 24; h++){
+        const option = document.createElement("option");
+        option.value = pad(h);
+        option.innerText = pad(h);
+        hourSelect.appendChild(option);
+    }
+
+    for(let m = 0; m < 60; m += 5){
+        const option = document.createElement("option");
+        option.value = pad(m);
+        option.innerText = pad(m);
+        minuteSelect.appendChild(option);
+    }
+}
+
+function openTimePopup(type){
+    activeTimeType = type;
+    setupTimeOptions();
+
+    const title = type === "check_in" ? "Select Check In Time" : "Select Check Out Time";
+    const inputId = type === "check_in" ? "checkInInput" : "checkOutInput";
+    const defaultValue = type === "check_in" ? "08:00" : "20:00";
+    const value = document.getElementById(inputId).value || defaultValue;
+
+    const parts = value.split(":");
+
+    document.getElementById("timePopupTitle").innerText = title;
+    document.getElementById("hourSelect").value = parts[0] || "08";
+    document.getElementById("minuteSelect").value = parts[1] || "00";
+
+    document.getElementById("timeBackdrop").classList.add("active");
+    document.getElementById("timePopup").classList.add("active");
+}
+
+function closeTimePopup(){
+    document.getElementById("timeBackdrop").classList.remove("active");
+    document.getElementById("timePopup").classList.remove("active");
+}
+
+function setQuickTime(value){
+    const parts = value.split(":");
+    document.getElementById("hourSelect").value = parts[0];
+    document.getElementById("minuteSelect").value = parts[1];
+}
+
+function applyTime(){
+    const value = document.getElementById("hourSelect").value + ":" + document.getElementById("minuteSelect").value;
+
+    if(activeTimeType === "check_in"){
+        document.getElementById("checkInInput").value = value;
+        document.getElementById("checkInLabel").innerText = value;
+    }else{
+        document.getElementById("checkOutInput").value = value;
+        document.getElementById("checkOutLabel").innerText = value;
+    }
+
+    closeTimePopup();
+}
+
+function clearTime(){
+    if(activeTimeType === "check_in"){
+        document.getElementById("checkInInput").value = "";
+        document.getElementById("checkInLabel").innerText = "Select Time";
+    }else{
+        document.getElementById("checkOutInput").value = "";
+        document.getElementById("checkOutLabel").innerText = "Select Time";
+    }
+
+    closeTimePopup();
+}
+
+document.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){
+        closeStaffPopup();
+        closeStatusPopup();
+        closeDatePopup();
+        closeTimePopup();
+    }
+});
+</script>
+
+{% endblock %}

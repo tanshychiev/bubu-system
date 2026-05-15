@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="setting-page">
+    <div class="page-top">
+        <div>
+            <h1>Staff Settings ⚙️</h1>
+            <p>Manage payroll setting, PIN, shift time and late allowance without Django admin.</p>
+        </div>
+
+        <div class="top-actions">
+            <a href="{% url 'staff_setting_create' %}" class="main-btn">＋ Add Staff Setting</a>
+            <a href="{% url 'staff_qr_list' %}" class="soft-btn">📲 Attendance QR</a>
+        </div>
+    </div>
+
+    <form method="get" class="filter-card">
+        <input type="text" name="q" value="{{ q|default:'' }}" placeholder="Search staff, branch...">
+        <button type="submit">Search</button>
+        <a href="{% url 'staff_setting_list' %}">Clear</a>
+    </form>
+
+    <div class="setting-grid">
+        {% for staff in staffs %}
+            <div class="staff-card">
+                <div class="staff-head">
+                    <div>
+                        <h2>{{ staff.user.get_full_name|default:staff.user.username }}</h2>
+                        <p>
+                            {% if staff.branch %}
+                                📍 {{ staff.branch.name }}
+                            {% else %}
+                                📍 No Branch
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    {% if staff.payroll_setting %}
+                        <span class="ok">Ready</span>
+                    {% else %}
+                        <span class="bad">No Setting</span>
+                    {% endif %}
+                </div>
+
+                {% if staff.payroll_setting %}
+                    <div class="info-grid">
+                        <div>
+                            <small>Salary</small>
+                            <b>${{ staff.payroll_setting.base_salary|floatformat:2 }}</b>
+                        </div>
+
+                        <div>
+                            <small>PIN</small>
+                            <b>
+                                {% if staff.payroll_setting.attendance_pin %}
+                                    Set
+                                {% else %}
+                                    No PIN
+                                {% endif %}
+                            </b>
+                        </div>
+
+                        <div>
+                            <small>Cycle Day</small>
+                            <b>{{ staff.payroll_setting.salary_cycle_start_day }}</b>
+                        </div>
+
+                        <div>
+                            <small>Open After</small>
+                            <b>{{ staff.payroll_setting.salary_open_after_days }} days</b>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="warn-text">Payroll setting not created yet. Staff cannot scan attendance until setting is created.</p>
+                {% endif %}
+
+                <a href="{% url 'staff_setting_edit' staff.id %}" class="edit-btn">
+                    Edit Setting
+                </a>
+            </div>
+        {% empty %}
+            <div class="empty-box">
+                <h2>No staff found</h2>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+*{box-sizing:border-box}
+a{text-decoration:none}
+
+.setting-page{
+    padding:24px 28px;
+}
+
+.page-top{
+    display:flex;
+    justify-content:space-between;
+    gap:18px;
+    margin-bottom:22px;
+}
+
+.page-top h1{
+    margin:0;
+    color:#080634;
+    font-size:34px;
+    font-weight:1000;
+}
+
+.page-top p{
+    margin:8px 0 0;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.top-actions{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+.main-btn,
+.soft-btn,
+.edit-btn,
+.filter-card button,
+.filter-card a{
+    min-height:54px;
+    padding:0 18px;
+    border-radius:18px;
+    border:0;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+}
+
+.main-btn{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    color:white;
+}
+
+.soft-btn,
+.filter-card a{
+    background:#f1f5f9;
+    color:#334155;
+}
+
+.filter-card{
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:26px;
+    padding:16px;
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    gap:12px;
+    margin-bottom:18px;
+}
+
+.filter-card input{
+    height:56px;
+    border:2px solid #eaddec;
+    border-radius:18px;
+    padding:0 16px;
+    font-weight:900;
+}
+
+.filter-card button{
+    background:#080634;
+    color:white;
+}
+
+.setting-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:18px;
+}
+
+.staff-card{
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:30px;
+    padding:18px;
+    box-shadow:0 18px 40px rgba(130,91,60,.08);
+}
+
+.staff-head{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+}
+
+.staff-head h2{
+    margin:0;
+    color:#080634;
+    font-size:22px;
+    font-weight:1000;
+}
+
+.staff-head p{
+    margin:6px 0 0;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.ok,
+.bad{
+    padding:8px 12px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+
+.ok{
+    background:#dcfce7;
+    color:#16a34a;
+}
+
+.bad{
+    background:#fee2e2;
+    color:#dc2626;
+}
+
+.info-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:16px;
+}
+
+.info-grid div{
+    background:#fafafa;
+    border-radius:18px;
+    padding:12px;
+}
+
+.info-grid small{
+    display:block;
+    color:#7b7288;
+    font-weight:1000;
+}
+
+.info-grid b{
+    display:block;
+    margin-top:4px;
+    color:#080634;
+}
+
+.warn-text{
+    background:#fff7ed;
+    color:#ea580c;
+    padding:12px;
+    border-radius:18px;
+    font-weight:900;
+    line-height:1.5;
+}
+
+.edit-btn{
+    margin-top:14px;
+    width:100%;
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    color:white;
+}
+
+.empty-box{
+    grid-column:1/-1;
+    background:white;
+    border:2px dashed #eaddec;
+    border-radius:28px;
+    padding:48px;
+    text-align:center;
+}
+
+@media(max-width:1100px){
+    .setting-grid{
+        grid-template-columns:1fr 1fr;
+    }
+}
+
+@media(max-width:700px){
+    .setting-page{
+        padding:18px;
+    }
+
+    .page-top{
+        display:block;
+    }
+
+    .top-actions{
+        margin-top:14px;
+        display:grid;
+        grid-template-columns:1fr;
+    }
+
+    .filter-card,
+    .setting-grid{
+        grid-template-columns:1fr;
+    }
+
+    .main-btn,
+    .soft-btn,
+    .edit-btn,
+    .filter-card button,
+    .filter-card a{
+        width:100%;
+        min-height:68px;
+        font-size:18px;
+    }
+}
+</style>
+
+{% endblock %}

@@ -4,6 +4,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+from inventory.models import Branch
+
 
 class PetBreed(models.Model):
     TYPE_CHOICES = [
@@ -78,6 +80,15 @@ class Pet(models.Model):
         ("cancelled", "Cancelled"),
     ]
 
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="pets",
+        help_text="Which branch/shop this pet is currently stocked in.",
+    )
+
     breed_profile = models.ForeignKey(
         PetBreed,
         on_delete=models.SET_NULL,
@@ -127,6 +138,12 @@ class Pet(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def branch_name(self):
+        if self.branch:
+            return self.branch.name
+        return "No Branch"
 
     @property
     def breed_name(self):
@@ -220,7 +237,12 @@ class Pet(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.get_pet_type_display()} - {self.breed_name} - {self.get_status_display()}"
+        return (
+            f"{self.branch_name} - "
+            f"{self.get_pet_type_display()} - "
+            f"{self.breed_name} - "
+            f"{self.get_status_display()}"
+        )
 
 
 class PetVaccine(models.Model):
@@ -358,6 +380,12 @@ class PetSale(models.Model):
         return "-"
 
     @property
+    def branch_display(self):
+        if self.pet and self.pet.branch:
+            return self.pet.branch.name
+        return "No Branch"
+
+    @property
     def pet_type_display(self):
         if self.pet:
             return self.pet.get_pet_type_display()
@@ -415,6 +443,7 @@ class PetSale(models.Model):
 
         return (
             "🐶 BUBU PET PRE-ORDER\n"
+            f"Branch: {self.branch_display}\n"
             f"Breed: {self.breed_display or '-'}\n"
             f"Sex: {self.gender_display or '-'}\n"
             f"Color: {self.color_display or '-'}\n"

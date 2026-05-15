@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="permission-page">
+    <div class="form-card">
+        <div class="page-top">
+            <div>
+                <h1>Ask Permission 📝</h1>
+                <p>Submit leave, come-late, leave-early or other request.</p>
+            </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="permission-form">
+            {% csrf_token %}
+
+            <label>
+                Request Type
+                <select name="request_type" required>
+                    <option value="late">Come Late</option>
+                    <option value="leave_early">Leave Early</option>
+                    <option value="day_leave">Day Leave</option>
+                    <option value="sick_leave">Sick Leave</option>
+                    <option value="other">Other</option>
+                </select>
+            </label>
+
+            <div class="grid-2">
+                <label>
+                    Date From
+                    <input type="date" name="date_from" required>
+                </label>
+
+                <label>
+                    Date To
+                    <input type="date" name="date_to" required>
+                </label>
+            </div>
+
+            <div class="grid-2">
+                <label>
+                    Time From
+                    <input type="time" name="time_from">
+                </label>
+
+                <label>
+                    Time To
+                    <input type="time" name="time_to">
+                </label>
+            </div>
+
+            <label>
+                Reason
+                <textarea name="reason" rows="5" placeholder="Write reason..." required></textarea>
+            </label>
+
+            <label>
+                Proof Photo
+                <input type="file" name="proof_photo" accept="image/*">
+            </label>
+
+            <div class="form-actions">
+                <button type="submit" class="submit-btn">Submit Permission</button>
+                <a href="{% url 'staff_my_dashboard' %}" class="cancel-btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+a{
+    text-decoration:none;
+}
+
+.permission-page{
+    min-height:100vh;
+    padding:24px;
+    background:linear-gradient(135deg,#fff8f4,#f8f6ff);
+    display:flex;
+    justify-content:center;
+}
+
+.form-card{
+    width:760px;
+    max-width:100%;
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:34px;
+    padding:24px;
+    box-shadow:0 24px 70px rgba(130,91,60,.12);
+}
+
+.page-top h1{
+    margin:0;
+    color:#080634;
+    font-size:34px;
+    font-weight:1000;
+}
+
+.page-top p{
+    margin:8px 0 0;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.permission-form{
+    display:grid;
+    gap:16px;
+    margin-top:22px;
+}
+
+.grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+}
+
+.permission-form label{
+    color:#080634;
+    font-weight:1000;
+}
+
+.permission-form input,
+.permission-form select,
+.permission-form textarea{
+    width:100%;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    padding:0 16px;
+    margin-top:8px;
+    color:#080634;
+    font-size:17px;
+    font-weight:900;
+    background:white;
+}
+
+.permission-form input,
+.permission-form select{
+    height:64px;
+}
+
+.permission-form textarea{
+    padding-top:14px;
+    resize:vertical;
+}
+
+.form-actions{
+    display:grid;
+    grid-template-columns:1.4fr 1fr;
+    gap:12px;
+}
+
+.submit-btn,
+.cancel-btn{
+    min-height:66px;
+    border:0;
+    border-radius:22px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:18px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.submit-btn{
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    color:white;
+}
+
+.cancel-btn{
+    background:#f1f5f9;
+    color:#334155;
+}
+
+@media(max-width:700px){
+    .permission-page{
+        padding:16px;
+    }
+
+    .form-card{
+        padding:20px;
+        border-radius:30px;
+    }
+
+    .page-top h1{
+        font-size:28px;
+    }
+
+    .grid-2,
+    .form-actions{
+        grid-template-columns:1fr;
+    }
+
+    .permission-form input,
+    .permission-form select,
+    .submit-btn,
+    .cancel-btn{
+        min-height:72px;
+        font-size:18px;
+    }
+}
+</style>
+
+{% endblock %}

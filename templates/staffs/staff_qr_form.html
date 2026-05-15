@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="qr-form-page">
+    <div class="form-card">
+        <div class="page-top">
+            <div>
+                <h1>Create Attendance QR 📲</h1>
+                <p>Create a branch QR code for staff check-in and check-out.</p>
+            </div>
+
+            <div class="top-actions">
+                <a href="{% url 'staff_qr_list' %}" class="soft-btn">← Back to QR List</a>
+            </div>
+        </div>
+
+        {% if messages %}
+            <div class="message-box">
+                {% for message in messages %}
+                    <p class="{{ message.tags }}">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" class="qr-form">
+            {% csrf_token %}
+
+            <label>
+                Branch / Shop
+                <select name="branch" required>
+                    <option value="">Select Branch</option>
+                    {% for branch in branches %}
+                        <option value="{{ branch.id }}">{{ branch.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <label>
+                QR Title
+                <input
+                    type="text"
+                    name="title"
+                    value="Main Attendance QR"
+                    placeholder="Main Attendance QR"
+                >
+            </label>
+
+            <div class="hint-box">
+                <strong>How it works</strong>
+                <p>After creating, the system will auto-generate a secure QR token. You can download or print the QR from the QR list page.</p>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="submit-btn">Create QR</button>
+                <a href="{% url 'staff_qr_list' %}" class="cancel-btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+a{
+    text-decoration:none;
+}
+
+.qr-form-page{
+    min-height:100vh;
+    padding:24px;
+    display:flex;
+    justify-content:center;
+    background:linear-gradient(135deg,#fff8f4,#f8f6ff);
+}
+
+.form-card{
+    width:760px;
+    max-width:100%;
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:34px;
+    padding:24px;
+    box-shadow:0 24px 70px rgba(130,91,60,.12);
+}
+
+.page-top{
+    display:flex;
+    justify-content:space-between;
+    gap:16px;
+    align-items:flex-start;
+}
+
+.page-top h1{
+    margin:0;
+    color:#080634;
+    font-size:34px;
+    font-weight:1000;
+}
+
+.page-top p{
+    margin:8px 0 0;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.soft-btn{
+    min-height:54px;
+    padding:0 18px;
+    border-radius:18px;
+    background:#f1f5f9;
+    color:#334155;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+}
+
+.message-box{
+    margin-top:14px;
+}
+
+.message-box p{
+    margin:0 0 8px;
+    padding:12px 14px;
+    border-radius:16px;
+    font-weight:1000;
+}
+
+.message-box .success{
+    background:#dcfce7;
+    color:#16a34a;
+}
+
+.message-box .error{
+    background:#fee2e2;
+    color:#dc2626;
+}
+
+.qr-form{
+    display:grid;
+    gap:16px;
+    margin-top:22px;
+}
+
+.qr-form label{
+    color:#080634;
+    font-weight:1000;
+}
+
+.qr-form input,
+.qr-form select{
+    width:100%;
+    height:64px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    padding:0 16px;
+    margin-top:8px;
+    color:#080634;
+    font-size:17px;
+    font-weight:900;
+    background:white;
+}
+
+.hint-box{
+    background:#f4f0ff;
+    border:2px solid #e6dcff;
+    border-radius:20px;
+    padding:14px;
+}
+
+.hint-box strong{
+    color:#7b5cff;
+    font-weight:1000;
+}
+
+.hint-box p{
+    margin:6px 0 0;
+    color:#7b7288;
+    font-weight:900;
+    line-height:1.5;
+}
+
+.form-actions{
+    display:grid;
+    grid-template-columns:1.4fr 1fr;
+    gap:12px;
+}
+
+.submit-btn,
+.cancel-btn{
+    min-height:66px;
+    border:0;
+    border-radius:22px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:18px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.submit-btn{
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    color:white;
+}
+
+.cancel-btn{
+    background:#f1f5f9;
+    color:#334155;
+}
+
+@media(max-width:700px){
+    .qr-form-page{
+        padding:16px;
+    }
+
+    .form-card{
+        padding:20px;
+        border-radius:30px;
+    }
+
+    .page-top{
+        display:block;
+    }
+
+    .top-actions{
+        margin-top:14px;
+    }
+
+    .page-top h1{
+        font-size:28px;
+    }
+
+    .form-actions{
+        grid-template-columns:1fr;
+    }
+
+    .qr-form input,
+    .qr-form select,
+    .submit-btn,
+    .cancel-btn,
+    .soft-btn{
+        width:100%;
+        min-height:72px;
+        font-size:18px;
+    }
+}
+</style>
+
+{% endblock %}

@@ -1,8 +1,15 @@
 from django import forms
 from django.db.models import Q
 
-from .models import Pet, PetBreed, PetSale, PetWarrantyClaim
-from .models import Pet, PetBreed, PetSale, PetWarrantyClaim, PetSalePhoto
+from inventory.models import Branch
+
+from .models import (
+    Pet,
+    PetBreed,
+    PetSale,
+    PetWarrantyClaim,
+    PetSalePhoto,
+)
 
 
 class PetBreedForm(forms.ModelForm):
@@ -26,6 +33,7 @@ class PetForm(forms.ModelForm):
     class Meta:
         model = Pet
         fields = [
+            "branch",
             "breed_profile",
             "pet_type",
             "breed",
@@ -42,6 +50,97 @@ class PetForm(forms.ModelForm):
             "status",
             "note",
         ]
+
+        widgets = {
+            "branch": forms.Select(attrs={
+                "class": "form-control",
+            }),
+            "breed_profile": forms.Select(attrs={
+                "class": "form-control",
+            }),
+            "pet_type": forms.Select(attrs={
+                "class": "form-control",
+            }),
+            "breed": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Breed name if no breed profile",
+            }),
+            "name": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Pet name / nickname",
+            }),
+            "gender": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Male / Female",
+            }),
+            "color": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "White, Cream, Brown...",
+            }),
+            "special_type": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Teacup, Mini, Show Grade...",
+            }),
+            "age_months_at_stock_in": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "0",
+                "inputmode": "numeric",
+            }),
+            "age_recorded_date": forms.DateInput(attrs={
+                "class": "form-control",
+                "type": "date",
+            }),
+            "death_date": forms.DateInput(attrs={
+                "class": "form-control",
+                "type": "date",
+            }),
+            "photo": forms.ClearableFileInput(attrs={
+                "class": "form-control",
+                "accept": "image/*",
+            }),
+            "cost_price": forms.NumberInput(attrs={
+                "class": "form-control",
+                "step": "0.01",
+                "min": "0",
+                "inputmode": "decimal",
+            }),
+            "sale_price": forms.NumberInput(attrs={
+                "class": "form-control",
+                "step": "0.01",
+                "min": "0",
+                "inputmode": "decimal",
+            }),
+            "status": forms.Select(attrs={
+                "class": "form-control",
+            }),
+            "note": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Pet note...",
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["branch"].queryset = Branch.objects.filter(
+            is_active=True,
+        ).order_by("name")
+
+        self.fields["branch"].required = False
+        self.fields["branch"].empty_label = "Select Branch / Shop"
+
+        self.fields["breed_profile"].queryset = PetBreed.objects.filter(
+            is_active=True,
+        ).order_by("pet_type", "name")
+
+        self.fields["breed_profile"].required = False
+        self.fields["breed_profile"].empty_label = "Select Breed Master"
+
+        self.fields["breed"].required = False
+        self.fields["death_date"].required = False
+        self.fields["photo"].required = False
+        self.fields["note"].required = False
 
     def clean(self):
         cleaned = super().clean()
@@ -82,6 +181,81 @@ class PetSaleForm(forms.ModelForm):
             "note",
         ]
 
+        widgets = {
+            "sale_kind": forms.Select(attrs={
+                "class": "form-control",
+            }),
+            "pet": forms.Select(attrs={
+                "class": "form-control",
+            }),
+            "preorder_pet_type": forms.Select(attrs={
+                "class": "form-control",
+            }),
+            "preorder_breed": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Breed",
+            }),
+            "preorder_gender": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Male / Female",
+            }),
+            "preorder_color": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Color",
+            }),
+            "preorder_special_type": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Special type",
+            }),
+            "deadline": forms.DateInput(attrs={
+                "class": "form-control",
+                "type": "date",
+            }),
+            "customer_name": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Customer name",
+            }),
+            "phone": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Phone number",
+            }),
+            "address": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 2,
+                "placeholder": "Customer location",
+            }),
+            "sale_price": forms.NumberInput(attrs={
+                "class": "form-control",
+                "step": "0.01",
+                "min": "0",
+                "inputmode": "decimal",
+            }),
+            "paid_amount": forms.NumberInput(attrs={
+                "class": "form-control",
+                "step": "0.01",
+                "min": "0",
+                "inputmode": "decimal",
+            }),
+            "warranty_days": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "0",
+                "inputmode": "numeric",
+            }),
+            "warranty_start_date": forms.DateInput(attrs={
+                "class": "form-control",
+                "type": "date",
+            }),
+            "sale_photo": forms.ClearableFileInput(attrs={
+                "class": "form-control",
+                "accept": "image/*",
+            }),
+            "note": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Sale note...",
+            }),
+        }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -92,20 +266,29 @@ class PetSaleForm(forms.ModelForm):
 
         pets = (
             Pet.objects
-            .select_related("breed_profile")
+            .select_related("breed_profile", "branch")
             .filter(status="in_stock")
-            .order_by("-created_at")
+            .order_by("branch__name", "pet_type", "breed_profile__name", "breed", "name")
         )
 
         if current_pet_id:
             pets = (
                 Pet.objects
-                .select_related("breed_profile")
+                .select_related("breed_profile", "branch")
                 .filter(Q(status="in_stock") | Q(id=current_pet_id))
-                .order_by("-created_at")
+                .order_by("branch__name", "pet_type", "breed_profile__name", "breed", "name")
             )
 
         self.fields["pet"].queryset = pets
+        self.fields["pet"].required = False
+        self.fields["pet"].empty_label = "Select In-stock Pet"
+
+        self.fields["deadline"].required = False
+        self.fields["phone"].required = False
+        self.fields["address"].required = False
+        self.fields["warranty_start_date"].required = False
+        self.fields["sale_photo"].required = False
+        self.fields["note"].required = False
 
     def clean(self):
         cleaned = super().clean()
@@ -137,3 +320,26 @@ class PetWarrantyClaimForm(forms.ModelForm):
             "compensation_cost",
             "claim_photo",
         ]
+
+        widgets = {
+            "problem_note": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Problem note...",
+            }),
+            "action_taken": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Action taken...",
+            }),
+            "compensation_cost": forms.NumberInput(attrs={
+                "class": "form-control",
+                "step": "0.01",
+                "min": "0",
+                "inputmode": "decimal",
+            }),
+            "claim_photo": forms.ClearableFileInput(attrs={
+                "class": "form-control",
+                "accept": "image/*",
+            }),
+        }

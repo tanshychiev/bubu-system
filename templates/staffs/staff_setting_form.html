@@ -1,0 +1,1053 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="setting-form-page">
+    <div class="form-card">
+        <div class="page-top">
+            <div>
+                <h1>{{ title }} ⚙️</h1>
+                <p>Set staff salary, attendance PIN, shift time and late allowance.</p>
+            </div>
+
+            <a href="{% url 'staff_setting_list' %}" class="soft-btn">← Back</a>
+        </div>
+
+        {% if messages %}
+            <div class="message-box">
+                {% for message in messages %}
+                    <p class="{{ message.tags }}">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" class="setting-form">
+            {% csrf_token %}
+
+            {% if selected_staff %}
+                <div class="selected-staff-box">
+                    <small>Staff</small>
+                    <strong>{{ selected_staff.user.get_full_name|default:selected_staff.user.username }}</strong>
+                    <span>
+                        {% if selected_staff.branch %}
+                            📍 {{ selected_staff.branch.name }}
+                        {% else %}
+                            📍 No Branch
+                        {% endif %}
+                    </span>
+                </div>
+            {% else %}
+                <label>
+                    Staff
+                    <select name="staff" required>
+                        <option value="">Select Staff</option>
+                        {% for staff in staffs %}
+                            <option value="{{ staff.id }}">
+                                {{ staff.user.get_full_name|default:staff.user.username }}
+                                {% if staff.branch %} - {{ staff.branch.name }}{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </label>
+            {% endif %}
+
+            <div class="grid-2">
+                <label>
+                    Base Salary
+                    <input
+                        type="number"
+                        step="0.01"
+                        name="base_salary"
+                        value="{% if setting %}{{ setting.base_salary }}{% else %}0{% endif %}"
+                        required
+                    >
+                </label>
+
+                <label>
+                    Attendance PIN
+                    <input
+                        type="text"
+                        name="attendance_pin"
+                        value="{% if setting %}{{ setting.attendance_pin }}{% endif %}"
+                        placeholder="Example: 1234"
+                        required
+                    >
+                </label>
+            </div>
+
+            <div class="grid-3">
+                <div class="fake-label">
+                    Start Work Date
+                    <input
+                        type="hidden"
+                        name="start_work_date"
+                        id="startWorkDateInput"
+                        value="{% if setting %}{{ setting.start_work_date|date:'Y-m-d' }}{% endif %}"
+                        required
+                    >
+
+                    <button type="button" class="popup-field-btn" onclick="openDatePopup()">
+                        <span id="startWorkDateLabel">
+                            {% if setting %}
+                                {{ setting.start_work_date|date:"m/d/Y" }}
+                            {% else %}
+                                Select Date
+                            {% endif %}
+                        </span>
+                        <b>📅</b>
+                    </button>
+                </div>
+
+                <label>
+                    Salary Cycle Start Day
+                    <input
+                        type="number"
+                        name="salary_cycle_start_day"
+                        value="{% if setting %}{{ setting.salary_cycle_start_day }}{% else %}1{% endif %}"
+                        min="1"
+                        max="31"
+                        required
+                    >
+                </label>
+
+                <label>
+                    Salary Open After Days
+                    <input
+                        type="number"
+                        name="salary_open_after_days"
+                        value="{% if setting %}{{ setting.salary_open_after_days }}{% else %}6{% endif %}"
+                        min="0"
+                        required
+                    >
+                </label>
+            </div>
+
+            <div class="grid-3">
+                <div class="fake-label">
+                    Shift Start
+                    <input
+                        type="hidden"
+                        name="shift_start"
+                        id="shiftStartInput"
+                        value="{% if shift %}{{ shift.start_time|time:'H:i' }}{% endif %}"
+                    >
+
+                    <button type="button" class="popup-field-btn" onclick="openTimePopup('start')">
+                        <span id="shiftStartLabel">
+                            {% if shift %}
+                                {{ shift.start_time|time:"H:i" }}
+                            {% else %}
+                                Select Time
+                            {% endif %}
+                        </span>
+                        <b>🕘</b>
+                    </button>
+                </div>
+
+                <div class="fake-label">
+                    Shift End
+                    <input
+                        type="hidden"
+                        name="shift_end"
+                        id="shiftEndInput"
+                        value="{% if shift %}{{ shift.end_time|time:'H:i' }}{% endif %}"
+                    >
+
+                    <button type="button" class="popup-field-btn" onclick="openTimePopup('end')">
+                        <span id="shiftEndLabel">
+                            {% if shift %}
+                                {{ shift.end_time|time:"H:i" }}
+                            {% else %}
+                                Select Time
+                            {% endif %}
+                        </span>
+                        <b>🕕</b>
+                    </button>
+                </div>
+
+                <label>
+                    Allowed Late Minutes
+                    <input
+                        type="number"
+                        name="late_after_minutes"
+                        value="{% if shift %}{{ shift.late_after_minutes }}{% else %}10{% endif %}"
+                        min="0"
+                    >
+                </label>
+            </div>
+
+            <div class="grid-2">
+                <label>
+                    Commission Rate %
+                    <input
+                        type="number"
+                        step="0.01"
+                        name="default_commission_rate"
+                        value="{% if setting %}{{ setting.default_commission_rate }}{% else %}5{% endif %}"
+                    >
+                </label>
+
+                <label>
+                    Note
+                    <input
+                        type="text"
+                        name="note"
+                        value="{% if setting %}{{ setting.note }}{% endif %}"
+                        placeholder="Optional note"
+                    >
+                </label>
+            </div>
+
+            <div class="toggle-grid">
+                <label class="toggle-card">
+                    <input
+                        type="checkbox"
+                        name="commission_enabled"
+                        {% if not setting or setting.commission_enabled %}checked{% endif %}
+                    >
+                    <span class="toggle-box"></span>
+                    <div class="toggle-text">
+                        <strong>Commission Enabled</strong>
+                        <small>Allow commission for this staff</small>
+                    </div>
+                </label>
+
+                <label class="toggle-card">
+                    <input
+                        type="checkbox"
+                        name="is_active"
+                        {% if not setting or setting.is_active %}checked{% endif %}
+                    >
+                    <span class="toggle-box"></span>
+                    <div class="toggle-text">
+                        <strong>Setting Active</strong>
+                        <small>This staff setting is active</small>
+                    </div>
+                </label>
+            </div>
+
+            <div class="hint-box">
+                <strong>Example</strong>
+                <p>If staff starts work on 5 May, set salary cycle start day = 5. If salary opens on 10 or 11 next month, set salary open after days = 6 or 7.</p>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="submit-btn">Save Setting</button>
+                <a href="{% url 'staff_setting_list' %}" class="cancel-btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- DATE POPUP -->
+<div class="popup-backdrop" id="dateBackdrop" onclick="closeDatePopup()"></div>
+
+<div class="picker-popup" id="datePopup">
+    <div class="popup-head">
+        <h3>Select Start Work Date</h3>
+        <button type="button" onclick="closeDatePopup()">✕</button>
+    </div>
+
+    <div class="date-picker-box">
+        <div class="month-nav">
+            <button type="button" onclick="changeMonth(-1)">‹</button>
+            <strong id="monthTitle">Month Year</strong>
+            <button type="button" onclick="changeMonth(1)">›</button>
+        </div>
+
+        <div class="weekday-row">
+            <span>Su</span>
+            <span>Mo</span>
+            <span>Tu</span>
+            <span>We</span>
+            <span>Th</span>
+            <span>Fr</span>
+            <span>Sa</span>
+        </div>
+
+        <div class="calendar-grid" id="calendarGrid"></div>
+
+        <div class="quick-grid">
+            <button type="button" onclick="setTodayDate()">Today</button>
+            <button type="button" onclick="clearStartDate()">Clear</button>
+        </div>
+    </div>
+</div>
+
+<!-- TIME POPUP -->
+<div class="popup-backdrop" id="timeBackdrop" onclick="closeTimePopup()"></div>
+
+<div class="picker-popup time-popup" id="timePopup">
+    <div class="popup-head">
+        <h3 id="timePopupTitle">Select Time</h3>
+        <button type="button" onclick="closeTimePopup()">✕</button>
+    </div>
+
+    <div class="time-picker-box">
+        <div class="time-columns">
+            <div>
+                <span>Hour</span>
+                <select id="hourSelect"></select>
+            </div>
+
+            <div>
+                <span>Minute</span>
+                <select id="minuteSelect"></select>
+            </div>
+        </div>
+
+        <div class="quick-time-grid">
+            <button type="button" onclick="setQuickTime('08:00')">08:00</button>
+            <button type="button" onclick="setQuickTime('09:00')">09:00</button>
+            <button type="button" onclick="setQuickTime('19:00')">19:00</button>
+            <button type="button" onclick="setQuickTime('20:00')">20:00</button>
+        </div>
+
+        <button type="button" class="apply-time-btn" onclick="applyTime()">Apply Time</button>
+    </div>
+</div>
+
+<style>
+*{box-sizing:border-box}
+a{text-decoration:none}
+
+.setting-form-page{
+    min-height:100vh;
+    padding:24px;
+    display:flex;
+    justify-content:center;
+    background:linear-gradient(135deg,#fff8f4,#f8f6ff);
+}
+
+.form-card{
+    width:920px;
+    max-width:100%;
+    background:white;
+    border:2px solid #f5e0d8;
+    border-radius:34px;
+    padding:24px;
+    box-shadow:0 24px 70px rgba(130,91,60,.12);
+}
+
+.page-top{
+    display:flex;
+    justify-content:space-between;
+    gap:16px;
+    align-items:flex-start;
+}
+
+.page-top h1{
+    margin:0;
+    color:#080634;
+    font-size:34px;
+    font-weight:1000;
+}
+
+.page-top p{
+    margin:8px 0 0;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.soft-btn,
+.submit-btn,
+.cancel-btn{
+    min-height:58px;
+    padding:0 18px;
+    border-radius:20px;
+    border:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+}
+
+.soft-btn,
+.cancel-btn{
+    background:#f1f5f9;
+    color:#334155;
+}
+
+.message-box{
+    margin-top:14px;
+}
+
+.message-box p{
+    margin:0 0 8px;
+    padding:12px 14px;
+    border-radius:16px;
+    font-weight:1000;
+}
+
+.message-box .success{
+    background:#dcfce7;
+    color:#16a34a;
+}
+
+.message-box .error{
+    background:#fee2e2;
+    color:#dc2626;
+}
+
+.setting-form{
+    display:grid;
+    gap:16px;
+    margin-top:22px;
+}
+
+.grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+}
+
+.grid-3{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:14px;
+}
+
+.setting-form label,
+.fake-label{
+    color:#080634;
+    font-weight:1000;
+}
+
+.setting-form input,
+.setting-form select{
+    width:100%;
+    height:64px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    padding:0 16px;
+    margin-top:8px;
+    color:#080634;
+    font-size:17px;
+    font-weight:900;
+    background:white;
+}
+
+.popup-field-btn{
+    width:100%;
+    height:64px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    padding:0 16px;
+    margin-top:8px;
+    color:#080634;
+    font-size:17px;
+    font-weight:900;
+    background:white;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    transition:.2s;
+}
+
+.popup-field-btn:hover{
+    border-color:#b99cff;
+    box-shadow:0 10px 24px rgba(123,92,255,.10);
+}
+
+.popup-field-btn b{
+    font-size:18px;
+}
+
+.selected-staff-box{
+    background:#fff8f4;
+    border:2px solid #f5e0d8;
+    border-radius:24px;
+    padding:18px;
+}
+
+.selected-staff-box small{
+    display:block;
+    color:#7b7288;
+    font-weight:1000;
+}
+
+.selected-staff-box strong{
+    display:block;
+    margin-top:4px;
+    color:#080634;
+    font-size:24px;
+    font-weight:1000;
+}
+
+.selected-staff-box span{
+    display:block;
+    margin-top:4px;
+    color:#7b5cff;
+    font-weight:1000;
+}
+
+/* COOLER TOGGLE */
+.toggle-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+}
+
+.toggle-card{
+    position:relative;
+    display:flex !important;
+    align-items:center;
+    gap:14px;
+    padding:16px 18px;
+    border-radius:22px;
+    border:2px solid #eaddec;
+    background:linear-gradient(135deg,#ffffff,#faf8ff);
+    cursor:pointer;
+    transition:.2s;
+    min-height:78px;
+}
+
+.toggle-card:hover{
+    border-color:#cdb8ff;
+    box-shadow:0 14px 28px rgba(123,92,255,.10);
+}
+
+.toggle-card input{
+    position:absolute;
+    opacity:0;
+    pointer-events:none;
+}
+
+.toggle-box{
+    width:28px;
+    height:28px;
+    border-radius:10px;
+    border:2px solid #cfc3ec;
+    background:white;
+    position:relative;
+    flex-shrink:0;
+    transition:.2s;
+}
+
+.toggle-box::after{
+    content:"";
+    position:absolute;
+    left:8px;
+    top:3px;
+    width:7px;
+    height:14px;
+    border:solid white;
+    border-width:0 3px 3px 0;
+    transform:rotate(45deg);
+    opacity:0;
+}
+
+.toggle-card input:checked + .toggle-box{
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    border-color:transparent;
+    box-shadow:0 10px 24px rgba(123,92,255,.22);
+}
+
+.toggle-card input:checked + .toggle-box::after{
+    opacity:1;
+}
+
+.toggle-card input:checked ~ .toggle-text strong{
+    color:#5d3ff5;
+}
+
+.toggle-text{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+}
+
+.toggle-text strong{
+    color:#080634;
+    font-size:17px;
+    font-weight:1000;
+    line-height:1.1;
+}
+
+.toggle-text small{
+    color:#8b819d;
+    font-size:13px;
+    font-weight:900;
+    line-height:1.3;
+}
+
+.hint-box{
+    background:#f4f0ff;
+    border:2px solid #e6dcff;
+    border-radius:20px;
+    padding:14px;
+}
+
+.hint-box strong{
+    color:#7b5cff;
+    font-weight:1000;
+}
+
+.hint-box p{
+    margin:6px 0 0;
+    color:#7b7288;
+    font-weight:900;
+    line-height:1.5;
+}
+
+.form-actions{
+    display:grid;
+    grid-template-columns:1.4fr 1fr;
+    gap:12px;
+}
+
+.submit-btn{
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    color:white;
+    cursor:pointer;
+}
+
+/* POPUPS */
+.popup-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(28,20,58,.42);
+    z-index:9000;
+}
+
+.popup-backdrop.active{
+    display:block;
+}
+
+.picker-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:430px;
+    max-width:calc(100% - 28px);
+    background:white;
+    border-radius:30px;
+    overflow:hidden;
+    box-shadow:0 28px 80px rgba(28,20,58,.30);
+    z-index:9001;
+}
+
+.picker-popup.active{
+    display:block;
+}
+
+.popup-head{
+    background:linear-gradient(135deg,#7b5cff,#ff8c6b);
+    color:white;
+    padding:18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.popup-head h3{
+    margin:0;
+    font-size:20px;
+    font-weight:1000;
+}
+
+.popup-head button{
+    width:44px;
+    height:44px;
+    border:0;
+    border-radius:50%;
+    background:rgba(255,255,255,.22);
+    color:white;
+    font-size:18px;
+    font-weight:1000;
+}
+
+.date-picker-box,
+.time-picker-box{
+    padding:16px;
+}
+
+.month-nav{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+}
+
+.month-nav button{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background:#f4f0ff;
+    color:#7b5cff;
+    font-size:24px;
+    font-weight:1000;
+}
+
+.month-nav strong{
+    color:#080634;
+    font-size:20px;
+    font-weight:1000;
+}
+
+.weekday-row,
+.calendar-grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    text-align:center;
+}
+
+.weekday-row span{
+    color:#9a91a7;
+    font-size:13px;
+    font-weight:1000;
+    padding:8px 0;
+}
+
+.calendar-day{
+    height:44px;
+    border-radius:999px;
+    border:0;
+    background:white;
+    color:#080634;
+    font-weight:1000;
+    padding:0;
+    margin:2px;
+}
+
+.calendar-day.muted{
+    color:#c7bfd4;
+}
+
+.calendar-day.selected{
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    color:white;
+}
+
+.calendar-day.today{
+    border:2px solid #7b5cff;
+}
+
+.quick-grid,
+.quick-time-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:16px;
+}
+
+.quick-grid button{
+    min-height:54px;
+    border-radius:18px;
+    background:#f4f0ff;
+    color:#7b5cff;
+    font-weight:1000;
+}
+
+.quick-time-grid button{
+    min-height:58px;
+    border-radius:20px;
+    border:0;
+    background:linear-gradient(135deg,#f6f1ff,#ece4ff);
+    color:#6b4dff;
+    font-weight:1000;
+    font-size:16px;
+    box-shadow:inset 0 0 0 1px #e5d9ff;
+}
+
+.quick-time-grid button:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 22px rgba(123,92,255,.12);
+}
+
+.time-columns{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+}
+
+.time-columns span{
+    display:block;
+    color:#7b7288;
+    font-weight:1000;
+    margin-bottom:8px;
+}
+
+.time-columns select{
+    width:100%;
+    height:64px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    padding:0 16px;
+    color:#080634;
+    font-size:20px;
+    font-weight:1000;
+    background:white;
+}
+
+.apply-time-btn{
+    width:100%;
+    min-height:62px;
+    margin-top:16px;
+    border-radius:22px;
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    color:white;
+    font-size:17px;
+    font-weight:1000;
+    box-shadow:0 14px 30px rgba(72,165,255,.22);
+}
+
+@media(max-width:700px){
+    .setting-form-page{
+        padding:16px;
+    }
+
+    .form-card{
+        padding:20px;
+        border-radius:30px;
+    }
+
+    .page-top{
+        display:block;
+    }
+
+    .soft-btn{
+        margin-top:14px;
+    }
+
+    .page-top h1{
+        font-size:28px;
+    }
+
+    .grid-2,
+    .grid-3,
+    .form-actions,
+    .toggle-grid{
+        grid-template-columns:1fr;
+    }
+
+    .setting-form input,
+    .setting-form select,
+    .submit-btn,
+    .cancel-btn,
+    .soft-btn,
+    .popup-field-btn{
+        min-height:72px;
+        font-size:18px;
+    }
+
+    .picker-popup{
+        left:14px;
+        right:14px;
+        bottom:16px;
+        top:auto;
+        width:auto;
+        max-width:none;
+        transform:none;
+        border-radius:28px;
+    }
+
+    .calendar-day{
+        height:48px;
+    }
+
+    .quick-grid button,
+    .quick-time-grid button,
+    .apply-time-btn{
+        min-height:68px;
+        font-size:18px;
+    }
+}
+</style>
+
+<script>
+let calendarDate = new Date();
+let selectedDate = document.getElementById("startWorkDateInput").value || "";
+let activeTimeType = "start";
+
+function pad(number){
+    return String(number).padStart(2, "0");
+}
+
+function formatDateValue(date){
+    return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate());
+}
+
+function formatDateLabel(value){
+    if(!value){
+        return "Select Date";
+    }
+
+    const parts = value.split("-");
+    return parts[1] + "/" + parts[2] + "/" + parts[0];
+}
+
+function openDatePopup(){
+    const currentValue = document.getElementById("startWorkDateInput").value;
+
+    if(currentValue){
+        const parts = currentValue.split("-");
+        calendarDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        selectedDate = currentValue;
+    }
+
+    renderCalendar();
+    document.getElementById("dateBackdrop").classList.add("active");
+    document.getElementById("datePopup").classList.add("active");
+}
+
+function closeDatePopup(){
+    document.getElementById("dateBackdrop").classList.remove("active");
+    document.getElementById("datePopup").classList.remove("active");
+}
+
+function changeMonth(step){
+    calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + step, 1);
+    renderCalendar();
+}
+
+function renderCalendar(){
+    const monthTitle = document.getElementById("monthTitle");
+    const calendarGrid = document.getElementById("calendarGrid");
+
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+
+    monthTitle.innerText = calendarDate.toLocaleDateString("en-US", {
+        month:"long",
+        year:"numeric"
+    });
+
+    calendarGrid.innerHTML = "";
+
+    const firstDay = new Date(year, month, 1);
+    const startDay = firstDay.getDay();
+    const firstGridDate = new Date(year, month, 1 - startDay);
+
+    const todayValue = formatDateValue(new Date());
+
+    for(let i = 0; i < 42; i++){
+        const day = new Date(firstGridDate);
+        day.setDate(firstGridDate.getDate() + i);
+
+        const value = formatDateValue(day);
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "calendar-day";
+        btn.innerText = day.getDate();
+
+        if(day.getMonth() !== month){
+            btn.classList.add("muted");
+        }
+
+        if(value === selectedDate){
+            btn.classList.add("selected");
+        }
+
+        if(value === todayValue){
+            btn.classList.add("today");
+        }
+
+        btn.onclick = function(){
+            selectedDate = value;
+            document.getElementById("startWorkDateInput").value = value;
+            document.getElementById("startWorkDateLabel").innerText = formatDateLabel(value);
+            closeDatePopup();
+        };
+
+        calendarGrid.appendChild(btn);
+    }
+}
+
+function setTodayDate(){
+    const today = new Date();
+    const value = formatDateValue(today);
+
+    selectedDate = value;
+    document.getElementById("startWorkDateInput").value = value;
+    document.getElementById("startWorkDateLabel").innerText = formatDateLabel(value);
+    closeDatePopup();
+}
+
+function clearStartDate(){
+    selectedDate = "";
+    document.getElementById("startWorkDateInput").value = "";
+    document.getElementById("startWorkDateLabel").innerText = "Select Date";
+    closeDatePopup();
+}
+
+function setupTimeOptions(){
+    const hourSelect = document.getElementById("hourSelect");
+    const minuteSelect = document.getElementById("minuteSelect");
+
+    hourSelect.innerHTML = "";
+    minuteSelect.innerHTML = "";
+
+    for(let h = 0; h < 24; h++){
+        const option = document.createElement("option");
+        option.value = pad(h);
+        option.innerText = pad(h);
+        hourSelect.appendChild(option);
+    }
+
+    for(let m = 0; m < 60; m += 5){
+        const option = document.createElement("option");
+        option.value = pad(m);
+        option.innerText = pad(m);
+        minuteSelect.appendChild(option);
+    }
+}
+
+function openTimePopup(type){
+    activeTimeType = type;
+    setupTimeOptions();
+
+    const title = type === "start" ? "Select Shift Start" : "Select Shift End";
+    const inputId = type === "start" ? "shiftStartInput" : "shiftEndInput";
+    const defaultValue = type === "start" ? "08:00" : "20:00";
+    const value = document.getElementById(inputId).value || defaultValue;
+
+    const parts = value.split(":");
+
+    document.getElementById("timePopupTitle").innerText = title;
+    document.getElementById("hourSelect").value = parts[0] || "08";
+    document.getElementById("minuteSelect").value = parts[1] || "00";
+
+    document.getElementById("timeBackdrop").classList.add("active");
+    document.getElementById("timePopup").classList.add("active");
+}
+
+function closeTimePopup(){
+    document.getElementById("timeBackdrop").classList.remove("active");
+    document.getElementById("timePopup").classList.remove("active");
+}
+
+function setQuickTime(value){
+    const parts = value.split(":");
+    document.getElementById("hourSelect").value = parts[0];
+    document.getElementById("minuteSelect").value = parts[1];
+}
+
+function applyTime(){
+    const value = document.getElementById("hourSelect").value + ":" + document.getElementById("minuteSelect").value;
+
+    if(activeTimeType === "start"){
+        document.getElementById("shiftStartInput").value = value;
+        document.getElementById("shiftStartLabel").innerText = value;
+    }else{
+        document.getElementById("shiftEndInput").value = value;
+        document.getElementById("shiftEndLabel").innerText = value;
+    }
+
+    closeTimePopup();
+}
+
+document.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){
+        closeDatePopup();
+        closeTimePopup();
+    }
+});
+</script>
+
+{% endblock %}

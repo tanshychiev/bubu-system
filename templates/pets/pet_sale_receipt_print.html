@@ -1,143 +1,611 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="km">
 <head>
     <meta charset="UTF-8">
-    <title>Pet Sale Receipt #{{ sale.id }}</title>
+    <title>BUBU Warranty Receipt #{{ sale.id }}</title>
 
     <style>
-        @page{size:80mm auto;margin:0}
-        *{box-sizing:border-box}
-        body{margin:0;font-family:Arial,"Khmer OS Battambang","Khmer OS",sans-serif;background:#fff;color:#111}
-        .print-btn{position:fixed;top:12px;right:12px;z-index:20}
-        .print-btn button{border:0;border-radius:999px;background:#111;color:#fff;padding:10px 18px;font-weight:900;cursor:pointer}
-        .receipt{width:80mm;padding:7mm 5mm;margin:0 auto}
-        .center{text-align:center}
-        .logo-title{font-size:21px;font-weight:900;margin:0;letter-spacing:.5px}
-        .sub-title,.receipt-no{margin:4px 0;font-size:12px}
-        .line{border-top:1px dashed #111;margin:8px 0}
-        .section-title{font-size:13px;font-weight:900;margin:8px 0 5px}
-        .pet-box{padding:7px;border:1px solid #ddd;border-radius:8px;background:#fafafa}
-        .pet-name{font-size:13px;font-weight:900;margin-bottom:4px}
-        .small{font-size:11px;line-height:1.45}
-        .row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin:5px 0;font-size:12px}
-        .row span{color:#333}
-        .row strong{text-align:right;font-weight:900}
-        .total-row{font-size:15px;font-weight:900;padding-top:4px}
-        .status-badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#f2f2f2;font-size:11px;font-weight:900}
-        .warranty-box{margin-top:8px;padding:8px;border:1px solid #111;border-radius:8px}
-        .warranty-title{text-align:center;font-size:13px;font-weight:900;margin-bottom:6px}
-        .policy{margin:0;padding-left:15px;font-size:10.5px;line-height:1.55}
-        .policy li{margin-bottom:5px}
-        .policy-en{margin-top:7px;border-top:1px dashed #999;padding-top:7px}
-        .signature{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;font-size:11px;text-align:center}
-        .signature div{padding-top:26px}
-        .sign-line{border-top:1px solid #111;padding-top:4px}
-        .thank{margin-top:9px;font-size:12px;font-weight:900;text-align:center}
-        .muted{color:#666}
-        @media print{.print-btn{display:none}.receipt{margin:0}}
+        @page {
+            size: 148mm 210mm;
+            margin: 0;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 148mm;
+            height: 210mm;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        body {
+            font-family: Arial, "Khmer OS Battambang", "Khmer OS", sans-serif;
+            color: #2f241d;
+        }
+
+        .print-btn {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 9999;
+        }
+
+        .print-btn button {
+            border: 0;
+            border-radius: 999px;
+            background: #7c5338;
+            color: #fff;
+            padding: 10px 18px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,.18);
+        }
+
+        .page {
+            width: 148mm;
+            height: 210mm;
+            margin: 0 auto;
+            padding: 6mm 7mm 5mm;
+            background:
+                radial-gradient(circle at top right, rgba(242, 213, 196, 0.45), transparent 40mm),
+                radial-gradient(circle at bottom left, rgba(247, 221, 207, 0.45), transparent 36mm),
+                linear-gradient(180deg, #fffdfa 0%, #fff8f4 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .content {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* HEADER */
+        .header {
+            text-align: center;
+            margin-bottom: 2mm;
+        }
+
+        .logo-box {
+            width: 30mm;
+            height: 30mm;
+            margin: 0 auto 1.5mm;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 1.5px solid #7c5338;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .brand-kh {
+            font-size: 18px;
+            font-weight: 900;
+            color: #8e5f42;
+            line-height: 1.05;
+            text-shadow:
+                -0.7px -0.7px #2d2017,
+                 0.7px -0.7px #2d2017,
+                -0.7px  0.7px #2d2017,
+                 0.7px  0.7px #2d2017;
+        }
+
+        .brand-en {
+            font-size: 12px;
+            font-weight: 900;
+            color: #8e5f42;
+            margin-top: .5mm;
+            text-shadow:
+                -0.7px -0.7px #2d2017,
+                 0.7px -0.7px #2d2017,
+                -0.7px  0.7px #2d2017,
+                 0.7px  0.7px #2d2017;
+        }
+
+        /* TOP INFO */
+        .top-grid {
+            margin-top: 1mm;
+            display: grid;
+            grid-template-columns: 30mm 1fr 34mm;
+            gap: 4mm;
+            align-items: start;
+        }
+
+        .invoice-box {
+            text-align: center;
+            padding-top: 2mm;
+        }
+
+        .invoice-kh {
+            font-size: 11px;
+            font-weight: 900;
+            line-height: 1.1;
+        }
+
+        .invoice-en {
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .3px;
+        }
+
+        .invoice-no {
+            color: #f02020;
+            font-size: 14px;
+            font-weight: 900;
+            margin-top: 2mm;
+            border-bottom: 1.3px solid #3a2b21;
+            padding-bottom: 1mm;
+            display: inline-block;
+            min-width: 28mm;
+        }
+
+        .middle-info {
+            padding-top: 1mm;
+        }
+
+        .date-line {
+            text-align: center;
+            font-size: 8.8px;
+            font-weight: 800;
+            color: #5b473a;
+            margin-bottom: 2mm;
+        }
+
+        .info-list {
+            display: grid;
+            gap: 2mm;
+        }
+
+        .info-row {
+            display: grid;
+            grid-template-columns: 22mm 1fr;
+            gap: 2mm;
+        }
+
+        .label {
+            background: #f0d7c8;
+            border: 1px solid #e0b89f;
+            border-radius: 6px;
+            min-height: 8.8mm;
+            padding: 2mm 2.4mm;
+            font-size: 8.5px;
+            font-weight: 900;
+            color: #5f402d;
+            display: flex;
+            align-items: center;
+        }
+
+        .value {
+            background: #f8e9df;
+            border: 1px solid #e6c4af;
+            border-radius: 6px;
+            min-height: 8.8mm;
+            padding: 2mm 2.6mm;
+            font-size: 8.8px;
+            font-weight: 700;
+            color: #2f241d;
+            display: flex;
+            align-items: center;
+        }
+
+        .pet-photo {
+            width: 34mm;
+            height: 34mm;
+            border: 1.6px solid #d5a786;
+            border-radius: 8px;
+            background: #fff7f2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-top: 4mm;
+        }
+
+        .pet-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .pet-photo .no-photo {
+            font-size: 10px;
+            font-weight: 900;
+            color: #81563b;
+            text-align: center;
+            line-height: 1.25;
+        }
+
+        /* TABLE */
+        .table-wrap {
+            margin-top: 4mm;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .main-table thead th {
+            background: #d3a07a;
+            color: #2c2018;
+            font-size: 9px;
+            font-weight: 900;
+            padding: 2.5mm 1mm;
+            border-right: 1px solid rgba(255,255,255,.7);
+            text-align: center;
+        }
+
+        .main-table thead th:last-child {
+            border-right: 0;
+        }
+
+        .main-table tbody td {
+            font-size: 8px;
+            font-weight: 700;
+            color: #2f241d;
+            padding: 2.2mm 1.5mm;
+            border-top: 1px solid #fff;
+            border-right: 1px solid #fff;
+            vertical-align: top;
+            height: 12mm;
+        }
+
+        .main-table tbody td:last-child {
+            border-right: 0;
+        }
+
+        .main-table tbody tr:nth-child(odd) td {
+            background: rgba(255,255,255,.88);
+        }
+
+        .main-table tbody tr:nth-child(even) td {
+            background: #f9eee7;
+        }
+
+        .c-no    { width: 9mm; text-align: center; }
+        .c-desc  { width: auto; }
+        .c-qty   { width: 14mm; text-align: center; }
+        .c-price { width: 18mm; text-align: right; }
+        .c-total { width: 18mm; text-align: right; }
+
+        .desc-main {
+            font-size: 8.7px;
+            font-weight: 900;
+            color: #463024;
+            margin-bottom: .6mm;
+        }
+
+        .desc-sub {
+            font-size: 7.4px;
+            line-height: 1.4;
+            color: #3b2d24;
+        }
+
+        /* BOTTOM AREA */
+        .bottom-grid {
+            margin-top: 4mm;
+            display: grid;
+            grid-template-columns: 1fr 31mm;
+            gap: 4mm;
+            align-items: start;
+        }
+
+        .policy-box {
+            background: rgba(255,255,255,.55);
+            border: 1px solid #e5c3af;
+            border-radius: 8px;
+            padding: 3mm;
+            min-height: 33mm;
+        }
+
+        .policy-box p {
+            margin: 0 0 1mm;
+            font-size: 7.3px;
+            line-height: 1.45;
+            font-weight: 800;
+            color: #9b6d4e;
+        }
+
+        .policy-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .summary-table td {
+            border: 1px solid #d9b091;
+            background: rgba(255,255,255,.55);
+            text-align: center;
+            padding: 3mm 1.5mm;
+            font-size: 8.6px;
+            font-weight: 900;
+            color: #5d3d2a;
+        }
+
+        .summary-table .amount {
+            display: block;
+            margin-top: 1mm;
+            font-size: 10.4px;
+            color: #21160f;
+        }
+
+        /* SIGNATURES */
+        .signatures {
+            margin-top: 5mm;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10mm;
+            padding: 0 6mm;
+        }
+
+        .sign-box {
+            border-top: 1.2px solid #6e4b34;
+            padding-top: 2mm;
+            text-align: center;
+            font-size: 7.6px;
+            font-weight: 900;
+            color: #4f382a;
+            min-height: 10mm;
+        }
+
+        /* FOOTER */
+        .footer {
+            position: absolute;
+            left: 7mm;
+            right: 7mm;
+            bottom: 5mm;
+            display: grid;
+            grid-template-columns: 18mm 1fr;
+            gap: 3mm;
+            align-items: end;
+        }
+
+        .footer-pet {
+            text-align: left;
+        }
+
+        .footer-pet img {
+            width: 14mm;
+            height: 14mm;
+            object-fit: contain;
+            display: block;
+        }
+
+        .footer-text {
+            text-align: right;
+            font-size: 7.3px;
+            line-height: 1.35;
+            font-weight: 800;
+            color: #5d493c;
+        }
+
+        .footer-brand {
+            color: #8e5f42;
+            font-style: italic;
+            font-size: 8.8px;
+            font-weight: 900;
+        }
+
+        @media print {
+            html, body {
+                width: 148mm !important;
+                height: 210mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+                background: #fff !important;
+            }
+
+            .print-btn {
+                display: none !important;
+            }
+
+            .page {
+                width: 148mm !important;
+                height: 210mm !important;
+                margin: 0 !important;
+                page-break-before: avoid !important;
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+            }
+        }
     </style>
 </head>
-
 <body>
 
 <div class="print-btn">
     <button onclick="window.print()">🖨 Print</button>
 </div>
 
-<div class="receipt">
+<div class="page">
+    <div class="content">
 
-    <div class="center">
-        <h1 class="logo-title">BUBU PET STORE</h1>
-        <p class="sub-title">Dog / Cat Sale Receipt</p>
-        <p class="receipt-no">No: PS-{{ sale.id }}</p>
-        <p class="receipt-no">{{ sale.created_at|date:"d/m/Y H:i" }}</p>
-    </div>
-
-    <div class="line"></div>
-
-    <div class="section-title">Pet Information / ព័ត៌មានសត្វចិញ្ចឹម</div>
-
-    <div class="pet-box">
-        <div class="pet-name">
-            {{ sale.pet_type_display }} · {{ sale.breed_display|default:"-" }}
+        <div class="header">
+            <div class="logo-box">
+                <img src="{% static 'images/bubu-logo.png' %}" alt="BUBU Logo">
+            </div>
+            <div class="brand-kh">ប៊ូប៊ូ ផេត ស្តរ៍</div>
+            <div class="brand-en">BUBU Pet Store</div>
         </div>
 
-        <div class="small">
-            {% if sale.pet_name_display %}Name: {{ sale.pet_name_display }}<br>{% endif %}
-            Sex: {{ sale.gender_display|default:"-" }}<br>
-            {% if sale.pet and sale.pet.color %}Color: {{ sale.pet.color }}<br>{% endif %}
-            {% if sale.pet and sale.pet.birth_date %}Birth Date: {{ sale.pet.birth_date|date:"d/m/Y" }}<br>{% endif %}
-            {% if sale.deadline %}Deadline: {{ sale.deadline|date:"d/m/Y" }}<br>{% endif %}
-            {% if sale.note %}Remark: {{ sale.note }}{% endif %}
+        <div class="top-grid">
+            <div class="invoice-box">
+                <div class="invoice-kh">វិក្កយបត្រ</div>
+                <div class="invoice-en">INVOICE</div>
+                <div class="invoice-no">{{ sale.id|stringformat:"06d" }}</div>
+            </div>
+
+            <div class="middle-info">
+                <div class="date-line">
+                    ថ្ងៃទី {{ sale.created_at|date:"d" }} ខែ {{ sale.created_at|date:"m" }} ឆ្នាំ {{ sale.created_at|date:"Y" }}
+                </div>
+
+                <div class="info-list">
+                    <div class="info-row">
+                        <div class="label">ឈ្មោះអតិថិជន</div>
+                        <div class="value">{{ sale.customer_name|default:"-" }}</div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="label">លេខទូរស័ព្ទ</div>
+                        <div class="value">{{ sale.phone|default:"-" }}</div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="label">អាសយដ្ឋាន</div>
+                        <div class="value">{{ sale.address|default:"-" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pet-photo">
+                {% if sale.sale_photo %}
+                    <img src="{{ sale.sale_photo.url }}" alt="Pet Photo">
+                {% elif sale.pet and sale.pet.photo %}
+                    <img src="{{ sale.pet.photo.url }}" alt="Pet Photo">
+                {% elif sale.pet and sale.pet.breed_profile and sale.pet.breed_profile.photo %}
+                    <img src="{{ sale.pet.breed_profile.photo.url }}" alt="Pet Photo">
+                {% else %}
+                    <div class="no-photo">PET<br>PHOTO</div>
+                {% endif %}
+            </div>
         </div>
-    </div>
 
-    <div class="line"></div>
+        <div class="table-wrap">
+            <table class="main-table">
+                <thead>
+                    <tr>
+                        <th class="c-no">ល.រ</th>
+                        <th class="c-desc">ការពិពណ៌នា</th>
+                        <th class="c-qty">ចំនួន</th>
+                        <th class="c-price">តម្លៃ</th>
+                        <th class="c-total">សរុប</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="c-no">1</td>
+                        <td class="c-desc">
+                            <div class="desc-main">
+                                {{ sale.pet_type_display|default:"Dog" }} · {{ sale.breed_display|default:"Poodle" }}
+                            </div>
+                            <div class="desc-sub">
+                                {% if sale.pet_name_display %}Name: {{ sale.pet_name_display }}<br>{% endif %}
+                                Sex: {{ sale.gender_display|default:"Male" }}<br>
+                                {% if sale.deadline %}Deadline: {{ sale.deadline|date:"d/m/Y" }}{% endif %}
+                                {% if sale.note %}<br>Remark: {{ sale.note }}{% endif %}
+                            </div>
+                        </td>
+                        <td class="c-qty">1</td>
+                        <td class="c-price">${{ sale.sale_price }}</td>
+                        <td class="c-total">${{ sale.sale_price }}</td>
+                    </tr>
 
-    <div class="section-title">Customer / អតិថិជន</div>
+                    <tr>
+                        <td class="c-no">2</td>
+                        <td class="c-desc">&nbsp;</td>
+                        <td class="c-qty"></td>
+                        <td class="c-price"></td>
+                        <td class="c-total"></td>
+                    </tr>
 
-    <div class="row"><span>Name</span><strong>{{ sale.customer_name }}</strong></div>
-    <div class="row"><span>Phone</span><strong>{{ sale.phone|default:"-" }}</strong></div>
-    <div class="row"><span>Location</span><strong>{{ sale.address|default:"-" }}</strong></div>
-    <div class="row"><span>Status</span><strong><span class="status-badge">{{ sale.get_status_display }}</span></strong></div>
+                    <tr>
+                        <td class="c-no">3</td>
+                        <td class="c-desc">&nbsp;</td>
+                        <td class="c-qty"></td>
+                        <td class="c-price"></td>
+                        <td class="c-total"></td>
+                    </tr>
 
-    <div class="line"></div>
-
-    <div class="section-title">Payment / ការទូទាត់</div>
-
-    <div class="row"><span>Full Price</span><strong>${{ sale.sale_price }}</strong></div>
-    <div class="row"><span>Paid / Deposit</span><strong>${{ sale.paid_amount }}</strong></div>
-    <div class="row total-row"><span>Remaining</span><strong>${{ sale.remaining_amount }}</strong></div>
-
-    <div class="line"></div>
-
-    <div class="section-title">Warranty / ការធានា</div>
-
-    <div class="row"><span>Warranty Days</span><strong>{{ sale.warranty_days|default:"3" }} days</strong></div>
-    <div class="row"><span>Start Date</span><strong>{{ sale.warranty_start_date|date:"d/m/Y"|default:"Purchase date" }}</strong></div>
-    <div class="row"><span>Expire Date</span><strong>{{ sale.warranty_expire_date|date:"d/m/Y"|default:"Auto after 3 days" }}</strong></div>
-
-    <div class="warranty-box">
-        <div class="warranty-title">គោលការណ៍ធានា</div>
-
-        <ul class="policy">
-            <li>ការធានាមានសុពលភាព ៣ថ្ងៃ ចាប់ពីថ្ងៃទិញ ឬថ្ងៃទទួលសត្វ។</li>
-            <li>ធានាចំពោះជំងឺធ្ងន់ធ្ងរដែលពាក់ព័ន្ធនឹងសុខភាពសត្វ ដូចជា Parvo និង Distemper បើមានការបញ្ជាក់ពីពេទ្យសត្វ។</li>
-            <li>សូមអតិថិជនរក្សាវិក្កយបត្រ និងទាក់ទងមកហាងភ្លាមៗ ប្រសិនបើសត្វមានអាការៈមិនប្រក្រតី។</li>
-            <li>ការធានាមិនគ្របដណ្តប់លើគ្រោះថ្នាក់ ការថែទាំមិនត្រឹមត្រូវ ការផ្លាស់ប្តូរអាហារខុសរបៀប ឬបញ្ហាដែលកើតឡើងក្រោយរយៈពេលធានា។</li>
-            <li>ការប្តូរ ការសងប្រាក់ ឬដំណោះស្រាយផ្សេងៗ ត្រូវពិនិត្យតាមករណីជាក់ស្តែង និងសម្រេចដោយ BUBU Pet Store។</li>
-        </ul>
-
-        <div class="policy-en">
-            <div class="warranty-title">Warranty Policy</div>
-
-            <ul class="policy">
-                <li>Warranty is valid for 3 days from the purchase date or pet handover date.</li>
-                <li>Warranty covers serious health conditions such as Parvo and Distemper when confirmed by a veterinarian.</li>
-                <li>Please keep this receipt and contact BUBU Pet Store immediately if the pet shows abnormal symptoms.</li>
-                <li>Warranty does not cover accidents, improper care, incorrect food changes, or problems occurring after the warranty period.</li>
-                <li>Exchange, refund, or compensation will be reviewed case by case and decided by BUBU Pet Store.</li>
-            </ul>
+                    <tr>
+                        <td class="c-no">4</td>
+                        <td class="c-desc">&nbsp;</td>
+                        <td class="c-qty"></td>
+                        <td class="c-price"></td>
+                        <td class="c-total"></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
+
+        <div class="bottom-grid">
+            <div class="policy-box">
+                <p>- សូមរក្សាវិក្កយបត្រនេះសម្រាប់ការទាមទារការធានា។</p>
+                <p>- ការធានាមានសុពលភាព {{ sale.warranty_days|default:"3" }} ថ្ងៃ ចាប់ពីថ្ងៃទិញ ឬថ្ងៃទទួលសត្វ។</p>
+                <p>- ការធានាគ្របដណ្តប់ជំងឺ Parvo &amp; Distemper បើមានការបញ្ជាក់ពីពេទ្យសត្វ។</p>
+                <p>- សូមទាក់ទងមកហាងភ្លាមៗ ប្រសិនបើសត្វមានអាការៈមិនប្រក្រតី។</p>
+                <p>- BUBU Pet Store សូមរក្សាសិទ្ធិក្នុងការសម្រេចចុងក្រោយ។</p>
+            </div>
+
+            <div>
+                <table class="summary-table">
+                    <tr>
+                        <td>
+                            តម្លៃសរុប
+                            <span class="amount">${{ sale.sale_price }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            បានបង់
+                            <span class="amount">${{ sale.paid_amount }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            នៅខ្វះ
+                            <span class="amount">${{ sale.remaining_amount }}</span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="signatures">
+            <div class="sign-box">ហត្ថលេខាអតិថិជន</div>
+            <div class="sign-box">ហត្ថលេខាបុគ្គលិក</div>
+        </div>
+
+        <div class="footer">
+            <div class="footer-pet">
+                <img src="{% static 'images/bubu-dog.png' %}" alt="Dog" onerror="this.style.display='none';">
+            </div>
+            <div class="footer-text">
+                សូមអរគុណសម្រាប់ការគាំទ្ររបស់លោកអ្នក 💗<br>
+                ជូនពរអោយសត្វចិញ្ចឹមរបស់អ្នកមានសុខភាពល្អពី
+                <span class="footer-brand">BuBu Pet Store</span>
+            </div>
+        </div>
+
     </div>
-
-    <div class="signature">
-        <div><div class="sign-line">Customer Signature</div></div>
-        <div><div class="sign-line">Staff Signature</div></div>
-    </div>
-
-    <div class="line"></div>
-
-    <div class="thank">
-        Thank you! សូមអរគុណ 🐾
-        <div class="small muted">Please keep this receipt for warranty claim.</div>
-    </div>
-
 </div>
 
 <script>
-window.addEventListener("load", function(){
-    setTimeout(function(){
+window.addEventListener("load", function () {
+    setTimeout(function () {
         window.print();
     }, 300);
 });

@@ -6,7 +6,7 @@
     <div class="page-top">
         <div>
             <h1>Pets Stock 🐾</h1>
-            <p>Manage breed stock, real pet photos, current age, sale status and warranty.</p>
+            <p>Default shows In Stock pets from current month. Search by date, status, type, breed, name and color.</p>
         </div>
 
         <div class="top-actions">
@@ -24,22 +24,22 @@
                 <input
                     type="text"
                     name="q"
-                    value="{{ request.GET.q }}"
+                    value="{{ q|default:'' }}"
                     placeholder="Breed, name, color, special type..."
                 >
             </label>
 
             <div class="touch-field">
                 <span>Pet Type</span>
-                <input type="hidden" name="pet_type" id="petTypeInput" value="{{ request.GET.pet_type }}">
+                <input type="hidden" name="pet_type" id="petTypeInput" value="{{ pet_type|default:'' }}">
 
                 <button type="button" onclick="openPopup('type')" class="touch-btn">
                     <strong id="petTypeLabel">
-                        {% if request.GET.pet_type == "dog" %}
+                        {% if pet_type == "dog" %}
                             Dog
-                        {% elif request.GET.pet_type == "cat" %}
+                        {% elif pet_type == "cat" %}
                             Cat
-                        {% elif request.GET.pet_type == "other" %}
+                        {% elif pet_type == "other" %}
                             Other
                         {% else %}
                             All Type
@@ -51,26 +51,48 @@
 
             <div class="touch-field">
                 <span>Status</span>
-                <input type="hidden" name="status" id="statusInput" value="{{ request.GET.status }}">
+                <input type="hidden" name="status" id="statusInput" value="{{ status|default:'in_stock' }}">
 
                 <button type="button" onclick="openPopup('status')" class="touch-btn">
                     <strong id="statusLabel">
-                        {% if request.GET.status == "in_stock" %}
+                        {% if status == "in_stock" %}
                             In Stock
-                        {% elif request.GET.status == "reserved" %}
+                        {% elif status == "reserved" %}
                             Reserved
-                        {% elif request.GET.status == "sold" %}
+                        {% elif status == "sold" %}
                             Sold
-                        {% elif request.GET.status == "preorder" %}
+                        {% elif status == "preorder" %}
                             Preorder
-                        {% elif request.GET.status == "sick" %}
+                        {% elif status == "sick_dead" %}
+                            Sick / Dead
+                        {% elif status == "sick" %}
                             Sick
-                        {% elif request.GET.status == "dead" %}
+                        {% elif status == "dead" %}
                             Dead
-                        {% elif request.GET.status == "cancelled" %}
+                        {% elif status == "cancelled" %}
                             Cancelled
-                        {% else %}
+                        {% elif status == "all" %}
                             All Status
+                        {% else %}
+                            In Stock
+                        {% endif %}
+                    </strong>
+                    <em>⌄</em>
+                </button>
+            </div>
+
+            <div class="touch-field">
+                <span>Date</span>
+
+                <input type="hidden" name="date_from" id="dateFromInput" value="{{ date_from|default:'' }}">
+                <input type="hidden" name="date_to" id="dateToInput" value="{{ date_to|default:'' }}">
+
+                <button type="button" onclick="openPopup('date')" class="touch-btn">
+                    <strong id="dateLabel">
+                        {% if date_from and date_to %}
+                            {{ date_from }} → {{ date_to }}
+                        {% else %}
+                            Current Month
                         {% endif %}
                     </strong>
                     <em>⌄</em>
@@ -83,25 +105,49 @@
     </form>
 
     <div class="summary-grid">
-        <div>
+        <button type="button" onclick="quickStatus('in_stock', 'In Stock')" class="summary-card">
             <span>In Stock</span>
             <strong>{{ in_stock_count|default:0 }}</strong>
-        </div>
+        </button>
 
-        <div>
+        <button type="button" onclick="quickStatus('reserved', 'Reserved')" class="summary-card">
             <span>Reserved</span>
             <strong>{{ reserved_count|default:0 }}</strong>
-        </div>
+        </button>
 
-        <div>
+        <button type="button" onclick="quickStatus('sold', 'Sold')" class="summary-card">
             <span>Sold</span>
             <strong>{{ sold_count|default:0 }}</strong>
-        </div>
+        </button>
 
-        <div class="danger">
+        <button type="button" onclick="quickStatus('sick_dead', 'Sick / Dead')" class="summary-card danger">
             <span>Sick / Dead</span>
             <strong>{{ sick_dead_count|default:0 }}</strong>
+        </button>
+    </div>
+
+    <div class="active-filter-card">
+        <div>
+            <strong>{{ pets.count }}</strong>
+            <span>pets found</span>
         </div>
+
+        <p>
+            Status:
+            <b>
+                {% if status == "in_stock" %}
+                    In Stock
+                {% elif status == "all" %}
+                    All Status
+                {% elif status == "sick_dead" %}
+                    Sick / Dead
+                {% else %}
+                    {{ status }}
+                {% endif %}
+            </b>
+            · Date:
+            <b>{{ date_from }} → {{ date_to }}</b>
+        </p>
     </div>
 
     <div class="pet-grid">
@@ -158,7 +204,14 @@
                             <span>✨ {{ pet.special_type }}</span>
                         {% endif %}
 
-                        <span>📅 Age: {{ pet.current_age_display }}</span>
+                        <span>📅 Stock: {{ pet.created_at|date:"d M Y" }}</span>
+                        <span>🎂 Age: {{ pet.current_age_display }}</span>
+
+                        {% if pet.branch %}
+                            <span>📍 {{ pet.branch.name }}</span>
+                        {% else %}
+                            <span>📍 No Branch</span>
+                        {% endif %}
                     </div>
 
                     <div class="money-row">
@@ -216,13 +269,14 @@
             <div class="empty-box">
                 <div>🐾</div>
                 <h2>No pets found</h2>
-                <p>Stock in dog/cat first.</p>
+                <p>Try another date range, status, or search text.</p>
                 <a href="{% url 'pet_create' %}" class="main-btn">＋ Stock In Pet</a>
             </div>
         {% endfor %}
     </div>
 </div>
 
+<!-- TYPE POPUP -->
 <div class="popup-backdrop" id="typeBackdrop" onclick="closePopup('type')"></div>
 
 <div class="select-popup" id="typePopup">
@@ -239,6 +293,7 @@
     </div>
 </div>
 
+<!-- STATUS POPUP -->
 <div class="popup-backdrop" id="statusBackdrop" onclick="closePopup('status')"></div>
 
 <div class="select-popup" id="statusPopup">
@@ -248,13 +303,46 @@
     </div>
 
     <div class="popup-list">
-        <button type="button" onclick="selectStatus('', 'All Status')">📋 All Status</button>
         <button type="button" onclick="selectStatus('in_stock', 'In Stock')">✅ In Stock</button>
         <button type="button" onclick="selectStatus('reserved', 'Reserved')">🟠 Reserved</button>
         <button type="button" onclick="selectStatus('sold', 'Sold')">💙 Sold</button>
-        <button type="button" onclick="selectStatus('sick', 'Sick')">⚠️ Sick</button>
-        <button type="button" onclick="selectStatus('dead', 'Dead')">🕊️ Dead</button>
+        <button type="button" onclick="selectStatus('preorder', 'Preorder')">📝 Preorder</button>
+        <button type="button" onclick="selectStatus('sick_dead', 'Sick / Dead')">⚠️ Sick / Dead</button>
         <button type="button" onclick="selectStatus('cancelled', 'Cancelled')">❌ Cancelled</button>
+        <button type="button" onclick="selectStatus('all', 'All Status')">📋 All Status</button>
+    </div>
+</div>
+
+<!-- DATE POPUP -->
+<div class="popup-backdrop" id="dateBackdrop" onclick="closePopup('date')"></div>
+
+<div class="select-popup date-popup" id="datePopup">
+    <div class="popup-head">
+        <h3>Choose Date Range</h3>
+        <button type="button" onclick="closePopup('date')">✕</button>
+    </div>
+
+    <div class="date-popup-body">
+        <div class="quick-date-grid">
+            <button type="button" onclick="setToday()">Today</button>
+            <button type="button" onclick="setThisMonth()">This Month</button>
+            <button type="button" onclick="setLastMonth()">Last Month</button>
+            <button type="button" onclick="clearDateRange()">All Date</button>
+        </div>
+
+        <label>
+            From Date
+            <input type="date" id="dateFromPicker" value="{{ date_from|default:'' }}">
+        </label>
+
+        <label>
+            To Date
+            <input type="date" id="dateToPicker" value="{{ date_to|default:'' }}">
+        </label>
+
+        <button type="button" class="apply-date-btn" onclick="applyDateRange()">
+            Apply Date Search
+        </button>
     </div>
 </div>
 
@@ -353,7 +441,8 @@ a{
     color:#ea580c;
 }
 
-.filter-card{
+.filter-card,
+.active-filter-card{
     background:white;
     border:2px solid #f5e0d8;
     border-radius:28px;
@@ -364,7 +453,7 @@ a{
 
 .filter-grid{
     display:grid;
-    grid-template-columns:1.5fr 1fr 1fr auto auto;
+    grid-template-columns:1.5fr 1fr 1fr 1.2fr auto auto;
     gap:14px;
     align-items:end;
 }
@@ -408,6 +497,13 @@ a{
     cursor:pointer;
 }
 
+.touch-btn strong{
+    max-width:210px;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
 .touch-btn em{
     font-style:normal;
     color:#7b5cff;
@@ -421,33 +517,60 @@ a{
     margin-bottom:20px;
 }
 
-.summary-grid div{
+.summary-card{
     background:#f8f6ff;
     border:2px solid #e6dcff;
     border-radius:24px;
     padding:18px;
+    text-align:left;
+    cursor:pointer;
 }
 
-.summary-grid span{
+.summary-card span{
     display:block;
     color:#7b7288;
     font-weight:1000;
 }
 
-.summary-grid strong{
+.summary-card strong{
     display:block;
     margin-top:6px;
     font-size:34px;
     color:#7b5cff;
 }
 
-.summary-grid .danger{
+.summary-card.danger{
     background:#fff0f0;
     border-color:#ffc9c9;
 }
 
-.summary-grid .danger strong{
+.summary-card.danger strong{
     color:#ff3d4f;
+}
+
+.active-filter-card{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+}
+
+.active-filter-card strong{
+    font-size:34px;
+    color:#7b5cff;
+    font-weight:1000;
+}
+
+.active-filter-card span{
+    color:#080634;
+    font-weight:1000;
+}
+
+.active-filter-card p{
+    margin:0;
+    color:#7b7288;
+    font-weight:900;
 }
 
 .pet-grid{
@@ -699,7 +822,7 @@ a{
     left:50%;
     top:50%;
     transform:translate(-50%,-50%);
-    width:390px;
+    width:420px;
     max-width:calc(100% - 28px);
     background:white;
     border-radius:28px;
@@ -710,6 +833,10 @@ a{
 
 .select-popup.active{
     display:block;
+}
+
+.date-popup{
+    width:460px;
 }
 
 .popup-head{
@@ -756,6 +883,58 @@ a{
     cursor:pointer;
 }
 
+.date-popup-body{
+    padding:16px;
+}
+
+.quick-date-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:14px;
+}
+
+.quick-date-grid button{
+    min-height:54px;
+    border:2px solid #eaddec;
+    border-radius:18px;
+    background:#fff8fb;
+    color:#080634;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.date-popup-body label{
+    display:block;
+    color:#080634;
+    font-weight:1000;
+    margin-bottom:12px;
+}
+
+.date-popup-body input{
+    width:100%;
+    height:62px;
+    border:2px solid #eaddec;
+    border-radius:18px;
+    padding:0 14px;
+    margin-top:8px;
+    color:#080634;
+    font-size:17px;
+    font-weight:900;
+}
+
+.apply-date-btn{
+    width:100%;
+    min-height:62px;
+    border:0;
+    border-radius:20px;
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    color:white;
+    font-size:17px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
 @media(max-width:1194px){
     .page-top{
         display:block;
@@ -772,6 +951,14 @@ a{
     .summary-grid,
     .pet-grid{
         grid-template-columns:1fr 1fr;
+    }
+
+    .active-filter-card{
+        display:block;
+    }
+
+    .active-filter-card p{
+        margin-top:8px;
     }
 }
 
@@ -821,7 +1008,14 @@ a{
         border-radius:26px;
     }
 
-    .popup-list button{
+    .popup-list button,
+    .quick-date-grid button{
+        min-height:70px;
+        font-size:18px;
+    }
+
+    .date-popup-body input,
+    .apply-date-btn{
         min-height:70px;
         font-size:18px;
     }
@@ -849,6 +1043,65 @@ function selectStatus(value, label){
     document.getElementById("statusInput").value = value;
     document.getElementById("statusLabel").innerText = label;
     closePopup("status");
+}
+
+function quickStatus(value, label){
+    document.getElementById("statusInput").value = value;
+    document.getElementById("statusLabel").innerText = label;
+    document.getElementById("filterForm").submit();
+}
+
+function formatDate(date){
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+function setToday(){
+    const today = new Date();
+    const value = formatDate(today);
+
+    document.getElementById("dateFromPicker").value = value;
+    document.getElementById("dateToPicker").value = value;
+}
+
+function setThisMonth(){
+    const today = new Date();
+    const first = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    document.getElementById("dateFromPicker").value = formatDate(first);
+    document.getElementById("dateToPicker").value = formatDate(today);
+}
+
+function setLastMonth(){
+    const today = new Date();
+    const first = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const last = new Date(today.getFullYear(), today.getMonth(), 0);
+
+    document.getElementById("dateFromPicker").value = formatDate(first);
+    document.getElementById("dateToPicker").value = formatDate(last);
+}
+
+function clearDateRange(){
+    document.getElementById("dateFromPicker").value = "";
+    document.getElementById("dateToPicker").value = "";
+}
+
+function applyDateRange(){
+    const fromValue = document.getElementById("dateFromPicker").value;
+    const toValue = document.getElementById("dateToPicker").value;
+
+    document.getElementById("dateFromInput").value = fromValue;
+    document.getElementById("dateToInput").value = toValue;
+
+    if(fromValue && toValue){
+        document.getElementById("dateLabel").innerText = fromValue + " → " + toValue;
+    }else{
+        document.getElementById("dateLabel").innerText = "All Date";
+    }
+
+    closePopup("date");
 }
 </script>
 

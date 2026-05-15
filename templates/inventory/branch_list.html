@@ -88,6 +88,12 @@
                 </div>
 
                 <div class="actions">
+                    <a href="{% url 'branch_location_setting' %}?branch={{ b.id }}"
+                       class="location-btn"
+                       title="Set Branch GPS">
+                        📍
+                    </a>
+
                     <button type="button"
                             class="edit-btn"
                             onclick="openEdit('{{ b.id }}', '{{ b.name|escapejs }}', {% if b.is_active %}true{% else %}false{% endif %})">
@@ -235,7 +241,7 @@
 .shop-table{overflow:hidden;border-radius:22px;border:1px solid #f1ddd1}
 .shop-row{
     display:grid;
-    grid-template-columns:1.4fr 1fr 1fr 150px;
+    grid-template-columns:1.4fr 1fr 1fr 210px;
     align-items:center;
     padding:18px 22px;
     border-bottom:1px solid #f5e8df;
@@ -255,16 +261,24 @@
 .status-pill.active{background:#dcffec;color:#10b85d;box-shadow:0 8px 22px rgba(16,184,93,.18)}
 .status-pill.inactive{background:#ffe3e7;color:#ff3d4f;box-shadow:0 8px 22px rgba(255,61,79,.15)}
 
-.actions{display:flex;gap:12px}
+.actions{display:flex;gap:12px;align-items:center}
 .actions form{margin:0}
-.edit-btn,.delete-btn{
+
+.location-btn,
+.edit-btn,
+.delete-btn{
     width:48px;
     height:48px;
     border:0;
     border-radius:14px;
     font-size:18px;
     font-weight:1000;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
 }
+.location-btn{background:#e0f2fe;color:#0284c7}
 .edit-btn{background:#f1e8ff;color:#8d4df8}
 .delete-btn{background:#ffe8e8;color:#ff3547}
 
