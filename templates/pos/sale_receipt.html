@@ -1,63 +1,43 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>BUBU Receipt #{{ sale.id }}</title>
+    <title>Receipt #{{ sale.id }}</title>
 
     <style>
+        @page {
+            size: 58mm auto;
+            margin: 0;
+        }
+
         * {
             box-sizing: border-box;
-            color: #000 !important;
-            background: transparent !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
         }
 
         html, body {
             margin: 0;
             padding: 0;
-            background: #fff !important;
-            font-family: Arial, Helvetica, sans-serif;
-            color: #000 !important;
-        }
-
-        .screen-actions {
-            width: 80mm;
-            margin: 10px auto;
-            display: flex;
-            gap: 8px;
-        }
-
-        .screen-actions button,
-        .screen-actions a {
-            flex: 1;
-            min-height: 40px;
-            border: 2px solid #000;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 900;
-            color: #000 !important;
-            background: #fff !important;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
+            width: 58mm;
+            background: #fff;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            color: #000;
         }
 
         .receipt-wrap {
-            width: 80mm;
-            margin: 0 auto;
-            background: #fff !important;
+            width: 58mm;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
         }
 
         .receipt {
-            width: 72mm;
+            width: 50mm;
             margin: 0 auto;
-            padding: 5mm 3mm 8mm;
-            background: #fff !important;
+            padding: 3mm 0 5mm 0;
+            overflow: hidden;
         }
 
         .center {
@@ -65,206 +45,148 @@
         }
 
         .logo {
-            width: 25mm;
-            max-height: 18mm;
+            width: 22mm;
+            height: 22mm;
             object-fit: contain;
             display: block;
-            margin: 0 auto 4px;
-            filter: grayscale(100%) contrast(180%);
+            margin: 0 auto 2mm auto;
         }
 
-        .brand-title {
-            margin: 0;
+        .store-name {
             font-size: 18px;
             font-weight: 900;
+            letter-spacing: 1px;
             line-height: 1.1;
-            letter-spacing: 0.2px;
         }
 
-        .sub {
-            margin: 2px 0;
-            font-size: 12px;
-            line-height: 1.25;
+        .small {
+            font-size: 11px;
             font-weight: 700;
+            line-height: 1.25;
         }
 
         .dash {
             border-top: 1px dashed #000;
-            margin: 8px 0;
+            margin: 6px 0;
         }
 
-        .row {
+        .line {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            gap: 8px;
-            margin: 5px 0;
-            font-size: 12px;
-            line-height: 1.25;
+            gap: 5px;
+            width: 100%;
         }
 
-        .row .label {
-            flex: 1;
-            font-weight: 700;
+        .line .left {
+            max-width: 35mm;
+            word-break: break-word;
         }
 
-        .row .value {
+        .line .right {
+            min-width: 13mm;
             text-align: right;
-            font-weight: 900;
+            font-weight: 800;
             white-space: nowrap;
-        }
-
-        .item {
-            margin: 8px 0 10px;
-        }
-
-        .item-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 8px;
-            font-size: 12px;
         }
 
         .item-name {
-            font-size: 12px;
             font-weight: 900;
+            font-size: 12px;
             line-height: 1.25;
-            max-width: 48mm;
         }
 
-        .item-price {
-            font-size: 12px;
-            font-weight: 900;
-            white-space: nowrap;
-        }
-
-        .item-meta {
-            margin-top: 2px;
+        .item-sub {
             font-size: 11px;
-            line-height: 1.3;
             font-weight: 700;
+            line-height: 1.25;
         }
 
-        .final-box {
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             border-top: 2px solid #000;
             border-bottom: 2px solid #000;
-            margin: 8px 0;
-            padding: 8px 0 7px;
+            padding: 5px 0;
+            margin-top: 6px;
+            margin-bottom: 5px;
         }
 
-        .final-box .row {
-            margin: 0;
-            align-items: center;
-        }
-
-        .final-box .label {
+        .total-label {
             font-size: 18px;
             font-weight: 900;
         }
 
-        .final-box .value {
+        .total-price {
             font-size: 22px;
             font-weight: 900;
+            white-space: nowrap;
         }
 
         .section-title {
+            font-weight: 900;
             font-size: 13px;
-            font-weight: 900;
-            margin: 0 0 4px;
+            margin-top: 5px;
         }
 
-        .member-invite {
-            margin: 8px auto;
-            padding: 6px;
+        .member-box {
             border: 1px dashed #000;
-            font-size: 10.5px;
-            line-height: 1.35;
-            font-weight: 900;
             text-align: center;
-            width: 100%;
-            background: #fff !important;
-        }
-
-        .footer-banner {
-            margin: 8px auto 0;
-            padding: 0;
-            width: 60mm;
-            text-align: center;
-            background: #fff !important;
-        }
-
-        .footer-dog {
-            width: 11mm;
-            max-width: 11mm;
-            height: auto;
-            display: block;
-            margin: 0 auto 3px;
-            filter: grayscale(100%) contrast(200%);
-        }
-
-        .footer-kh {
-            font-size: 9px;
-            line-height: 1.45;
+            padding: 6px 2px;
+            margin-top: 6px;
+            font-size: 11px;
             font-weight: 800;
-            text-align: center;
-            color: #000 !important;
+            line-height: 1.25;
         }
 
-        .footer-kh .brand,
-        .footer-kh .heart {
-            color: #000 !important;
-            font-weight: 900;
-            font-style: normal;
-        }
-
-        .thank-center {
+        .footer {
             text-align: center;
+            font-size: 11px;
+            font-weight: 800;
+            line-height: 1.35;
             margin-top: 8px;
         }
 
-        .thank-center .thank-main {
-            font-size: 12px;
-            font-weight: 900;
-            line-height: 1.3;
+        .footer-dog {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 2px;
         }
 
-        .thank-center .thank-sub {
-            font-size: 11px;
-            font-weight: 900;
-            line-height: 1.3;
-        }
-
-        @page {
-            size: 80mm auto;
-            margin: 0;
+        .btn-print {
+            display: block;
+            width: 160px;
+            margin: 20px auto;
+            padding: 12px;
+            border: 0;
+            border-radius: 8px;
+            background: #111;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
         }
 
         @media print {
-            html, body {
-                width: 80mm;
-                margin: 0 !important;
-                padding: 0 !important;
-                background: #fff !important;
+            .btn-print {
+                display: none;
             }
 
-            .screen-actions {
-                display: none !important;
+            html, body {
+                width: 58mm;
+                margin: 0;
+                padding: 0;
             }
 
             .receipt-wrap {
-                width: 80mm !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                background: #fff !important;
+                width: 58mm;
+                margin: 0;
+                padding: 0;
             }
 
             .receipt {
-                width: 72mm !important;
-                margin-left: 0mm !important;
-                margin-right: auto !important;
-                padding: 5mm 2mm 8mm !important;
-                background: #fff !important;
+                width: 50mm;
+                margin-left: auto;
+                margin-right: auto;
             }
         }
     </style>
@@ -272,201 +194,130 @@
 
 <body>
 
-<div class="screen-actions">
-    <button type="button" onclick="window.print()">Print</button>
-    <a href="{% url 'pos' %}">Back POS</a>
-</div>
+<button class="btn-print" onclick="window.print()">Print Receipt</button>
 
 <div class="receipt-wrap">
     <div class="receipt">
 
         <div class="center">
-            <img src="{% static 'img/bubu-logo.png' %}" alt="BUBU Logo" class="logo">
+            <img class="logo" src="{% static 'images/bubu_receipt_logo.png' %}" alt="BUBU Logo">
 
-            <h1 class="brand-title">BUBU PET STORE</h1>
-            <div class="sub">Sale Receipt</div>
+            <div class="store-name">BUBU PET STORE</div>
+            <div class="small">Sale Receipt</div>
 
-            <div class="sub">
+            <div class="small">
                 Shop:
                 {% if sale.branch %}
                     {{ sale.branch.name }}
                 {% else %}
-                    No Branch
+                    BUBU PET STORE
                 {% endif %}
             </div>
 
-            <div class="sub">Receipt #{{ sale.id }}</div>
-            <div class="sub">{{ sale.created_at|date:"d M Y H:i" }}</div>
+            <div class="small">Receipt #{{ sale.id }}</div>
+            <div class="small">{{ sale.created_at|date:"d M Y H:i" }}</div>
         </div>
 
         <div class="dash"></div>
 
-        {% if sale.customer %}
-            <div class="row">
-                <div class="label">Customer</div>
-                <div class="value">
-                    {% if sale.customer.phone %}
-                        {{ sale.customer.phone }}
-                    {% else %}
-                        {{ sale.customer.name }}
-                    {% endif %}
-                </div>
+        <div class="line">
+            <div class="left"><b>Status</b></div>
+            <div class="right">
+                {% if sale.status %}
+                    {{ sale.status|title }}
+                {% else %}
+                    Paid
+                {% endif %}
             </div>
-
-            {% if sale.customer.points and sale.customer.points > 0 %}
-                <div class="row">
-                    <div class="label">Customer Point</div>
-                    <div class="value">{{ sale.customer.points|default:0 }}</div>
-                </div>
-            {% endif %}
-        {% endif %}
-
-        <div class="row">
-            <div class="label">Status</div>
-            <div class="value">{{ sale.status }}</div>
         </div>
 
         <div class="dash"></div>
 
-        {% for line in sale.items.all %}
-            <div class="item">
-                <div class="item-head">
-                    <div class="item-name">{{ line.item.name }}</div>
-                    <div class="item-price">${{ line.total|floatformat:2 }}</div>
+        {% for item in sale.items.all %}
+            <div class="line">
+                <div class="left item-name">
+                    {{ item.name|default:item.item.name }}
                 </div>
+                <div class="right">
+                    ${{ item.line_total|floatformat:2 }}
+                </div>
+            </div>
 
-                {% if line.item.item_type %}
-                    <div class="item-meta">{{ line.item.item_type.name }}</div>
+            <div class="item-sub">
+                {% if item.variant %}
+                    {{ item.variant }}
                 {% endif %}
+            </div>
 
-                <div class="item-meta">{{ line.quantity }} x ${{ line.price|floatformat:2 }}</div>
+            <div class="item-sub">
+                {{ item.quantity }} x ${{ item.price|floatformat:2 }}
+            </div>
+
+            <div class="dash"></div>
+        {% endfor %}
+
+        <div class="total-row">
+            <div class="total-label">Final Total</div>
+            <div class="total-price">${{ sale.final_total|floatformat:2 }}</div>
+        </div>
+
+        <div class="line">
+            <div class="left"><b>Paid</b></div>
+            <div class="right">${{ sale.paid_amount|floatformat:2 }}</div>
+        </div>
+
+        <div class="line">
+            <div class="left"><b>Balance</b></div>
+            <div class="right">${{ sale.balance|floatformat:2 }}</div>
+        </div>
+
+        <div class="dash"></div>
+
+        <div class="section-title">Payment Detail</div>
+
+        {% for payment in sale.payments.all %}
+            <div class="line">
+                <div class="left">
+                    {{ payment.get_method_display|default:payment.method }}
+                </div>
+                <div class="right">
+                    ${{ payment.amount_usd|floatformat:2 }}
+                </div>
+            </div>
+        {% empty %}
+            <div class="line">
+                <div class="left">Cash USD</div>
+                <div class="right">${{ sale.paid_amount|floatformat:2 }}</div>
             </div>
         {% endfor %}
 
         <div class="dash"></div>
 
-        {% if product_total and product_total > 0 %}
-            <div class="row">
-                <div class="label">Products</div>
-                <div class="value">${{ product_total|floatformat:2 }}</div>
-            </div>
-        {% endif %}
-
-        {% if grooming_total and grooming_total > 0 %}
-            <div class="row">
-                <div class="label">Grooming</div>
-                <div class="value">${{ grooming_total|floatformat:2 }}</div>
-            </div>
-        {% endif %}
-
-        {% if service_total and service_total > 0 %}
-            <div class="row">
-                <div class="label">Services</div>
-                <div class="value">${{ service_total|floatformat:2 }}</div>
-            </div>
-        {% endif %}
-
-        {% if pet_total and pet_total > 0 %}
-            <div class="row">
-                <div class="label">Pet / Dog / Cat</div>
-                <div class="value">${{ pet_total|floatformat:2 }}</div>
-            </div>
-        {% endif %}
-
-        {% if sale.discount_amount and sale.discount_amount > 0 %}
-            <div class="row">
-                <div class="label">
-                    Discount
-                    {% if sale.discount_type == "percent" %}
-                        ({{ sale.discount_value|floatformat:0 }}%)
-                    {% endif %}
-                </div>
-                <div class="value">-${{ sale.discount_amount|floatformat:2 }}</div>
-            </div>
-        {% endif %}
-
-        {% if sale.tax_amount and sale.tax_amount > 0 %}
-            <div class="row">
-                <div class="label">
-                    Tax
-                    {% if sale.tax_type == "percent" %}
-                        ({{ sale.tax_value|floatformat:0 }}%)
-                    {% endif %}
-                </div>
-                <div class="value">${{ sale.tax_amount|floatformat:2 }}</div>
-            </div>
-        {% endif %}
-
-        <div class="final-box">
-            <div class="row">
-                <div class="label">Final Total</div>
-                <div class="value">${{ sale.total_amount|floatformat:2 }}</div>
-            </div>
+        <div class="member-box">
+            Membership Program<br>
+            Now we have membership program.<br>
+            Please join us to collect points.
         </div>
-
-        <div class="row">
-            <div class="label">Paid</div>
-            <div class="value">${{ sale.paid_amount|floatformat:2 }}</div>
-        </div>
-
-        <div class="row">
-            <div class="label">Balance</div>
-            <div class="value">${{ balance|floatformat:2 }}</div>
-        </div>
-
-        {% if sale.change_amount and sale.change_amount > 0 %}
-            <div class="row">
-                <div class="label">Change</div>
-                <div class="value">${{ sale.change_amount|floatformat:2 }}</div>
-            </div>
-        {% endif %}
 
         <div class="dash"></div>
 
-        {% if sale.payments.all %}
-            <div class="section-title">Payment Detail</div>
-
-            {% for payment in sale.payments.all %}
-                <div class="row">
-                    <div class="label">{{ payment.get_method_display }}</div>
-                    <div class="value">${{ payment.amount|floatformat:2 }}</div>
-                </div>
-            {% endfor %}
-
-            <div class="dash"></div>
-        {% endif %}
-
-        {% if not sale.customer or not sale.customer.points or sale.customer.points <= 0 %}
-            <div class="member-invite">
-                Membership Program<br>
-                Now we have membership program.<br>
-                Please join us to collect points.
-            </div>
-        {% endif %}
-
-        <div class="footer-banner">
-            <img src="{% static 'img/bubu-receipt-thankyou.png' %}" alt="Dog" class="footer-dog">
-
-            <div class="footer-kh">
-                សូមអរគុណសម្រាប់ការគាំទ្រ និងជឿជាក់លើហាង<br>
-                Bubu Pet Store
-            </div>
-        </div>
-
-        <div class="thank-center">
-            <div class="thank-main">Thank you!</div>
-            <div class="thank-sub">Please come again</div>
+        <div class="footer">
+            <div class="footer-dog">Dog</div>
+            សូមអរគុណសម្រាប់ការទិញទំនិញជាមួយពួកយើង<br>
+            Bubu Pet Store<br><br>
+            Thank you!<br>
+            Please come again
         </div>
 
     </div>
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    setTimeout(function () {
-        window.print();
-    }, 400);
-});
+    window.onload = function () {
+        setTimeout(function () {
+            window.print();
+        }, 300);
+    };
 </script>
 
 </body>
