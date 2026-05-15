@@ -16,13 +16,13 @@
         }
 
         html, body {
+            width: 58mm;
             margin: 0;
             padding: 0;
-            width: 58mm;
             background: #fff;
-            font-family: Arial, sans-serif;
-            font-size: 11px;
             color: #000;
+            font-family: Arial, sans-serif;
+            font-size: 10.5px;
         }
 
         .receipt-wrap {
@@ -34,7 +34,7 @@
         }
 
         .receipt {
-            width: 50mm;
+            width: 46mm;      /* IMPORTANT: printer printable area is 48mm */
             margin: 0 auto;
             padding: 3mm 0 5mm 0;
             overflow: hidden;
@@ -45,58 +45,56 @@
         }
 
         .logo {
-            width: 22mm;
-            height: 22mm;
-            object-fit: contain;
+            width: 19mm;
+            height: auto;
             display: block;
             margin: 0 auto 2mm auto;
         }
 
         .store-name {
-            font-size: 18px;
+            font-size: 15px;
             font-weight: 900;
-            letter-spacing: 1px;
             line-height: 1.1;
         }
 
         .small {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
             line-height: 1.25;
         }
 
         .dash {
             border-top: 1px dashed #000;
-            margin: 6px 0;
+            margin: 5px 0;
         }
 
         .line {
             display: flex;
             justify-content: space-between;
-            gap: 5px;
+            gap: 3px;
             width: 100%;
         }
 
-        .line .left {
-            max-width: 35mm;
+        .left {
+            max-width: 31mm;
             word-break: break-word;
         }
 
-        .line .right {
-            min-width: 13mm;
+        .right {
+            min-width: 12mm;
             text-align: right;
             font-weight: 800;
             white-space: nowrap;
         }
 
         .item-name {
+            font-size: 11px;
             font-weight: 900;
-            font-size: 12px;
             line-height: 1.25;
         }
 
         .item-sub {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
             line-height: 1.25;
         }
@@ -107,50 +105,50 @@
             align-items: center;
             border-top: 2px solid #000;
             border-bottom: 2px solid #000;
-            padding: 5px 0;
-            margin-top: 6px;
-            margin-bottom: 5px;
+            padding: 4px 0;
+            margin: 5px 0;
         }
 
         .total-label {
-            font-size: 18px;
+            font-size: 15px;
             font-weight: 900;
         }
 
         .total-price {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 900;
             white-space: nowrap;
         }
 
         .section-title {
             font-weight: 900;
-            font-size: 13px;
+            font-size: 12px;
             margin-top: 5px;
         }
 
         .member-box {
             border: 1px dashed #000;
             text-align: center;
-            padding: 6px 2px;
-            margin-top: 6px;
-            font-size: 11px;
+            padding: 5px 2px;
+            margin-top: 5px;
+            font-size: 9.5px;
             font-weight: 800;
             line-height: 1.25;
         }
 
         .footer {
             text-align: center;
-            font-size: 11px;
+            font-size: 9.5px;
             font-weight: 800;
             line-height: 1.35;
-            margin-top: 8px;
+            margin-top: 7px;
         }
 
-        .footer-dog {
-            font-size: 15px;
-            font-weight: 500;
-            margin-bottom: 2px;
+        .dog-bottom {
+            width: 14mm;
+            height: auto;
+            display: block;
+            margin: 5px auto 2px auto;
         }
 
         .btn-print {
@@ -179,14 +177,12 @@
 
             .receipt-wrap {
                 width: 58mm;
-                margin: 0;
-                padding: 0;
+                justify-content: center;
             }
 
             .receipt {
-                width: 50mm;
-                margin-left: auto;
-                margin-right: auto;
+                width: 46mm;
+                margin: 0 auto;
             }
         }
     </style>
@@ -302,7 +298,7 @@
         <div class="dash"></div>
 
         <div class="footer">
-            <div class="footer-dog">Dog</div>
+            <img class="dog-bottom" src="{% static 'images/bubu_dog_bottom.png' %}" alt="Dog">
             សូមអរគុណសម្រាប់ការទិញទំនិញជាមួយពួកយើង<br>
             Bubu Pet Store<br><br>
             Thank you!<br>
