@@ -4,7 +4,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>BUBU Receipt #{{ sale.id }}</title>
+    <title>BUBU POS Sale Receipt #{{ sale.id }}</title>
 
     <style>
         * {
@@ -18,7 +18,6 @@
             padding: 0;
             background: #fff !important;
             font-family: Arial, Helvetica, sans-serif;
-            color: #000 !important;
         }
 
         .screen-actions {
@@ -36,7 +35,6 @@
             border-radius: 8px;
             font-size: 14px;
             font-weight: 900;
-            color: #000 !important;
             background: #fff !important;
             text-decoration: none;
             display: flex;
@@ -53,33 +51,41 @@
 
         .receipt {
             width: 72mm;
-            margin-left: 0mm;
+            margin-left: 0;
             margin-right: auto;
             padding: 5mm 2mm 8mm;
             background: #fff !important;
         }
 
-        .center { text-align: center; }
+        .center {
+            text-align: center;
+        }
 
         .logo {
-            width: 24mm;
-            max-height: 18mm;
+            width: 34mm;
+            max-height: 27mm;
             object-fit: contain;
             display: block;
-            margin: 0 auto 4px;
-            filter: grayscale(100%) contrast(200%);
+            margin: 0 auto 3px;
+            filter: grayscale(100%) contrast(210%);
         }
 
         .brand-title {
             margin: 0;
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 900;
             line-height: 1.1;
         }
 
-        .sub {
+        .receipt-title {
             margin: 2px 0;
             font-size: 12px;
+            font-weight: 900;
+        }
+
+        .sub {
+            margin: 2px 0;
+            font-size: 11.5px;
             line-height: 1.25;
             font-weight: 700;
         }
@@ -92,7 +98,6 @@
         .row {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
             gap: 8px;
             margin: 5px 0;
             font-size: 12px;
@@ -117,15 +122,14 @@
         .item-head {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
             gap: 8px;
         }
 
         .item-name {
+            max-width: 47mm;
             font-size: 12px;
             font-weight: 900;
             line-height: 1.25;
-            max-width: 47mm;
         }
 
         .item-price {
@@ -178,7 +182,6 @@
             font-weight: 900;
             text-align: center;
             width: 100%;
-            background: #fff !important;
         }
 
         .footer-banner {
@@ -188,8 +191,8 @@
         }
 
         .footer-dog {
-            width: 11mm;
-            max-width: 11mm;
+            width: 18mm;
+            max-width: 18mm;
             height: auto;
             display: block;
             margin: 0 auto 3px;
@@ -197,7 +200,7 @@
         }
 
         .footer-kh {
-            font-size: 9px;
+            font-size: 12px;
             line-height: 1.45;
             font-weight: 800;
             text-align: center;
@@ -264,9 +267,9 @@
     <div class="receipt">
 
         <div class="center">
-            <img src="{% static 'img/bubu-logo.png' %}" alt="BUBU Logo" class="logo">
+            <img src="{% static 'img/bubu-pos-sale-logo.png' %}" alt="BUBU POS Sale Logo" class="logo">
             <h1 class="brand-title">BUBU PET STORE</h1>
-            <div class="sub">Sale Receipt</div>
+            <div class="receipt-title">POS Sale Receipt</div>
 
             <div class="sub">
                 Shop:
@@ -461,7 +464,7 @@
         {% endif %}
 
         <div class="footer-banner">
-            <img src="{% static 'img/bubu-receipt-thankyou.png' %}" alt="Dog" class="footer-dog">
+            <img src="{% static 'img/bubu-receipt-dog.png' %}" alt="Dog" class="footer-dog">
             <div class="footer-kh">
                 សូមអរគុណសម្រាប់ការគាំទ្រ និងជឿជាក់លើហាង<br>
                 Bubu Pet Store
