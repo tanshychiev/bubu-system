@@ -7,7 +7,7 @@
     <div class="page-top">
         <div>
             <h1>Pet Sale List 🐾</h1>
-            <p>View all in-stock pet sales, deposits, completed sales and pre-orders.</p>
+            <p>View pet sales, deposits, completed sales and pre-orders. Default search is this month.</p>
         </div>
 
         <div class="top-actions">
@@ -25,7 +25,7 @@
                     type="text"
                     name="q"
                     value="{{ q|default:'' }}"
-                    placeholder="Customer, phone, breed, color..."
+                    placeholder="Customer, phone, breed, color, seller..."
                 >
             </label>
 
@@ -71,15 +71,64 @@
                 </button>
             </div>
 
+            <div class="touch-field date-touch-field">
+                <span>Date Range</span>
+                <input type="hidden" name="date_from" id="dateFromInput" value="{{ date_from|default:'' }}">
+                <input type="hidden" name="date_to" id="dateToInput" value="{{ date_to|default:'' }}">
+
+                <button type="button" class="touch-btn date-touch-btn" onclick="openDatePopup()">
+                    <strong id="dateLabel">
+                        {% if date_from and date_to %}
+                            {{ date_from }} → {{ date_to }}
+                        {% else %}
+                            This Month
+                        {% endif %}
+                    </strong>
+                    <em>⌄</em>
+                </button>
+            </div>
+
             <button type="submit" class="dark-btn">Search</button>
             <a href="{% url 'pet_sale_list' %}" class="clear-btn">Clear</a>
         </div>
     </form>
 
-    <div class="summary-grid">
+    <div class="summary-grid result-summary">
+        <div class="summary-card blue">
+            <span>Total Pets</span>
+            <strong id="summaryTotalPets">{{ total_pet_count|default:sales.count|default:0 }}</strong>
+            <small>Current search result</small>
+        </div>
+
+        <div class="summary-card green">
+            <span>Dogs</span>
+            <strong id="summaryDogs">{{ dog_count|default:0 }}</strong>
+            <small>Current search result</small>
+        </div>
+
+        <div class="summary-card purple">
+            <span>Cats</span>
+            <strong id="summaryCats">{{ cat_count|default:0 }}</strong>
+            <small>Current search result</small>
+        </div>
+
+        <div class="summary-card orange">
+            <span>Pre-order</span>
+            <strong id="summaryPreorder">{{ preorder_count|default:0 }}</strong>
+            <small>Current search result</small>
+        </div>
+
+        <div class="summary-card teal">
+            <span>In-stock Sale</span>
+            <strong id="summaryInstock">{{ instock_count|default:0 }}</strong>
+            <small>Current search result</small>
+        </div>
+    </div>
+
+    <div class="summary-grid money-summary">
         <div>
             <span>Total Sales</span>
-            <strong>{{ total_sales|default:0 }}</strong>
+            <strong>{{ total_sales|default:sales.count|default:0 }}</strong>
         </div>
 
         <div>
@@ -98,6 +147,50 @@
         </div>
     </div>
 
+    <div class="active-filter-card">
+        <div>
+            <strong>{{ sales.count }}</strong>
+            <span>sales found</span>
+        </div>
+
+        <p>
+            Date:
+            <b id="activeDateText">
+                {% if date_from and date_to %}
+                    {{ date_from }} → {{ date_to }}
+                {% else %}
+                    This Month
+                {% endif %}
+            </b>
+            · Type:
+            <b>
+                {% if sale_kind == "in_stock" %}
+                    In-stock Sale
+                {% elif sale_kind == "preorder" %}
+                    Pre-order
+                {% else %}
+                    All Type
+                {% endif %}
+            </b>
+            · Status:
+            <b>
+                {% if status == "deposit" %}
+                    Deposit / Waiting
+                {% elif status == "arrived" %}
+                    Arrived
+                {% elif status == "completed" %}
+                    Completed
+                {% elif status == "cancelled" %}
+                    Cancelled
+                {% elif status == "refunded" %}
+                    Refunded
+                {% else %}
+                    All Status
+                {% endif %}
+            </b>
+        </p>
+    </div>
+
     <div class="sale-table-card">
         <div class="desktop-table">
             <table>
@@ -106,6 +199,7 @@
                         <th>ID</th>
                         <th>Pet</th>
                         <th>Customer</th>
+                        <th>Seller</th>
                         <th>Price</th>
                         <th>Paid</th>
                         <th>Balance</th>
@@ -115,18 +209,22 @@
                     </tr>
                 </thead>
 
-                <tbody>
+                <tbody id="saleTableBody">
                     {% for sale in sales %}
-                        <tr>
+                        <tr
+                            class="sale-data-row"
+                            data-kind="{{ sale.sale_kind|default:'' }}"
+                            data-pet-type="{% if sale.pet %}{{ sale.pet.pet_type|default:'' }}{% else %}{{ sale.preorder_pet_type|default:'' }}{% endif %}"
+                        >
                             <td>#{{ sale.id }}</td>
 
                             <td>
                                 <div class="pet-info">
                                     <div class="mini-photo">
                                         {% if sale.sale_photo %}
-                                            <img src="{{ sale.sale_photo.url }}">
+                                            <img src="{{ sale.sale_photo.url }}" alt="">
                                         {% elif sale.pet and sale.pet.display_photo %}
-                                            <img src="{{ sale.pet.display_photo.url }}">
+                                            <img src="{{ sale.pet.display_photo.url }}" alt="">
                                         {% else %}
                                             <span>🐾</span>
                                         {% endif %}
@@ -144,8 +242,23 @@
                             </td>
 
                             <td>
-                                <strong>{{ sale.customer_name }}</strong>
+                                <strong>{{ sale.customer_name|default:"Walk-in" }}</strong>
                                 <small>{{ sale.phone|default:"No phone" }}</small>
+                            </td>
+
+                            <td>
+                                <strong>
+                                    {% if sale.seller %}
+                                        {{ sale.seller.get_full_name|default:sale.seller.username }}
+                                    {% elif sale.created_by %}
+                                        {{ sale.created_by.get_full_name|default:sale.created_by.username }}
+                                    {% elif sale.staff %}
+                                        {{ sale.staff.get_full_name|default:sale.staff.username }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </strong>
+                                <small>Seller</small>
                             </td>
 
                             <td>${{ sale.sale_price|floatformat:2 }}</td>
@@ -169,8 +282,9 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="9">
+                            <td colspan="10">
                                 <div class="empty-box">
+                                    <div class="paw-empty">🐾</div>
                                     <h2>No pet sale yet</h2>
                                     <p>Create sale or pre-order first.</p>
                                     <a href="{% url 'pet_sale_create' %}" class="main-btn">＋ New Sale</a>
@@ -184,13 +298,17 @@
 
         <div class="mobile-list">
             {% for sale in sales %}
-                <div class="sale-card">
+                <div
+                    class="sale-card sale-data-row"
+                    data-kind="{{ sale.sale_kind|default:'' }}"
+                    data-pet-type="{% if sale.pet %}{{ sale.pet.pet_type|default:'' }}{% else %}{{ sale.preorder_pet_type|default:'' }}{% endif %}"
+                >
                     <div class="sale-card-top">
                         <div class="mini-photo">
                             {% if sale.sale_photo %}
-                                <img src="{{ sale.sale_photo.url }}">
+                                <img src="{{ sale.sale_photo.url }}" alt="">
                             {% elif sale.pet and sale.pet.display_photo %}
-                                <img src="{{ sale.pet.display_photo.url }}">
+                                <img src="{{ sale.pet.display_photo.url }}" alt="">
                             {% else %}
                                 <span>🐾</span>
                             {% endif %}
@@ -198,7 +316,19 @@
 
                         <div>
                             <h3>#{{ sale.id }} · {{ sale.breed_display|default:"-" }}</h3>
-                            <p>{{ sale.customer_name }} · {{ sale.phone|default:"No phone" }}</p>
+                            <p>{{ sale.customer_name|default:"Walk-in" }} · {{ sale.phone|default:"No phone" }}</p>
+                            <p class="seller-mobile">
+                                Seller:
+                                {% if sale.seller %}
+                                    {{ sale.seller.get_full_name|default:sale.seller.username }}
+                                {% elif sale.created_by %}
+                                    {{ sale.created_by.get_full_name|default:sale.created_by.username }}
+                                {% elif sale.staff %}
+                                    {{ sale.staff.get_full_name|default:sale.staff.username }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </p>
                         </div>
                     </div>
 
@@ -228,6 +358,7 @@
                 </div>
             {% empty %}
                 <div class="empty-box">
+                    <div class="paw-empty">🐾</div>
                     <h2>No pet sale yet</h2>
                     <p>Create sale or pre-order first.</p>
                     <a href="{% url 'pet_sale_create' %}" class="main-btn">＋ New Sale</a>
@@ -237,6 +368,7 @@
     </div>
 </div>
 
+<!-- SALE TYPE POPUP -->
 <div class="popup-backdrop" id="kindBackdrop" onclick="closePopup('kind')"></div>
 <div class="select-popup" id="kindPopup">
     <div class="popup-head">
@@ -251,6 +383,7 @@
     </div>
 </div>
 
+<!-- STATUS POPUP -->
 <div class="popup-backdrop" id="statusBackdrop" onclick="closePopup('status')"></div>
 <div class="select-popup" id="statusPopup">
     <div class="popup-head">
@@ -265,6 +398,70 @@
         <button type="button" onclick="selectStatus('completed', 'Completed')">✅ Completed</button>
         <button type="button" onclick="selectStatus('cancelled', 'Cancelled')">❌ Cancelled</button>
         <button type="button" onclick="selectStatus('refunded', 'Refunded')">↩️ Refunded</button>
+    </div>
+</div>
+
+<!-- DATE POPUP -->
+<div class="popup-backdrop" id="dateBackdrop" onclick="closeDatePopup()"></div>
+<div class="date-popup-panel" id="datePopup">
+    <div class="date-popup-head">
+        <span>Choose date range</span>
+        <strong id="datePopupTitle">This Month</strong>
+        <button type="button" onclick="closeDatePopup()">✕</button>
+    </div>
+
+    <div class="quick-date-grid">
+        <button type="button" onclick="setToday()">Today</button>
+        <button type="button" onclick="setYesterday()">Yesterday</button>
+        <button type="button" onclick="setThisMonth()">This Month</button>
+        <button type="button" onclick="setLastMonth()">Last Month</button>
+    </div>
+
+    <div class="calendar-top">
+        <h3 id="calendarMonthTitle">Month</h3>
+        <div>
+            <button type="button" onclick="moveMonth(-1)">‹</button>
+            <button type="button" onclick="moveMonth(1)">›</button>
+        </div>
+    </div>
+
+    <div class="selected-range-box">
+        <div>
+            <span>From</span>
+            <strong id="selectedFromShow">-</strong>
+        </div>
+        <div>
+            <span>To</span>
+            <strong id="selectedToShow">-</strong>
+        </div>
+    </div>
+
+    <div class="week-row">
+        <span>Su</span>
+        <span>Mo</span>
+        <span>Tu</span>
+        <span>We</span>
+        <span>Th</span>
+        <span>Fr</span>
+        <span>Sa</span>
+    </div>
+
+    <div class="calendar-grid" id="calendarGrid"></div>
+
+    <div class="time-box">
+        <div class="time-title">Time</div>
+        <div class="time-grid">
+            <button type="button" onclick="setQuickTime('00:00')">00:00</button>
+            <button type="button" onclick="setQuickTime('08:00')">08:00</button>
+            <button type="button" onclick="setQuickTime('12:00')">12:00</button>
+            <button type="button" onclick="setQuickTime('23:59')">23:59</button>
+        </div>
+        <small>Time buttons are for touch selection only. Search uses date from/to.</small>
+    </div>
+
+    <div class="date-popup-actions">
+        <button type="button" class="all-date-btn" onclick="clearDateRange()">All Date</button>
+        <button type="button" class="apply-date-btn" onclick="applyDateRange()">Apply Search</button>
     </div>
 </div>
 
@@ -346,7 +543,8 @@ a{text-decoration:none}
 }
 
 .filter-card,
-.sale-table-card{
+.sale-table-card,
+.active-filter-card{
     background:white;
     border:2px solid #f5e0d8;
     border-radius:28px;
@@ -357,7 +555,7 @@ a{text-decoration:none}
 
 .filter-grid{
     display:grid;
-    grid-template-columns:1.5fr 1fr 1fr auto auto;
+    grid-template-columns:1.5fr 1fr 1fr 1.3fr auto auto;
     gap:14px;
     align-items:end;
 }
@@ -401,10 +599,21 @@ a{text-decoration:none}
     cursor:pointer;
 }
 
+.touch-btn strong{
+    max-width:260px;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
 .touch-btn em{
     font-style:normal;
     color:#7b5cff;
     font-size:20px;
+}
+
+.result-summary{
+    grid-template-columns:repeat(5,1fr) !important;
 }
 
 .summary-grid{
@@ -434,6 +643,25 @@ a{text-decoration:none}
     color:#7b5cff;
 }
 
+.summary-grid small{
+    display:block;
+    margin-top:5px;
+    color:#9a8fb1;
+    font-size:12px;
+    font-weight:900;
+}
+
+.summary-card.blue{background:#eef6ff;border-color:#cfe6ff}
+.summary-card.blue strong{color:#2563eb}
+.summary-card.green{background:#ecfdf5;border-color:#bbf7d0}
+.summary-card.green strong{color:#16a34a}
+.summary-card.purple{background:#f4f0ff;border-color:#ddd6fe}
+.summary-card.purple strong{color:#7b5cff}
+.summary-card.orange{background:#fff7ed;border-color:#fed7aa}
+.summary-card.orange strong{color:#ea580c}
+.summary-card.teal{background:#ecfeff;border-color:#a5f3fc}
+.summary-card.teal strong{color:#0891b2}
+
 .summary-grid .danger{
     background:#fff0f0;
     border-color:#ffc9c9;
@@ -443,8 +671,39 @@ a{text-decoration:none}
     color:#ff3d4f;
 }
 
+.active-filter-card{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+}
+
+.active-filter-card strong{
+    font-size:32px;
+    color:#7b5cff;
+    font-weight:1000;
+}
+
+.active-filter-card span{
+    font-weight:1000;
+    color:#080634;
+}
+
+.active-filter-card p{
+    margin:0;
+    color:#7b7288;
+    font-weight:900;
+    text-align:right;
+}
+
+.desktop-table{
+    overflow:auto;
+}
+
 .desktop-table table{
     width:100%;
+    min-width:1060px;
     border-collapse:separate;
     border-spacing:0;
 }
@@ -489,6 +748,7 @@ a{text-decoration:none}
     justify-content:center;
     overflow:hidden;
     font-size:26px;
+    flex:0 0 auto;
 }
 
 .mini-photo img{
@@ -547,6 +807,11 @@ a{text-decoration:none}
     text-align:center;
     color:#7b7288;
     font-weight:900;
+}
+
+.paw-empty{
+    font-size:62px;
+    margin-bottom:10px;
 }
 
 .empty-box h2{
@@ -628,6 +893,271 @@ a{text-decoration:none}
     cursor:pointer;
 }
 
+/* DATE TOUCH POPUP */
+.date-popup-panel{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:430px;
+    max-width:calc(100% - 28px);
+    max-height:92vh;
+    overflow:auto;
+    background:white;
+    border-radius:28px;
+    box-shadow:0 28px 80px rgba(28,20,58,.35);
+    z-index:9001;
+}
+
+.date-popup-panel.active{
+    display:block;
+}
+
+.date-popup-head{
+    background:linear-gradient(135deg,#7b5cff,#ff8c6b);
+    color:white;
+    padding:18px;
+    position:relative;
+}
+
+.date-popup-head span{
+    display:block;
+    font-size:13px;
+    font-weight:1000;
+    opacity:.95;
+}
+
+.date-popup-head strong{
+    display:block;
+    margin-top:5px;
+    font-size:22px;
+    font-weight:1000;
+}
+
+.date-popup-head button{
+    position:absolute;
+    right:14px;
+    top:16px;
+    width:42px;
+    height:42px;
+    border:0;
+    border-radius:50%;
+    background:rgba(255,255,255,.25);
+    color:white;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.quick-date-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    padding:14px;
+}
+
+.quick-date-grid button{
+    min-height:58px;
+    border:0;
+    border-radius:18px;
+    color:white;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.quick-date-grid button:nth-child(1){
+    background:linear-gradient(135deg,#10b981,#34d399);
+}
+
+.quick-date-grid button:nth-child(2){
+    background:linear-gradient(135deg,#8b5cf6,#ff8c6b);
+}
+
+.quick-date-grid button:nth-child(3){
+    background:linear-gradient(135deg,#38bdf8,#6366f1);
+}
+
+.quick-date-grid button:nth-child(4){
+    background:linear-gradient(135deg,#fb923c,#fdba74);
+}
+
+.calendar-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 18px 12px;
+}
+
+.calendar-top h3{
+    margin:0;
+    color:#080634;
+    font-weight:1000;
+}
+
+.calendar-top div{
+    display:flex;
+    gap:8px;
+}
+
+.calendar-top button{
+    width:48px;
+    height:48px;
+    border:0;
+    border-radius:50%;
+    background:#f4f0ff;
+    color:#7b5cff;
+    font-size:24px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.selected-range-box{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    padding:0 18px 12px;
+}
+
+.selected-range-box div{
+    border:2px solid #eaddec;
+    border-radius:18px;
+    padding:10px 12px;
+    background:#fff8fb;
+}
+
+.selected-range-box span{
+    display:block;
+    color:#7b7288;
+    font-size:12px;
+    font-weight:1000;
+}
+
+.selected-range-box strong{
+    display:block;
+    margin-top:3px;
+    color:#080634;
+    font-size:15px;
+    font-weight:1000;
+}
+
+.week-row,
+.calendar-grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    padding:0 18px;
+}
+
+.week-row span{
+    height:34px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#8b7da6;
+    font-size:12px;
+    font-weight:1000;
+}
+
+.calendar-day{
+    height:48px;
+    border:0;
+    border-radius:16px;
+    background:white;
+    color:#080634;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.calendar-day.muted{
+    color:#c2b8d4;
+}
+
+.calendar-day.today{
+    background:#eef6ff;
+    color:#2563eb;
+}
+
+.calendar-day.selected{
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    color:white;
+}
+
+.calendar-day.in-range{
+    background:#f4f0ff;
+    color:#7b5cff;
+}
+
+.time-box{
+    margin:14px;
+    padding:14px;
+    border:2px solid #f5e0d8;
+    border-radius:22px;
+    background:#fff8fb;
+}
+
+.time-title{
+    color:#080634;
+    font-weight:1000;
+    margin-bottom:10px;
+}
+
+.time-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+}
+
+.time-grid button{
+    min-height:48px;
+    border:2px solid #eaddec;
+    border-radius:16px;
+    background:white;
+    color:#080634;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.time-box small{
+    display:block;
+    margin-top:10px;
+    color:#8b7da6;
+    font-weight:900;
+}
+
+.date-popup-actions{
+    display:grid;
+    grid-template-columns:1fr 1.4fr;
+    gap:10px;
+    padding:0 14px 16px;
+}
+
+.all-date-btn,
+.apply-date-btn{
+    min-height:62px;
+    border:0;
+    border-radius:20px;
+    color:white;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.all-date-btn{
+    background:#94a3b8;
+}
+
+.apply-date-btn{
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+}
+
+@media(max-width:1350px){
+    .filter-grid{
+        grid-template-columns:1fr 1fr 1fr;
+    }
+
+    .result-summary{
+        grid-template-columns:repeat(3,1fr) !important;
+    }
+}
+
 @media(max-width:1194px){
     .page-top{
         display:block;
@@ -638,8 +1168,18 @@ a{text-decoration:none}
     }
 
     .filter-grid,
-    .summary-grid{
-        grid-template-columns:1fr 1fr;
+    .summary-grid,
+    .result-summary{
+        grid-template-columns:1fr 1fr !important;
+    }
+
+    .active-filter-card{
+        display:block;
+    }
+
+    .active-filter-card p{
+        text-align:left;
+        margin-top:8px;
     }
 
     .desktop-table{
@@ -673,6 +1213,10 @@ a{text-decoration:none}
         margin:5px 0 0;
         color:#7b7288;
         font-weight:900;
+    }
+
+    .seller-mobile{
+        color:#7b5cff !important;
     }
 
     .mobile-money{
@@ -721,9 +1265,10 @@ a{text-decoration:none}
 
     .top-actions,
     .filter-grid,
-    .summary-grid{
+    .summary-grid,
+    .result-summary{
         display:grid;
-        grid-template-columns:1fr;
+        grid-template-columns:1fr !important;
     }
 
     .main-btn,
@@ -741,7 +1286,8 @@ a{text-decoration:none}
         grid-template-columns:1fr;
     }
 
-    .select-popup{
+    .select-popup,
+    .date-popup-panel{
         left:14px;
         right:14px;
         bottom:16px;
@@ -756,10 +1302,25 @@ a{text-decoration:none}
         min-height:70px;
         font-size:18px;
     }
+
+    .quick-date-grid button,
+    .calendar-day,
+    .time-grid button{
+        min-height:58px;
+        font-size:16px;
+    }
+
+    .date-popup-panel{
+        max-height:88vh;
+    }
 }
 </style>
 
 <script>
+let calendarViewDate = new Date();
+let selectedFrom = "";
+let selectedTo = "";
+
 function openPopup(type){
     document.getElementById(type + "Popup").classList.add("active");
     document.getElementById(type + "Backdrop").classList.add("active");
@@ -781,6 +1342,280 @@ function selectStatus(value, label){
     document.getElementById("statusLabel").innerText = label;
     closePopup("status");
 }
+
+function formatDate(date){
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+function prettyDate(value){
+    if(!value){ return "-"; }
+    const parts = value.split("-");
+    if(parts.length !== 3){ return value; }
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+function parseDateValue(value){
+    if(!value){ return null; }
+    const parts = value.split("-");
+    if(parts.length !== 3){ return null; }
+    return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+}
+
+function openDatePopup(){
+    const fromInput = document.getElementById("dateFromInput").value;
+    const toInput = document.getElementById("dateToInput").value;
+
+    selectedFrom = fromInput;
+    selectedTo = toInput;
+
+    const baseDate = parseDateValue(selectedFrom) || new Date();
+    calendarViewDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+
+    document.getElementById("dateBackdrop").classList.add("active");
+    document.getElementById("datePopup").classList.add("active");
+
+    renderCalendar();
+    updateSelectedRangeShow();
+}
+
+function closeDatePopup(){
+    document.getElementById("dateBackdrop").classList.remove("active");
+    document.getElementById("datePopup").classList.remove("active");
+}
+
+function updateSelectedRangeShow(){
+    document.getElementById("selectedFromShow").innerText = prettyDate(selectedFrom);
+    document.getElementById("selectedToShow").innerText = prettyDate(selectedTo);
+
+    if(selectedFrom && selectedTo){
+        document.getElementById("datePopupTitle").innerText = prettyDate(selectedFrom) + " → " + prettyDate(selectedTo);
+    }else if(selectedFrom){
+        document.getElementById("datePopupTitle").innerText = "Choose To Date";
+    }else{
+        document.getElementById("datePopupTitle").innerText = "Choose From Date";
+    }
+}
+
+function setToday(){
+    const today = new Date();
+    selectedFrom = formatDate(today);
+    selectedTo = formatDate(today);
+    calendarViewDate = new Date(today.getFullYear(), today.getMonth(), 1);
+    renderCalendar();
+    updateSelectedRangeShow();
+}
+
+function setYesterday(){
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    selectedFrom = formatDate(yesterday);
+    selectedTo = formatDate(yesterday);
+    calendarViewDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), 1);
+    renderCalendar();
+    updateSelectedRangeShow();
+}
+
+function setThisMonth(){
+    const today = new Date();
+    const first = new Date(today.getFullYear(), today.getMonth(), 1);
+    selectedFrom = formatDate(first);
+    selectedTo = formatDate(today);
+    calendarViewDate = new Date(today.getFullYear(), today.getMonth(), 1);
+    renderCalendar();
+    updateSelectedRangeShow();
+}
+
+function setLastMonth(){
+    const today = new Date();
+    const first = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const last = new Date(today.getFullYear(), today.getMonth(), 0);
+    selectedFrom = formatDate(first);
+    selectedTo = formatDate(last);
+    calendarViewDate = new Date(first.getFullYear(), first.getMonth(), 1);
+    renderCalendar();
+    updateSelectedRangeShow();
+}
+
+function setQuickTime(value){
+    document.getElementById("datePopupTitle").innerText = "Time selected: " + value;
+}
+
+function clearDateRange(){
+    selectedFrom = "";
+    selectedTo = "";
+    document.getElementById("dateFromInput").value = "";
+    document.getElementById("dateToInput").value = "";
+    document.getElementById("dateLabel").innerText = "All Date";
+    document.getElementById("activeDateText").innerText = "All Date";
+    closeDatePopup();
+    document.getElementById("filterForm").submit();
+}
+
+function applyDateRange(){
+    if(selectedFrom && !selectedTo){
+        selectedTo = selectedFrom;
+    }
+
+    document.getElementById("dateFromInput").value = selectedFrom;
+    document.getElementById("dateToInput").value = selectedTo;
+
+    if(selectedFrom && selectedTo){
+        const label = selectedFrom + " → " + selectedTo;
+        document.getElementById("dateLabel").innerText = label;
+        document.getElementById("activeDateText").innerText = label;
+    }else{
+        document.getElementById("dateLabel").innerText = "All Date";
+        document.getElementById("activeDateText").innerText = "All Date";
+    }
+
+    closeDatePopup();
+    document.getElementById("filterForm").submit();
+}
+
+function moveMonth(delta){
+    calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + delta, 1);
+    renderCalendar();
+}
+
+function renderCalendar(){
+    const grid = document.getElementById("calendarGrid");
+    const title = document.getElementById("calendarMonthTitle");
+    grid.innerHTML = "";
+
+    const year = calendarViewDate.getFullYear();
+    const month = calendarViewDate.getMonth();
+
+    title.innerText = calendarViewDate.toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric"
+    });
+
+    const firstDay = new Date(year, month, 1);
+    const startDay = firstDay.getDay();
+    const startDate = new Date(year, month, 1 - startDay);
+
+    const todayValue = formatDate(new Date());
+    const fromTime = selectedFrom ? parseDateValue(selectedFrom).getTime() : null;
+    const toTime = selectedTo ? parseDateValue(selectedTo).getTime() : null;
+
+    for(let i = 0; i < 42; i++){
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i);
+
+        const value = formatDate(date);
+        const btn = document.createElement("button");
+
+        btn.type = "button";
+        btn.className = "calendar-day";
+        btn.innerText = date.getDate();
+        btn.onclick = function(){
+            selectCalendarDay(value);
+        };
+
+        if(date.getMonth() !== month){
+            btn.classList.add("muted");
+        }
+
+        if(value === todayValue){
+            btn.classList.add("today");
+        }
+
+        const currentTime = date.getTime();
+
+        if(value === selectedFrom || value === selectedTo){
+            btn.classList.add("selected");
+        }else if(fromTime && toTime && currentTime > fromTime && currentTime < toTime){
+            btn.classList.add("in-range");
+        }
+
+        grid.appendChild(btn);
+    }
+}
+
+function selectCalendarDay(value){
+    if(!selectedFrom || (selectedFrom && selectedTo)){
+        selectedFrom = value;
+        selectedTo = "";
+    }else{
+        if(value < selectedFrom){
+            selectedTo = selectedFrom;
+            selectedFrom = value;
+        }else{
+            selectedTo = value;
+        }
+    }
+
+    renderCalendar();
+    updateSelectedRangeShow();
+}
+
+function setDefaultThisMonthOnEmptyDate(){
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasDateParam = urlParams.has("date_from") || urlParams.has("date_to");
+
+    const fromInput = document.getElementById("dateFromInput");
+    const toInput = document.getElementById("dateToInput");
+
+    if(!hasDateParam && !fromInput.value && !toInput.value){
+        const today = new Date();
+        const first = new Date(today.getFullYear(), today.getMonth(), 1);
+
+        fromInput.value = formatDate(first);
+        toInput.value = formatDate(today);
+
+        const label = fromInput.value + " → " + toInput.value;
+        document.getElementById("dateLabel").innerText = label;
+        document.getElementById("activeDateText").innerText = label;
+    }
+}
+
+function calculateResultSummary(){
+    const rows = document.querySelectorAll(".desktop-table .sale-data-row");
+    let total = 0;
+    let dog = 0;
+    let cat = 0;
+    let preorder = 0;
+    let instock = 0;
+
+    rows.forEach(function(row){
+        total += 1;
+
+        const kind = (row.dataset.kind || "").toLowerCase();
+        const petType = (row.dataset.petType || "").toLowerCase();
+
+        if(petType === "dog"){
+            dog += 1;
+        }
+
+        if(petType === "cat"){
+            cat += 1;
+        }
+
+        if(kind === "preorder"){
+            preorder += 1;
+        }
+
+        if(kind === "in_stock"){
+            instock += 1;
+        }
+    });
+
+    if(rows.length > 0){
+        document.getElementById("summaryTotalPets").innerText = total;
+        document.getElementById("summaryDogs").innerText = dog;
+        document.getElementById("summaryCats").innerText = cat;
+        document.getElementById("summaryPreorder").innerText = preorder;
+        document.getElementById("summaryInstock").innerText = instock;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+    setDefaultThisMonthOnEmptyDate();
+    calculateResultSummary();
+});
 </script>
 
 {% endblock %}

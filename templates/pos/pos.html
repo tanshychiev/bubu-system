@@ -490,8 +490,7 @@
                     <div><span>Total COD</span><strong id="codTotalShow">${{ total|default:"0.00" }}</strong></div>
                 </div>
 
-                <small>Customer pay: 1 USD = 4100 KHR</small>
-                <small>Customer change: 1 USD = 4000 KHR</small>
+                <small class="exchange-rate-note">Exchange rate: 1$ = 4100 Riel</small>
             </div>
 
             <div class="member-box">
@@ -716,22 +715,22 @@
             <div class="pay-grid" id="payGrid">
                 <label class="cash-pay-field" id="cashUsdField">
                     Cash USD
-                    <input type="number" step="0.01" name="cash_usd" id="cash_usd" value="0" oninput="calcChange()">
+                    <input type="text" inputmode="decimal" name="cash_usd" id="cash_usd" value="0" oninput="calcChange()">
                 </label>
 
                 <label class="cash-pay-field" id="cashKhrField">
                     Cash KHR
-                    <input type="number" step="1" name="cash_khr" id="cash_khr" value="0" oninput="calcChange()">
+                    <input type="text" inputmode="numeric" name="cash_khr" id="cash_khr" value="0" oninput="calcChange()">
                 </label>
 
                 <label class="aba-pay-field" id="abaUsdField">
                     ABA USD
-                    <input type="number" step="0.01" name="aba_usd" id="aba_usd" value="0" oninput="calcChange()">
+                    <input type="text" inputmode="decimal" name="aba_usd" id="aba_usd" value="0" oninput="calcChange()">
                 </label>
 
                 <label class="aba-pay-field" id="abaKhrField">
                     ABA KHR
-                    <input type="number" step="1" name="aba_khr" id="aba_khr" value="0" oninput="calcChange()">
+                    <input type="text" inputmode="numeric" name="aba_khr" id="aba_khr" value="0" oninput="calcChange()">
                 </label>
             </div>
 
@@ -2298,6 +2297,29 @@ a{
     font-size:20px;
     font-weight:1000;
     margin-top:8px;
+}
+
+/* Remove browser up/down spinner buttons from payment inputs */
+.pay-grid input::-webkit-outer-spin-button,
+.pay-grid input::-webkit-inner-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+}
+
+.pay-grid input[type=number]{
+    appearance:textfield;
+    -moz-appearance:textfield;
+}
+
+.exchange-rate-note{
+    display:inline-flex;
+    width:max-content;
+    max-width:100%;
+    padding:7px 12px;
+    border-radius:999px;
+    background:#fff7df;
+    color:#8a5a00 !important;
+    font-weight:1000 !important;
 }
 
 .change-box{

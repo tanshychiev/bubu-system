@@ -7,108 +7,238 @@
 
     <div class="dashboard-head">
         <div>
-            <h1>Dashboard 🐾</h1>
-            <div class="page-subtitle">
-                Welcome back, BUBU! Here's what's happening in your store today. 💜
-            </div>
+            <div class="hello-badge">🐾 BUBU Pet Store POS</div>
+            <h1>Dashboard</h1>
+            <p>Welcome back. Here is today and this month business summary. 💜</p>
         </div>
 
-        <img src="{% static 'img/dashboard-hero.png' %}" class="dashboard-hero" alt="Dashboard pets">
+        <div class="head-actions">
+            <a href="{% url 'pos' %}" class="head-btn orange">🛍️ Open POS</a>
+            <a href="{% url 'pet_available_for_sale' %}" class="head-btn green">🐾 Sell Pet</a>
+            <a href="{% url 'pet_create' %}" class="head-btn purple">＋ Stock In Pet</a>
+        </div>
+    </div>
+
+    <div class="today-strip">
+        <div>
+            <span>Today Sales</span>
+            <strong>${{ today_sales|default:"0.00" }}</strong>
+        </div>
+
+        <div>
+            <span>Today Orders</span>
+            <strong>{{ today_orders|default:0 }}</strong>
+        </div>
+
+        <div>
+            <span>Today Pet Sales</span>
+            <strong>{{ today_pet_sales|default:0 }}</strong>
+        </div>
+
+        <div>
+            <span>This Month Sales</span>
+            <strong>
+                {% if this_month_sales %}
+                    ${{ this_month_sales }}
+                {% else %}
+                    ${{ total_sales|default:"0.00" }}
+                {% endif %}
+            </strong>
+        </div>
     </div>
 
     <div class="grid-cards">
 
-        <div class="card stat purple">
+        <a href="{% url 'item_list' %}" class="card stat purple">
             <div>
                 <small>Total Products</small>
                 <h2>{{ total_products|default:0 }}</h2>
                 <span>Inventory items ↗</span>
             </div>
             <div class="icon">🛍️</div>
-        </div>
+        </a>
 
-        <div class="card stat orange">
+        <a href="{% url 'sale_list' %}" class="card stat orange">
             <div>
-                <small>Total Sales</small>
+                <small>Total POS Sales</small>
                 <h2>${{ total_sales|default:"0.00" }}</h2>
-                <span>All sales total ↗</span>
+                <span>All POS sales total ↗</span>
             </div>
             <div class="icon">💳</div>
-        </div>
+        </a>
 
-        <div class="card stat blue">
+        <a href="{% url 'pet_list' %}" class="card stat blue">
             <div>
-                <small>Total Orders</small>
-                <h2>{{ total_orders|default:0 }}</h2>
-                <span>All orders ↗</span>
+                <small>Total Pets</small>
+                <h2>{{ total_pets|default:0 }}</h2>
+                <span>Pet stock records ↗</span>
             </div>
-            <div class="icon">📦</div>
-        </div>
+            <div class="icon">🐾</div>
+        </a>
 
-        <div class="card stat green">
+        <a href="{% url 'customer_list' %}" class="card stat green">
             <div>
                 <small>Total Customers</small>
                 <h2>{{ total_customers|default:0 }}</h2>
                 <span>Customer records ↗</span>
             </div>
             <div class="icon">👥</div>
-        </div>
+        </a>
 
+    </div>
+
+    <div class="pet-summary-grid">
+        <a href="{% url 'pet_list' %}?status=in_stock" class="pet-summary-card">
+            <span>In-stock Pets</span>
+            <strong>{{ in_stock_pets|default:0 }}</strong>
+            <em>Ready to sell</em>
+        </a>
+
+        <a href="{% url 'pet_list' %}?pet_type=dog" class="pet-summary-card">
+            <span>Dogs</span>
+            <strong>{{ dog_count|default:0 }}</strong>
+            <em>Dog stock</em>
+        </a>
+
+        <a href="{% url 'pet_list' %}?pet_type=cat" class="pet-summary-card">
+            <span>Cats</span>
+            <strong>{{ cat_count|default:0 }}</strong>
+            <em>Cat stock</em>
+        </a>
+
+        <a href="{% url 'pet_sale_list' %}?sale_kind=preorder" class="pet-summary-card">
+            <span>Pre-orders</span>
+            <strong>{{ preorder_count|default:0 }}</strong>
+            <em>Waiting / deposit</em>
+        </a>
+
+        <a href="{% url 'pet_sale_list' %}?sale_kind=in_stock" class="pet-summary-card">
+            <span>In-stock Pet Sales</span>
+            <strong>{{ instock_pet_sale_count|default:0 }}</strong>
+            <em>Sold from stock</em>
+        </a>
     </div>
 
     <div class="grid-main">
 
         <div class="card big sales-card">
-            <h3>Sales Overview ✨</h3>
-
-            <div class="fake-chart"></div>
-
-            <div class="chart-footer">
-                <div>This Week: <b>${{ this_week_sales|default:"0.00" }}</b></div>
-                <div>Last Week: <b>${{ last_week_sales|default:"0.00" }}</b></div>
+            <div class="card-title-row">
+                <div>
+                    <h3>Sales Overview ✨</h3>
+                    <p>This week and last week performance</p>
+                </div>
+                <span class="soft-pill">This Month</span>
             </div>
 
-            <img src="{% static 'img/dashboard-cat.png' %}" class="chart-cat" alt="Cute cat">
+            <div class="chart-box">
+                <div class="chart-bars">
+                    <span style="height:32%"></span>
+                    <span style="height:48%"></span>
+                    <span style="height:40%"></span>
+                    <span style="height:68%"></span>
+                    <span style="height:54%"></span>
+                    <span style="height:78%"></span>
+                    <span style="height:62%"></span>
+                </div>
+            </div>
+
+            <div class="chart-footer">
+                <div>
+                    <span>This Week</span>
+                    <b>${{ this_week_sales|default:"0.00" }}</b>
+                </div>
+
+                <div>
+                    <span>Last Week</span>
+                    <b>${{ last_week_sales|default:"0.00" }}</b>
+                </div>
+
+                <div>
+                    <span>Balance / Unpaid</span>
+                    <b>${{ total_balance|default:"0.00" }}</b>
+                </div>
+            </div>
         </div>
 
         <div class="card side">
-            <h3>Recent Orders</h3>
+            <div class="card-title-row">
+                <div>
+                    <h3>Recent Orders</h3>
+                    <p>Latest POS orders</p>
+                </div>
+                <a href="{% url 'sale_list' %}" class="mini-link">View</a>
+            </div>
 
             {% for order in recent_orders %}
                 <div class="order">
-                    <span>#{{ order.id }} {{ order.customer.name|default:"Customer" }}</span>
-                    <span>${{ order.total|default:"0.00" }}</span>
+                    <div>
+                        <strong>#{{ order.id }}</strong>
+                        <span>{{ order.customer.name|default:"Walk-in customer" }}</span>
+                    </div>
+                    <b>${{ order.total|default:"0.00" }}</b>
                 </div>
             {% empty %}
                 <div class="empty-box">
                     <div class="empty-icon">📦✨</div>
                     <h3>No recent orders</h3>
+                    <p>New orders will show here.</p>
                 </div>
             {% endfor %}
         </div>
 
         <div class="card side">
-            <h3>Low Stock Alert</h3>
+            <div class="card-title-row">
+                <div>
+                    <h3>Low Stock Alert</h3>
+                    <p>Items need refill</p>
+                </div>
+                <a href="{% url 'item_list' %}" class="mini-link">View</a>
+            </div>
 
             {% for item in low_stock_items %}
                 <div class="stock">
-                    <span>{{ item.name }}</span>
-                    <span class="danger-text">{{ item.stock }} left</span>
+                    <div>
+                        <strong>{{ item.name }}</strong>
+                        <span>Low stock</span>
+                    </div>
+                    <b class="danger-text">
+                        {% if item.stock %}
+                            {{ item.stock }}
+                        {% elif item.quantity %}
+                            {{ item.quantity }}
+                        {% else %}
+                            0
+                        {% endif %}
+                        left
+                    </b>
                 </div>
             {% empty %}
-                <div class="stock">
+                <div class="empty-stock">
                     <span>No low stock</span>
-                    <span>✅</span>
+                    <b>✅</b>
                 </div>
             {% endfor %}
 
-            <img src="{% static 'img/dashboard-dog.png' %}" class="alert-dog" alt="Cute dog">
+            <div class="cute-dog">🐶💗</div>
         </div>
 
     </div>
 
-    <div class="card footer-box">
-        <div>
+    <div class="bottom-grid">
+        <div class="card quick-card">
+            <h3>Quick Actions ⚡</h3>
+
+            <div class="quick-grid">
+                <a href="{% url 'pos' %}">🛍️ Open POS</a>
+                <a href="{% url 'pet_available_for_sale' %}">🐾 Sell In-stock Pet</a>
+                <a href="{% url 'pet_sale_create' %}">📝 New Pet Sale</a>
+                <a href="{% url 'pet_create' %}">＋ Stock In Pet</a>
+                <a href="{% url 'customer_list' %}">👥 Customers</a>
+                <a href="{% url 'delivery_list' %}">🚚 Delivery</a>
+            </div>
+        </div>
+
+        <div class="card footer-box">
             <h3>You're doing great today! 🌟</h3>
             <p>Keep up the pawsome work 💜</p>
         </div>
@@ -117,6 +247,14 @@
 </div>
 
 <style>
+*{
+    box-sizing:border-box;
+}
+
+a{
+    text-decoration:none;
+}
+
 .dashboard-page{
     padding:28px 36px;
 }
@@ -126,34 +264,101 @@
     justify-content:space-between;
     align-items:center;
     gap:24px;
-    margin-bottom:28px;
+    margin-bottom:24px;
+}
+
+.hello-badge{
+    display:inline-flex;
+    padding:9px 14px;
+    border-radius:999px;
+    background:#f4f0ff;
+    color:#7b5cff;
+    font-weight:1000;
+    margin-bottom:12px;
 }
 
 .dashboard-head h1{
     margin:0;
-    font-size:34px;
+    font-size:38px;
+    line-height:1.08;
     font-weight:1000;
     color:#080634;
 }
 
-.page-subtitle{
-    margin-top:10px;
+.dashboard-head p{
+    margin:10px 0 0;
     font-size:16px;
-    font-weight:800;
+    font-weight:900;
     color:#81758f;
 }
 
-.dashboard-hero{
-    width:320px;
-    max-width:34%;
-    object-fit:contain;
+.head-actions{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+}
+
+.head-btn{
+    min-height:56px;
+    padding:0 18px;
+    border-radius:18px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-weight:1000;
+    box-shadow:0 14px 28px rgba(130,91,60,.10);
+}
+
+.head-btn.orange{
+    background:linear-gradient(135deg,#ff8c6b,#ff5d73);
+}
+
+.head-btn.green{
+    background:linear-gradient(135deg,#13a85f,#7b5cff);
+}
+
+.head-btn.purple{
+    background:linear-gradient(135deg,#9b7cf6,#34c6ff);
+}
+
+.today-strip{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+    margin-bottom:22px;
+}
+
+.today-strip div{
+    min-height:96px;
+    padding:18px;
+    border-radius:24px;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+    border:2px solid #f5e0d8;
+    box-shadow:0 14px 30px rgba(130,91,60,.06);
+}
+
+.today-strip span{
+    display:block;
+    color:#81758f;
+    font-weight:1000;
+    font-size:13px;
+}
+
+.today-strip strong{
+    display:block;
+    margin-top:8px;
+    color:#080634;
+    font-size:28px;
+    font-weight:1000;
 }
 
 .grid-cards{
     display:grid;
-    grid-template-columns:repeat(4, 1fr);
+    grid-template-columns:repeat(4,1fr);
     gap:20px;
-    margin-bottom:26px;
+    margin-bottom:22px;
 }
 
 .card{
@@ -170,6 +375,13 @@
     justify-content:space-between;
     align-items:center;
     gap:16px;
+    color:#080634;
+    transition:.12s;
+}
+
+.stat:hover{
+    transform:translateY(-3px);
+    box-shadow:0 24px 50px rgba(130,91,60,.12);
 }
 
 .stat small{
@@ -193,19 +405,60 @@
 }
 
 .stat .icon{
-    width:62px;
-    height:62px;
+    width:64px;
+    height:64px;
     border-radius:22px;
     display:flex;
     align-items:center;
     justify-content:center;
     font-size:32px;
+    flex:0 0 auto;
 }
 
 .stat.purple .icon{background:#f2edff;}
 .stat.orange .icon{background:#fff1df;}
 .stat.blue .icon{background:#eaf4ff;}
 .stat.green .icon{background:#eafff3;}
+
+.pet-summary-grid{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:14px;
+    margin-bottom:22px;
+}
+
+.pet-summary-card{
+    padding:18px;
+    min-height:128px;
+    border-radius:24px;
+    background:white;
+    border:2px solid #eaddec;
+    color:#080634;
+    box-shadow:0 14px 30px rgba(130,91,60,.06);
+}
+
+.pet-summary-card span{
+    display:block;
+    color:#81758f;
+    font-weight:1000;
+}
+
+.pet-summary-card strong{
+    display:block;
+    margin-top:7px;
+    color:#7b5cff;
+    font-size:34px;
+    font-weight:1000;
+}
+
+.pet-summary-card em{
+    display:block;
+    margin-top:6px;
+    color:#81758f;
+    font-size:12px;
+    font-style:normal;
+    font-weight:900;
+}
 
 .grid-main{
     display:grid;
@@ -221,16 +474,40 @@
     overflow:hidden;
 }
 
-.big h3,
-.side h3,
-.footer-box h3{
-    margin:0 0 18px;
+.card-title-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    margin-bottom:18px;
+}
+
+.card-title-row h3,
+.footer-box h3,
+.quick-card h3{
+    margin:0;
     font-size:24px;
     font-weight:1000;
     color:#080634;
 }
 
-.fake-chart{
+.card-title-row p{
+    margin:6px 0 0;
+    color:#81758f;
+    font-weight:900;
+}
+
+.soft-pill,
+.mini-link{
+    padding:8px 12px;
+    border-radius:999px;
+    background:#f4f0ff;
+    color:#7b5cff;
+    font-weight:1000;
+    white-space:nowrap;
+}
+
+.chart-box{
     height:250px;
     border-radius:24px;
     background:
@@ -239,32 +516,62 @@
             to right,
             transparent 0,
             transparent 34px,
-            rgba(155,124,246,.18) 35px,
+            rgba(155,124,246,.16) 35px,
             transparent 36px
         );
     border:2px dashed #eaddec;
+    padding:24px;
+    display:flex;
+    align-items:flex-end;
+}
+
+.chart-bars{
+    width:100%;
+    height:100%;
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    align-items:end;
+    gap:14px;
+}
+
+.chart-bars span{
+    display:block;
+    min-height:18px;
+    border-radius:999px 999px 12px 12px;
+    background:linear-gradient(180deg,#9b7cf6,#ff8c6b);
 }
 
 .chart-footer{
-    display:flex;
-    justify-content:space-between;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
     gap:14px;
     margin-top:16px;
-    font-weight:900;
-    color:#625a74;
 }
 
-.chart-cat{
-    position:absolute;
-    right:18px;
-    bottom:8px;
-    width:110px;
-    opacity:.95;
+.chart-footer div{
+    padding:14px;
+    border-radius:18px;
+    background:#fff8fb;
+    border:1px solid #eaddec;
+}
+
+.chart-footer span{
+    display:block;
+    color:#81758f;
+    font-size:13px;
+    font-weight:1000;
+}
+
+.chart-footer b{
+    display:block;
+    margin-top:5px;
+    color:#080634;
+    font-size:18px;
 }
 
 .order,
 .stock{
-    min-height:54px;
+    min-height:62px;
     padding:14px 0;
     border-bottom:1px dashed #eaddec;
     display:flex;
@@ -272,6 +579,20 @@
     gap:14px;
     font-weight:1000;
     color:#080634;
+}
+
+.order strong,
+.stock strong{
+    display:block;
+}
+
+.order span,
+.stock span{
+    display:block;
+    margin-top:4px;
+    color:#81758f;
+    font-size:13px;
+    font-weight:900;
 }
 
 .danger-text{
@@ -288,100 +609,115 @@
     justify-content:center;
     text-align:center;
     color:#81758f;
+    padding:18px;
+}
+
+.empty-box h3{
+    margin:8px 0 0;
+    color:#080634;
+}
+
+.empty-box p{
+    margin:6px 0 0;
+    font-weight:900;
 }
 
 .empty-icon{
     font-size:42px;
 }
 
-.alert-dog{
-    width:130px;
-    display:block;
-    margin:22px auto 0;
+.empty-stock{
+    min-height:58px;
+    padding:14px 0;
+    border-bottom:1px dashed #eaddec;
+    display:flex;
+    justify-content:space-between;
+    gap:14px;
+    color:#080634;
+    font-weight:1000;
 }
 
-.footer-box{
+.cute-dog{
+    margin-top:22px;
+    text-align:center;
+    font-size:58px;
+}
+
+.bottom-grid{
+    display:grid;
+    grid-template-columns:2fr 1fr;
+    gap:22px;
     margin-top:24px;
+}
+
+.quick-card,
+.footer-box{
     padding:24px;
 }
 
-.footer-box h3{
-    margin-bottom:6px;
+.quick-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin-top:16px;
+}
+
+.quick-grid a{
+    min-height:62px;
+    padding:0 14px;
+    border-radius:18px;
+    background:#f8f6ff;
+    color:#080634;
+    border:2px solid #eaddec;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-weight:1000;
+}
+
+.footer-box{
+    display:flex;
+    align-items:center;
 }
 
 .footer-box p{
-    margin:0;
+    margin:6px 0 0;
     font-weight:900;
     color:#81758f;
 }
 
-/* iPad 11 inch */
+/* iPad */
 @media (min-width:768px) and (max-width:1194px){
     .dashboard-page{
         padding:22px;
     }
 
     .dashboard-head{
-        align-items:flex-start;
-        gap:18px;
+        display:block;
     }
 
-    .dashboard-head h1{
-        font-size:32px;
+    .head-actions{
+        justify-content:flex-start;
+        margin-top:18px;
     }
 
-    .page-subtitle{
-        font-size:15px;
-        max-width:520px;
-    }
-
-    .dashboard-hero{
-        width:210px;
-        max-width:28%;
-    }
-
+    .today-strip,
     .grid-cards{
-        grid-template-columns:repeat(2, 1fr);
-        gap:18px;
+        grid-template-columns:repeat(2,1fr);
     }
 
-    .stat{
-        min-height:168px;
-        padding:24px;
+    .pet-summary-grid{
+        grid-template-columns:repeat(3,1fr);
     }
 
-    .stat h2{
-        font-size:38px;
-    }
-
-    .stat .icon{
-        width:68px;
-        height:68px;
-        font-size:34px;
-    }
-
-    .grid-main{
+    .grid-main,
+    .bottom-grid{
         grid-template-columns:1fr;
-        gap:18px;
     }
 
-    .big,
-    .side{
-        padding:24px;
-    }
-
-    .fake-chart{
+    .chart-box{
         height:280px;
-    }
-
-    .chart-cat{
-        width:100px;
-    }
-
-    .order,
-    .stock{
-        min-height:62px;
-        font-size:16px;
     }
 }
 
@@ -399,21 +735,34 @@
         font-size:30px;
     }
 
-    .dashboard-hero{
-        display:none;
-    }
-
+    .head-actions,
+    .today-strip,
     .grid-cards,
-    .grid-main{
+    .pet-summary-grid,
+    .grid-main,
+    .bottom-grid,
+    .quick-grid,
+    .chart-footer{
+        display:grid;
         grid-template-columns:1fr;
     }
 
-    .chart-footer{
-        flex-direction:column;
+    .head-actions{
+        margin-top:18px;
     }
 
-    .fake-chart{
-        height:200px;
+    .head-btn{
+        width:100%;
+        min-height:68px;
+        font-size:18px;
+    }
+
+    .stat{
+        min-height:138px;
+    }
+
+    .chart-box{
+        height:210px;
     }
 }
 </style>

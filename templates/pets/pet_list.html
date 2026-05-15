@@ -323,22 +323,52 @@
     </div>
 
     <div class="date-popup-body">
-        <div class="quick-date-grid">
+        <input type="hidden" id="dateFromPicker" value="{{ date_from|default:'' }}">
+        <input type="hidden" id="dateToPicker" value="{{ date_to|default:'' }}">
+
+        <div class="date-big-display" id="dateBigDisplay">
+            Choose date range
+        </div>
+
+        <div class="quick-date-grid touch-quick-grid">
             <button type="button" onclick="setToday()">Today</button>
+            <button type="button" onclick="setYesterday()">Yesterday</button>
             <button type="button" onclick="setThisMonth()">This Month</button>
             <button type="button" onclick="setLastMonth()">Last Month</button>
             <button type="button" onclick="clearDateRange()">All Date</button>
         </div>
 
-        <label>
-            From Date
-            <input type="date" id="dateFromPicker" value="{{ date_from|default:'' }}">
-        </label>
+        <div class="range-touch-tabs">
+            <button type="button" id="fromTabBtn" class="active" onclick="setPickingTarget('from')">
+                <span>From Date</span>
+                <strong id="fromDateShow">-</strong>
+            </button>
 
-        <label>
-            To Date
-            <input type="date" id="dateToPicker" value="{{ date_to|default:'' }}">
-        </label>
+            <button type="button" id="toTabBtn" onclick="setPickingTarget('to')">
+                <span>To Date</span>
+                <strong id="toDateShow">-</strong>
+            </button>
+        </div>
+
+        <div class="touch-calendar-card">
+            <div class="calendar-head">
+                <button type="button" onclick="changeCalendarMonth(-1)">‹</button>
+                <strong id="calendarMonthTitle">Month</strong>
+                <button type="button" onclick="changeCalendarMonth(1)">›</button>
+            </div>
+
+            <div class="calendar-week-row">
+                <span>Sun</span>
+                <span>Mon</span>
+                <span>Tue</span>
+                <span>Wed</span>
+                <span>Thu</span>
+                <span>Fri</span>
+                <span>Sat</span>
+            </div>
+
+            <div class="calendar-day-grid" id="calendarDayGrid"></div>
+        </div>
 
         <button type="button" class="apply-date-btn" onclick="applyDateRange()">
             Apply Date Search
@@ -935,6 +965,152 @@ a{
     cursor:pointer;
 }
 
+
+.date-big-display{
+    margin-bottom:14px;
+    padding:14px 16px;
+    border-radius:20px;
+    background:linear-gradient(135deg,#f6f2ff,#fff8fb);
+    border:2px solid #eaddec;
+    color:#080634;
+    font-size:18px;
+    font-weight:1000;
+    text-align:center;
+}
+
+.touch-quick-grid{
+    grid-template-columns:1fr 1fr;
+}
+
+.touch-quick-grid button:nth-child(5){
+    grid-column:1 / -1;
+}
+
+.range-touch-tabs{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:14px;
+}
+
+.range-touch-tabs button{
+    min-height:76px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    background:#fff8fb;
+    color:#080634;
+    cursor:pointer;
+    text-align:left;
+    padding:12px 14px;
+}
+
+.range-touch-tabs button.active{
+    border-color:#7b5cff;
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    color:white;
+    box-shadow:0 14px 28px rgba(123,92,255,.18);
+}
+
+.range-touch-tabs span,
+.range-touch-tabs strong{
+    display:block;
+    font-weight:1000;
+}
+
+.range-touch-tabs span{
+    font-size:13px;
+    opacity:.78;
+}
+
+.range-touch-tabs strong{
+    margin-top:6px;
+    font-size:16px;
+}
+
+.touch-calendar-card{
+    padding:14px;
+    border:2px solid #eaddec;
+    border-radius:24px;
+    background:#fff;
+    margin-bottom:14px;
+}
+
+.calendar-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+}
+
+.calendar-head strong{
+    color:#080634;
+    font-size:18px;
+    font-weight:1000;
+}
+
+.calendar-head button{
+    width:50px;
+    height:50px;
+    border:0;
+    border-radius:18px;
+    background:#f4f0ff;
+    color:#7b5cff;
+    font-size:28px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.calendar-week-row,
+.calendar-day-grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:7px;
+}
+
+.calendar-week-row{
+    margin-bottom:8px;
+}
+
+.calendar-week-row span{
+    text-align:center;
+    color:#7b7288;
+    font-size:12px;
+    font-weight:1000;
+}
+
+.calendar-day-btn{
+    width:100%;
+    min-height:48px;
+    border:0;
+    border-radius:16px;
+    background:#fff;
+    color:#080634;
+    font-weight:1000;
+    cursor:pointer;
+    touch-action:manipulation;
+}
+
+.calendar-day-btn.muted{
+    color:#c7bfd1;
+    background:#fafafa;
+}
+
+.calendar-day-btn.today{
+    border:2px solid #34c6ff;
+}
+
+.calendar-day-btn.in-range{
+    background:#f4f0ff;
+    color:#5b21b6;
+}
+
+.calendar-day-btn.selected{
+    background:linear-gradient(135deg,#7b5cff,#ff8c6b);
+    color:white;
+    box-shadow:0 10px 20px rgba(123,92,255,.2);
+}
+
 @media(max-width:1194px){
     .page-top{
         display:block;
@@ -1051,11 +1227,154 @@ function quickStatus(value, label){
     document.getElementById("filterForm").submit();
 }
 
+function padTwo(value){
+    return String(value).padStart(2, "0");
+}
+
 function formatDate(date){
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
+    const month = padTwo(date.getMonth() + 1);
+    const day = padTwo(date.getDate());
     return `${year}-${month}-${day}`;
+}
+
+function parseDateValue(value){
+    if(!value){
+        return null;
+    }
+
+    const parts = value.split("-");
+    if(parts.length !== 3){
+        return null;
+    }
+
+    return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+}
+
+function prettyDate(value){
+    const date = parseDateValue(value);
+    if(!date){
+        return "-";
+    }
+
+    return date.toLocaleDateString("en-GB", {
+        day:"2-digit",
+        month:"short",
+        year:"numeric"
+    });
+}
+
+let pickingTarget = "from";
+let calendarViewDate = parseDateValue(document.getElementById("dateFromPicker").value) || new Date();
+
+function setPickingTarget(target){
+    pickingTarget = target;
+
+    document.getElementById("fromTabBtn").classList.toggle("active", target === "from");
+    document.getElementById("toTabBtn").classList.toggle("active", target === "to");
+}
+
+function updateDateDisplay(){
+    const fromValue = document.getElementById("dateFromPicker").value;
+    const toValue = document.getElementById("dateToPicker").value;
+
+    document.getElementById("fromDateShow").innerText = prettyDate(fromValue);
+    document.getElementById("toDateShow").innerText = prettyDate(toValue);
+
+    if(fromValue && toValue){
+        document.getElementById("dateBigDisplay").innerText = prettyDate(fromValue) + " → " + prettyDate(toValue);
+    }else if(fromValue){
+        document.getElementById("dateBigDisplay").innerText = "From " + prettyDate(fromValue);
+    }else if(toValue){
+        document.getElementById("dateBigDisplay").innerText = "To " + prettyDate(toValue);
+    }else{
+        document.getElementById("dateBigDisplay").innerText = "All Date";
+    }
+}
+
+function sameDate(a, b){
+    return a && b && formatDate(a) === formatDate(b);
+}
+
+function renderCalendar(){
+    const grid = document.getElementById("calendarDayGrid");
+    const title = document.getElementById("calendarMonthTitle");
+    const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
+    const year = calendarViewDate.getFullYear();
+    const month = calendarViewDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const startDate = new Date(year, month, 1 - firstDay.getDay());
+    const today = new Date();
+    const fromDate = parseDateValue(document.getElementById("dateFromPicker").value);
+    const toDate = parseDateValue(document.getElementById("dateToPicker").value);
+
+    title.innerText = monthNames[month] + " " + year;
+    grid.innerHTML = "";
+
+    for(let i = 0; i < 42; i++){
+        const day = new Date(startDate);
+        day.setDate(startDate.getDate() + i);
+
+        const value = formatDate(day);
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "calendar-day-btn";
+        btn.innerText = day.getDate();
+        btn.onclick = function(){
+            pickCalendarDate(value);
+        };
+
+        if(day.getMonth() !== month){
+            btn.classList.add("muted");
+        }
+
+        if(sameDate(day, today)){
+            btn.classList.add("today");
+        }
+
+        if((fromDate && sameDate(day, fromDate)) || (toDate && sameDate(day, toDate))){
+            btn.classList.add("selected");
+        }else if(fromDate && toDate && day >= fromDate && day <= toDate){
+            btn.classList.add("in-range");
+        }
+
+        grid.appendChild(btn);
+    }
+
+    updateDateDisplay();
+}
+
+function changeCalendarMonth(step){
+    calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + step, 1);
+    renderCalendar();
+}
+
+function pickCalendarDate(value){
+    const fromInput = document.getElementById("dateFromPicker");
+    const toInput = document.getElementById("dateToPicker");
+
+    if(pickingTarget === "from"){
+        fromInput.value = value;
+
+        if(toInput.value && value > toInput.value){
+            toInput.value = value;
+        }
+
+        setPickingTarget("to");
+    }else{
+        toInput.value = value;
+
+        if(fromInput.value && value < fromInput.value){
+            fromInput.value = value;
+        }
+    }
+
+    calendarViewDate = parseDateValue(value) || calendarViewDate;
+    renderCalendar();
 }
 
 function setToday(){
@@ -1064,6 +1383,21 @@ function setToday(){
 
     document.getElementById("dateFromPicker").value = value;
     document.getElementById("dateToPicker").value = value;
+    calendarViewDate = today;
+    setPickingTarget("from");
+    renderCalendar();
+}
+
+function setYesterday(){
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const value = formatDate(yesterday);
+
+    document.getElementById("dateFromPicker").value = value;
+    document.getElementById("dateToPicker").value = value;
+    calendarViewDate = yesterday;
+    setPickingTarget("from");
+    renderCalendar();
 }
 
 function setThisMonth(){
@@ -1072,6 +1406,9 @@ function setThisMonth(){
 
     document.getElementById("dateFromPicker").value = formatDate(first);
     document.getElementById("dateToPicker").value = formatDate(today);
+    calendarViewDate = today;
+    setPickingTarget("from");
+    renderCalendar();
 }
 
 function setLastMonth(){
@@ -1081,11 +1418,16 @@ function setLastMonth(){
 
     document.getElementById("dateFromPicker").value = formatDate(first);
     document.getElementById("dateToPicker").value = formatDate(last);
+    calendarViewDate = first;
+    setPickingTarget("from");
+    renderCalendar();
 }
 
 function clearDateRange(){
     document.getElementById("dateFromPicker").value = "";
     document.getElementById("dateToPicker").value = "";
+    setPickingTarget("from");
+    renderCalendar();
 }
 
 function applyDateRange(){
@@ -1102,7 +1444,13 @@ function applyDateRange(){
     }
 
     closePopup("date");
+    document.getElementById("filterForm").submit();
 }
+
+document.addEventListener("DOMContentLoaded", function(){
+    renderCalendar();
+});
+
 </script>
 
 {% endblock %}

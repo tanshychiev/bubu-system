@@ -93,15 +93,23 @@
                 </button>
             </div>
 
-            <label class="date-box">
-                From Date
-                <input type="date" name="date_from" value="{{ date_from|default:'' }}">
-            </label>
+            <div class="touch-field date-touch-field">
+                <span>Date</span>
 
-            <label class="date-box">
-                To Date
-                <input type="date" name="date_to" value="{{ date_to|default:'' }}">
-            </label>
+                <input type="hidden" name="date_from" id="dateFromInput" value="{{ date_from|default:'' }}">
+                <input type="hidden" name="date_to" id="dateToInput" value="{{ date_to|default:'' }}">
+
+                <button type="button" onclick="openDatePopup()" class="touch-btn date-touch-btn">
+                    <strong id="dateLabel">
+                        {% if date_from and date_to %}
+                            {{ date_from }} → {{ date_to }}
+                        {% else %}
+                            This Month
+                        {% endif %}
+                    </strong>
+                    <em>⌄</em>
+                </button>
+            </div>
 
             <button type="submit" class="dark-btn">Search</button>
             <a href="{% url 'pet_available_for_sale' %}" class="clear-btn">Clear</a>
@@ -314,6 +322,62 @@
     </div>
 </div>
 
+<!-- DATE POPUP -->
+<div class="popup-backdrop" id="dateBackdrop" onclick="closeDatePopup()"></div>
+
+<div class="select-popup date-popup" id="datePopup">
+    <div class="date-popup-head">
+        <small>Choose date range</small>
+        <h3 id="datePopupTitle">This Month</h3>
+        <button type="button" onclick="closeDatePopup()">✕</button>
+    </div>
+
+    <div class="date-popup-body">
+        <div class="quick-date-grid">
+            <button type="button" class="quick-date today" onclick="setTodayRange()">Today</button>
+            <button type="button" class="quick-date yesterday" onclick="setYesterdayRange()">Yesterday</button>
+            <button type="button" class="quick-date morning" onclick="setThisMonthRange()">This Month</button>
+            <button type="button" class="quick-date night" onclick="setLastMonthRange()">Last Month</button>
+        </div>
+
+        <div class="calendar-top">
+            <strong id="calendarMonthLabel">Month</strong>
+            <div class="calendar-nav">
+                <button type="button" onclick="moveCalendarMonth(-1)">‹</button>
+                <button type="button" onclick="moveCalendarMonth(1)">›</button>
+            </div>
+        </div>
+
+        <div class="calendar-week">
+            <span>Su</span>
+            <span>Mo</span>
+            <span>Tu</span>
+            <span>We</span>
+            <span>Th</span>
+            <span>Fr</span>
+            <span>Sa</span>
+        </div>
+
+        <div class="calendar-grid" id="calendarGrid"></div>
+
+        <div class="selected-date-box">
+            <div>
+                <small>From</small>
+                <strong id="selectedFromShow">-</strong>
+            </div>
+            <div>
+                <small>To</small>
+                <strong id="selectedToShow">-</strong>
+            </div>
+        </div>
+
+        <div class="date-action-row">
+            <button type="button" class="date-clear-btn" onclick="clearDateRange()">All Date</button>
+            <button type="button" class="date-apply-btn" onclick="applyDateRange()">Apply Search</button>
+        </div>
+    </div>
+</div>
+
 <!-- TYPE POPUP -->
 <div class="popup-backdrop" id="typeBackdrop" onclick="closePopup('type')"></div>
 
@@ -433,14 +497,12 @@ a{
 }
 
 .search-box,
-.date-box,
 .touch-field{
     font-weight:1000;
     color:#080634;
 }
 
-.search-box input,
-.date-box input{
+.search-box input{
     width:100%;
     height:62px;
     border:2px solid #eaddec;
@@ -866,6 +928,209 @@ a{
     color:#080634;
 }
 
+
+/* =========================
+   TOUCH DATE POPUP
+========================= */
+.date-popup{
+    width:390px;
+    border-radius:24px;
+}
+
+.date-popup-head{
+    position:relative;
+    padding:18px 18px 20px;
+    background:linear-gradient(135deg,#7b5cff,#ff8c6b);
+    color:white;
+}
+
+.date-popup-head small{
+    display:block;
+    font-weight:1000;
+    opacity:.92;
+    margin-bottom:6px;
+}
+
+.date-popup-head h3{
+    margin:0;
+    font-size:24px;
+    font-weight:1000;
+}
+
+.date-popup-head button{
+    position:absolute;
+    right:14px;
+    top:14px;
+    width:46px;
+    height:46px;
+    border:0;
+    border-radius:50%;
+    background:rgba(255,255,255,.25);
+    color:white;
+    font-size:18px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.date-popup-body{
+    padding:16px;
+}
+
+.quick-date-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:16px;
+}
+
+.quick-date{
+    min-height:58px;
+    border:0;
+    border-radius:16px;
+    color:white;
+    font-size:15px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.quick-date.today{background:#25b889;}
+.quick-date.yesterday{background:linear-gradient(135deg,#7b5cff,#ff8c6b);}
+.quick-date.morning{background:linear-gradient(135deg,#34c6ff,#6b5cff);}
+.quick-date.night{background:#ffad66;}
+
+.calendar-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin:10px 0 14px;
+}
+
+.calendar-top strong{
+    color:#080634;
+    font-size:17px;
+    font-weight:1000;
+}
+
+.calendar-nav{
+    display:flex;
+    gap:10px;
+}
+
+.calendar-nav button{
+    width:46px;
+    height:46px;
+    border:0;
+    border-radius:50%;
+    background:#f4f0ff;
+    color:#7b5cff;
+    font-size:24px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.calendar-week,
+.calendar-grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:7px;
+}
+
+.calendar-week span{
+    text-align:center;
+    color:#8b80a0;
+    font-size:12px;
+    font-weight:1000;
+    padding:6px 0;
+}
+
+.calendar-day{
+    height:42px;
+    border:0;
+    border-radius:50%;
+    background:white;
+    color:#080634;
+    font-size:14px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.calendar-day.other-month{
+    color:#c7bed6;
+}
+
+.calendar-day.today-day{
+    box-shadow:0 0 0 2px #34c6ff inset;
+}
+
+.calendar-day.selected-start,
+.calendar-day.selected-end{
+    background:#7b5cff;
+    color:white;
+}
+
+.calendar-day.in-range{
+    background:#f4f0ff;
+    color:#5b21b6;
+    border-radius:14px;
+}
+
+.selected-date-box{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin:16px 0 12px;
+}
+
+.selected-date-box div{
+    padding:12px;
+    border:2px solid #eaddec;
+    border-radius:16px;
+    background:#fff8fb;
+}
+
+.selected-date-box small{
+    display:block;
+    color:#7b7288;
+    font-weight:1000;
+}
+
+.selected-date-box strong{
+    display:block;
+    margin-top:4px;
+    color:#080634;
+    font-weight:1000;
+}
+
+.date-action-row{
+    display:grid;
+    grid-template-columns:1fr 1.5fr;
+    gap:10px;
+}
+
+.date-clear-btn,
+.date-apply-btn{
+    min-height:60px;
+    border:0;
+    border-radius:18px;
+    font-size:16px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.date-clear-btn{
+    background:#f1f5f9;
+    color:#64748b;
+}
+
+.date-apply-btn{
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+    color:white;
+}
+
+.date-touch-field{
+    min-width:190px;
+}
+
 @media(max-width:1350px){
     .filter-grid{
         grid-template-columns:1fr 1fr 1fr 1fr;
@@ -936,7 +1201,6 @@ a{
     }
 
     .search-box input,
-    .date-box input,
     .touch-btn{
         height:66px;
         font-size:18px;
@@ -968,9 +1232,279 @@ a{
         grid-template-columns:1fr;
     }
 }
+
+
+@media(max-width:700px){
+    .date-popup{
+        max-height:calc(100vh - 32px);
+        overflow:auto;
+    }
+
+    .quick-date{
+        min-height:66px;
+        font-size:17px;
+    }
+
+    .calendar-day{
+        height:46px;
+        font-size:15px;
+    }
+
+    .date-clear-btn,
+    .date-apply-btn{
+        min-height:70px;
+        font-size:18px;
+    }
+}
+
 </style>
 
 <script>
+
+let calendarViewDate = new Date();
+let selectedDateFrom = "";
+let selectedDateTo = "";
+let selectingDateSide = "from";
+
+function padDateNumber(value){
+    return String(value).padStart(2, "0");
+}
+
+function formatDateValue(date){
+    return date.getFullYear() + "-" + padDateNumber(date.getMonth() + 1) + "-" + padDateNumber(date.getDate());
+}
+
+function parseDateValue(value){
+    if(!value){
+        return null;
+    }
+
+    const parts = value.split("-");
+    if(parts.length !== 3){
+        return null;
+    }
+
+    return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+}
+
+function shortDateText(value){
+    const date = parseDateValue(value);
+    if(!date){
+        return "-";
+    }
+
+    return padDateNumber(date.getDate()) + "/" + padDateNumber(date.getMonth() + 1) + "/" + date.getFullYear();
+}
+
+function getThisMonthRange(){
+    const today = new Date();
+    const first = new Date(today.getFullYear(), today.getMonth(), 1);
+    return {from: formatDateValue(first), to: formatDateValue(today)};
+}
+
+function syncDateShows(){
+    document.getElementById("selectedFromShow").innerText = shortDateText(selectedDateFrom);
+    document.getElementById("selectedToShow").innerText = shortDateText(selectedDateTo);
+
+    if(selectedDateFrom && selectedDateTo){
+        document.getElementById("dateLabel").innerText = selectedDateFrom + " → " + selectedDateTo;
+        document.getElementById("datePopupTitle").innerText = shortDateText(selectedDateFrom) + " → " + shortDateText(selectedDateTo);
+    }else{
+        document.getElementById("dateLabel").innerText = "All Date";
+        document.getElementById("datePopupTitle").innerText = "All Date";
+    }
+}
+
+function openDatePopup(){
+    selectedDateFrom = document.getElementById("dateFromInput").value;
+    selectedDateTo = document.getElementById("dateToInput").value;
+
+    if(!selectedDateFrom || !selectedDateTo){
+        const thisMonth = getThisMonthRange();
+        selectedDateFrom = thisMonth.from;
+        selectedDateTo = thisMonth.to;
+    }
+
+    const viewDate = parseDateValue(selectedDateFrom);
+    if(viewDate){
+        calendarViewDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
+    }
+
+    selectingDateSide = "from";
+    syncDateShows();
+    renderCalendar();
+    document.getElementById("datePopup").classList.add("active");
+    document.getElementById("dateBackdrop").classList.add("active");
+}
+
+function closeDatePopup(){
+    document.getElementById("datePopup").classList.remove("active");
+    document.getElementById("dateBackdrop").classList.remove("active");
+}
+
+function moveCalendarMonth(amount){
+    calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + amount, 1);
+    renderCalendar();
+}
+
+function setCalendarRange(fromValue, toValue){
+    selectedDateFrom = fromValue;
+    selectedDateTo = toValue;
+
+    const viewDate = parseDateValue(fromValue);
+    if(viewDate){
+        calendarViewDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
+    }
+
+    syncDateShows();
+    renderCalendar();
+}
+
+function setTodayRange(){
+    const today = new Date();
+    const value = formatDateValue(today);
+    setCalendarRange(value, value);
+}
+
+function setYesterdayRange(){
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const value = formatDateValue(yesterday);
+    setCalendarRange(value, value);
+}
+
+function setThisMonthRange(){
+    const range = getThisMonthRange();
+    setCalendarRange(range.from, range.to);
+}
+
+function setLastMonthRange(){
+    const today = new Date();
+    const first = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const last = new Date(today.getFullYear(), today.getMonth(), 0);
+    setCalendarRange(formatDateValue(first), formatDateValue(last));
+}
+
+function clearDateRange(){
+    selectedDateFrom = "";
+    selectedDateTo = "";
+    document.getElementById("dateFromInput").value = "";
+    document.getElementById("dateToInput").value = "";
+    syncDateShows();
+    closeDatePopup();
+    document.getElementById("filterForm").submit();
+}
+
+function chooseCalendarDay(value){
+    if(!selectedDateFrom || selectingDateSide === "from"){
+        selectedDateFrom = value;
+        selectedDateTo = "";
+        selectingDateSide = "to";
+    }else{
+        selectedDateTo = value;
+        if(selectedDateTo < selectedDateFrom){
+            const temp = selectedDateFrom;
+            selectedDateFrom = selectedDateTo;
+            selectedDateTo = temp;
+        }
+        selectingDateSide = "from";
+    }
+
+    syncDateShows();
+    renderCalendar();
+}
+
+function renderCalendar(){
+    const grid = document.getElementById("calendarGrid");
+    if(!grid){
+        return;
+    }
+
+    const year = calendarViewDate.getFullYear();
+    const month = calendarViewDate.getMonth();
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    document.getElementById("calendarMonthLabel").innerText = monthNames[month] + " " + year;
+    grid.innerHTML = "";
+
+    const firstDay = new Date(year, month, 1);
+    const startDate = new Date(year, month, 1 - firstDay.getDay());
+    const todayValue = formatDateValue(new Date());
+
+    for(let index = 0; index < 42; index++){
+        const day = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + index);
+        const value = formatDateValue(day);
+        const button = document.createElement("button");
+
+        button.type = "button";
+        button.innerText = day.getDate();
+        button.className = "calendar-day";
+
+        if(day.getMonth() !== month){
+            button.classList.add("other-month");
+        }
+
+        if(value === todayValue){
+            button.classList.add("today-day");
+        }
+
+        if(value === selectedDateFrom){
+            button.classList.add("selected-start");
+        }
+
+        if(value === selectedDateTo){
+            button.classList.add("selected-end");
+        }
+
+        if(selectedDateFrom && selectedDateTo && value > selectedDateFrom && value < selectedDateTo){
+            button.classList.add("in-range");
+        }
+
+        button.onclick = function(){
+            chooseCalendarDay(value);
+        };
+
+        grid.appendChild(button);
+    }
+}
+
+function applyDateRange(){
+    if(selectedDateFrom && !selectedDateTo){
+        selectedDateTo = selectedDateFrom;
+    }
+
+    document.getElementById("dateFromInput").value = selectedDateFrom;
+    document.getElementById("dateToInput").value = selectedDateTo;
+    syncDateShows();
+    closeDatePopup();
+    document.getElementById("filterForm").submit();
+}
+
+function setDefaultThisMonthDate(){
+    const fromInput = document.getElementById("dateFromInput");
+    const toInput = document.getElementById("dateToInput");
+
+    if(!fromInput || !toInput){
+        return;
+    }
+
+    if(!fromInput.value && !toInput.value){
+        const range = getThisMonthRange();
+        fromInput.value = range.from;
+        toInput.value = range.to;
+        selectedDateFrom = range.from;
+        selectedDateTo = range.to;
+        document.getElementById("dateLabel").innerText = range.from + " → " + range.to;
+    }else{
+        selectedDateFrom = fromInput.value;
+        selectedDateTo = toInput.value;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+    setDefaultThisMonthDate();
+});
+
 function openPopup(type){
     document.getElementById(type + "Popup").classList.add("active");
     document.getElementById(type + "Backdrop").classList.add("active");
