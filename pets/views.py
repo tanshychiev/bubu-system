@@ -4,10 +4,12 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
+
 from inventory.models import Branch
 from core.telegram import send_telegram_message, send_telegram_photos
 from customers.models import Customer, CustomerPet, CustomerHistory
@@ -25,6 +27,19 @@ def _to_decimal(value, default="0.00"):
         return Decimal(str(value or default))
     except Exception:
         return Decimal(default)
+
+
+def _get_pet_photo_model():
+    """
+    Safe PetPhoto loader.
+    Do not import PetPhoto directly at top.
+    This prevents server crash when PetPhoto model/migration is not ready yet.
+    """
+    try:
+        from django.apps import apps
+        return apps.get_model("pets", "PetPhoto")
+    except Exception:
+        return None
 
 
 def _get_active_sellers():
@@ -126,10 +141,6 @@ def _get_sale_photo_paths(sale):
 
 
 def _set_optional_sale_tracking(sale, request):
-    """
-    Reads hidden HTML fields and saves them if the model already has those fields.
-    This keeps the view safe even before/after migration changes.
-    """
     customer_source = request.POST.get("customer_source", "staff_chat") or "staff_chat"
     commission_mode = request.POST.get("commission_mode", "seller") or "seller"
     lead_owner_id = request.POST.get("lead_owner", "") or None
@@ -173,17 +184,6 @@ def _find_customer_from_sale(sale):
 
 
 def _get_or_create_customer_from_sale(request, sale):
-    """
-    Recognize old/new customer immediately from pet sale.
-
-    Priority:
-    1. phone match
-    2. name match
-    3. create new customer
-
-    Returns:
-    customer, is_new_customer
-    """
     name = (sale.customer_name or "").strip()
     phone = (sale.phone or "").strip()
     address = (sale.address or "").strip()
@@ -245,10 +245,6 @@ def _get_or_create_customer_from_sale(request, sale):
 
 
 def sync_sale_customer_only(request, sale):
-    """
-    Auto create/find customer even when sale is only deposit/preorder.
-    This does NOT add points. Points add only when sale is completed.
-    """
     customer, is_new_customer = _get_or_create_customer_from_sale(request, sale)
 
     sale._customer_obj = customer
@@ -282,12 +278,6 @@ def get_sale_customer_badge(sale):
 
 
 def sync_completed_pet_sale_to_customer(request, sale):
-    """
-    When pet sale is completed:
-    1. Find or create customer
-    2. Add point and total spent once
-    3. Create/update customer pet profile
-    """
     if sale.status != "completed":
         return None
 
@@ -321,7 +311,6 @@ def sync_completed_pet_sale_to_customer(request, sale):
             existing_customer_pet.photo = photo
 
         existing_customer_pet.save()
-
         return customer
 
     old_points = customer.points
@@ -393,6 +382,10 @@ def complete_pet_sale(request, sale, extra_paid=None, warranty_days=None):
     sale.completed_at = timezone.now()
     sale.set_warranty_dates()
     sale.save()
+
+    if sale.sale_kind == "in_stock" and sale.pet:
+        sale.pet.status = "sold"
+        sale.pet.save(update_fields=["status"])
 
     sync_completed_pet_sale_to_customer(request, sale)
 
@@ -682,11 +675,8 @@ def pet_list(request):
 
     q = request.GET.get("q", "").strip()
     pet_type = request.GET.get("pet_type", "").strip()
-
-    # Default status = In Stock
     status = request.GET.get("status", "in_stock").strip() or "in_stock"
 
-    # Default date = current month
     date_from = request.GET.get("date_from", "").strip()
     date_to = request.GET.get("date_to", "").strip()
 
@@ -738,13 +728,11 @@ def pet_list(request):
 
     return render(request, "pets/pet_list.html", {
         "pets": pets,
-
         "q": q,
         "pet_type": pet_type,
         "status": status,
         "date_from": date_from,
         "date_to": date_to,
-
         "in_stock_count": all_pets.filter(status="in_stock").count(),
         "reserved_count": all_pets.filter(status="reserved").count(),
         "sold_count": all_pets.filter(status="sold").count(),
@@ -752,9 +740,106 @@ def pet_list(request):
         "sick_dead_count": all_pets.filter(status__in=["sick", "dead"]).count(),
         "all_count": all_pets.count(),
     })
+
+
 @login_required
+@transaction.atomic
 def pet_create(request):
+    """
+    Same page supports:
+    1. Single Pet Stock-In
+    2. Bulk Stock-In with per-pet branch, age, cost, sale price, and photos.
+    """
+    breeds = PetBreed.objects.filter(is_active=True).order_by("pet_type", "name")
+    branches = Branch.objects.filter(is_active=True).order_by("name")
+
     if request.method == "POST":
+        stock_mode = request.POST.get("stock_mode", "single")
+
+        # =====================================================
+        # BULK STOCK-IN MODE
+        # =====================================================
+        if stock_mode == "bulk":
+            pet_type = request.POST.get("pet_type", "").strip()
+            breed_profile_id = request.POST.get("breed_profile", "").strip()
+            default_branch_id = request.POST.get("branch", "").strip()
+
+            default_age_months = request.POST.get("age_months_at_stock_in") or 0
+            default_cost_price = request.POST.get("cost_price") or 0
+            default_sale_price = request.POST.get("sale_price") or 0
+
+            try:
+                quantity = int(request.POST.get("quantity") or 0)
+            except ValueError:
+                quantity = 0
+
+            shared_note = request.POST.get("note", "").strip()
+
+            if not pet_type or not breed_profile_id or quantity <= 0:
+                messages.error(request, "Please select pet type, breed, and quantity.")
+                return redirect("pet_create")
+
+            breed_profile = get_object_or_404(PetBreed, id=breed_profile_id)
+            stock_date = timezone.localdate()
+            created_count = 0
+            PetPhotoModel = _get_pet_photo_model()
+
+            for i in range(1, quantity + 1):
+                pet_name = request.POST.get(f"name_{i}", "").strip()
+                if not pet_name:
+                    pet_name = f"{breed_profile.name} #{i}"
+
+                branch_id = request.POST.get(f"branch_{i}", "").strip() or default_branch_id
+                branch = None
+                if branch_id:
+                    branch = Branch.objects.filter(id=branch_id).first()
+
+                gender = request.POST.get(f"gender_{i}", "").strip()
+                color = request.POST.get(f"color_{i}", "").strip()
+                special_type = request.POST.get(f"special_type_{i}", "").strip()
+                pet_note = request.POST.get(f"note_{i}", "").strip()
+
+                age_months = request.POST.get(f"age_months_{i}") or default_age_months
+                cost_price = request.POST.get(f"cost_price_{i}") or default_cost_price
+                sale_price = request.POST.get(f"sale_price_{i}") or default_sale_price
+
+                photos = request.FILES.getlist(f"photos_{i}[]")
+                first_photo = photos[0] if photos else None
+
+                pet = Pet.objects.create(
+                    branch=branch,
+                    breed_profile=breed_profile,
+                    pet_type=pet_type,
+                    breed=breed_profile.name,
+                    name=pet_name,
+                    gender=gender,
+                    color=color,
+                    special_type=special_type,
+                    age_months_at_stock_in=age_months,
+                    age_recorded_date=stock_date,
+                    photo=first_photo,
+                    cost_price=_to_decimal(cost_price),
+                    sale_price=_to_decimal(sale_price),
+                    status="in_stock",
+                    note=(pet_note or shared_note),
+                    created_by=request.user,
+                )
+
+                if PetPhotoModel:
+                    for photo_file in photos:
+                        PetPhotoModel.objects.create(
+                            pet=pet,
+                            photo=photo_file,
+                        )
+
+                created_count += 1
+
+            messages.success(request, f"{created_count} pets created successfully.")
+            return redirect("pet_list")
+
+        # =====================================================
+        # SINGLE STOCK-IN MODE
+        # =====================================================
         form = PetForm(request.POST, request.FILES)
 
         if form.is_valid():
@@ -769,12 +854,17 @@ def pet_create(request):
 
             messages.success(request, "Pet created successfully.")
             return redirect("pet_detail", pet.id)
+
+        messages.error(request, "Please check the form and try again.")
+
     else:
         form = PetForm()
 
     return render(request, "pets/pet_form.html", {
         "form": form,
         "pet": None,
+        "breeds": breeds,
+        "branches": branches,
     })
 
 
@@ -798,12 +888,17 @@ def pet_edit(request, pk):
 
             messages.success(request, "Pet updated successfully.")
             return redirect("pet_detail", pet.id)
+
+        messages.error(request, "Please check the form and try again.")
+
     else:
         form = PetForm(instance=pet)
 
     return render(request, "pets/pet_form.html", {
         "form": form,
         "pet": pet,
+        "breeds": PetBreed.objects.filter(is_active=True).order_by("pet_type", "name"),
+        "branches": Branch.objects.filter(is_active=True).order_by("name"),
     })
 
 
@@ -861,6 +956,9 @@ def pet_breed_create(request):
 
             messages.success(request, "Breed created successfully.")
             return redirect("pet_breed_list")
+
+        messages.error(request, "Please check the form and try again.")
+
     else:
         form = PetBreedForm()
 
@@ -889,6 +987,9 @@ def pet_breed_edit(request, pk):
 
             messages.success(request, "Breed updated successfully.")
             return redirect("pet_breed_list")
+
+        messages.error(request, "Please check the form and try again.")
+
     else:
         form = PetBreedForm(instance=breed)
 
@@ -906,8 +1007,6 @@ def pet_breed_edit(request, pk):
 def pet_available_for_sale(request):
     q = request.GET.get("q", "").strip()
     pet_type = request.GET.get("pet_type", "").strip()
-
-    # Default status must be In Stock
     status = request.GET.get("status", "in_stock").strip() or "in_stock"
 
     branch_id = request.GET.get("branch", "").strip()
@@ -968,14 +1067,12 @@ def pet_available_for_sale(request):
         "pets": pets,
         "branches": branches,
         "selected_branch": selected_branch,
-
         "q": q,
         "pet_type": pet_type,
         "status": status,
         "branch_id": branch_id,
         "date_from": date_from,
         "date_to": date_to,
-
         "in_stock_count": all_pets.filter(status="in_stock").count(),
         "reserved_count": all_pets.filter(status="reserved").count(),
         "sold_count": all_pets.filter(status="sold").count(),
@@ -983,6 +1080,7 @@ def pet_available_for_sale(request):
         "sick_dead_count": all_pets.filter(status__in=["sick", "dead"]).count(),
         "all_count": all_pets.count(),
     })
+
 
 @login_required
 def pet_sale_list(request):
@@ -1100,6 +1198,9 @@ def pet_sale_create(request):
                 return redirect("pet_sale_receipt_print", sale.id)
 
             return redirect("pet_sale_detail", sale.id)
+
+        messages.error(request, "Please check the sale form and try again.")
+
     else:
         initial = {
             "sale_kind": "in_stock",
@@ -1194,6 +1295,9 @@ def pet_sale_edit(request, pk):
                 return redirect("pet_sale_receipt_print", sale.id)
 
             return redirect("pet_sale_detail", sale.id)
+
+        messages.error(request, "Please check the sale form and try again.")
+
     else:
         form = PetSaleForm(instance=sale)
 
@@ -1269,6 +1373,8 @@ def pet_sale_complete(request, pk):
         )
 
         messages.success(request, "Pet sale completed. Customer profile updated.")
+    else:
+        messages.error(request, "Invalid request. Please use the Complete Sale button.")
 
     return redirect("pet_sale_detail", sale.id)
 
@@ -1342,6 +1448,9 @@ def pet_warranty_claim_create(request, sale_id):
 
             messages.success(request, "Warranty claim recorded.")
             return redirect("pet_sale_detail", sale.id)
+
+        messages.error(request, "Please check the warranty form and try again.")
+
     else:
         form = PetWarrantyClaimForm()
 

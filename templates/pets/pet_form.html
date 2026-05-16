@@ -8,7 +8,13 @@
     <div class="page-top">
         <div>
             <h1>{% if pet %}Edit Pet Stock{% else %}Stock In Pet{% endif %} 🐾</h1>
-            <p>Choose breed master, upload real pet photo, record current age, price and health record.</p>
+            <p>
+                {% if pet %}
+                    Update this pet information.
+                {% else %}
+                    Single pet or bulk same-breed stock-in with editable batch, branch, price, age, photos, and note history.
+                {% endif %}
+            </p>
         </div>
 
         <a href="{% url 'pet_list' %}" class="soft-btn">← Back</a>
@@ -34,287 +40,355 @@
             </div>
         {% endif %}
 
-        <div class="layout">
+        {% if not pet %}
+            <div class="mode-box">
+                <label class="mode-card active" id="singleModeCard">
+                    <input type="radio" name="stock_mode" value="single" checked onchange="switchStockMode()">
+                    <span class="mode-icon">🐾</span>
+                    <strong>Single Pet</strong>
+                    <small>Stock in one dog/cat</small>
+                </label>
 
-            <!-- PHOTO PANEL -->
-            <div class="photo-panel">
-                <div class="preview" id="previewBox">
-                    {% if pet and pet.display_photo %}
-                        <img src="{{ pet.display_photo.url }}" id="photoPreview">
-                        <button type="button" class="photo-x" onclick="removeCurrentPhoto()">×</button>
-                    {% else %}
-                        <div id="photoEmpty">🐾</div>
-                        <img src="" id="photoPreview" style="display:none;">
-                        <button type="button" class="photo-x" id="photoX" style="display:none;" onclick="clearNewPhoto(event)">×</button>
-                    {% endif %}
-                </div>
-
-                <input type="hidden" name="remove_photo" id="removePhotoInput" value="0">
-
-                <div
-                    class="drop-zone"
-                    id="dropZone"
-                    onclick="document.getElementById('photoInput').click()"
-                    ondragover="handleDragOver(event)"
-                    ondragleave="handleDragLeave(event)"
-                    ondrop="handleDrop(event)"
-                >
-                    <div class="drop-title">📸 Upload Real Pet Photo</div>
-                    <div class="drop-sub">
-                        This is actual pet photo. Click, drag image, or paste screenshot with Ctrl + V.
-                    </div>
-                </div>
-
-                <input
-                    type="file"
-                    name="photo"
-                    id="photoInput"
-                    accept="image/*"
-                    class="hidden-file"
-                    onchange="previewPhotoFile(this)"
-                >
+                <label class="mode-card" id="bulkModeCard">
+                    <input type="radio" name="stock_mode" value="bulk" onchange="switchStockMode()">
+                    <span class="mode-icon">🐶🐶</span>
+                    <strong>Bulk Same Breed</strong>
+                    <small>Create many pets at once</small>
+                </label>
             </div>
+        {% else %}
+            <input type="hidden" name="stock_mode" value="single">
+        {% endif %}
 
-            <!-- FIELDS -->
-            <div class="fields">
+        <!-- ===================================================== -->
+        <!-- SINGLE MODE -->
+        <!-- ===================================================== -->
+        <div id="singleStockBox">
 
-                <div class="grid">
+            <div class="layout">
 
-                    <!-- BREED MASTER POPUP -->
-                    <label class="{% if form.breed_profile.errors %}field-error{% endif %}" id="breedMasterWrap">
-                        Breed Master
-                        <input
-                            type="hidden"
-                            name="breed_profile"
-                            id="breedProfileInput"
-                            value="{% if pet and pet.breed_profile %}{{ pet.breed_profile.id }}{% elif form.breed_profile.value %}{{ form.breed_profile.value }}{% endif %}"
-                        >
+                <!-- PHOTO PANEL -->
+                <div class="photo-panel">
+                    <div class="preview" id="previewBox">
+                        {% if pet and pet.display_photo %}
+                            <img src="{{ pet.display_photo.url }}" id="photoPreview">
+                            <button type="button" class="photo-x" onclick="removeCurrentPhoto()">×</button>
+                        {% else %}
+                            <div id="photoEmpty">🐾</div>
+                            <img src="" id="photoPreview" style="display:none;">
+                            <button type="button" class="photo-x" id="photoX" style="display:none;" onclick="clearNewPhoto(event)">×</button>
+                        {% endif %}
+                    </div>
 
-                        <button type="button" class="touch-select" onclick="openOptionPopup('breed')">
-                            <span id="breedProfileLabel">
-                                {% if pet and pet.breed_profile %}
-                                    {{ pet.breed_profile.get_pet_type_display }} - {{ pet.breed_profile.name }}
-                                {% elif form.breed_profile.value %}
-                                    Breed selected
-                                {% else %}
-                                    Choose Breed Master
-                                {% endif %}
-                            </span>
-                            <b>⌄</b>
-                        </button>
+                    <input type="hidden" name="remove_photo" id="removePhotoInput" value="0">
 
-                        <small class="field-help">Choose from Breed Master. If no breed, fill manual breed.</small>
-                    </label>
+                    <div
+                        class="drop-zone"
+                        id="dropZone"
+                        onclick="document.getElementById('photoInput').click()"
+                        ondragover="handleDragOver(event)"
+                        ondragleave="handleDragLeave(event)"
+                        ondrop="handleDrop(event)"
+                    >
+                        <div class="drop-title">📸 Upload Pet Photo</div>
+                        <div class="drop-sub">Click, drag image, or paste screenshot with Ctrl + V.</div>
+                    </div>
 
-                    <label class="{% if form.breed.errors %}field-error{% endif %}" id="manualBreedWrap">
-                        Manual Breed / Old Data
-                        <input
-                            name="breed"
-                            id="manualBreedInput"
-                            value="{{ pet.breed|default:'' }}"
-                            placeholder="Only fill if no breed master"
-                        >
-                    </label>
-
-                    <!-- TYPE -->
-                    <label class="{% if form.pet_type.errors %}field-error{% endif %}">
-                        Type
-                        <input type="hidden" name="pet_type" id="petTypeInput" value="{% if pet %}{{ pet.pet_type }}{% else %}dog{% endif %}">
-
-                        <button type="button" class="touch-select" onclick="openOptionPopup('type')">
-                            <span id="petTypeLabel">
-                                {% if pet.pet_type == "cat" %}
-                                    🐱 Cat
-                                {% elif pet.pet_type == "other" %}
-                                    🐾 Other
-                                {% else %}
-                                    🐶 Dog
-                                {% endif %}
-                            </span>
-                            <b>⌄</b>
-                        </button>
-                    </label>
-
-                    <label class="{% if form.name.errors %}field-error{% endif %}">
-                        Name / Code
-                        <input name="name" value="{{ pet.name|default:'' }}" placeholder="Example: Bear / POM-001">
-                    </label>
-
-                    <!-- GENDER -->
-                    <label class="{% if form.gender.errors %}field-error{% endif %}">
-                        Gender
-                        <input type="hidden" name="gender" id="genderInput" value="{{ pet.gender|default:'' }}">
-
-                        <button type="button" class="touch-select" onclick="openOptionPopup('gender')">
-                            <span id="genderLabel">
-                                {% if pet.gender %}
-                                    {{ pet.gender }}
-                                {% else %}
-                                    Choose
-                                {% endif %}
-                            </span>
-                            <b>⌄</b>
-                        </button>
-                    </label>
-
-                    <label class="{% if form.color.errors %}field-error{% endif %}">
-                        Color
-                        <input name="color" value="{{ pet.color|default:'' }}" placeholder="Example: Cream">
-                    </label>
-
-                    <label class="{% if form.special_type.errors %}field-error{% endif %}">
-                        Special Type
-                        <input name="special_type" value="{{ pet.special_type|default:'' }}" placeholder="Example: Teacup / Mini / Show Grade">
-                    </label>
-
-                    <label class="{% if form.age_months_at_stock_in.errors %}field-error{% endif %}" id="ageWrap">
-                        Age Now / Stock In Age <small class="inline-small">(month)</small>
-                        <div class="age-input-wrap">
-                            <input
-                                type="number"
-                                min="0"
-                                step="1"
-                                name="age_months_at_stock_in"
-                                id="ageMonthsInput"
-                                value="{{ pet.age_months_at_stock_in|default:0 }}"
-                                placeholder="Example: 3"
-                            >
-                            <span>months</span>
-                        </div>
-                    </label>
-
-                    <!-- AGE RECORDED DATE -->
-                    <label class="{% if form.age_recorded_date.errors %}field-error{% endif %}">
-                        Age Recorded Date
-                        <input type="hidden" name="age_recorded_date" id="ageRecordedDateInput" value="{{ pet.age_recorded_date|date:'Y-m-d' }}">
-
-                        <button type="button" class="touch-date-btn" onclick="openDatePicker('ageRecordedDateInput','ageRecordedDateLabel')">
-                            <span id="ageRecordedDateLabel">
-                                {% if pet.age_recorded_date %}
-                                    {{ pet.age_recorded_date|date:"M d, Y" }}
-                                {% else %}
-                                    Today
-                                {% endif %}
-                            </span>
-                            <b>📅</b>
-                        </button>
-                    </label>
-
-                    <!-- DEATH DATE -->
-                    <label class="{% if form.death_date.errors %}field-error{% endif %}">
-                        Death Date
-                        <input type="hidden" name="death_date" id="deathDateInput" value="{{ pet.death_date|date:'Y-m-d' }}">
-
-                        <button type="button" class="touch-date-btn" onclick="openDatePicker('deathDateInput','deathDateLabel')">
-                            <span id="deathDateLabel">
-                                {% if pet.death_date %}
-                                    {{ pet.death_date|date:"M d, Y" }}
-                                {% else %}
-                                    Choose date
-                                {% endif %}
-                            </span>
-                            <b>📅</b>
-                        </button>
-                    </label>
-
-                    <!-- STATUS -->
-                    <label class="{% if form.status.errors %}field-error{% endif %}">
-                        Stock Status
-                        <input type="hidden" name="status" id="statusInput" value="{% if pet %}{{ pet.status }}{% else %}in_stock{% endif %}">
-
-                        <button type="button" class="touch-select" onclick="openOptionPopup('status')">
-                            <span id="statusLabel">
-                                {% if pet.status == "reserved" %}
-                                    🟡 Reserved / Deposit
-                                {% elif pet.status == "sold" %}
-                                    🔴 Sold
-                                {% elif pet.status == "sick" %}
-                                    🏥 Sick
-                                {% elif pet.status == "dead" %}
-                                    ⚫ Dead
-                                {% elif pet.status == "cancelled" %}
-                                    ❌ Cancelled
-                                {% else %}
-                                    🟢 In Stock
-                                {% endif %}
-                            </span>
-                            <b>⌄</b>
-                        </button>
-                    </label>
-
-                    <label class="{% if form.cost_price.errors %}field-error{% endif %}">
-                        Cost Price
-                        <input type="number" step="0.01" name="cost_price" id="costPriceInput" value="{{ pet.cost_price|default:'0.00' }}">
-                    </label>
-
-                    <label class="{% if form.sale_price.errors %}field-error{% endif %}">
-                        Sale Price
-                        <input type="number" step="0.01" name="sale_price" id="salePriceInput" value="{{ pet.sale_price|default:'0.00' }}">
-                    </label>
-
+                    <input
+                        type="file"
+                        name="photo"
+                        id="photoInput"
+                        accept="image/*"
+                        capture="environment"
+                        class="hidden-file"
+                        onchange="previewPhotoFile(this)"
+                    >
                 </div>
 
-                {% if pet %}
-                    <div class="age-box">
-                        Current Age Auto Show:
-                        <strong>{{ pet.current_age_display }}</strong>
-                    </div>
-                {% endif %}
+                <!-- FIELDS -->
+                <div class="fields">
 
-                <!-- VACCINE SECTION -->
-                <div class="vaccine-section">
-                    <div class="vaccine-head">
-                        <div>
-                            <h3>💉 Vaccine History</h3>
-                            <p>Vaccine 1, Vaccine 2, and next recommended vaccine date.</p>
+                    <div class="grid">
+
+                        <!-- BREED MASTER POPUP -->
+                        <label class="{% if form.breed_profile.errors %}field-error{% endif %}" id="breedMasterWrap">
+                            Breed Master
+                            <input
+                                type="hidden"
+                                name="breed_profile"
+                                id="breedProfileInput"
+                                value="{% if pet and pet.breed_profile %}{{ pet.breed_profile.id }}{% elif form.breed_profile.value %}{{ form.breed_profile.value }}{% endif %}"
+                            >
+
+                            <button type="button" class="touch-select" onclick="openOptionPopup('breed')">
+                                <span id="breedProfileLabel">
+                                    {% if pet and pet.breed_profile %}
+                                        {{ pet.breed_profile.get_pet_type_display }} - {{ pet.breed_profile.name }}
+                                    {% elif form.breed_profile.value %}
+                                        Breed selected
+                                    {% else %}
+                                        Choose Breed Master
+                                    {% endif %}
+                                </span>
+                                <b>⌄</b>
+                            </button>
+
+                            <small class="field-help">Choose from Breed Master. If no breed, fill manual breed.</small>
+                        </label>
+
+                        <label class="{% if form.breed.errors %}field-error{% endif %}" id="manualBreedWrap">
+                            Manual Breed / Old Data
+                            <input
+                                name="breed"
+                                id="manualBreedInput"
+                                value="{{ pet.breed|default:'' }}"
+                                placeholder="Only fill if no breed master"
+                            >
+                        </label>
+
+                        <!-- TYPE -->
+                        <label class="{% if form.pet_type.errors %}field-error{% endif %}">
+                            Type
+                            <input type="hidden" name="pet_type" id="petTypeInput" value="{% if pet %}{{ pet.pet_type }}{% else %}dog{% endif %}">
+
+                            <button type="button" class="touch-select" onclick="openOptionPopup('type')">
+                                <span id="petTypeLabel">
+                                    {% if pet.pet_type == "cat" %}
+                                        🐱 Cat
+                                    {% elif pet.pet_type == "other" %}
+                                        🐾 Other
+                                    {% else %}
+                                        🐶 Dog
+                                    {% endif %}
+                                </span>
+                                <b>⌄</b>
+                            </button>
+                        </label>
+
+                        <label class="{% if form.name.errors %}field-error{% endif %}">
+                            Name / Code
+                            <input name="name" value="{{ pet.name|default:'' }}" placeholder="Example: Bear / POM-001">
+                        </label>
+
+                        <!-- GENDER -->
+                        <label class="{% if form.gender.errors %}field-error{% endif %}">
+                            Gender
+                            <input type="hidden" name="gender" id="genderInput" value="{{ pet.gender|default:'' }}">
+
+                            <button type="button" class="touch-select" onclick="openOptionPopup('gender')">
+                                <span id="genderLabel">
+                                    {% if pet.gender %}
+                                        {{ pet.gender }}
+                                    {% else %}
+                                        Choose
+                                    {% endif %}
+                                </span>
+                                <b>⌄</b>
+                            </button>
+                        </label>
+
+                        <label class="{% if form.color.errors %}field-error{% endif %}">
+                            Color
+                            <input name="color" value="{{ pet.color|default:'' }}" placeholder="Example: Cream">
+                        </label>
+
+                        <label class="{% if form.special_type.errors %}field-error{% endif %}">
+                            Special Type
+                            <input name="special_type" value="{{ pet.special_type|default:'' }}" placeholder="Example: Teacup / Mini">
+                        </label>
+
+                        <label class="{% if form.age_months_at_stock_in.errors %}field-error{% endif %}" id="ageWrap">
+                            Age Now <small class="inline-small">(month)</small>
+                            <div class="age-input-wrap">
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    name="age_months_at_stock_in"
+                                    id="ageMonthsInput"
+                                    value="{{ pet.age_months_at_stock_in|default:0 }}"
+                                    placeholder="Example: 3"
+                                >
+                                <span>months</span>
+                            </div>
+                        </label>
+
+                        <!-- AGE RECORDED DATE -->
+                        <label class="{% if form.age_recorded_date.errors %}field-error{% endif %}">
+                            Age Recorded Date
+                            <input type="hidden" name="age_recorded_date" id="ageRecordedDateInput" value="{{ pet.age_recorded_date|date:'Y-m-d' }}">
+
+                            <button type="button" class="touch-date-btn" onclick="openDatePicker('ageRecordedDateInput','ageRecordedDateLabel')">
+                                <span id="ageRecordedDateLabel">
+                                    {% if pet.age_recorded_date %}
+                                        {{ pet.age_recorded_date|date:"M d, Y" }}
+                                    {% else %}
+                                        Today
+                                    {% endif %}
+                                </span>
+                                <b>📅</b>
+                            </button>
+                        </label>
+
+                        <!-- DEATH DATE -->
+                        <label class="{% if form.death_date.errors %}field-error{% endif %}">
+                            Death Date
+                            <input type="hidden" name="death_date" id="deathDateInput" value="{{ pet.death_date|date:'Y-m-d' }}">
+
+                            <button type="button" class="touch-date-btn" onclick="openDatePicker('deathDateInput','deathDateLabel')">
+                                <span id="deathDateLabel">
+                                    {% if pet.death_date %}
+                                        {{ pet.death_date|date:"M d, Y" }}
+                                    {% else %}
+                                        Choose date
+                                    {% endif %}
+                                </span>
+                                <b>📅</b>
+                            </button>
+                        </label>
+
+                        <!-- STATUS -->
+                        <label class="{% if form.status.errors %}field-error{% endif %}">
+                            Stock Status
+                            <input type="hidden" name="status" id="statusInput" value="{% if pet %}{{ pet.status }}{% else %}in_stock{% endif %}">
+
+                            <button type="button" class="touch-select" onclick="openOptionPopup('status')">
+                                <span id="statusLabel">
+                                    {% if pet.status == "reserved" %}
+                                        🟡 Reserved / Deposit
+                                    {% elif pet.status == "sold" %}
+                                        🔴 Sold
+                                    {% elif pet.status == "sick" %}
+                                        🏥 Sick
+                                    {% elif pet.status == "dead" %}
+                                        ⚫ Dead
+                                    {% elif pet.status == "cancelled" %}
+                                        ❌ Cancelled
+                                    {% else %}
+                                        🟢 In Stock
+                                    {% endif %}
+                                </span>
+                                <b>⌄</b>
+                            </button>
+                        </label>
+
+                        <label class="{% if form.cost_price.errors %}field-error{% endif %}">
+                            Cost Price
+                            <input type="number" step="0.01" name="cost_price" id="costPriceInput" value="{{ pet.cost_price|default:'0.00' }}">
+                        </label>
+
+                        <label class="{% if form.sale_price.errors %}field-error{% endif %}">
+                            Sale Price
+                            <input type="number" step="0.01" name="sale_price" id="salePriceInput" value="{{ pet.sale_price|default:'0.00' }}">
+                        </label>
+
+                    </div>
+
+                    {% if pet %}
+                        <div class="age-box">
+                            Current Age Auto Show:
+                            <strong>{{ pet.current_age_display }}</strong>
+                        </div>
+                    {% endif %}
+
+                    <!-- VACCINE SECTION -->
+                    <div class="vaccine-section">
+                        <div class="vaccine-head">
+                            <div>
+                                <h3>💉 Vaccine History</h3>
+                                <p>Optional vaccine records.</p>
+                            </div>
+
+                            <button type="button" class="add-vaccine-btn" onclick="addVaccineRow()">＋ Add Vaccine</button>
                         </div>
 
-                        <button type="button" class="add-vaccine-btn" onclick="addVaccineRow()">＋ Add Vaccine</button>
-                    </div>
+                        <div id="vaccineRows">
+                            {% if pet and pet.vaccines.all %}
+                                {% for v in pet.vaccines.all %}
+                                    <div class="vaccine-row">
+                                        <div class="vaccine-grid">
+                                            <label>
+                                                Vaccine No
+                                                <input type="number" name="vaccine_no[]" value="{{ v.vaccine_no|default:forloop.counter }}">
+                                            </label>
 
-                    <div id="vaccineRows">
-                        {% if pet and pet.vaccines.all %}
-                            {% for v in pet.vaccines.all %}
+                                            <label>
+                                                Vaccine Name
+                                                <input type="text" name="vaccine_name[]" value="{{ v.vaccine_name|default:'' }}" placeholder="Example: Vaccine 1 / Rabies">
+                                            </label>
+
+                                            <label>
+                                                Vaccine Date
+                                                <input type="hidden" name="vaccine_date[]" id="vaccineDateInput{{ forloop.counter }}" value="{{ v.vaccine_date|date:'Y-m-d' }}">
+
+                                                <button type="button" class="touch-date-btn small-date-btn" onclick="openDatePicker('vaccineDateInput{{ forloop.counter }}','vaccineDateLabel{{ forloop.counter }}')">
+                                                    <span id="vaccineDateLabel{{ forloop.counter }}">
+                                                        {% if v.vaccine_date %}
+                                                            {{ v.vaccine_date|date:"M d, Y" }}
+                                                        {% else %}
+                                                            Choose date
+                                                        {% endif %}
+                                                    </span>
+                                                    <b>📅</b>
+                                                </button>
+                                            </label>
+
+                                            <label>
+                                                Next Recommended
+                                                <input type="hidden" name="next_recommended_date[]" id="nextVaccineInput{{ forloop.counter }}" value="{{ v.next_recommended_date|date:'Y-m-d' }}">
+
+                                                <button type="button" class="touch-date-btn small-date-btn" onclick="openDatePicker('nextVaccineInput{{ forloop.counter }}','nextVaccineLabel{{ forloop.counter }}')">
+                                                    <span id="nextVaccineLabel{{ forloop.counter }}">
+                                                        {% if v.next_recommended_date %}
+                                                            {{ v.next_recommended_date|date:"M d, Y" }}
+                                                        {% else %}
+                                                            Choose date
+                                                        {% endif %}
+                                                    </span>
+                                                    <b>📅</b>
+                                                </button>
+                                            </label>
+                                        </div>
+
+                                        <div class="vaccine-note-row">
+                                            <label class="full">
+                                                Note
+                                                <input type="text" name="vaccine_note[]" value="{{ v.note|default:'' }}" placeholder="Optional note">
+                                            </label>
+
+                                            <button type="button" class="remove-vaccine-btn" onclick="removeVaccineRow(this)">✕</button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
                                 <div class="vaccine-row">
                                     <div class="vaccine-grid">
                                         <label>
                                             Vaccine No
-                                            <input type="number" name="vaccine_no[]" value="{{ v.vaccine_no|default:forloop.counter }}">
+                                            <input type="number" name="vaccine_no[]" value="1">
                                         </label>
 
                                         <label>
                                             Vaccine Name
-                                            <input type="text" name="vaccine_name[]" value="{{ v.vaccine_name|default:'' }}" placeholder="Example: Vaccine 1 / Rabies">
+                                            <input type="text" name="vaccine_name[]" placeholder="Example: Vaccine 1 / Rabies">
                                         </label>
 
                                         <label>
                                             Vaccine Date
-                                            <input type="hidden" name="vaccine_date[]" id="vaccineDateInput{{ forloop.counter }}" value="{{ v.vaccine_date|date:'Y-m-d' }}">
+                                            <input type="hidden" name="vaccine_date[]" id="vaccineDateInput1" value="">
 
-                                            <button type="button" class="touch-date-btn small-date-btn" onclick="openDatePicker('vaccineDateInput{{ forloop.counter }}','vaccineDateLabel{{ forloop.counter }}')">
-                                                <span id="vaccineDateLabel{{ forloop.counter }}">
-                                                    {% if v.vaccine_date %}
-                                                        {{ v.vaccine_date|date:"M d, Y" }}
-                                                    {% else %}
-                                                        Choose date
-                                                    {% endif %}
-                                                </span>
+                                            <button type="button" class="touch-date-btn small-date-btn" onclick="openDatePicker('vaccineDateInput1','vaccineDateLabel1')">
+                                                <span id="vaccineDateLabel1">Choose date</span>
                                                 <b>📅</b>
                                             </button>
                                         </label>
 
                                         <label>
                                             Next Recommended
-                                            <input type="hidden" name="next_recommended_date[]" id="nextVaccineInput{{ forloop.counter }}" value="{{ v.next_recommended_date|date:'Y-m-d' }}">
+                                            <input type="hidden" name="next_recommended_date[]" id="nextVaccineInput1" value="">
 
-                                            <button type="button" class="touch-date-btn small-date-btn" onclick="openDatePicker('nextVaccineInput{{ forloop.counter }}','nextVaccineLabel{{ forloop.counter }}')">
-                                                <span id="nextVaccineLabel{{ forloop.counter }}">
-                                                    {% if v.next_recommended_date %}
-                                                        {{ v.next_recommended_date|date:"M d, Y" }}
-                                                    {% else %}
-                                                        Choose date
-                                                    {% endif %}
-                                                </span>
+                                            <button type="button" class="touch-date-btn small-date-btn" onclick="openDatePicker('nextVaccineInput1','nextVaccineLabel1')">
+                                                <span id="nextVaccineLabel1">Choose date</span>
                                                 <b>📅</b>
                                             </button>
                                         </label>
@@ -323,111 +397,279 @@
                                     <div class="vaccine-note-row">
                                         <label class="full">
                                             Note
-                                            <input type="text" name="vaccine_note[]" value="{{ v.note|default:'' }}" placeholder="Optional note">
+                                            <input type="text" name="vaccine_note[]" placeholder="Optional note">
                                         </label>
 
                                         <button type="button" class="remove-vaccine-btn" onclick="removeVaccineRow(this)">✕</button>
                                     </div>
                                 </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="vaccine-row">
-                                <div class="vaccine-grid">
-                                    <label>
-                                        Vaccine No
-                                        <input type="number" name="vaccine_no[]" value="1">
-                                    </label>
+                            {% endif %}
+                        </div>
+                    </div>
 
-                                    <label>
-                                        Vaccine Name
-                                        <input type="text" name="vaccine_name[]" placeholder="Example: Vaccine 1 / Rabies">
-                                    </label>
+                    <label class="full">
+                        Note
+                        <textarea name="note" placeholder="Extra note...">{{ pet.note|default:'' }}</textarea>
+                    </label>
 
-                                    <label>
-                                        Vaccine Date
-                                        <input type="hidden" name="vaccine_date[]" id="vaccineDateInput1" value="">
-
-                                        <button type="button" class="touch-date-btn small-date-btn" onclick="openDatePicker('vaccineDateInput1','vaccineDateLabel1')">
-                                            <span id="vaccineDateLabel1">Choose date</span>
-                                            <b>📅</b>
-                                        </button>
-                                    </label>
-
-                                    <label>
-                                        Next Recommended
-                                        <input type="hidden" name="next_recommended_date[]" id="nextVaccineInput1" value="">
-
-                                        <button type="button" class="touch-date-btn small-date-btn" onclick="openDatePicker('nextVaccineInput1','nextVaccineLabel1')">
-                                            <span id="nextVaccineLabel1">Choose date</span>
-                                            <b>📅</b>
-                                        </button>
-                                    </label>
-                                </div>
-
-                                <div class="vaccine-note-row">
-                                    <label class="full">
-                                        Note
-                                        <input type="text" name="vaccine_note[]" placeholder="Optional note">
-                                    </label>
-
-                                    <button type="button" class="remove-vaccine-btn" onclick="removeVaccineRow(this)">✕</button>
+                    {% if pet %}
+                        <div class="history-card">
+                            <div class="history-head">
+                                <div>
+                                    <h3>📝 Add Note History</h3>
+                                    <p>Use this when staff wants to record a new update without deleting old note.</p>
                                 </div>
                             </div>
+
+                            <textarea name="note_history" placeholder="Example: Customer asked to reserve / vaccine checked / moved branch..."></textarea>
+
+                            {% if note_histories %}
+                                <div class="history-list">
+                                    {% for item in note_histories %}
+                                        <div class="history-item">
+                                            <strong>{{ item.created_at|date:"M d, Y H:i" }}</strong>
+                                            <span>{% if item.created_by %}{{ item.created_by.get_full_name|default:item.created_by.username }}{% else %}-{% endif %}</span>
+                                            <p>{{ item.note }}</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        {% if batch %}
+                            <div class="history-card batch-edit-card">
+                                <div class="history-head">
+                                    <div>
+                                        <h3>📦 Batch Information</h3>
+                                        <p>Edit this batch later. All pets from the same stock-in can stay grouped.</p>
+                                    </div>
+                                </div>
+
+                                <input type="hidden" name="batch_id" value="{{ batch.id }}">
+
+                                <div class="bulk-grid">
+                                    <label>
+                                        Batch Name
+                                        <input type="text" name="batch_name" value="{{ batch.name|default:'' }}" placeholder="Example: Pomeranian Batch 2026-05">
+                                    </label>
+
+                                    <label>
+                                        Batch Code
+                                        <input type="text" name="batch_code" value="{{ batch.code|default:'' }}" placeholder="Auto or manual code">
+                                    </label>
+
+                                    <label>
+                                        Batch Date
+                                        <input type="hidden" name="batch_date" id="editBatchDateInput" value="{{ batch.batch_date|date:'Y-m-d' }}">
+                                        <button type="button" class="touch-date-btn" onclick="openDatePicker('editBatchDateInput','editBatchDateLabel')">
+                                            <span id="editBatchDateLabel">
+                                                {% if batch.batch_date %}{{ batch.batch_date|date:"M d, Y" }}{% else %}Today{% endif %}
+                                            </span>
+                                            <b>📅</b>
+                                        </button>
+                                    </label>
+                                </div>
+
+                                <label class="full">
+                                    Batch Note
+                                    <textarea name="batch_note" placeholder="Batch note...">{{ batch.note|default:'' }}</textarea>
+                                </label>
+
+                                <label class="full">
+                                    Add Batch Note History
+                                    <textarea name="batch_note_history" placeholder="New batch update note..."></textarea>
+                                </label>
+
+                                {% if batch_note_histories %}
+                                    <div class="history-list">
+                                        {% for item in batch_note_histories %}
+                                            <div class="history-item">
+                                                <strong>{{ item.created_at|date:"M d, Y H:i" }}</strong>
+                                                <span>{% if item.created_by %}{{ item.created_by.get_full_name|default:item.created_by.username }}{% else %}-{% endif %}</span>
+                                                <p>{{ item.note }}</p>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
                         {% endif %}
-                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================================================== -->
+        <!-- BULK MODE -->
+        <!-- ===================================================== -->
+        {% if not pet %}
+            <div id="bulkStockBox" style="display:none;">
+
+                <div class="bulk-info-box">
+                    <h2>🐶 Bulk Same Breed Stock-In</h2>
+                    <p>Choose batch/shared info first. After generate, each pet can change branch, age, price, gender, note, and photos.</p>
                 </div>
 
-                <label class="full">
-                    Note
-                    <textarea name="note" placeholder="Extra note...">{{ pet.note|default:'' }}</textarea>
-                </label>
+                <div class="bulk-shared-card batch-edit-card">
+                    <h3>1. Batch Information</h3>
+                    <p class="bulk-help">This batch can be opened and edited later. Use batch note history for supplier/shop updates.</p>
 
-                <div class="actions">
-                    <button class="save-btn" type="submit">💾 Save Pet</button>
-                    <a href="{% url 'pet_list' %}" class="cancel-btn">Cancel</a>
+                    <input type="hidden" name="batch_id" value="{{ batch.id|default:'' }}">
+
+                    <div class="bulk-grid">
+                        <label>
+                            Batch Name
+                            <input type="text" name="batch_name" id="batchNameInput" value="{{ batch.name|default:'' }}" placeholder="Example: Pomeranian Batch">
+                        </label>
+
+                        <label>
+                            Batch Code
+                            <input type="text" name="batch_code" id="batchCodeInput" value="{{ batch.code|default:'' }}" placeholder="Auto or manual code">
+                        </label>
+
+                        <label>
+                            Batch Date
+                            <input type="hidden" name="batch_date" id="batchDateInput" value="{% if batch and batch.batch_date %}{{ batch.batch_date|date:'Y-m-d' }}{% endif %}">
+                            <button type="button" class="touch-date-btn" onclick="openDatePicker('batchDateInput','batchDateLabel')">
+                                <span id="batchDateLabel">
+                                    {% if batch and batch.batch_date %}{{ batch.batch_date|date:"M d, Y" }}{% else %}Today{% endif %}
+                                </span>
+                                <b>📅</b>
+                            </button>
+                        </label>
+                    </div>
+
+                    <label class="full">
+                        Batch Note
+                        <textarea name="batch_note" id="batchNoteInput" placeholder="Example: Same supplier, same parent, arrived together...">{{ batch.note|default:'' }}</textarea>
+                    </label>
+
+                    <label class="full">
+                        Add Batch Note History
+                        <textarea name="batch_note_history" placeholder="Example: Changed price after checking quality / moved 1 dog to another branch..."></textarea>
+                    </label>
+
+                    {% if batch_note_histories %}
+                        <div class="history-list">
+                            {% for item in batch_note_histories %}
+                                <div class="history-item">
+                                    <strong>{{ item.created_at|date:"M d, Y H:i" }}</strong>
+                                    <span>{% if item.created_by %}{{ item.created_by.get_full_name|default:item.created_by.username }}{% else %}-{% endif %}</span>
+                                    <p>{{ item.note }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="bulk-shared-card">
+                    <h3>2. Shared Information</h3>
+
+                    <div class="bulk-grid">
+                        <label>
+                            Pet Type *
+                            <input type="hidden" name="pet_type" id="bulkPetTypeInput" value="dog">
+
+                            <button type="button" class="touch-select" onclick="openOptionPopup('bulkType')">
+                                <span id="bulkPetTypeLabel">🐶 Dog</span>
+                                <b>⌄</b>
+                            </button>
+                        </label>
+
+                        <label>
+                            Breed *
+                            <input type="hidden" name="breed_profile" id="bulkBreedProfileInput" value="">
+
+                            <button type="button" class="touch-select" onclick="openOptionPopup('bulkBreed')">
+                                <span id="bulkBreedProfileLabel">Choose Breed</span>
+                                <b>⌄</b>
+                            </button>
+                        </label>
+
+                        <label>
+                            Shared Branch
+                            <input type="hidden" name="branch" id="bulkBranchInput" value="">
+
+                            <button type="button" class="touch-select" onclick="openOptionPopup('bulkBranch')">
+                                <span id="bulkBranchLabel">No Branch</span>
+                                <b>⌄</b>
+                            </button>
+                        </label>
+
+                        <label>
+                            Age Now <small class="inline-small">(month)</small>
+                            <div class="age-input-wrap">
+                                <input type="number" name="age_months_at_stock_in" id="bulkAgeInput" min="0" value="2">
+                                <span>months</span>
+                            </div>
+                        </label>
+
+                        <label>
+                            Quantity *
+                            <input type="number" name="quantity" id="bulkQuantityInput" min="1" max="30" value="2">
+                        </label>
+
+                        <label>
+                            Cost Price
+                            <input type="number" step="0.01" name="cost_price" id="bulkCostPriceInput" value="0.00">
+                        </label>
+
+                        <label>
+                            Sale Price *
+                            <input type="number" step="0.01" name="sale_price" id="bulkSalePriceInput" value="0.00">
+                        </label>
+
+                        <label>
+                            Shared Note
+                            <input type="text" name="note" placeholder="Same batch note...">
+                        </label>
+                    </div>
+
+                    <button type="button" class="generate-btn" onclick="generateBulkCards()">
+                        3. Generate Pet Cards
+                    </button>
+                </div>
+
+                <div class="bulk-shared-card">
+                    <h3>4. Pet Cards</h3>
+                    <p class="bulk-help">Each pet can have its own branch, age, cost, sale price, gender, note, and up to 4 photos.</p>
+                    <div id="bulkCardsWrap"></div>
                 </div>
 
             </div>
+        {% endif %}
+
+        <div class="actions">
+            <button class="save-btn" type="submit" id="saveBtn">💾 Save Pet</button>
+            <a href="{% url 'pet_list' %}" class="cancel-btn">Cancel</a>
         </div>
+
     </form>
 </div>
 
 <!-- SELECT BACKDROP -->
 <div class="select-backdrop" id="selectBackdrop" onclick="closeOptionPopups()"></div>
 
-<!-- BREED POPUP -->
+<!-- BREED POPUP SINGLE -->
 <div class="option-popup breed-popup breed-style-popup" id="breedPopup">
     <div class="breed-popup-head">
         <h3>Select Breed</h3>
         <button type="button" onclick="closeOptionPopups()">×</button>
     </div>
 
-    <input
-        type="text"
-        id="breedSearchInput"
-        class="popup-search"
-        placeholder="Search breed..."
-        oninput="filterBreedButtons()"
-    >
+    <input type="text" id="breedSearchInput" class="popup-search" placeholder="Search breed..." oninput="filterBreedButtons('breedOptionList', 'breedSearchInput')">
 
     <div class="breed-option-list" id="breedOptionList">
-        <button
-            type="button"
-            class="breed-select-card breed-option"
-            data-search="no breed manual old data"
-            onclick="chooseBreed('', 'Choose Breed Master', '', '', '', '')"
-        >
+        <button type="button" class="breed-select-card breed-option" data-search="no breed manual old data" onclick="chooseBreed('', 'Choose Breed Master', '', '', '', '')">
             <div class="breed-icon">🐾</div>
-
             <div class="breed-info">
                 <strong>No Breed Master</strong>
                 <span>Use manual breed / old data</span>
             </div>
-
             <div class="breed-price">$0.00</div>
         </button>
 
-        {% for breed in form.breed_profile.field.queryset %}
+        {% for breed in breeds %}
             <button
                 type="button"
                 class="breed-select-card breed-option"
@@ -438,25 +680,13 @@
                     {% if breed.photo %}
                         <img src="{{ breed.photo.url }}" alt="{{ breed.name }}">
                     {% else %}
-                        <span>
-                            {% if breed.pet_type == "cat" %}🐱{% elif breed.pet_type == "dog" %}🐶{% else %}🐾{% endif %}
-                        </span>
+                        <span>{% if breed.pet_type == "cat" %}🐱{% elif breed.pet_type == "dog" %}🐶{% else %}🐾{% endif %}</span>
                     {% endif %}
                 </div>
 
                 <div class="breed-info">
                     <strong>{{ breed.name }}</strong>
                     <span>{{ breed.get_pet_type_display }}</span>
-
-                    <div class="breed-tags">
-                        {% if breed.color_options %}
-                            <em>{{ breed.color_options|truncatechars:22 }}</em>
-                        {% endif %}
-
-                        {% if breed.special_type_options %}
-                            <em>{{ breed.special_type_options|truncatechars:22 }}</em>
-                        {% endif %}
-                    </div>
                 </div>
 
                 <div class="breed-price">
@@ -468,7 +698,46 @@
     </div>
 </div>
 
-<!-- TYPE POPUP -->
+<!-- BREED POPUP BULK -->
+<div class="option-popup breed-popup breed-style-popup" id="bulkBreedPopup">
+    <div class="breed-popup-head">
+        <h3>Select Breed for Bulk</h3>
+        <button type="button" onclick="closeOptionPopups()">×</button>
+    </div>
+
+    <input type="text" id="bulkBreedSearchInput" class="popup-search" placeholder="Search breed..." oninput="filterBreedButtons('bulkBreedOptionList', 'bulkBreedSearchInput')">
+
+    <div class="breed-option-list" id="bulkBreedOptionList">
+        {% for breed in breeds %}
+            <button
+                type="button"
+                class="breed-select-card breed-option"
+                data-search="{{ breed.get_pet_type_display }} {{ breed.name }} {{ breed.color_options }} {{ breed.special_type_options }}"
+                onclick="chooseBulkBreed('{{ breed.id }}', '{{ breed.get_pet_type_display }} - {{ breed.name|escapejs }}', '{{ breed.pet_type }}', '{{ breed.default_cost_price }}', '{{ breed.default_sale_price }}', '{{ breed.name|escapejs }}')"
+            >
+                <div class="breed-photo">
+                    {% if breed.photo %}
+                        <img src="{{ breed.photo.url }}" alt="{{ breed.name }}">
+                    {% else %}
+                        <span>{% if breed.pet_type == "cat" %}🐱{% elif breed.pet_type == "dog" %}🐶{% else %}🐾{% endif %}</span>
+                    {% endif %}
+                </div>
+
+                <div class="breed-info">
+                    <strong>{{ breed.name }}</strong>
+                    <span>{{ breed.get_pet_type_display }}</span>
+                </div>
+
+                <div class="breed-price">
+                    ${{ breed.default_sale_price|floatformat:2 }}
+                    <small>Cost ${{ breed.default_cost_price|floatformat:2 }}</small>
+                </div>
+            </button>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- TYPE POPUP SINGLE -->
 <div class="option-popup" id="typePopup">
     <div class="option-head">
         <h3>Choose Type</h3>
@@ -476,21 +745,67 @@
     </div>
 
     <div class="option-list">
-        <button type="button" class="option-btn" onclick="chooseOption('petTypeInput','petTypeLabel','dog','🐶 Dog')">
-            <span>🐶 Dog</span><b>✓</b>
-        </button>
-
-        <button type="button" class="option-btn" onclick="chooseOption('petTypeInput','petTypeLabel','cat','🐱 Cat')">
-            <span>🐱 Cat</span><b>✓</b>
-        </button>
-
-        <button type="button" class="option-btn" onclick="chooseOption('petTypeInput','petTypeLabel','other','🐾 Other')">
-            <span>🐾 Other</span><b>✓</b>
-        </button>
+        <button type="button" class="option-btn" onclick="chooseOption('petTypeInput','petTypeLabel','dog','🐶 Dog')"><span>🐶 Dog</span><b>✓</b></button>
+        <button type="button" class="option-btn" onclick="chooseOption('petTypeInput','petTypeLabel','cat','🐱 Cat')"><span>🐱 Cat</span><b>✓</b></button>
+        <button type="button" class="option-btn" onclick="chooseOption('petTypeInput','petTypeLabel','other','🐾 Other')"><span>🐾 Other</span><b>✓</b></button>
     </div>
 </div>
 
-<!-- GENDER POPUP -->
+<!-- TYPE POPUP BULK -->
+<div class="option-popup" id="bulkTypePopup">
+    <div class="option-head">
+        <h3>Choose Bulk Type</h3>
+        <button type="button" onclick="closeOptionPopups()">✕</button>
+    </div>
+
+    <div class="option-list">
+        <button type="button" class="option-btn" onclick="chooseOption('bulkPetTypeInput','bulkPetTypeLabel','dog','🐶 Dog')"><span>🐶 Dog</span><b>✓</b></button>
+        <button type="button" class="option-btn" onclick="chooseOption('bulkPetTypeInput','bulkPetTypeLabel','cat','🐱 Cat')"><span>🐱 Cat</span><b>✓</b></button>
+        <button type="button" class="option-btn" onclick="chooseOption('bulkPetTypeInput','bulkPetTypeLabel','other','🐾 Other')"><span>🐾 Other</span><b>✓</b></button>
+    </div>
+</div>
+
+<!-- BULK SHARED BRANCH POPUP -->
+<div class="option-popup" id="bulkBranchPopup">
+    <div class="option-head">
+        <h3>Choose Shared Branch</h3>
+        <button type="button" onclick="closeOptionPopups()">✕</button>
+    </div>
+
+    <div class="option-list">
+        <button type="button" class="option-btn" onclick="chooseBulkBranch('', 'No Branch')">
+            <span>No Branch</span><b>✓</b>
+        </button>
+
+        {% for branch in branches %}
+            <button type="button" class="option-btn" onclick="chooseBulkBranch('{{ branch.id }}', '{{ branch.name|escapejs }}')">
+                <span>{{ branch.name }}</span><b>✓</b>
+            </button>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- PER PET BRANCH POPUP -->
+<div class="option-popup" id="petBranchPopup">
+    <div class="option-head">
+        <h3>Choose Pet Branch</h3>
+        <button type="button" onclick="closeOptionPopups()">✕</button>
+    </div>
+
+    <div class="option-list">
+        <button type="button" class="option-btn" onclick="choosePetBranch('', 'No Branch')">
+            <span>No Branch</span><b>✓</b>
+        </button>
+
+        {% for branch in branches %}
+            <button type="button" class="option-btn" onclick="choosePetBranch('{{ branch.id }}', '{{ branch.name|escapejs }}')">
+                <span>{{ branch.name }}</span><b>✓</b>
+            </button>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- GENDER POPUP SINGLE -->
 <div class="option-popup" id="genderPopup">
     <div class="option-head">
         <h3>Choose Gender</h3>
@@ -498,17 +813,23 @@
     </div>
 
     <div class="option-list">
-        <button type="button" class="option-btn" onclick="chooseOption('genderInput','genderLabel','','Choose')">
-            <span>⚪ Choose</span><b>✓</b>
-        </button>
+        <button type="button" class="option-btn" onclick="chooseOption('genderInput','genderLabel','','Choose')"><span>⚪ Choose</span><b>✓</b></button>
+        <button type="button" class="option-btn" onclick="chooseOption('genderInput','genderLabel','Male','♂️ Male')"><span>♂️ Male</span><b>✓</b></button>
+        <button type="button" class="option-btn" onclick="chooseOption('genderInput','genderLabel','Female','♀️ Female')"><span>♀️ Female</span><b>✓</b></button>
+    </div>
+</div>
 
-        <button type="button" class="option-btn" onclick="chooseOption('genderInput','genderLabel','Male','♂️ Male')">
-            <span>♂️ Male</span><b>✓</b>
-        </button>
+<!-- GENDER POPUP PER PET -->
+<div class="option-popup" id="petGenderPopup">
+    <div class="option-head">
+        <h3>Choose Pet Gender</h3>
+        <button type="button" onclick="closeOptionPopups()">✕</button>
+    </div>
 
-        <button type="button" class="option-btn" onclick="chooseOption('genderInput','genderLabel','Female','♀️ Female')">
-            <span>♀️ Female</span><b>✓</b>
-        </button>
+    <div class="option-list">
+        <button type="button" class="option-btn" onclick="choosePetGender('', 'Choose')"><span>⚪ Choose</span><b>✓</b></button>
+        <button type="button" class="option-btn" onclick="choosePetGender('Male', '♂️ Male')"><span>♂️ Male</span><b>✓</b></button>
+        <button type="button" class="option-btn" onclick="choosePetGender('Female', '♀️ Female')"><span>♀️ Female</span><b>✓</b></button>
     </div>
 </div>
 
@@ -520,29 +841,12 @@
     </div>
 
     <div class="option-list">
-        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','in_stock','🟢 In Stock')">
-            <span>🟢 In Stock</span><b>✓</b>
-        </button>
-
-        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','reserved','🟡 Reserved / Deposit')">
-            <span>🟡 Reserved / Deposit</span><b>✓</b>
-        </button>
-
-        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','sold','🔴 Sold')">
-            <span>🔴 Sold</span><b>✓</b>
-        </button>
-
-        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','sick','🏥 Sick')">
-            <span>🏥 Sick</span><b>✓</b>
-        </button>
-
-        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','dead','⚫ Dead')">
-            <span>⚫ Dead</span><b>✓</b>
-        </button>
-
-        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','cancelled','❌ Cancelled')">
-            <span>❌ Cancelled</span><b>✓</b>
-        </button>
+        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','in_stock','🟢 In Stock')"><span>🟢 In Stock</span><b>✓</b></button>
+        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','reserved','🟡 Reserved / Deposit')"><span>🟡 Reserved / Deposit</span><b>✓</b></button>
+        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','sold','🔴 Sold')"><span>🔴 Sold</span><b>✓</b></button>
+        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','sick','🏥 Sick')"><span>🏥 Sick</span><b>✓</b></button>
+        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','dead','⚫ Dead')"><span>⚫ Dead</span><b>✓</b></button>
+        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','cancelled','❌ Cancelled')"><span>❌ Cancelled</span><b>✓</b></button>
     </div>
 </div>
 
@@ -588,6 +892,17 @@
 <style>
 *{box-sizing:border-box}
 a{text-decoration:none}
+
+/* remove number up/down buttons */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+}
+
+input[type=number]{
+    -moz-appearance:textfield;
+}
 
 .form-page{padding:24px 28px}
 
@@ -650,6 +965,46 @@ a{text-decoration:none}
     padding-left:18px;
 }
 
+.mode-box{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-bottom:20px;
+}
+
+.mode-card{
+    border:3px solid #f1e5ef;
+    background:#fffafe;
+    border-radius:24px;
+    padding:18px;
+    cursor:pointer;
+    display:grid;
+    gap:6px;
+    transition:.18s;
+}
+
+.mode-card input{display:none}
+
+.mode-card.active{
+    border-color:#7b5cff;
+    background:linear-gradient(135deg,#f8f5ff,#fff8f4);
+    box-shadow:0 14px 34px rgba(123,92,255,.14);
+}
+
+.mode-icon{font-size:32px}
+
+.mode-card strong{
+    color:#080634;
+    font-size:22px;
+    font-weight:1000;
+}
+
+.mode-card small{
+    color:#7b7288;
+    font-size:13px;
+    font-weight:900;
+}
+
 .layout{
     display:grid;
     grid-template-columns:340px 1fr;
@@ -696,7 +1051,6 @@ a{text-decoration:none}
     font-size:24px;
     font-weight:1000;
     cursor:pointer;
-    box-shadow:0 10px 20px rgba(255,77,93,.25);
 }
 
 .drop-zone{
@@ -733,7 +1087,8 @@ a{text-decoration:none}
 
 .hidden-file{display:none}
 
-.grid{
+.grid,
+.bulk-grid{
     display:grid;
     grid-template-columns:1fr 1fr 1fr;
     gap:16px;
@@ -759,9 +1114,7 @@ textarea{
 }
 
 input,
-select{
-    height:62px;
-}
+select{height:62px}
 
 textarea{
     padding:16px;
@@ -828,7 +1181,8 @@ textarea:focus{
     margin-top:16px;
 }
 
-.age-box{
+.age-box,
+.bulk-info-box{
     margin-top:16px;
     background:#f8f6ff;
     border:2px solid #e6dcff;
@@ -838,9 +1192,187 @@ textarea:focus{
     font-weight:1000;
 }
 
+.bulk-info-box{
+    margin-top:0;
+    margin-bottom:16px;
+}
+
+.bulk-info-box h2{
+    color:#080634;
+    margin:0 0 6px;
+    font-size:28px;
+    font-weight:1000;
+}
+
+.bulk-info-box p{margin:0}
+
 .age-box strong{
     color:#7b5cff;
     font-size:20px;
+}
+
+.bulk-shared-card{
+    border:2px solid #f2e4ef;
+    border-radius:26px;
+    padding:18px;
+    background:#fffafe;
+    margin-bottom:18px;
+}
+
+.bulk-shared-card h3{
+    margin:0 0 14px;
+    color:#080634;
+    font-size:22px;
+    font-weight:1000;
+}
+
+.bulk-help{
+    margin-top:-6px;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.generate-btn{
+    width:100%;
+    min-height:64px;
+    margin-top:16px;
+    border:0;
+    border-radius:20px;
+    background:linear-gradient(135deg,#ff8c6b,#7b5cff);
+    color:white;
+    font-size:18px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.bulk-pet-card{
+    border:2px solid #f1e5ef;
+    border-radius:24px;
+    background:white;
+    padding:16px;
+    margin-top:14px;
+}
+
+.bulk-pet-top{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    align-items:center;
+    margin-bottom:12px;
+}
+
+.bulk-pet-top h4{
+    margin:0;
+    color:#080634;
+    font-size:22px;
+    font-weight:1000;
+}
+
+.pet-card-badge{
+    background:#f4f0ff;
+    color:#7b5cff;
+    border-radius:999px;
+    padding:8px 12px;
+    font-size:13px;
+    font-weight:1000;
+}
+
+.bulk-pet-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:14px;
+}
+
+.multi-photo-box{
+    margin-top:16px;
+    border:2px solid #ffe1d6;
+    border-radius:22px;
+    padding:16px;
+    background:#fff8f4;
+}
+
+.multi-photo-head{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center;
+    margin-bottom:12px;
+    flex-wrap:wrap;
+}
+
+.multi-photo-head strong{
+    color:#080634;
+    font-size:17px;
+    font-weight:1000;
+}
+
+.multi-photo-head small{
+    color:#7b7288;
+    font-weight:900;
+}
+
+.multi-photo-drop{
+    border:2px dashed #d8c8ef;
+    background:white;
+    border-radius:20px;
+    min-height:92px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    cursor:pointer;
+    font-weight:1000;
+    color:#7b5cff;
+    text-align:center;
+}
+
+.multi-photo-drop.dragover{
+    border-color:#7b5cff;
+    background:#f8f5ff;
+    box-shadow:0 0 0 5px rgba(123,92,255,.12);
+}
+
+.multi-photo-drop small{
+    color:#7b7288;
+    font-weight:900;
+}
+
+.photo-preview-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:10px;
+    margin-top:12px;
+}
+
+.pet-photo-preview{
+    height:120px;
+    border-radius:18px;
+    background:white;
+    overflow:hidden;
+    position:relative;
+    border:2px solid #f1e5ef;
+}
+
+.pet-photo-preview img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.pet-photo-preview button{
+    position:absolute;
+    top:6px;
+    right:6px;
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    border:0;
+    background:#ff4d5d;
+    color:white;
+    font-size:20px;
+    font-weight:1000;
+    cursor:pointer;
 }
 
 .actions{
@@ -972,25 +1504,13 @@ textarea:focus{
     cursor:pointer;
 }
 
-.option-btn small{
-    display:block;
-    margin-top:5px;
-    color:#7b7288;
-    font-size:12px;
-    font-weight:900;
-}
-
 .option-btn:hover{
     border-color:transparent;
     color:white;
     background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
 }
 
-.option-btn:hover small{
-    color:white;
-}
-
-/* BREED POPUP - POS VARIANT STYLE */
+/* BREED POPUP */
 .breed-style-popup{
     width:560px;
     max-width:calc(100% - 28px);
@@ -1089,23 +1609,6 @@ textarea:focus{
     margin-top:4px;
     color:#7b7288;
     font-size:13px;
-    font-weight:1000;
-}
-
-.breed-tags{
-    display:flex;
-    gap:6px;
-    flex-wrap:wrap;
-    margin-top:8px;
-}
-
-.breed-tags em{
-    font-style:normal;
-    padding:6px 10px;
-    border-radius:999px;
-    background:white;
-    color:#7b5cff;
-    font-size:12px;
     font-weight:1000;
 }
 
@@ -1363,22 +1866,99 @@ textarea:focus{
 .date-cancel{background:#f3ecff;color:#7b5cff}
 .date-ok{background:#7b5cff;color:white}
 
+
+.history-card{
+    margin-top:18px;
+    padding:18px;
+    border:2px solid #e6dcff;
+    border-radius:24px;
+    background:#f8f6ff;
+}
+
+.history-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+}
+
+.history-head h3{
+    margin:0;
+    color:#080634;
+    font-size:22px;
+    font-weight:1000;
+}
+
+.history-head p{
+    margin:5px 0 0;
+    color:#7b7288;
+    font-weight:900;
+}
+
+.history-list{
+    display:grid;
+    gap:10px;
+    margin-top:14px;
+}
+
+.history-item{
+    background:white;
+    border:1px solid #eaddec;
+    border-radius:18px;
+    padding:12px 14px;
+}
+
+.history-item strong{
+    color:#080634;
+    font-size:13px;
+    font-weight:1000;
+}
+
+.history-item span{
+    display:block;
+    margin-top:2px;
+    color:#7b7288;
+    font-size:12px;
+    font-weight:900;
+}
+
+.history-item p{
+    margin:8px 0 0;
+    color:#334155;
+    font-weight:800;
+    line-height:1.45;
+}
+
+.batch-edit-card{
+    background:linear-gradient(135deg,#fff8f4,#fbf8ff);
+}
+
+.pet-history-field{
+    grid-column:1 / -1;
+}
+
 @media(max-width:1194px){
     .page-top{display:block}
     .soft-btn{margin-top:16px}
     .layout{grid-template-columns:1fr}
-    .grid{grid-template-columns:1fr 1fr}
+    .grid,
+    .bulk-grid{grid-template-columns:1fr 1fr}
     .vaccine-grid{grid-template-columns:1fr 1fr}
+    .bulk-pet-grid{grid-template-columns:1fr 1fr}
 }
 
 @media(max-width:700px){
-    .form-page{padding:18px}
+    .form-page{padding:14px}
     .page-top h1{font-size:28px}
 
+    .mode-box,
     .grid,
+    .bulk-grid,
     .actions,
     .vaccine-grid,
-    .vaccine-note-row{
+    .vaccine-note-row,
+    .bulk-pet-grid{
         grid-template-columns:1fr;
         display:grid;
     }
@@ -1387,7 +1967,8 @@ textarea:focus{
     .save-btn,
     .cancel-btn,
     .add-vaccine-btn,
-    .remove-vaccine-btn{
+    .remove-vaccine-btn,
+    .generate-btn{
         width:100%;
         min-height:70px;
         font-size:19px;
@@ -1403,6 +1984,14 @@ textarea:focus{
         font-size:18px;
     }
 
+    .photo-preview-grid{
+        grid-template-columns:repeat(2, 1fr);
+    }
+
+    .pet-photo-preview{
+        height:140px;
+    }
+
     .option-popup,
     .date-popup{
         left:14px;
@@ -1416,13 +2005,9 @@ textarea:focus{
         border-radius:28px;
     }
 
-    .breed-style-popup{
-        max-height:82vh;
-    }
+    .breed-style-popup{max-height:82vh}
 
-    .breed-select-card{
-        grid-template-columns:64px 1fr;
-    }
+    .breed-select-card{grid-template-columns:64px 1fr}
 
     .breed-price{
         grid-column:1 / -1;
@@ -1449,10 +2034,17 @@ let activeDateLabelId = null;
 let calendarDate = new Date();
 let selectedDate = null;
 
+let activePetBranchIndex = null;
+let activePetGenderIndex = null;
+let activePhotoIndex = null;
+const petPhotoFiles = {};
+
 document.addEventListener("DOMContentLoaded", function(){
     const form = document.getElementById("petForm");
 
     setDefaultAgeRecordedDate();
+    setDefaultBatchDate();
+    switchStockMode();
 
     if(form){
         form.addEventListener("submit", function(e){
@@ -1479,8 +2071,72 @@ function setDefaultAgeRecordedDate(){
         input.value = todayYMD();
     }
 
-    if(label && (!label.innerText || label.innerText.trim() === "Today")){
+    if(label && input && (!label.innerText || label.innerText.trim() === "Today")){
         label.innerText = formatNice(parseYMD(input.value));
+    }
+}
+
+function setDefaultBatchDate(){
+    const ids = [
+        ["batchDateInput", "batchDateLabel"],
+        ["editBatchDateInput", "editBatchDateLabel"]
+    ];
+
+    ids.forEach(function(pair){
+        const input = document.getElementById(pair[0]);
+        const label = document.getElementById(pair[1]);
+
+        if(input && !input.value){
+            input.value = todayYMD();
+        }
+
+        if(label && input && (!label.innerText || label.innerText.trim() === "Today")){
+            label.innerText = formatNice(parseYMD(input.value));
+        }
+    });
+}
+
+function setContainerDisabled(containerId, disabled){
+    const box = document.getElementById(containerId);
+    if(!box) return;
+
+    box.querySelectorAll("input, select, textarea").forEach(function(el){
+        el.disabled = disabled;
+    });
+}
+
+function switchStockMode(){
+    const checked = document.querySelector('input[name="stock_mode"]:checked');
+    const mode = checked ? checked.value : "single";
+
+    const singleBox = document.getElementById("singleStockBox");
+    const bulkBox = document.getElementById("bulkStockBox");
+    const singleCard = document.getElementById("singleModeCard");
+    const bulkCard = document.getElementById("bulkModeCard");
+    const saveBtn = document.getElementById("saveBtn");
+
+    if(!singleBox || !bulkBox){
+        return;
+    }
+
+    if(mode === "bulk"){
+        singleBox.style.display = "none";
+        bulkBox.style.display = "block";
+        setContainerDisabled("singleStockBox", true);
+        setContainerDisabled("bulkStockBox", false);
+
+        if(singleCard) singleCard.classList.remove("active");
+        if(bulkCard) bulkCard.classList.add("active");
+        if(saveBtn) saveBtn.innerText = "💾 Save All Pets";
+    }else{
+        singleBox.style.display = "block";
+        bulkBox.style.display = "none";
+        setContainerDisabled("singleStockBox", false);
+        setContainerDisabled("bulkStockBox", true);
+
+        if(singleCard) singleCard.classList.add("active");
+        if(bulkCard) bulkCard.classList.remove("active");
+        if(saveBtn) saveBtn.innerText = "💾 Save Pet";
     }
 }
 
@@ -1488,7 +2144,7 @@ function markInvalid(elementId){
     const el = document.getElementById(elementId);
     if(!el) return;
 
-    const wrap = el.closest("label") || el.closest(".touch-field") || el.parentElement;
+    const wrap = el.closest("label") || el.parentElement;
     if(wrap){
         wrap.classList.add("field-error");
         wrap.scrollIntoView({behavior:"smooth", block:"center"});
@@ -1503,6 +2159,41 @@ function clearInvalid(){
 
 function validatePetForm(){
     clearInvalid();
+
+    const checked = document.querySelector('input[name="stock_mode"]:checked');
+    const mode = checked ? checked.value : "single";
+
+    if(mode === "bulk"){
+        const breedId = document.getElementById("bulkBreedProfileInput").value.trim();
+        const qty = Number(document.getElementById("bulkQuantityInput").value || 0);
+        const salePrice = Number(document.getElementById("bulkSalePriceInput").value || 0);
+        const cardCount = document.querySelectorAll(".bulk-pet-card").length;
+
+        if(!breedId){
+            alert("Please choose breed for bulk stock-in.");
+            markInvalid("bulkBreedProfileInput");
+            return false;
+        }
+
+        if(qty <= 0){
+            alert("Please fill quantity.");
+            markInvalid("bulkQuantityInput");
+            return false;
+        }
+
+        if(salePrice <= 0){
+            alert("Please fill sale price.");
+            markInvalid("bulkSalePriceInput");
+            return false;
+        }
+
+        if(cardCount !== qty){
+            alert("Please click Generate Pet Cards before save.");
+            return false;
+        }
+
+        return true;
+    }
 
     const breedProfile = document.getElementById("breedProfileInput").value.trim();
     const manualBreed = document.getElementById("manualBreedInput").value.trim();
@@ -1541,9 +2232,12 @@ function openOptionPopup(type){
 
     if(type === "breed"){
         const search = document.getElementById("breedSearchInput");
-        if(search){
-            setTimeout(function(){ search.focus(); }, 100);
-        }
+        if(search){ setTimeout(function(){ search.focus(); }, 100); }
+    }
+
+    if(type === "bulkBreed"){
+        const search = document.getElementById("bulkBreedSearchInput");
+        if(search){ setTimeout(function(){ search.focus(); }, 100); }
     }
 }
 
@@ -1595,21 +2289,338 @@ function chooseBreed(id, label, petType, costPrice, salePrice, breedName){
     closeOptionPopups();
 }
 
-function filterBreedButtons(){
-    const q = document.getElementById("breedSearchInput").value.toLowerCase().trim();
+function chooseBulkBreed(id, label, petType, costPrice, salePrice, breedName){
+    document.getElementById("bulkBreedProfileInput").value = id;
+    document.getElementById("bulkBreedProfileLabel").innerText = label;
 
-    document.querySelectorAll(".breed-option").forEach(function(btn){
+    if(petType === "dog"){
+        document.getElementById("bulkPetTypeInput").value = "dog";
+        document.getElementById("bulkPetTypeLabel").innerText = "🐶 Dog";
+    }else if(petType === "cat"){
+        document.getElementById("bulkPetTypeInput").value = "cat";
+        document.getElementById("bulkPetTypeLabel").innerText = "🐱 Cat";
+    }else if(petType === "other"){
+        document.getElementById("bulkPetTypeInput").value = "other";
+        document.getElementById("bulkPetTypeLabel").innerText = "🐾 Other";
+    }
+
+    const costInput = document.getElementById("bulkCostPriceInput");
+    const saleInput = document.getElementById("bulkSalePriceInput");
+
+    if(costInput && Number(costInput.value || 0) <= 0){
+        costInput.value = Number(costPrice || 0).toFixed(2);
+    }
+
+    if(saleInput && Number(saleInput.value || 0) <= 0){
+        saleInput.value = Number(salePrice || 0).toFixed(2);
+    }
+
+    closeOptionPopups();
+}
+
+function chooseBulkBranch(value, label){
+    document.getElementById("bulkBranchInput").value = value;
+    document.getElementById("bulkBranchLabel").innerText = label;
+    closeOptionPopups();
+}
+
+function openPetBranchPopup(index){
+    activePetBranchIndex = index;
+    openOptionPopup("petBranch");
+}
+
+function choosePetBranch(value, label){
+    if(activePetBranchIndex === null) return;
+
+    document.getElementById(`branchInput_${activePetBranchIndex}`).value = value;
+    document.getElementById(`branchLabel_${activePetBranchIndex}`).innerText = label;
+
+    closeOptionPopups();
+}
+
+function openPetGenderPopup(index){
+    activePetGenderIndex = index;
+    openOptionPopup("petGender");
+}
+
+function choosePetGender(value, label){
+    if(activePetGenderIndex === null) return;
+
+    document.getElementById(`genderInput_${activePetGenderIndex}`).value = value;
+    document.getElementById(`genderLabel_${activePetGenderIndex}`).innerText = label;
+
+    closeOptionPopups();
+}
+
+function filterBreedButtons(listId, inputId){
+    const input = document.getElementById(inputId);
+    const q = input ? input.value.toLowerCase().trim() : "";
+
+    document.querySelectorAll("#" + listId + " .breed-option").forEach(function(btn){
         const text = (btn.dataset.search || "").toLowerCase();
-
-        if(!q || text.includes(q)){
-            btn.style.display = "grid";
-        }else{
-            btn.style.display = "none";
-        }
+        btn.style.display = (!q || text.includes(q)) ? "grid" : "none";
     });
 }
 
-/* PHOTO UPLOAD */
+function generateBulkCards(){
+    const wrap = document.getElementById("bulkCardsWrap");
+    const qty = Number(document.getElementById("bulkQuantityInput").value || 0);
+    const breedLabel = document.getElementById("bulkBreedProfileLabel").innerText.trim();
+    const sharedBranchId = document.getElementById("bulkBranchInput").value || "";
+    const sharedBranchLabel = document.getElementById("bulkBranchLabel").innerText || "No Branch";
+
+    const sharedAge = document.getElementById("bulkAgeInput").value || "0";
+    const sharedCost = document.getElementById("bulkCostPriceInput").value || "0.00";
+    const sharedSale = document.getElementById("bulkSalePriceInput").value || "0.00";
+
+    let breedName = breedLabel;
+    if(breedName.includes(" - ")){
+        breedName = breedName.split(" - ")[1];
+    }
+
+    if(!qty || qty < 1){
+        alert("Please enter quantity.");
+        return;
+    }
+
+    if(!document.getElementById("bulkBreedProfileInput").value){
+        alert("Please choose breed first.");
+        return;
+    }
+
+    wrap.innerHTML = "";
+
+    for(let i = 1; i <= qty; i++){
+        petPhotoFiles[i] = [];
+
+        const card = document.createElement("div");
+        card.className = "bulk-pet-card";
+
+        card.innerHTML = `
+            <div class="bulk-pet-top">
+                <h4>🐾 ${breedName} #${i}</h4>
+                <span class="pet-card-badge">Pet ${i}</span>
+            </div>
+
+            <div class="bulk-pet-grid">
+                <label>
+                    Name / Code
+                    <input type="text" name="name_${i}" value="${breedName} #${i}">
+                </label>
+
+                <label>
+                    Branch
+                    <input type="hidden" name="branch_${i}" id="branchInput_${i}" value="${sharedBranchId}">
+                    <button type="button" class="touch-select" onclick="openPetBranchPopup(${i})">
+                        <span id="branchLabel_${i}">${sharedBranchLabel}</span>
+                        <b>⌄</b>
+                    </button>
+                </label>
+
+                <label>
+                    Gender
+                    <input type="hidden" name="gender_${i}" id="genderInput_${i}" value="">
+                    <button type="button" class="touch-select" onclick="openPetGenderPopup(${i})">
+                        <span id="genderLabel_${i}">Choose</span>
+                        <b>⌄</b>
+                    </button>
+                </label>
+
+                <label>
+                    Age
+                    <div class="age-input-wrap">
+                        <input type="number" name="age_months_${i}" value="${sharedAge}" min="0">
+                        <span>months</span>
+                    </div>
+                </label>
+
+                <label>
+                    Cost Price
+                    <input type="number" step="0.01" name="cost_price_${i}" value="${sharedCost}">
+                </label>
+
+                <label>
+                    Sale Price
+                    <input type="number" step="0.01" name="sale_price_${i}" value="${sharedSale}">
+                </label>
+
+                <label>
+                    Color
+                    <input type="text" name="color_${i}" placeholder="Optional">
+                </label>
+
+                <label>
+                    Special Type
+                    <input type="text" name="special_type_${i}" placeholder="Optional">
+                </label>
+
+                <label>
+                    Pet Note
+                    <input type="text" name="note_${i}" placeholder="Optional individual note">
+                </label>
+
+                <label class="pet-history-field">
+                    Pet Note History
+                    <input type="text" name="note_history_${i}" placeholder="Optional history for this pet">
+                </label>
+            </div>
+
+            <div class="multi-photo-box">
+                <div class="multi-photo-head">
+                    <strong>📸 Photos for ${breedName} #${i}</strong>
+                    <small>Upload 1–4 photos. Drag, click, or paste.</small>
+                </div>
+
+                <div class="multi-photo-drop" id="photoDrop_${i}" onclick="openPhotoPicker(${i})">
+                    <div>＋ Add Photos</div>
+                    <small>Click / drag / paste picture</small>
+                </div>
+
+                <input
+                    type="file"
+                    id="photoInput_${i}"
+                    name="photos_${i}[]"
+                    accept="image/*"
+                    multiple
+                    class="hidden-file"
+                    onchange="handlePetPhotoInput(${i}, this)"
+                >
+
+                <div class="photo-preview-grid" id="photoPreviewGrid_${i}"></div>
+            </div>
+        `;
+
+        wrap.appendChild(card);
+        setupPetDropZone(i);
+    }
+}
+
+/* BULK MULTI PHOTO */
+function openPhotoPicker(index){
+    activePhotoIndex = index;
+    const input = document.getElementById(`photoInput_${index}`);
+    if(input){
+        input.click();
+    }
+}
+
+function handlePetPhotoInput(index, input){
+    const files = Array.from(input.files || []);
+    addPetPhotoFiles(index, files);
+}
+
+function addPetPhotoFiles(index, files){
+    if(!petPhotoFiles[index]){
+        petPhotoFiles[index] = [];
+    }
+
+    files.forEach(function(file){
+        if(!file || !file.type.startsWith("image/")){
+            return;
+        }
+
+        if(petPhotoFiles[index].length >= 4){
+            alert("Maximum 4 photos per pet.");
+            return;
+        }
+
+        petPhotoFiles[index].push(file);
+    });
+
+    syncPetPhotoInput(index);
+    renderPetPhotoPreview(index);
+}
+
+function removePetPhoto(index, photoIndex){
+    if(!petPhotoFiles[index]){
+        return;
+    }
+
+    petPhotoFiles[index].splice(photoIndex, 1);
+    syncPetPhotoInput(index);
+    renderPetPhotoPreview(index);
+}
+
+function syncPetPhotoInput(index){
+    const input = document.getElementById(`photoInput_${index}`);
+    if(!input){
+        return;
+    }
+
+    const dataTransfer = new DataTransfer();
+
+    (petPhotoFiles[index] || []).forEach(function(file){
+        dataTransfer.items.add(file);
+    });
+
+    input.files = dataTransfer.files;
+}
+
+function renderPetPhotoPreview(index){
+    const grid = document.getElementById(`photoPreviewGrid_${index}`);
+    if(!grid){
+        return;
+    }
+
+    grid.innerHTML = "";
+
+    (petPhotoFiles[index] || []).forEach(function(file, photoIndex){
+        const item = document.createElement("div");
+        item.className = "pet-photo-preview";
+
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(file);
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.innerText = "×";
+        btn.onclick = function(e){
+            e.stopPropagation();
+            removePetPhoto(index, photoIndex);
+        };
+
+        item.appendChild(img);
+        item.appendChild(btn);
+        grid.appendChild(item);
+    });
+}
+
+function setupPetDropZone(index){
+    const drop = document.getElementById(`photoDrop_${index}`);
+    if(!drop){
+        return;
+    }
+
+    drop.addEventListener("mouseenter", function(){
+        activePhotoIndex = index;
+    });
+
+    drop.addEventListener("click", function(){
+        activePhotoIndex = index;
+    });
+
+    drop.addEventListener("dragover", function(e){
+        e.preventDefault();
+        activePhotoIndex = index;
+        drop.classList.add("dragover");
+    });
+
+    drop.addEventListener("dragleave", function(e){
+        e.preventDefault();
+        drop.classList.remove("dragover");
+    });
+
+    drop.addEventListener("drop", function(e){
+        e.preventDefault();
+        activePhotoIndex = index;
+        drop.classList.remove("dragover");
+
+        const files = Array.from(e.dataTransfer.files || []);
+        addPetPhotoFiles(index, files);
+    });
+}
+
+/* SINGLE PHOTO UPLOAD */
 function previewPhotoFile(input){
     if(input.files && input.files.length > 0){
         setPhotoFile(input.files[0]);
@@ -1739,19 +2750,40 @@ function handleDrop(e){
     }
 }
 
+/* PASTE PHOTO */
 document.addEventListener("paste", function(e){
+    const checked = document.querySelector('input[name="stock_mode"]:checked');
+    const mode = checked ? checked.value : "single";
+
     const items = e.clipboardData && e.clipboardData.items;
     if(!items){ return; }
+
+    const files = [];
 
     for(let i = 0; i < items.length; i++){
         const item = items[i];
 
         if(item.type.indexOf("image") !== -1){
-            const file = item.getAsFile();
-            setPhotoFile(file);
-            break;
+            files.push(item.getAsFile());
         }
     }
+
+    if(!files.length){
+        return;
+    }
+
+    if(mode === "bulk"){
+        const cards = document.querySelectorAll(".bulk-pet-card");
+        if(!cards.length){
+            return;
+        }
+
+        const targetIndex = activePhotoIndex || cards.length;
+        addPetPhotoFiles(targetIndex, files);
+        return;
+    }
+
+    setPhotoFile(files[0]);
 });
 
 /* VACCINE ROW */
