@@ -42,19 +42,90 @@ a{text-decoration:none!important}
     object-fit:contain;
 }
 
-.btn-add{
+.btn-add,
+.btn-search,
+.btn-clear{
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    margin-top:20px;
     min-height:58px;
     padding:0 30px;
     border-radius:999px;
-    color:white;
+    border:none;
     font-size:16px;
     font-weight:1000;
+    cursor:pointer;
+    text-decoration:none;
+}
+
+.btn-add,
+.btn-search{
+    color:white;
     background:linear-gradient(135deg,#8e63ff,#ff8c6b);
     box-shadow:0 12px 28px rgba(142,99,255,.22);
+}
+
+.btn-clear{
+    color:#8e63ff;
+    background:#f7f1ff;
+    border:2px solid #e3d5ff;
+}
+
+.filter-panel{
+    background:white;
+    border:2px solid #f5e8df;
+    border-radius:30px;
+    padding:20px;
+    box-shadow:0 20px 50px rgba(130,91,60,.10);
+    margin-bottom:24px;
+}
+
+.filter-form{
+    display:grid;
+    grid-template-columns:1fr 1fr 1.2fr auto auto;
+    gap:14px;
+    align-items:end;
+}
+
+.filter-box{
+    border:2px solid #eaddec;
+    background:#fffaf7;
+    border-radius:24px;
+    padding:12px 14px;
+}
+
+.filter-label{
+    display:block;
+    color:#7b7288;
+    font-size:12px;
+    font-weight:1000;
+    margin-bottom:7px;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+}
+
+.date-pop-btn,
+.status-pop-btn{
+    width:100%;
+    min-height:50px;
+    border:none;
+    background:white;
+    border-radius:18px;
+    padding:0 14px;
+    color:#17152f;
+    font-size:15px;
+    font-weight:1000;
+    text-align:left;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    cursor:pointer;
+}
+
+.date-pop-btn small,
+.status-pop-btn small{
+    color:#7b7288;
+    font-weight:900;
 }
 
 .summary-card{
@@ -374,290 +445,596 @@ a{text-decoration:none!important}
     color:#17152f;
 }
 
-/* iPad 11-inch: portrait 834px / landscape 1194px */
+/* POPUP */
+.popup-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(23,21,47,.42);
+    z-index:9000;
+}
+
+.popup-backdrop.active{display:block}
+
+.phone-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:420px;
+    max-width:calc(100% - 28px);
+    background:white;
+    border-radius:30px;
+    box-shadow:0 30px 90px rgba(23,21,47,.32);
+    overflow:hidden;
+    z-index:9001;
+}
+
+.phone-popup.active{display:block}
+
+.popup-head{
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+    color:white;
+    padding:18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.popup-head h3{
+    margin:0;
+    font-size:22px;
+    font-weight:1000;
+}
+
+.popup-close{
+    width:42px;
+    height:42px;
+    border:none;
+    border-radius:50%;
+    background:rgba(255,255,255,.22);
+    color:white;
+    font-size:18px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.popup-body{
+    padding:16px;
+}
+
+.popup-date-input{
+    width:100%;
+    min-height:62px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    padding:0 16px;
+    font-size:18px;
+    font-weight:1000;
+    color:#17152f;
+}
+
+.quick-date-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:12px;
+}
+
+.quick-btn{
+    min-height:54px;
+    border:none;
+    border-radius:18px;
+    color:white;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.quick-btn.today{background:linear-gradient(135deg,#20b86b,#68d99d)}
+.quick-btn.month{background:linear-gradient(135deg,#3a86ff,#8e63ff)}
+.quick-btn.clear{background:linear-gradient(135deg,#8b819b,#17152f)}
+
+.popup-options{
+    display:grid;
+    gap:10px;
+    padding:16px;
+}
+
+.status-option{
+    min-height:62px;
+    border:2px solid #eaddec;
+    background:#fffaf7;
+    border-radius:20px;
+    padding:0 16px;
+    color:#17152f;
+    font-weight:1000;
+    text-align:left;
+    cursor:pointer;
+}
+
+.status-option.active,
+.status-option:hover{
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+    color:white;
+    border-color:transparent;
+}
+
+.popup-bottom{
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+    padding:16px;
+    border-top:1px solid #f1ddd1;
+}
+
+.popup-ok,
+.popup-cancel{
+    min-height:48px;
+    padding:0 22px;
+    border:none;
+    border-radius:999px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.popup-ok{
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+    color:white;
+}
+
+.popup-cancel{
+    background:#f7f1ff;
+    color:#8e63ff;
+}
+
+/* iPad */
 @media (min-width:768px) and (max-width:1194px){
-
-    /* 🔥 Make sidebar smaller */
-    .sidebar{
-        width:80px !important;
-        padding:12px 6px !important;
-    }
-
-    .sidebar .logo,
-    .sidebar span,
-    .sidebar .menu-text{
-        display:none !important;
-    }
-
-    /* icons center */
-    .sidebar a{
-        justify-content:center !important;
-        padding:14px !important;
-    }
-
-    /* 🔥 Give content FULL SPACE */
-    .main-content{
-        margin-left:80px !important;
-        padding:20px !important;
-        width:auto !important;
-    }
-
-    /* 🔥 FIX purchase page layout */
-    .purchase-page{
-        padding:20px !important;
-    }
-
-    /* 🔥 Hero stack better */
-    .purchase-hero{
-        grid-template-columns:1fr !important;
-        text-align:left;
-    }
-
-    .hero-img{
-        max-width:260px;
-        margin-left:auto;
-    }
-
-    /* 🔥 Summary = 2x2 (not 4 small) */
-    .summary-card{
-        grid-template-columns:repeat(2,1fr) !important;
-    }
-
-    /* 🔥 Cards = 2 columns (IMPORTANT) */
-    .purchase-grid{
-        grid-template-columns:repeat(2,1fr) !important;
-        gap:20px !important;
-    }
-
-    /* 🔥 Bigger cards */
-    .purchase-card{
-        padding:22px !important;
-        border-radius:28px !important;
-    }
-
-    /* 🔥 Bigger buttons */
-    .view-btn,
-    .edit-btn{
-        min-height:64px !important;
-        font-size:16px !important;
-    }
-
-    /* 🔥 Better spacing */
-    .panel-head{
-        margin-bottom:20px !important;
-    }
+    .purchase-page{padding:20px!important}
+    .purchase-hero{grid-template-columns:1fr!important}
+    .hero-img{max-width:260px;margin-left:auto}
+    .summary-card{grid-template-columns:repeat(2,1fr)!important}
+    .purchase-grid{grid-template-columns:repeat(2,1fr)!important;gap:20px!important}
+    .purchase-card{padding:22px!important;border-radius:28px!important}
+    .view-btn,.edit-btn{min-height:64px!important;font-size:16px!important}
+    .filter-form{grid-template-columns:1fr 1fr!important}
 }
 
 /* Phone */
 @media(max-width:767px){
-    .purchase-page{
-        padding:16px;
-    }
-
-    .purchase-hero{
-        grid-template-columns:1fr;
-        text-align:left;
-    }
-
-    .purchase-title h1{
-        font-size:32px;
-    }
-
-    .purchase-title p{
-        font-size:15px;
-    }
-
-    .hero-img{
-        display:none;
-    }
-
-    .btn-add{
-        width:100%;
-    }
-
-    .summary-card{
-        grid-template-columns:1fr;
-        padding:16px;
-    }
-
+    .purchase-page{padding:16px}
+    .purchase-hero{grid-template-columns:1fr;text-align:left}
+    .purchase-title h1{font-size:32px}
+    .purchase-title p{font-size:15px}
+    .hero-img{display:none}
+    .btn-add{width:100%}
+    .filter-form{grid-template-columns:1fr}
+    .btn-search,.btn-clear{width:100%}
+    .summary-card{grid-template-columns:1fr;padding:16px}
     .summary-item{
         border-right:none;
         border-bottom:1px solid #f1ddd1;
         padding-bottom:16px;
     }
+    .summary-item:last-child{border-bottom:none}
+    .purchase-panel{padding:16px}
+    .panel-head{align-items:flex-start;flex-direction:column}
+    .sort-pill{width:100%;justify-content:center}
+    .purchase-grid{grid-template-columns:1fr}
+    .purchase-top{align-items:flex-start;flex-direction:column}
+    .date{white-space:normal}
 
-    .summary-item:last-child{
-        border-bottom:none;
+    .phone-popup{
+        left:12px;
+        right:12px;
+        bottom:14px;
+        top:auto;
+        transform:none;
+        width:auto;
+        max-width:none;
+        border-radius:28px;
     }
 
-    .purchase-panel{
-        padding:16px;
-    }
-
-    .panel-head{
-        align-items:flex-start;
-        flex-direction:column;
-    }
-
-    .sort-pill{
-        width:100%;
-        justify-content:center;
-    }
-
-    .purchase-grid{
+    .quick-date-row{
         grid-template-columns:1fr;
-    }
-
-    .purchase-top{
-        align-items:flex-start;
-        flex-direction:column;
-    }
-
-    .date{
-        white-space:normal;
     }
 }
 </style>
 
 <div class="purchase-page">
 
-<div class="purchase-hero">
-    <div class="purchase-title">
-        <h1>Purchases ✨</h1>
-        <p>
-            Simple view: received, missing, plan status,<br>
-            and whether stock is allocated to shop.
-        </p>
-        <a href="{% url 'purchase_create' %}" class="btn-add">Add Purchase</a>
-    </div>
-
-    <img src="{% static 'img/purchase-hero.png' %}" class="hero-img">
-</div>
-
-<div class="summary-card">
-    <div class="summary-item">
-        <div class="summary-icon purple">🛒</div>
-        <div>
-            <div class="summary-label">Total Purchases</div>
-            <div class="summary-value">{{ total_purchases|default:"0" }}</div>
-            <div class="summary-sub">All time</div>
-        </div>
-    </div>
-
-    <div class="summary-item">
-        <div class="summary-icon green">💵</div>
-        <div>
-            <div class="summary-label">Total Spent</div>
-            <div class="summary-value green">${{ total_spent|default:"0.00" }}</div>
-            <div class="summary-sub">Batch cost only</div>
-        </div>
-    </div>
-
-    <div class="summary-item">
-        <div class="summary-icon orange">📦</div>
-        <div>
-            <div class="summary-label">Pending Orders</div>
-            <div class="summary-value orange">{{ pending_orders|default:"0" }}</div>
-            <div class="summary-sub">Not fully received</div>
-        </div>
-    </div>
-
-    <div class="summary-item">
-        <div class="summary-icon blue">🗓️</div>
-        <div>
-            <div class="summary-label">This Month</div>
-            <div class="summary-value blue">${{ this_month|default:"0.00" }}</div>
-            <div class="summary-sub">Current month</div>
-        </div>
-    </div>
-</div>
-
-<div class="purchase-panel">
-    <div class="panel-head">
-        <h2>All Purchases</h2>
-        <div class="sort-pill">Newest First⌄</div>
-    </div>
-
-    <div class="purchase-grid">
-        {% for purchase in purchases %}
-        <div class="purchase-card">
-            <div class="purchase-top">
-                <span class="code">#PUR-{{ purchase.id|stringformat:"05d" }}</span>
-                <span class="date">{{ purchase.created_at|date:"M d, Y" }} 🗓️</span>
-            </div>
-
-            <div class="supplier">
-                <div class="avatar">{{ purchase.supplier|slice:":2"|upper }}</div>
-                <div>
-                    <div class="supplier-name">{{ purchase.supplier }}</div>
-                    <div class="supplier-type">Supplier Order</div>
-                </div>
-            </div>
-
-            {% if purchase.status == "received" %}
-                <div class="status received">✓ Fully Received</div>
-            {% elif purchase.status == "partial" %}
-                <div class="status partial">📦 Partial Received</div>
-            {% elif purchase.status == "cancelled" %}
-                <div class="status cancelled">✕ Cancelled</div>
-            {% else %}
-                <div class="status ordered">⏳ Ordered</div>
-            {% endif %}
-
-            <div class="qty-row">
-                <div class="qty-box">
-                    <div class="qty-label">Ordered</div>
-                    <div class="qty-value">{{ purchase.total_ordered_qty }}</div>
-                </div>
-                <div class="qty-box">
-                    <div class="qty-label">Received</div>
-                    <div class="qty-value received">{{ purchase.total_received_qty }}</div>
-                </div>
-                <div class="qty-box">
-                    <div class="qty-label">Missing</div>
-                    <div class="qty-value pending">{{ purchase.total_pending_qty }}</div>
-                </div>
-            </div>
-
-            <div class="stock-status">
-                <div class="stock-title">📋 Stock Status</div>
-                <div class="pill-wrap">
-                    {% if purchase.has_plan %}
-                        <span class="pill plan">✅ Plan Set</span>
-                    {% else %}
-                        <span class="pill none">⚠️ No Plan</span>
-                    {% endif %}
-
-                    {% if purchase.is_allocated %}
-                        <span class="pill ok">✅ Allocated</span>
-                    {% else %}
-                        <span class="pill wait">⏳ Not Allocated</span>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="amount-label">Total Batch Cost</div>
-            <div class="amount">${{ purchase.total_amount|floatformat:2 }}</div>
-
-            <div class="card-actions">
-                <a href="{% url 'purchase_detail' purchase.id %}" class="view-btn">👁 Check / Receive</a>
-                <a href="{% url 'purchase_update' purchase.id %}" class="edit-btn">✏️</a>
-            </div>
+    <div class="purchase-hero">
+        <div class="purchase-title">
+            <h1>Purchases ✨</h1>
+            <p>
+                Search purchase orders by date and receiving status.<br>
+                Default shows all old orders until today, Ordered + Partial Received.
+            </p>
+            <a href="{% url 'purchase_create' %}" class="btn-add">Add Purchase</a>
         </div>
 
-        {% empty %}
-        <div class="empty-box">
+        <img src="{% static 'img/purchase-hero.png' %}" class="hero-img" alt="Purchase">
+    </div>
+
+    <div class="filter-panel">
+        <form method="get" class="filter-form" id="purchaseFilterForm">
+            <div class="filter-box">
+                <span class="filter-label">From Date</span>
+                <input type="hidden" name="date_from" id="dateFromInput" value="{{ date_from }}">
+                <button type="button" class="date-pop-btn" onclick="openDatePopup('from')">
+                    <span id="dateFromLabel">All dates</span>
+                    <small>📅</small>
+                </button>
+            </div>
+
+            <div class="filter-box">
+                <span class="filter-label">To Date</span>
+                <input type="hidden" name="date_to" id="dateToInput" value="{{ date_to }}">
+                <button type="button" class="date-pop-btn" onclick="openDatePopup('to')">
+                    <span id="dateToLabel">{{ date_to }}</span>
+                    <small>📅</small>
+                </button>
+            </div>
+
+            <div class="filter-box">
+                <span class="filter-label">Status</span>
+                <input type="hidden" name="status" id="statusInput" value="{{ status_filter|default:'active' }}">
+                <button type="button" class="status-pop-btn" onclick="openStatusPopup()">
+                    <span id="statusLabel">
+                        {% if status_filter == "all" %}
+                            All
+                        {% elif status_filter == "complete" %}
+                            Complete
+                        {% elif status_filter == "ordered" %}
+                            Ordered
+                        {% elif status_filter == "partial" %}
+                            Partial Received
+                        {% else %}
+                            Ordered + Partial Received
+                        {% endif %}
+                    </span>
+                    <small>⌄</small>
+                </button>
+            </div>
+
+            <button type="submit" class="btn-search">🔍 Search</button>
+            <a href="{% url 'purchase_list' %}" class="btn-clear">Clear</a>
+        </form>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-item">
+            <div class="summary-icon purple">🛒</div>
             <div>
-                <div style="font-size:90px;">📦✨</div>
-                <h3>No purchases found</h3>
-                <p>Create your first purchase order.</p>
-                <a href="{% url 'purchase_create' %}" class="btn-add">Add Purchase</a>
+                <div class="summary-label">Total Purchases</div>
+                <div class="summary-value">{{ total_purchases|default:"0" }}</div>
+                <div class="summary-sub">Current filter</div>
             </div>
         </div>
-        {% endfor %}
+
+        <div class="summary-item">
+            <div class="summary-icon green">💵</div>
+            <div>
+                <div class="summary-label">Total Spent</div>
+                <div class="summary-value green">${{ total_spent|default:"0.00" }}</div>
+                <div class="summary-sub">Current filter</div>
+            </div>
+        </div>
+
+        <div class="summary-item">
+            <div class="summary-icon orange">📦</div>
+            <div>
+                <div class="summary-label">Pending Orders</div>
+                <div class="summary-value orange">{{ pending_orders|default:"0" }}</div>
+                <div class="summary-sub">Ordered + partial</div>
+            </div>
+        </div>
+
+        <div class="summary-item">
+            <div class="summary-icon blue">🗓️</div>
+            <div>
+                <div class="summary-label">This Month</div>
+                <div class="summary-value blue">${{ this_month|default:"0.00" }}</div>
+                <div class="summary-sub">Current month</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="purchase-panel">
+        <div class="panel-head">
+            <h2>Purchase Results</h2>
+            <div class="sort-pill">Newest First⌄</div>
+        </div>
+
+        <div class="purchase-grid">
+            {% for purchase in purchases %}
+            <div class="purchase-card">
+                <div class="purchase-top">
+                    <span class="code">#PUR-{{ purchase.id|stringformat:"05d" }}</span>
+                    <span class="date">{{ purchase.created_at|date:"M d, Y" }} 🗓️</span>
+                </div>
+
+                <div class="supplier">
+                    <div class="avatar">{{ purchase.supplier|slice:":2"|upper }}</div>
+                    <div>
+                        <div class="supplier-name">{{ purchase.supplier }}</div>
+                        <div class="supplier-type">Supplier Order</div>
+                    </div>
+                </div>
+
+                {% if purchase.status == "received" %}
+                    <div class="status received">✓ Complete</div>
+                {% elif purchase.status == "partial" %}
+                    <div class="status partial">📦 Partial Received</div>
+                {% elif purchase.status == "cancelled" %}
+                    <div class="status cancelled">✕ Cancelled</div>
+                {% else %}
+                    <div class="status ordered">⏳ Ordered</div>
+                {% endif %}
+
+                <div class="qty-row">
+                    <div class="qty-box">
+                        <div class="qty-label">Ordered</div>
+                        <div class="qty-value">{{ purchase.total_ordered_qty }}</div>
+                    </div>
+                    <div class="qty-box">
+                        <div class="qty-label">Received</div>
+                        <div class="qty-value received">{{ purchase.total_received_qty }}</div>
+                    </div>
+                    <div class="qty-box">
+                        <div class="qty-label">Missing</div>
+                        <div class="qty-value pending">{{ purchase.total_pending_qty }}</div>
+                    </div>
+                </div>
+
+                <div class="stock-status">
+                    <div class="stock-title">📋 Stock Status</div>
+                    <div class="pill-wrap">
+                        {% if purchase.has_plan %}
+                            <span class="pill plan">✅ Plan Set</span>
+                        {% else %}
+                            <span class="pill none">⚠️ No Plan</span>
+                        {% endif %}
+
+                        {% if purchase.is_allocated %}
+                            <span class="pill ok">✅ Allocated</span>
+                        {% else %}
+                            <span class="pill wait">⏳ Not Allocated</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="amount-label">Total Batch Cost</div>
+                <div class="amount">${{ purchase.total_amount|floatformat:2 }}</div>
+
+                <div class="card-actions">
+                    <a href="{% url 'purchase_detail' purchase.id %}" class="view-btn">👁 Check / Receive</a>
+                    <a href="{% url 'purchase_update' purchase.id %}" class="edit-btn">✏️</a>
+                </div>
+            </div>
+
+            {% empty %}
+            <div class="empty-box">
+                <div>
+                    <div style="font-size:90px;">📦✨</div>
+                    <h3>No purchases found</h3>
+                    <p>No purchases match this date/status filter.</p>
+                    <a href="{% url 'purchase_create' %}" class="btn-add">Add Purchase</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+<!-- DATE POPUP -->
+<div class="popup-backdrop" id="datePopupBackdrop" onclick="closeDatePopup()"></div>
+
+<div class="phone-popup" id="datePopup">
+    <div class="popup-head">
+        <h3 id="datePopupTitle">Choose Date</h3>
+        <button type="button" class="popup-close" onclick="closeDatePopup()">✕</button>
+    </div>
+
+    <div class="popup-body">
+        <input type="date" id="popupDateInput" class="popup-date-input">
+
+        <div class="quick-date-row">
+            <button type="button" class="quick-btn today" onclick="setPopupDateToday()">Today</button>
+            <button type="button" class="quick-btn month" onclick="setPopupDateMonthStart()">Month Start</button>
+            <button type="button" class="quick-btn clear" onclick="clearPopupDate()">All Dates</button>
+        </div>
+    </div>
+
+    <div class="popup-bottom">
+        <button type="button" class="popup-cancel" onclick="closeDatePopup()">Cancel</button>
+        <button type="button" class="popup-ok" onclick="applyPopupDate()">OK</button>
     </div>
 </div>
 
+<!-- STATUS POPUP -->
+<div class="popup-backdrop" id="statusPopupBackdrop" onclick="closeStatusPopup()"></div>
+
+<div class="phone-popup" id="statusPopup">
+    <div class="popup-head">
+        <h3>Choose Status</h3>
+        <button type="button" class="popup-close" onclick="closeStatusPopup()">✕</button>
+    </div>
+
+    <div class="popup-options">
+        <button type="button" class="status-option" data-value="active" onclick="selectStatus('active','Ordered + Partial Received')">
+            📦 Ordered + Partial Received
+        </button>
+
+        <button type="button" class="status-option" data-value="all" onclick="selectStatus('all','All')">
+            📋 All
+        </button>
+
+        <button type="button" class="status-option" data-value="complete" onclick="selectStatus('complete','Complete')">
+            ✅ Complete
+        </button>
+
+        <button type="button" class="status-option" data-value="ordered" onclick="selectStatus('ordered','Ordered')">
+            ⏳ Ordered
+        </button>
+
+        <button type="button" class="status-option" data-value="partial" onclick="selectStatus('partial','Partial Received')">
+            📦 Partial Received
+        </button>
+    </div>
 </div>
+
+<script>
+const dateFromInput = document.getElementById("dateFromInput");
+const dateToInput = document.getElementById("dateToInput");
+const dateFromLabel = document.getElementById("dateFromLabel");
+const dateToLabel = document.getElementById("dateToLabel");
+const popupDateInput = document.getElementById("popupDateInput");
+const datePopup = document.getElementById("datePopup");
+const datePopupBackdrop = document.getElementById("datePopupBackdrop");
+const datePopupTitle = document.getElementById("datePopupTitle");
+
+const statusInput = document.getElementById("statusInput");
+const statusLabel = document.getElementById("statusLabel");
+const statusPopup = document.getElementById("statusPopup");
+const statusPopupBackdrop = document.getElementById("statusPopupBackdrop");
+
+let activeDateField = "from";
+
+function pad2(value){
+    return String(value).padStart(2, "0");
+}
+
+function todayValue(){
+    const d = new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function monthStartValue(){
+    const d = new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-01`;
+}
+
+function formatDateLabel(value){
+    if(!value) return "All dates";
+
+    const parts = value.split("-");
+    if(parts.length !== 3) return value;
+
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return d.toLocaleDateString("en-GB", {
+        day:"2-digit",
+        month:"short",
+        year:"numeric"
+    });
+}
+
+function refreshDateLabels(){
+    if(!dateToInput.value){
+        dateToInput.value = todayValue();
+    }
+
+    if(dateFromInput.value){
+        dateFromLabel.textContent = formatDateLabel(dateFromInput.value);
+    }else{
+        dateFromLabel.textContent = "All dates";
+    }
+
+    dateToLabel.textContent = formatDateLabel(dateToInput.value);
+}
+
+function openDatePopup(field){
+    activeDateField = field;
+
+    if(field === "from"){
+        popupDateInput.value = dateFromInput.value || "";
+        datePopupTitle.textContent = "Choose From Date";
+    }else{
+        popupDateInput.value = dateToInput.value || todayValue();
+        datePopupTitle.textContent = "Choose To Date";
+    }
+
+    datePopup.classList.add("active");
+    datePopupBackdrop.classList.add("active");
+}
+
+function closeDatePopup(){
+    datePopup.classList.remove("active");
+    datePopupBackdrop.classList.remove("active");
+}
+
+function setPopupDateToday(){
+    popupDateInput.value = todayValue();
+}
+
+function setPopupDateMonthStart(){
+    popupDateInput.value = monthStartValue();
+}
+
+function clearPopupDate(){
+    popupDateInput.value = "";
+}
+
+function applyPopupDate(){
+    if(activeDateField === "from"){
+        dateFromInput.value = popupDateInput.value || "";
+    }else{
+        dateToInput.value = popupDateInput.value || todayValue();
+    }
+
+    refreshDateLabels();
+    closeDatePopup();
+}
+
+function openStatusPopup(){
+    markActiveStatus();
+    statusPopup.classList.add("active");
+    statusPopupBackdrop.classList.add("active");
+}
+
+function closeStatusPopup(){
+    statusPopup.classList.remove("active");
+    statusPopupBackdrop.classList.remove("active");
+}
+
+function selectStatus(value, label){
+    statusInput.value = value;
+    statusLabel.textContent = label;
+    markActiveStatus();
+    closeStatusPopup();
+}
+
+function markActiveStatus(){
+    const value = statusInput.value || "active";
+
+    document.querySelectorAll(".status-option").forEach(function(btn){
+        if(btn.getAttribute("data-value") === value){
+            btn.classList.add("active");
+        }else{
+            btn.classList.remove("active");
+        }
+    });
+}
+
+function initDefaultFilter(){
+    if(!statusInput.value){
+        statusInput.value = "active";
+        statusLabel.textContent = "Ordered + Partial Received";
+    }
+
+    refreshDateLabels();
+    markActiveStatus();
+}
+
+document.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){
+        closeDatePopup();
+        closeStatusPopup();
+    }
+});
+
+initDefaultFilter();
+</script>
 
 {% endblock %}

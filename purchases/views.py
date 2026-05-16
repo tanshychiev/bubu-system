@@ -56,24 +56,112 @@ def _get_plan_rows(request, prefix):
 
 @login_required
 def purchase_list(request):
-    purchases = Purchase.objects.prefetch_related("items").order_by("-id")
-
-    total_purchases = purchases.count()
-    total_spent = purchases.aggregate(total=Sum("total_amount"))["total"] or 0
-    pending_orders = purchases.exclude(status="received").count()
+    from datetime import datetime, time
 
     today = timezone.localdate()
-    this_month = Purchase.objects.filter(
-        created_at__year=today.year,
-        created_at__month=today.month,
-    ).aggregate(total=Sum("total_amount"))["total"] or 0
+
+    # Default:
+    # From = empty = all old purchases
+    # To = today
+    # Status = ordered + partial received
+    date_from = request.GET.get("date_from") or ""
+    date_to = request.GET.get("date_to") or today.strftime("%Y-%m-%d")
+    status_filter = request.GET.get("status") or "active"
+
+    purchases = Purchase.objects.prefetch_related("items").order_by("-id")
+
+    # =========================
+    # DATE FILTER
+    # =========================
+    # If date_from is empty, it means "All dates before date_to"
+    if date_from:
+        try:
+            from_date = datetime.strptime(date_from, "%Y-%m-%d").date()
+            from_datetime = timezone.make_aware(
+                datetime.combine(from_date, time.min)
+            )
+            purchases = purchases.filter(created_at__gte=from_datetime)
+        except ValueError:
+            messages.warning(request, "Invalid from date. Showing without from-date filter.")
+            date_from = ""
+
+    if date_to:
+        try:
+            to_date = datetime.strptime(date_to, "%Y-%m-%d").date()
+            to_datetime = timezone.make_aware(
+                datetime.combine(to_date, time.max)
+            )
+            purchases = purchases.filter(created_at__lte=to_datetime)
+        except ValueError:
+            messages.warning(request, "Invalid to date. Showing until today.")
+            date_to = today.strftime("%Y-%m-%d")
+            to_datetime = timezone.make_aware(
+                datetime.combine(today, time.max)
+            )
+            purchases = purchases.filter(created_at__lte=to_datetime)
+
+    # =========================
+    # STATUS FILTER
+    # =========================
+    # active   = Ordered + Partial Received
+    # all      = All
+    # complete = Fully Received
+    # ordered  = Ordered only
+    # partial  = Partial Received only
+    if status_filter == "all":
+        pass
+
+    elif status_filter == "complete":
+        purchases = purchases.filter(status="received")
+
+    elif status_filter == "ordered":
+        purchases = purchases.filter(status="ordered")
+
+    elif status_filter == "partial":
+        purchases = purchases.filter(status="partial")
+
+    else:
+        status_filter = "active"
+        purchases = purchases.filter(status__in=["ordered", "partial"])
+
+    filtered_purchases = purchases
+
+    # =========================
+    # SUMMARY BASED ON FILTER
+    # =========================
+    total_purchases = filtered_purchases.count()
+
+    total_spent = (
+        filtered_purchases.aggregate(total=Sum("total_amount"))["total"]
+        or 0
+    )
+
+    pending_orders = filtered_purchases.filter(
+        status__in=["ordered", "partial"]
+    ).count()
+
+    # This Month total, separate from current filter
+    month_start = today.replace(day=1)
+
+    this_month = (
+        Purchase.objects.filter(
+            created_at__date__gte=month_start,
+            created_at__date__lte=today,
+        ).aggregate(total=Sum("total_amount"))["total"]
+        or 0
+    )
 
     return render(request, "purchases/purchase_list.html", {
-        "purchases": purchases,
+        "purchases": filtered_purchases,
         "total_purchases": total_purchases,
         "total_spent": total_spent,
         "pending_orders": pending_orders,
         "this_month": this_month,
+
+        # Send filter values back to HTML
+        "date_from": date_from,
+        "date_to": date_to,
+        "status_filter": status_filter,
     })
 
 

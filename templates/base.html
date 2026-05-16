@@ -96,15 +96,6 @@ a{
     border-radius:999px;
 }
 
-.menu-group-title{
-    margin:18px 10px 8px;
-    font-size:12px;
-    font-weight:1000;
-    color:#9b7cf6;
-    text-transform:uppercase;
-    letter-spacing:.8px;
-}
-
 .menu a{
     display:flex;
     align-items:center;
@@ -124,6 +115,66 @@ a{
     color:#17152f;
     box-shadow:0 12px 28px rgba(130,91,60,.12);
     transform:translateX(4px);
+}
+
+/* MAIN CLICKABLE MENU */
+.menu-main{
+    width:100%;
+    min-height:48px;
+    border:0;
+    background:transparent;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:12px 14px;
+    margin:10px 0 6px;
+    border-radius:20px;
+    color:#4a2f2a;
+    font-size:14px;
+    font-weight:1000;
+    font-family:'Nunito',sans-serif;
+    text-align:left;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.menu-main:hover,
+.menu-main.active{
+    background:white;
+    color:#17152f;
+    box-shadow:0 12px 28px rgba(130,91,60,.12);
+    transform:translateX(4px);
+}
+
+.menu-main-left{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    min-width:0;
+}
+
+.menu-arrow{
+    font-size:12px;
+    transition:.2s ease;
+    flex-shrink:0;
+}
+
+.menu-main.active .menu-arrow{
+    transform:rotate(180deg);
+}
+
+.menu-sub{
+    max-height:0;
+    overflow:hidden;
+    opacity:0;
+    padding-left:8px;
+    transition:max-height .25s ease, opacity .2s ease;
+}
+
+.menu-sub.show{
+    max-height:1000px;
+    opacity:1;
 }
 
 .sidebar-footer{
@@ -825,129 +876,159 @@ tbody tr:hover{
         <small>Pet Store POS</small>
     </div>
 
-    <div class="menu">
+    <div class="menu" id="sideMenu">
 
         <!-- CORE -->
-        <a href="{% url 'dashboard' %}" onclick="closeSidebar()"
+        <a href="{% url 'dashboard' %}" onclick="saveMenuStateAndClose()"
            class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
             <span>🏠</span><span>Dashboard</span>
         </a>
 
-        <a href="{% url 'pos' %}" onclick="closeSidebar()"
+        <a href="{% url 'pos' %}" onclick="saveMenuStateAndClose()"
            class="{% if request.resolver_match.url_name == 'pos' %}active{% endif %}">
             <span>🛍️</span><span>POS</span>
         </a>
 
-        <a href="{% url 'sale_list' %}" onclick="closeSidebar()"
+        <a href="{% url 'sale_list' %}" onclick="saveMenuStateAndClose()"
            class="{% if request.resolver_match.url_name == 'sale_list' %}active{% endif %}">
             <span>📊</span><span>Sales</span>
         </a>
 
         <!-- PETS -->
-        <div class="menu-group-title">Pets</div>
+        <button type="button" class="menu-main" data-menu="pets">
+            <span class="menu-main-left"><span>🐾</span><span>Pets</span></span>
+            <span class="menu-arrow">▼</span>
+        </button>
 
-        <a href="{% url 'pet_list' %}" onclick="closeSidebar()"
-           class="{% if request.resolver_match.url_name == 'pet_list' or request.resolver_match.url_name == 'pet_create' or request.resolver_match.url_name == 'pet_detail' or request.resolver_match.url_name == 'pet_edit' %}active{% endif %}">
-            <span>🐾</span><span>Pets Stock</span>
-        </a>
+        <div class="menu-sub" id="menu-pets">
+            <a href="{% url 'pet_list' %}" onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'pet_list' or request.resolver_match.url_name == 'pet_create' or request.resolver_match.url_name == 'pet_detail' or request.resolver_match.url_name == 'pet_edit' %}active{% endif %}">
+                <span>🐾</span><span>Pets Stock</span>
+            </a>
 
-        <a href="{% url 'pet_breed_list' %}" onclick="closeSidebar()"
-           class="{% if request.resolver_match.url_name == 'pet_breed_list' or request.resolver_match.url_name == 'pet_breed_create' or request.resolver_match.url_name == 'pet_breed_edit' %}active{% endif %}">
-            <span>🐕</span><span>Breed Master</span>
-        </a>
+            <a href="{% url 'pet_breed_list' %}" onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'pet_breed_list' or request.resolver_match.url_name == 'pet_breed_create' or request.resolver_match.url_name == 'pet_breed_edit' %}active{% endif %}">
+                <span>🐕</span><span>Breed Master</span>
+            </a>
 
-        <a href="{% url 'pet_sale_list' %}" onclick="closeSidebar()"
-           class="{% if request.resolver_match.url_name == 'pet_sale_list' or request.resolver_match.url_name == 'pet_sale_detail' or request.resolver_match.url_name == 'pet_sale_edit' %}active{% endif %}">
-            <span>📋</span><span>Pet Sale List</span>
-        </a>
+            <a href="{% url 'pet_sale_list' %}" onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'pet_sale_list' or request.resolver_match.url_name == 'pet_sale_detail' or request.resolver_match.url_name == 'pet_sale_edit' %}active{% endif %}">
+                <span>📋</span><span>Pet Sale List</span>
+            </a>
 
-        <a href="{% url 'pet_available_for_sale' %}" onclick="closeSidebar()"
-           class="{% if request.resolver_match.url_name == 'pet_available_for_sale' %}active{% endif %}">
-            <span>🐶</span><span>Sell In-stock</span>
-        </a>
+            <a href="{% url 'pet_available_for_sale' %}" onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'pet_available_for_sale' %}active{% endif %}">
+                <span>🐶</span><span>Sell In-stock</span>
+            </a>
 
-        <a href="{% url 'pet_sale_create' %}" onclick="closeSidebar()"
-           class="{% if request.resolver_match.url_name == 'pet_sale_create' %}active{% endif %}">
-            <span>💰</span><span>New Pet Sale</span>
-        </a>
+            <a href="{% url 'pet_sale_create' %}" onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'pet_sale_create' %}active{% endif %}">
+                <span>💰</span><span>New Pet Sale</span>
+            </a>
+        </div>
 
         <!-- INVENTORY -->
-        <div class="menu-group-title">Inventory</div>
+        <button type="button" class="menu-main" data-menu="inventory">
+            <span class="menu-main-left"><span>📦</span><span>Inventory</span></span>
+            <span class="menu-arrow">▼</span>
+        </button>
 
-        <a href="{% url 'item_list' %}" onclick="closeSidebar()"
-           class="{% if request.resolver_match.url_name == 'item_list' %}active{% endif %}">
-            <span>📦</span><span>Items</span>
-        </a>
+        <div class="menu-sub" id="menu-inventory">
+            <a href="{% url 'item_list' %}" onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'item_list' %}active{% endif %}">
+                <span>📦</span><span>Items</span>
+            </a>
 
-        <a href="{% url 'purchase_list' %}" onclick="closeSidebar()"
-           class="{% if request.resolver_match.url_name == 'purchase_list' %}active{% endif %}">
-            <span>🛒</span><span>Purchases</span>
-        </a>
+            <a href="{% url 'purchase_list' %}" onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'purchase_list' %}active{% endif %}">
+                <span>🛒</span><span>Purchases</span>
+            </a>
+        </div>
 
         <!-- OPERATIONS -->
-        <div class="menu-group-title">Operations</div>
+        <button type="button" class="menu-main" data-menu="operations">
+            <span class="menu-main-left"><span>🚚</span><span>Operations</span></span>
+            <span class="menu-arrow">▼</span>
+        </button>
 
-        <a href="{% url 'delivery_list' %}" onclick="closeSidebar()"
-           class="{% if request.resolver_match.url_name == 'delivery_list' %}active{% endif %}">
-            <span>🚚</span><span>Delivery</span>
-        </a>
+        <div class="menu-sub" id="menu-operations">
+            <a href="{% url 'delivery_list' %}" onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'delivery_list' %}active{% endif %}">
+                <span>🚚</span><span>Delivery</span>
+            </a>
 
-        <a href="{% url 'service_list' %}" onclick="closeSidebar()"
-           class="{% if request.resolver_match.url_name == 'service_list' %}active{% endif %}">
-            <span>✂️</span><span>Services</span>
-        </a>
+            <a href="{% url 'service_list' %}" onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'service_list' %}active{% endif %}">
+                <span>✂️</span><span>Services</span>
+            </a>
+        </div>
 
-        <!-- CRM -->
-        <div class="menu-group-title">Customers</div>
+        <!-- CUSTOMERS -->
+        <button type="button" class="menu-main" data-menu="customers">
+            <span class="menu-main-left"><span>👥</span><span>Customers</span></span>
+            <span class="menu-arrow">▼</span>
+        </button>
 
-        <a href="{% url 'customer_list' %}" onclick="closeSidebar()"
-           class="{% if request.resolver_match.url_name == 'customer_list' %}active{% endif %}">
-            <span>👥</span><span>Customers</span>
-        </a>
+        <div class="menu-sub" id="menu-customers">
+            <a href="{% url 'customer_list' %}" onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'customer_list' %}active{% endif %}">
+                <span>👥</span><span>Customers</span>
+            </a>
 
-        <a href="{% url 'branch_list' %}" onclick="closeSidebar()"
-           class="{% if request.resolver_match.url_name == 'branch_list' %}active{% endif %}">
-            <span>🏪</span><span>Shops</span>
-        </a>
+            <a href="{% url 'branch_list' %}" onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'branch_list' %}active{% endif %}">
+                <span>🏪</span><span>Shops</span>
+            </a>
+        </div>
 
         <!-- STAFF -->
-        <div class="menu-group-title">Staff</div>
+        <button type="button" class="menu-main" data-menu="staff">
+            <span class="menu-main-left"><span>👤</span><span>Staff</span></span>
+            <span class="menu-arrow">▼</span>
+        </button>
 
-        <a href="{% url 'staff_my_dashboard' %}" onclick="closeSidebar()"
-           class="{% if request.resolver_match.url_name == 'staff_my_dashboard' %}active{% endif %}">
-            <span>👤</span><span>My Staff Page</span>
-        </a>
+        <div class="menu-sub" id="menu-staff">
+            <a href="{% url 'staff_my_dashboard' %}" onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'staff_my_dashboard' %}active{% endif %}">
+                <span>👤</span><span>My Staff Page</span>
+            </a>
 
-        <a href="{% url 'staff_permission_create' %}" onclick="closeSidebar()"
-           class="{% if request.resolver_match.url_name == 'staff_permission_create' %}active{% endif %}">
-            <span>📝</span><span>Ask Permission</span>
-        </a>
+            <a href="{% url 'staff_permission_create' %}" onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'staff_permission_create' %}active{% endif %}">
+                <span>📝</span><span>Ask Permission</span>
+            </a>
 
-        {% if perms.auth.view_user %}
-        <a href="{% url 'staff_setting_list' %}" onclick="closeSidebar()"
-           class="{% if request.resolver_match.url_name == 'staff_setting_list' or request.resolver_match.url_name == 'staff_setting_create' or request.resolver_match.url_name == 'staff_setting_edit' %}active{% endif %}">
-            <span>⚙️</span><span>Staff Settings</span>
-        </a>
+            {% if perms.auth.view_user %}
+            <a href="{% url 'staff_setting_list' %}" onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'staff_setting_list' or request.resolver_match.url_name == 'staff_setting_create' or request.resolver_match.url_name == 'staff_setting_edit' %}active{% endif %}">
+                <span>⚙️</span><span>Staff Settings</span>
+            </a>
 
-        <a href="{% url 'staff_attendance_report' %}" onclick="closeSidebar()"
-           class="{% if request.resolver_match.url_name == 'staff_attendance_report' or request.resolver_match.url_name == 'staff_attendance_adjust' %}active{% endif %}">
-            <span>📊</span><span>Attendance Report</span>
-        </a>
+            <a href="{% url 'staff_attendance_report' %}" onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'staff_attendance_report' or request.resolver_match.url_name == 'staff_attendance_adjust' %}active{% endif %}">
+                <span>📊</span><span>Attendance Report</span>
+            </a>
 
-        <a href="{% url 'staff_qr_list' %}" onclick="closeSidebar()"
-           class="{% if request.resolver_match.url_name == 'staff_qr_list' or request.resolver_match.url_name == 'staff_qr_create' or request.resolver_match.url_name == 'staff_scan_page' or request.resolver_match.url_name == 'staff_scan_submit' %}active{% endif %}">
-            <span>📲</span><span>Attendance QR</span>
-        </a>
-        {% endif %}
+            <a href="{% url 'staff_qr_list' %}" onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'staff_qr_list' or request.resolver_match.url_name == 'staff_qr_create' or request.resolver_match.url_name == 'staff_scan_page' or request.resolver_match.url_name == 'staff_scan_submit' %}active{% endif %}">
+                <span>📲</span><span>Attendance QR</span>
+            </a>
+            {% endif %}
+        </div>
 
         <!-- ADMIN -->
         {% if perms.auth.view_user %}
-        <div class="menu-group-title">Admin</div>
+        <button type="button" class="menu-main" data-menu="admin">
+            <span class="menu-main-left"><span>🔒</span><span>Admin</span></span>
+            <span class="menu-arrow">▼</span>
+        </button>
 
-        <a href="{% url 'user_list' %}" onclick="closeSidebar()"
-           class="{% if request.resolver_match.url_name == 'user_list' %}active{% endif %}">
-            <span>🔒</span><span>Users</span>
-        </a>
+        <div class="menu-sub" id="menu-admin">
+            <a href="{% url 'user_list' %}" onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'user_list' %}active{% endif %}">
+                <span>🔒</span><span>Users</span>
+            </a>
+        </div>
         {% endif %}
 
     </div>
@@ -983,6 +1064,9 @@ tbody tr:hover{
 </div>
 
 <script>
+const BUBU_OPEN_MENU_KEY = "bubu_open_sidebar_menu";
+const BUBU_SCROLL_KEY = "bubu_sidebar_scroll_top";
+
 function toggleSidebar(){
     const sidebar = document.getElementById("sidebar");
     const overlay = document.getElementById("sidebarOverlay");
@@ -1007,6 +1091,103 @@ function closeSidebar(){
     if(sidebar) sidebar.classList.remove("active");
     if(overlay) overlay.classList.remove("active");
 }
+
+function saveMenuStateAndClose(){
+    const menu = document.getElementById("sideMenu");
+    const activeSub = document.querySelector(".menu-sub.show");
+
+    if(activeSub && activeSub.id){
+        localStorage.setItem(BUBU_OPEN_MENU_KEY, activeSub.id.replace("menu-", ""));
+    }
+
+    if(menu){
+        localStorage.setItem(BUBU_SCROLL_KEY, menu.scrollTop);
+    }
+
+    closeSidebar();
+}
+
+function closeAllSubMenus(){
+    document.querySelectorAll(".menu-main").forEach(function(btn){
+        btn.classList.remove("active");
+    });
+
+    document.querySelectorAll(".menu-sub").forEach(function(sub){
+        sub.classList.remove("show");
+    });
+}
+
+function openSubMenu(menuName){
+    const btn = document.querySelector('.menu-main[data-menu="' + menuName + '"]');
+    const sub = document.getElementById("menu-" + menuName);
+
+    if(!btn || !sub) return;
+
+    btn.classList.add("active");
+    sub.classList.add("show");
+
+    localStorage.setItem(BUBU_OPEN_MENU_KEY, menuName);
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+    const sideMenu = document.getElementById("sideMenu");
+    const menuButtons = document.querySelectorAll(".menu-main");
+
+    menuButtons.forEach(function(btn){
+        btn.addEventListener("click", function(){
+            const menuName = this.getAttribute("data-menu");
+            const sub = document.getElementById("menu-" + menuName);
+
+            if(!sub) return;
+
+            const alreadyOpen = sub.classList.contains("show");
+
+            closeAllSubMenus();
+
+            if(!alreadyOpen){
+                openSubMenu(menuName);
+            }else{
+                localStorage.removeItem(BUBU_OPEN_MENU_KEY);
+            }
+
+            if(sideMenu){
+                localStorage.setItem(BUBU_SCROLL_KEY, sideMenu.scrollTop);
+            }
+        });
+    });
+
+    let activeMenuName = null;
+
+    document.querySelectorAll(".menu-sub a.active").forEach(function(activeLink){
+        const parentSub = activeLink.closest(".menu-sub");
+
+        if(parentSub && parentSub.id){
+            activeMenuName = parentSub.id.replace("menu-", "");
+        }
+    });
+
+    closeAllSubMenus();
+
+    if(activeMenuName){
+        openSubMenu(activeMenuName);
+    }else{
+        const savedMenuName = localStorage.getItem(BUBU_OPEN_MENU_KEY);
+
+        if(savedMenuName){
+            openSubMenu(savedMenuName);
+        }
+    }
+
+    if(sideMenu){
+        const savedScroll = localStorage.getItem(BUBU_SCROLL_KEY);
+
+        if(savedScroll !== null){
+            setTimeout(function(){
+                sideMenu.scrollTop = parseInt(savedScroll, 10) || 0;
+            }, 50);
+        }
+    }
+});
 
 document.addEventListener("keydown", function(e){
     if(e.key === "Escape"){

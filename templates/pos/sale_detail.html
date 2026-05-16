@@ -549,7 +549,7 @@ a {
         <a href="{% url 'sale_list' %}" class="btn-back">← Back to Sales</a>
         <a href="{% url 'pos' %}" class="btn-main">🛒 New Sale</a>
         <a href="{% url 'cash_count_dashboard' %}" class="btn-soft">💵 Cash Count</a>
-        <button type="button" class="btn-soft" onclick="window.print()">🖨️ Print</button>
+        <a href="{% url 'sale_receipt' sale.id %}" class="btn-soft">🖨️ Print Receipt</a>
     </div>
 
     <div class="detail-header">

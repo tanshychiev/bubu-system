@@ -269,11 +269,13 @@ a { text-decoration: none !important; }
 }
 
 .empty-sale {
-    padding: 80px 0;
+    padding: 80px 18px;
     text-align: center;
 }
 
-.empty-icon { font-size: 88px; }
+.empty-icon {
+    font-size: 88px;
+}
 
 .empty-sale h3 {
     color: #1c143a;
@@ -284,6 +286,7 @@ a { text-decoration: none !important; }
 .empty-sale p {
     color: #7b6f92;
     margin-bottom: 22px;
+    font-weight: 800;
 }
 
 /* ========================= */
@@ -736,6 +739,8 @@ a { text-decoration: none !important; }
 }
 </style>
 
+{% with has_search=request.GET.q|default:request.GET.date_from|default:request.GET.date_to|default:request.GET.status|default:selected_branch %}
+
 <div class="sales-header">
     <div class="sales-title">
         <h1>Sales 🐾</h1>
@@ -756,13 +761,14 @@ a { text-decoration: none !important; }
             <a href="{% url 'cash_count_dashboard' %}" class="btn-rate">
                 💵 Cash Count
             </a>
+
             <a href="{% url 'branch_cash_float_settings' %}" class="btn-orange">
-    💰 Branch Cash Float
-</a>
+                💰 Branch Cash Float
+            </a>
         </div>
     </div>
 
-    <img src="{% static 'img/bubu-sales-hero.png' %}" class="hero-img">
+    <img src="{% static 'img/bubu-sales-hero.png' %}" class="hero-img" alt="BUBU sales">
 </div>
 
 <form method="get" class="filter-row" id="filterForm">
@@ -788,7 +794,7 @@ a { text-decoration: none !important; }
 
             <button type="button" class="datetime-touch-btn" onclick="openDateTimePopup('from')">
                 <span>From</span>
-                <small id="dateFromLabel">Choose start date/time</small>
+                <small id="dateFromLabel">Today 00:00</small>
             </button>
         </div>
 
@@ -803,7 +809,7 @@ a { text-decoration: none !important; }
 
             <button type="button" class="datetime-touch-btn" onclick="openDateTimePopup('to')">
                 <span>To</span>
-                <small id="dateToLabel">Choose end date/time</small>
+                <small id="dateToLabel">Today 23:59</small>
             </button>
         </div>
     </div>
@@ -858,6 +864,7 @@ a { text-decoration: none !important; }
     <a href="{% url 'sale_list' %}" class="btn-clear">Clear</a>
 </form>
 
+{% if has_search %}
 <div class="sales-summary">
     <div class="summary-box">
         <small>Total Amount</small>
@@ -905,19 +912,19 @@ a { text-decoration: none !important; }
                     </td>
 
                     <td>
-    {% if sale.customer %}
-        <strong>{{ sale.customer.name|default:"No Name" }}</strong>
+                        {% if sale.customer %}
+                            <strong>{{ sale.customer.name|default:"No Name" }}</strong>
 
-        {% if sale.customer.phone %}
-            <br>
-            <small style="color:#7b6f92;font-weight:800;">
-                {{ sale.customer.phone }}
-            </small>
-        {% endif %}
-    {% else %}
-        Walk-in
-    {% endif %}
-</td>
+                            {% if sale.customer.phone %}
+                                <br>
+                                <small style="color:#7b6f92;font-weight:800;">
+                                    {{ sale.customer.phone }}
+                                </small>
+                            {% endif %}
+                        {% else %}
+                            Walk-in
+                        {% endif %}
+                    </td>
 
                     <td>${{ sale.total_amount|floatformat:2 }}</td>
                     <td>${{ sale.paid_amount|floatformat:2 }}</td>
@@ -956,6 +963,15 @@ a { text-decoration: none !important; }
         </table>
     </div>
 </div>
+{% else %}
+<div class="sales-table-card">
+    <div class="empty-sale">
+        <div class="empty-icon">🔍🐾</div>
+        <h3>Search sales first</h3>
+        <p>Date is already set to today. Click Search to show today sales.</p>
+    </div>
+</div>
+{% endif %}
 
 <!-- STATUS POPUP -->
 <div class="select-popup-backdrop" id="statusPopupBackdrop" onclick="closeTouchSelect('status')"></div>
@@ -1090,6 +1106,8 @@ a { text-decoration: none !important; }
     </div>
 </div>
 
+{% endwith %}
+
 <script>
 const dateFromInput = document.getElementById("dateFromInput");
 const dateToInput = document.getElementById("dateToInput");
@@ -1140,8 +1158,8 @@ function parseDateTimeValue(value, fallbackMode){
 
         return {
             date: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-            hour: "00",
-            minute: "00",
+            hour: fallbackMode === "to" ? "23" : "00",
+            minute: fallbackMode === "to" ? "59" : "00",
         };
     }
 
@@ -1150,8 +1168,8 @@ function parseDateTimeValue(value, fallbackMode){
 
     return {
         date: new Date(Number(d[0]), Number(d[1]) - 1, Number(d[2])),
-        hour: t[0] || "00",
-        minute: t[1] || "00",
+        hour: t[0] || (fallbackMode === "to" ? "23" : "00"),
+        minute: t[1] || (fallbackMode === "to" ? "59" : "00"),
     };
 }
 
@@ -1418,14 +1436,29 @@ function clearCurrentDateTime(){
     closeDateTimePopup();
 }
 
-function initLabels(){
-    if(dateFromInput.value){
+function setDefaultTodayIfEmpty(){
+    const today = new Date();
+    const todayClean = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    if(!dateFromInput.value){
+        const fromValue = formatDateTimeValue(todayClean, "00", "00");
+        dateFromInput.value = fromValue;
+        dateFromLabel.textContent = formatShortLabel(fromValue);
+    }else{
         dateFromLabel.textContent = formatShortLabel(dateFromInput.value);
     }
 
-    if(dateToInput.value){
+    if(!dateToInput.value){
+        const toValue = formatDateTimeValue(todayClean, "23", "59");
+        dateToInput.value = toValue;
+        dateToLabel.textContent = formatShortLabel(toValue);
+    }else{
         dateToLabel.textContent = formatShortLabel(dateToInput.value);
     }
+}
+
+function initLabels(){
+    setDefaultTodayIfEmpty();
 }
 
 function openTouchSelect(type){
