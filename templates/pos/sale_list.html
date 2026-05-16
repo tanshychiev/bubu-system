@@ -739,7 +739,7 @@ a { text-decoration: none !important; }
 }
 </style>
 
-{% with has_search=request.GET.q|default:request.GET.date_from|default:request.GET.date_to|default:request.GET.status|default:selected_branch %}
+{% with has_search=request.GET.urlencode %}
 
 <div class="sales-header">
     <div class="sales-title">
