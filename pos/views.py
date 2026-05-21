@@ -1,12 +1,15 @@
+import json
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Q, Sum, F, Prefetch
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django.views.decorators.csrf import csrf_exempt
 
 from customers.models import Customer
 from delivery.models import Delivery, DeliveryItem, DeliveryCompany
@@ -25,7 +28,13 @@ from .models import (
     POSSetting,
     CashCount,
     BranchCashFloat,
+    CombinedPaymentSession,
+    ABAPaymentSession,
 )
+
+from .services.aba_qr import create_real_aba_payment, check_real_aba_payment
+
+from pets.models import PetSale
 
 
 # ==================================================
@@ -1554,3 +1563,408 @@ def branch_cash_float_settings(request):
         "branches": branches,
         "current_branch": current_branch,
     })
+
+@login_required
+def customer_display(request):
+    current_branch = get_pos_branch(request)
+
+    cart = _get_cart(request)
+    cart_items, cart_subtotal = _build_cart_items(cart, current_branch)
+
+    khr_rate = get_khr_rate()
+    if not khr_rate or khr_rate <= 0:
+        khr_rate = Decimal("4100")
+
+    # ==================================================
+    # PET SALE DISPLAY
+    # ==================================================
+    selected_pet_sale = None
+    selected_pet_image_url = ""
+    selected_pet_full_price = Decimal("0.00")
+    selected_pet_paid = Decimal("0.00")
+    selected_pet_remaining = Decimal("0.00")
+
+    selected_pet_sale_id = request.session.get("selected_pet_sale_id")
+
+    if selected_pet_sale_id:
+        try:
+            selected_pet_sale = (
+                PetSale.objects
+                .select_related("pet", "pet__breed_profile")
+                .prefetch_related("photos")
+                .filter(id=selected_pet_sale_id)
+                .first()
+            )
+
+            if selected_pet_sale:
+                selected_pet_full_price = selected_pet_sale.sale_price or Decimal("0.00")
+                selected_pet_paid = selected_pet_sale.paid_amount or Decimal("0.00")
+
+                try:
+                    selected_pet_remaining = selected_pet_sale.remaining_amount or Decimal("0.00")
+                except Exception:
+                    selected_pet_remaining = selected_pet_full_price - selected_pet_paid
+
+                if selected_pet_remaining < 0:
+                    selected_pet_remaining = Decimal("0.00")
+
+                first_photo = selected_pet_sale.photos.first()
+
+                if first_photo and first_photo.photo:
+                    selected_pet_image_url = first_photo.photo.url
+                elif selected_pet_sale.sale_photo:
+                    selected_pet_image_url = selected_pet_sale.sale_photo.url
+                elif selected_pet_sale.pet and selected_pet_sale.pet.display_photo:
+                    selected_pet_image_url = selected_pet_sale.pet.display_photo.url
+                elif (
+                    selected_pet_sale.pet
+                    and selected_pet_sale.pet.breed_profile
+                    and selected_pet_sale.pet.breed_profile.photo
+                ):
+                    selected_pet_image_url = selected_pet_sale.pet.breed_profile.photo.url
+
+        except Exception:
+            selected_pet_sale = None
+            selected_pet_image_url = ""
+            selected_pet_full_price = Decimal("0.00")
+            selected_pet_paid = Decimal("0.00")
+            selected_pet_remaining = Decimal("0.00")
+
+    # ==================================================
+    # TOTAL
+    # ==================================================
+    subtotal = cart_subtotal + selected_pet_remaining
+    total = subtotal
+    total_khr = total * Decimal(str(khr_rate))
+
+    # ==================================================
+    # ABA QR SESSION
+    # ==================================================
+    aba_session = None
+    aba_qr_image_url = ""
+    aba_qr_text = ""
+
+    if current_branch:
+        aba_session = (
+            ABAPaymentSession.objects
+            .filter(
+                branch=current_branch,
+                status=ABAPaymentSession.STATUS_WAITING,
+            )
+            .order_by("-created_at")
+            .first()
+        )
+
+    if aba_session:
+        aba_qr_image_url = aba_session.qr_image_url or ""
+        aba_qr_text = aba_session.qr_text or ""
+
+    # ==================================================
+    # CUSTOMER POINTS
+    # ==================================================
+    customer = None
+
+    customer_id = (
+        request.session.get("selected_customer_id")
+        or request.session.get("pos_customer_id")
+        or request.session.get("customer_id")
+    )
+
+    customer_phone = (
+        request.session.get("selected_customer_phone")
+        or request.session.get("pos_customer_phone")
+        or request.session.get("customer_phone")
+        or ""
+    )
+
+    if customer_id:
+        customer = Customer.objects.filter(id=customer_id).first()
+
+    if not customer and customer_phone:
+        customer = Customer.objects.filter(phone=customer_phone).first()
+
+    if customer:
+        customer_points = int(customer.points or 0)
+    else:
+        customer_points = request.session.get("customer_points", None)
+
+    earn_points = int(total or 0)
+
+    return render(request, "pos/customer_display.html", {
+        "cart_items": cart_items,
+
+        "subtotal": subtotal,
+        "cart_subtotal": cart_subtotal,
+        "total": total,
+        "total_khr": total_khr,
+
+        "current_branch": current_branch,
+        "khr_rate": khr_rate,
+
+        # ABA QR
+        "aba_session": aba_session,
+        "aba_qr_image_url": aba_qr_image_url,
+        "aba_qr_text": aba_qr_text,
+
+        # Customer points
+        "customer": customer,
+        "customer_points": customer_points,
+        "earn_points": earn_points,
+
+        # Pet sale
+        "selected_pet_sale": selected_pet_sale,
+        "selected_pet_image_url": selected_pet_image_url,
+        "selected_pet_full_price": selected_pet_full_price,
+        "selected_pet_paid": selected_pet_paid,
+        "selected_pet_remaining": selected_pet_remaining,
+    })
+
+@login_required
+def combined_payment_display(request):
+    current_branch = get_pos_branch(request)
+
+    session = (
+        CombinedPaymentSession.objects
+        .filter(
+            branch=current_branch,
+            status=CombinedPaymentSession.STATUS_WAITING,
+        )
+        .order_by("-created_at")
+        .first()
+    )
+
+    return render(request, "pos/combined_payment_display.html", {
+        "session": session,
+        "current_branch": current_branch,
+    })
+
+
+@login_required
+def pos(request):
+    current_branch = get_pos_branch(request)
+
+    if not current_branch:
+        messages.error(request, "No branch assigned. Please ask admin to set your shop.")
+        return redirect("dashboard")
+
+    branches = Branch.objects.filter(is_active=True).order_by("name")
+    delivery_companies = DeliveryCompany.objects.filter(is_active=True).order_by("delivery_type", "name")
+
+    raw_q = request.GET.get("q", "").strip()
+    q = raw_q
+    type_id = request.GET.get("type", "").strip()
+
+    if q.upper().startswith("SKU:"):
+        q = q.split(":", 1)[1].strip()
+
+    active_variants_qs = ItemVariant.objects.filter(is_active=True).order_by(
+        "sale_price", "size", "color", "label", "id"
+    )
+
+    items = (
+        Item.objects
+        .filter(is_active=True)
+        .select_related("item_type")
+        .prefetch_related(Prefetch("variants", queryset=active_variants_qs))
+        .order_by("name")
+    )
+
+    item_types = ItemType.objects.filter(is_active=True).order_by("name")
+    customers = Customer.objects.all().order_by("name", "phone")
+
+    if q:
+        variant = (
+            ItemVariant.objects
+            .select_related("item", "item__item_type")
+            .filter(item__is_active=True, is_active=True, sku__iexact=q)
+            .first()
+        )
+
+        if variant:
+            _add_to_cart(request, variant.item, variant)
+            messages.success(request, f"Added {variant.item.name} - {variant.display_name()}")
+            return redirect("pos")
+
+    if q:
+        items = items.filter(
+            Q(name__icontains=q)
+            | Q(brand__icontains=q)
+            | Q(item_type__name__icontains=q)
+            | Q(variants__sku__icontains=q)
+            | Q(variants__color__icontains=q)
+            | Q(variants__size__icontains=q)
+            | Q(variants__label__icontains=q)
+        ).distinct()
+
+    if type_id:
+        items = items.filter(item_type_id=type_id)
+
+    item_stock_map = {}
+    variant_stock_map = {}
+
+    branch_stocks = (
+        BranchStock.objects
+        .filter(branch=current_branch, variant__item__in=items, variant__is_active=True)
+        .select_related("variant", "variant__item")
+    )
+
+    for stock in branch_stocks:
+        item_stock_map[stock.variant.item_id] = item_stock_map.get(stock.variant.item_id, 0) + int(stock.quantity or 0)
+        variant_stock_map[stock.variant_id] = int(stock.quantity or 0)
+
+    try:
+        from purchases.models import PurchaseItem
+
+        purchase_data = PurchaseItem.objects.values("variant_id").annotate(
+            ordered=Sum("ordered_qty"),
+            received=Sum("received_qty"),
+        )
+
+        coming_map = {}
+        for row in purchase_data:
+            variant_id = row["variant_id"]
+            if not variant_id:
+                continue
+            coming_qty = (row["ordered"] or 0) - (row["received"] or 0)
+            if coming_qty > 0:
+                coming_map[variant_id] = coming_qty
+    except Exception:
+        coming_map = {}
+
+    for item in items:
+        item.branch_stock_total = item_stock_map.get(item.id, 0)
+        item_coming_soon_qty = 0
+
+        for variant in item.variants.all():
+            variant.branch_stock_qty = variant_stock_map.get(variant.id, 0)
+            variant.coming_soon_qty = coming_map.get(variant.id, 0)
+            variant.is_coming_soon = variant.coming_soon_qty > 0
+            item_coming_soon_qty += variant.coming_soon_qty
+
+        item.coming_soon_qty = item_coming_soon_qty
+        item.is_coming_soon = item_coming_soon_qty > 0
+
+    cart = _get_cart(request)
+    cart_items, subtotal = _build_cart_items(cart, current_branch)
+
+    product_total = Decimal("0.00")
+    grooming_total = Decimal("0.00")
+    service_total = Decimal("0.00")
+    pet_total = Decimal("0.00")
+
+    for cart_item in cart_items:
+        type_name = (cart_item.get("item_type_name") or "").lower()
+        line_total = cart_item["total"]
+
+        if "groom" in type_name:
+            grooming_total += line_total
+        elif "service" in type_name:
+            service_total += line_total
+        elif "pet" in type_name or "dog" in type_name or "cat" in type_name or "puppy" in type_name:
+            pet_total += line_total
+        else:
+            product_total += line_total
+
+    selected_pet_sale = None
+    selected_pet_full_price = Decimal("0.00")
+    selected_pet_paid = Decimal("0.00")
+    selected_pet_remaining = Decimal("0.00")
+
+    selected_pet_sale_id = request.session.get("selected_pet_sale_id")
+
+    if selected_pet_sale_id:
+        selected_pet_sale = PetSale.objects.filter(id=selected_pet_sale_id).first()
+
+        if selected_pet_sale:
+            selected_pet_full_price = selected_pet_sale.sale_price or Decimal("0.00")
+            selected_pet_paid = selected_pet_sale.paid_amount or Decimal("0.00")
+            selected_pet_remaining = selected_pet_full_price - selected_pet_paid
+
+            if selected_pet_remaining < 0:
+                selected_pet_remaining = Decimal("0.00")
+
+    final_total = subtotal + selected_pet_remaining
+
+    return render(request, "pos/pos.html", {
+        "items": items,
+        "item_types": item_types,
+        "cart_items": cart_items,
+        "subtotal": subtotal,
+        "discount": Decimal("0.00"),
+        "tax": Decimal("0.00"),
+        "total": final_total,
+
+        "product_total": product_total,
+        "grooming_total": grooming_total,
+        "service_total": service_total,
+        "pet_total": pet_total,
+
+        "selected_pet_sale": selected_pet_sale,
+        "selected_pet_full_price": selected_pet_full_price,
+        "selected_pet_paid": selected_pet_paid,
+        "selected_pet_remaining": selected_pet_remaining,
+
+        "khr_rate": get_khr_rate(),
+        "selected_type": type_id,
+        "q": raw_q,
+        "customers": customers,
+        "delivery_companies": delivery_companies,
+        "current_branch": current_branch,
+        "branches": branches,
+    })
+
+
+@login_required
+def create_aba_qr_for_display(request):
+    current_branch = get_pos_branch(request)
+
+    if not current_branch:
+        messages.error(request, "No branch selected.")
+        return redirect("pos")
+
+    cart = _get_cart(request)
+    cart_items, cart_subtotal = _build_cart_items(cart, current_branch)
+
+    selected_pet_remaining = Decimal("0.00")
+    selected_pet_sale_id = request.session.get("selected_pet_sale_id")
+
+    if selected_pet_sale_id:
+        selected_pet_sale = PetSale.objects.filter(id=selected_pet_sale_id).first()
+
+        if selected_pet_sale:
+            try:
+                selected_pet_remaining = selected_pet_sale.remaining_amount or Decimal("0.00")
+            except Exception:
+                selected_pet_remaining = (
+                    selected_pet_sale.sale_price or Decimal("0.00")
+                ) - (
+                    selected_pet_sale.paid_amount or Decimal("0.00")
+                )
+
+            if selected_pet_remaining < 0:
+                selected_pet_remaining = Decimal("0.00")
+
+    total = cart_subtotal + selected_pet_remaining
+
+    if total <= 0:
+        messages.error(request, "Total must be greater than 0 to create ABA QR.")
+        return redirect("pos")
+
+    # Clear old waiting QR for this branch
+    ABAPaymentSession.objects.filter(
+        branch=current_branch,
+        status=ABAPaymentSession.STATUS_WAITING,
+    ).update(status=ABAPaymentSession.STATUS_CANCELLED)
+
+    # Create mock ABA QR session from pos/aba_qr.py
+    aba_session = create_mock_aba_payment(
+        branch=current_branch,
+        cashier=request.user,
+        amount=total,
+    )
+
+    messages.success(
+        request,
+        f"ABA QR created for customer display: ${aba_session.amount:.2f}",
+    )
+    return redirect("pos")

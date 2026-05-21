@@ -1458,3 +1458,17 @@ def pet_warranty_claim_create(request, sale_id):
         "form": form,
         "sale": sale,
     })
+
+
+@login_required
+def pet_sale_add_to_pos(request, pk):
+    sale = get_object_or_404(PetSale, pk=pk)
+
+    request.session["selected_pet_sale_id"] = sale.id
+    request.session.modified = True
+
+    messages.success(
+        request,
+        f"Pet Sale #{sale.id} added to POS checkout. Customer can pay one total.",
+    )
+    return redirect("pos")

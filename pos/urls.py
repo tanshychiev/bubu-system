@@ -4,6 +4,12 @@ from . import views
 urlpatterns = [
     # POS
     path("", views.pos, name="pos"),
+    path("customer-display/", views.customer_display, name="customer_display"),
+    path(
+        "combined-payment-display/",
+        views.combined_payment_display,
+        name="combined_payment_display",
+    ),
     path("switch-branch/", views.pos_switch_branch, name="pos_switch_branch"),
 
     # Cart
@@ -23,10 +29,7 @@ urlpatterns = [
 
     # Sales
     path("sales/", views.sale_list, name="sale_list"),
-
-    # IMPORTANT: receipt must stay before sale_detail
     path("sales/<int:pk>/receipt/", views.sale_receipt, name="sale_receipt"),
-
     path("sales/<int:pk>/", views.sale_detail, name="sale_detail"),
     path("sales/<int:pk>/payment/", views.sale_add_payment, name="sale_add_payment"),
 

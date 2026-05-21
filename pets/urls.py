@@ -18,6 +18,10 @@ urlpatterns = [
     path("sales/", views.pet_sale_list, name="pet_sale_list"),
     path("sales/available/", views.pet_available_for_sale, name="pet_available_for_sale"),
     path("sales/create/", views.pet_sale_create, name="pet_sale_create"),
+
+    # ✅ Add pet sale to POS checkout
+    path("sales/<int:pk>/add-to-pos/", views.pet_sale_add_to_pos, name="pet_sale_add_to_pos"),
+
     path("sales/<int:pk>/", views.pet_sale_detail, name="pet_sale_detail"),
     path("sales/<int:pk>/edit/", views.pet_sale_edit, name="pet_sale_edit"),
 

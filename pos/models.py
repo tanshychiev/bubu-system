@@ -374,3 +374,134 @@ class CashCount(models.Model):
     def __str__(self):
         branch_name = self.branch.name if self.branch else "No Branch"
         return f"Cash Count {branch_name} - {self.date}"
+    
+
+class ABAPaymentSession(models.Model):
+    STATUS_WAITING = "waiting"
+    STATUS_PAID = "paid"
+    STATUS_FAILED = "failed"
+    STATUS_CANCELLED = "cancelled"
+
+    STATUS_CHOICES = [
+        (STATUS_WAITING, "Waiting"),
+        (STATUS_PAID, "Paid"),
+        (STATUS_FAILED, "Failed"),
+        (STATUS_CANCELLED, "Cancelled"),
+    ]
+
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.PROTECT,
+        related_name="aba_payment_sessions",
+    )
+
+    cashier = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="aba_payment_sessions",
+    )
+
+    session_key = models.CharField(max_length=120, unique=True)
+
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_WAITING,
+    )
+
+    sale = models.ForeignKey(
+        Sale,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="aba_payment_sessions",
+    )
+
+    qr_text = models.TextField(blank=True, default="")
+    qr_image_url = models.URLField(blank=True, default="")
+
+    aba_tran_id = models.CharField(max_length=120, blank=True, default="")
+    aba_response = models.JSONField(default=dict, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"ABA {self.session_key} - ${self.amount} - {self.status}"   
+
+
+class CombinedPaymentSession(models.Model):
+    STATUS_WAITING = "waiting"
+    STATUS_PAID = "paid"
+    STATUS_CANCELLED = "cancelled"
+    STATUS_FAILED = "failed"
+
+    STATUS_CHOICES = [
+        (STATUS_WAITING, "Waiting"),
+        (STATUS_PAID, "Paid"),
+        (STATUS_CANCELLED, "Cancelled"),
+        (STATUS_FAILED, "Failed"),
+    ]
+
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.PROTECT,
+        related_name="combined_payment_sessions",
+    )
+
+    cashier = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    pos_sale = models.ForeignKey(
+        Sale,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="combined_payment_sessions",
+    )
+
+    pet_sale_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="PetSale ID from pets app",
+    )
+
+    session_key = models.CharField(max_length=120, unique=True)
+    aba_tran_id = models.CharField(max_length=120, blank=True, default="")
+
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    pos_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    pet_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_WAITING,
+    )
+
+    qr_text = models.TextField(blank=True, default="")
+    qr_image_url = models.URLField(blank=True, default="")
+    raw_response = models.JSONField(default=dict, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Combined Pay {self.session_key} - ${self.total_amount} - {self.status}"     

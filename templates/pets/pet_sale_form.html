@@ -12,6 +12,9 @@
 
         <div class="top-actions">
             <a href="{% url 'pet_sale_list' %}" class="soft-btn">📋 Sale List</a>
+            {% if sale %}
+            <a href="{% url 'pet_sale_add_to_pos' sale.id %}" class="add-pos-top-btn">🛒 Add to POS</a>
+            {% endif %}
             <a href="{% url 'pet_list' %}" class="soft-btn">← Back</a>
         </div>
     </div>
@@ -507,6 +510,17 @@
                         <textarea name="note" id="noteInput" oninput="updateCopyBox()">{{ sale.note|default:'' }}</textarea>
                     </label>
 
+                    {% if sale %}
+                    <a href="{% url 'pet_sale_add_to_pos' sale.id %}" class="add-pos-btn">
+                        🛒 Add This Pet Sale to POS
+                        <small>Use this when customer also buys food/accessories. One payment total.</small>
+                    </a>
+                    {% else %}
+                    <div class="add-pos-help">
+                        🛒 Save this pet sale first, then open it and click Add to POS.
+                    </div>
+                    {% endif %}
+
                     <button type="submit" class="save-btn" onclick="return submitAction('save')">
                         💾 Save
                     </button>
@@ -819,6 +833,50 @@ a{text-decoration:none}
 .soft-btn{
     background:#f1f5f9;
     color:#334155;
+}
+
+.add-pos-top-btn{
+    min-height:60px;
+    padding:0 22px;
+    border-radius:20px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+    background:linear-gradient(135deg,#22c55e,#7b5cff);
+    color:white;
+}
+
+.add-pos-btn{
+    width:100%;
+    min-height:76px;
+    padding:12px 16px;
+    border-radius:20px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    font-weight:1000;
+    background:linear-gradient(135deg,#22c55e,#7b5cff);
+    color:white;
+    margin:10px 0;
+}
+
+.add-pos-btn small{
+    color:white;
+    opacity:.9;
+    font-size:12px;
+    font-weight:900;
+}
+
+.add-pos-help{
+    margin:10px 0;
+    padding:14px;
+    border-radius:18px;
+    background:#fff7ed;
+    color:#ea580c;
+    font-weight:1000;
 }
 
 .sale-card,

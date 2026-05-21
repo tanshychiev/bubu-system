@@ -303,6 +303,37 @@
                 {% endfor %}
             </div>
 
+            {% if selected_pet_sale %}
+            <div class="selected-pet-sale-card">
+                <div class="selected-pet-head">
+                    <div>
+                        <strong>🐶 Pet Sale Attached</strong>
+                        <span>Pet Sale #{{ selected_pet_sale.id }} will be paid together with POS.</span>
+                    </div>
+                    <a href="{% url 'pet_sale_detail' selected_pet_sale.id %}" target="_blank">View</a>
+                </div>
+
+                <div class="selected-pet-grid">
+                    <div>
+                        <span>Full Price</span>
+                        <strong>${{ selected_pet_full_price|floatformat:2 }}</strong>
+                    </div>
+                    <div>
+                        <span>Deposit / Paid</span>
+                        <strong>${{ selected_pet_paid|floatformat:2 }}</strong>
+                    </div>
+                    <div class="pay-now">
+                        <span>Pay Now</span>
+                        <strong>${{ selected_pet_remaining|floatformat:2 }}</strong>
+                    </div>
+                </div>
+
+                <div class="selected-pet-note">
+                    Customer pays one total. System will print normal POS receipt and pet warranty later.
+                </div>
+            </div>
+            {% endif %}
+
             <div class="customer-bill-summary">
                 <div class="bill-title">Customer Bill Summary</div>
 
@@ -321,6 +352,23 @@
                     <strong>${{ service_total|default:"0.00" }}</strong>
                 </div>
 
+                {% if selected_pet_sale %}
+                <div class="bill-row pet-combined-row">
+                    <span>🐶 Pet Sale #{{ selected_pet_sale.id }}</span>
+                    <strong>${{ selected_pet_remaining|floatformat:2 }}</strong>
+                </div>
+
+                <div class="bill-row pet-sub-row">
+                    <span>Pet Full Price</span>
+                    <strong>${{ selected_pet_full_price|floatformat:2 }}</strong>
+                </div>
+
+                <div class="bill-row pet-sub-row">
+                    <span>Pet Deposit / Paid</span>
+                    <strong>-${{ selected_pet_paid|floatformat:2 }}</strong>
+                </div>
+                {% endif %}
+
             </div>
 
             <div class="summary">
@@ -334,7 +382,7 @@
                 <strong id="cartTotalShow">${{ total|default:"0.00" }}</strong>
             </div>
 
-            <button type="button" class="checkout-btn" onclick="openPaymentModal()" {% if not cart_items %}disabled{% endif %}>
+            <button type="button" class="checkout-btn" onclick="openPaymentModal()" {% if not cart_items and not selected_pet_sale %}disabled{% endif %}>
                 Checkout
             </button>
         </div>
@@ -405,6 +453,7 @@
             <input type="hidden" name="tax_type" id="tax_type_hidden" value="percent">
             <input type="hidden" name="tax_value" id="tax_value_hidden" value="0">
             <input type="hidden" name="final_total" id="final_total_hidden" value="{{ total|default:'0.00' }}">
+            <input type="hidden" name="selected_pet_sale_id" id="selected_pet_sale_id" value="{% if selected_pet_sale %}{{ selected_pet_sale.id }}{% endif %}">
             <input type="hidden" name="checkout_action" id="checkout_action" value="complete">
             <input type="hidden" name="sale_type_hidden" id="sale_type_hidden" value="walk_in">
 
@@ -426,6 +475,33 @@
                     <em>Admin</em>
                 {% endif %}
             </div>
+
+            {% if selected_pet_sale %}
+            <div class="selected-pet-sale-card">
+                <div class="selected-pet-head">
+                    <div>
+                        <strong>🐶 Pet Sale Included</strong>
+                        <span>Pet Sale #{{ selected_pet_sale.id }} is combined with this POS payment.</span>
+                    </div>
+                    <a href="{% url 'pet_sale_detail' selected_pet_sale.id %}" target="_blank">View</a>
+                </div>
+
+                <div class="selected-pet-grid">
+                    <div>
+                        <span>Full Price</span>
+                        <strong>${{ selected_pet_full_price|floatformat:2 }}</strong>
+                    </div>
+                    <div>
+                        <span>Deposit / Paid</span>
+                        <strong>${{ selected_pet_paid|floatformat:2 }}</strong>
+                    </div>
+                    <div class="pay-now">
+                        <span>Pay Now</span>
+                        <strong>${{ selected_pet_remaining|floatformat:2 }}</strong>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
 
             <div class="sale-type-box">
                 <label>Customer Status</label>
@@ -785,6 +861,18 @@
             <p id="receiptDate"></p>
         </div>
 
+        {% if selected_pet_sale %}
+            <div class="receipt-item">
+                <div>
+                    <strong>Pet Sale #{{ selected_pet_sale.id }}</strong>
+                    <small>Full price: ${{ selected_pet_full_price|floatformat:2 }}</small>
+                    <small>Deposit/Paid: ${{ selected_pet_paid|floatformat:2 }}</small>
+                    <small>Remaining pay now</small>
+                </div>
+                <strong>${{ selected_pet_remaining|floatformat:2 }}</strong>
+            </div>
+        {% endif %}
+
         <div class="receipt-line"></div>
 
         <div class="receipt-items">
@@ -826,6 +914,12 @@
             <strong>${{ service_total|default:"0.00" }}</strong>
         </div>
 
+        {% if selected_pet_sale %}
+        <div class="receipt-row">
+            <span>Pet Sale Remaining</span>
+            <strong>${{ selected_pet_remaining|floatformat:2 }}</strong>
+        </div>
+        {% endif %}
 
         <div class="receipt-line"></div>
 
@@ -1492,6 +1586,113 @@ a{
     text-align:center;
     color:#7b7288;
     font-weight:1000;
+}
+
+
+.selected-pet-sale-card{
+    margin:16px 0;
+    padding:16px;
+    border-radius:24px;
+    background:linear-gradient(135deg,#fff0e8,#fff8fb);
+    border:2px solid #ffd4c2;
+    box-shadow:0 12px 28px rgba(255,93,115,.08);
+}
+
+.selected-pet-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    margin-bottom:12px;
+}
+
+.selected-pet-head strong{
+    display:block;
+    font-size:18px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.selected-pet-head span{
+    display:block;
+    margin-top:4px;
+    color:#7b7288;
+    font-weight:900;
+    font-size:13px;
+}
+
+.selected-pet-head a{
+    min-height:40px;
+    padding:0 14px;
+    border-radius:999px;
+    background:white;
+    color:#ff5d73;
+    display:flex;
+    align-items:center;
+    font-weight:1000;
+    white-space:nowrap;
+}
+
+.selected-pet-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
+}
+
+.selected-pet-grid div{
+    background:white;
+    border-radius:18px;
+    padding:12px;
+}
+
+.selected-pet-grid span{
+    display:block;
+    color:#7b7288;
+    font-size:12px;
+    font-weight:1000;
+}
+
+.selected-pet-grid strong{
+    display:block;
+    margin-top:5px;
+    color:#080634;
+    font-size:18px;
+    font-weight:1000;
+}
+
+.selected-pet-grid .pay-now{
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+}
+
+.selected-pet-grid .pay-now span,
+.selected-pet-grid .pay-now strong{
+    color:white;
+}
+
+.selected-pet-note{
+    margin-top:12px;
+    padding:10px 12px;
+    border-radius:16px;
+    background:#fff7df;
+    color:#8a5a00;
+    font-size:13px;
+    font-weight:1000;
+}
+
+.pet-combined-row{
+    background:#fff0e8;
+    border-radius:14px;
+    padding:10px !important;
+    border-bottom:0 !important;
+}
+
+.pet-combined-row span,
+.pet-combined-row strong{
+    color:#ff5d73 !important;
+}
+
+.pet-sub-row{
+    padding-left:12px !important;
 }
 
 .customer-bill-summary,
@@ -2949,6 +3150,7 @@ a{
 <script>
 const baseTotal = parseFloat("{{ total|default:'0.00' }}");
 const subtotalBase = parseFloat("{{ subtotal|default:'0.00' }}");
+const petRemainingBase = parseFloat("{{ selected_pet_remaining|default:'0.00' }}");
 let total = baseTotal;
 
 const payRate = 4100;
@@ -3131,8 +3333,9 @@ function calcFinalTotal(){
     const taxableAmount = Math.max(subtotalBase - discountAmount, 0);
     const taxAmount = calcPercentOrAmount("tax_type", "tax_value", taxableAmount);
     const itemTotal = Math.max(taxableAmount + taxAmount, 0);
+    const combinedItemTotal = Math.max(itemTotal + petRemainingBase, 0);
 
-    total = Math.max(itemTotal + deliveryExpense, 0);
+    total = Math.max(combinedItemTotal + deliveryExpense, 0);
 
     text("cartDiscountShow", "-" + moneyUSD(discountAmount));
     text("modalDiscountShow", "-" + moneyUSD(discountAmount));
@@ -3147,7 +3350,7 @@ function calcFinalTotal(){
     text("customerPayTotalShow", moneyUSD(total));
     text("receiptTotal", moneyUSD(total));
 
-    text("itemTotalShow", moneyUSD(itemTotal));
+    text("itemTotalShow", moneyUSD(combinedItemTotal));
     text("deliveryFeeShow", moneyUSD(deliveryExpense));
     text("codTotalShow", moneyUSD(total));
     text("receiptDeliveryFee", moneyUSD(deliveryExpense));
@@ -3789,4 +3992,4 @@ document.addEventListener("keydown", function(e){
 
 </script>
 
-{% endblock %}
+{% endblock content %}
