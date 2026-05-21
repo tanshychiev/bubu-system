@@ -241,9 +241,15 @@
                     {% endif %}
                 </div>
 
-                {% if cart_items %}
-                    <a href="{% url 'pos_clear_cart' %}" class="clear-btn">Clear</a>
-                {% endif %}
+                <div class="cart-head-actions">
+                    <button type="button" class="customer-display-btn" onclick="openCustomerDisplayTab()">
+                        🖥️ Open Customer Display
+                    </button>
+
+                    {% if cart_items %}
+                        <a href="{% url 'pos_clear_cart' %}" class="clear-btn pos-safe-nav">Clear</a>
+                    {% endif %}
+                </div>
             </div>
 
             <div class="cart-list">
@@ -3145,6 +3151,62 @@ a{
     }
 }
 
+
+
+/* =========================
+   CUSTOMER DISPLAY BUTTON + SAFE CART CLOSE
+========================= */
+.cart-head-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+}
+
+.customer-display-btn{
+    min-height:46px;
+    padding:0 16px;
+    border:none;
+    border-radius:18px;
+    background:linear-gradient(135deg,#34c6ff,#7b5cff);
+    color:white;
+    font-weight:1000;
+    cursor:pointer;
+    box-shadow:0 10px 22px rgba(52,198,255,.18);
+    white-space:nowrap;
+}
+
+.customer-display-btn:hover{
+    filter:brightness(1.03);
+}
+
+.customer-display-btn:active{
+    transform:scale(.97);
+}
+
+@media(max-width:700px){
+    .cart-head{
+        align-items:flex-start;
+        flex-direction:column;
+    }
+
+    .cart-head-actions{
+        width:100%;
+        display:grid;
+        grid-template-columns:1fr;
+        margin-top:10px;
+    }
+
+    .customer-display-btn,
+    .clear-btn{
+        width:100%;
+        min-height:54px;
+        justify-content:center;
+        text-align:center;
+    }
+}
+
 </style>
 
 <script>
@@ -3158,6 +3220,63 @@ const changeRate = 4000;
 
 const searchInput = document.getElementById("posSearch");
 const searchForm = document.getElementById("posSearchForm");
+
+let posIsNormalNavigation = false;
+let posIsSubmittingCheckout = false;
+let posIsClearingCartOnClose = false;
+
+function markPOSNormalNavigation(){
+    posIsNormalNavigation = true;
+
+    setTimeout(function(){
+        posIsNormalNavigation = false;
+    }, 1500);
+}
+
+function openCustomerDisplayTab(){
+    markPOSNormalNavigation();
+    window.open("{% url 'customer_display' %}", "_blank", "noopener,noreferrer");
+}
+
+function clearPOSCartWhenPageClosed(){
+    if(posIsNormalNavigation || posIsSubmittingCheckout || posIsClearingCartOnClose){
+        return;
+    }
+
+    posIsClearingCartOnClose = true;
+
+    const formData = new FormData();
+    formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+
+    if(navigator.sendBeacon){
+        navigator.sendBeacon("{% url 'pos_clear_cart' %}", formData);
+        return;
+    }
+
+    fetch("{% url 'pos_clear_cart' %}", {
+        method:"POST",
+        body:formData,
+        credentials:"same-origin",
+        keepalive:true
+    }).catch(function(){});
+}
+
+window.addEventListener("pagehide", clearPOSCartWhenPageClosed);
+
+document.addEventListener("click", function(e){
+    const safeClick = e.target.closest(
+        "a, button, input[type='submit'], .product-card, .variant-row, .qty-box a, .remove-btn, .clear-btn, .switch-shop-option, .pos-safe-nav"
+    );
+
+    if(safeClick){
+        markPOSNormalNavigation();
+    }
+}, true);
+
+document.addEventListener("submit", function(){
+    posIsSubmittingCheckout = true;
+    posIsNormalNavigation = true;
+}, true);
 
 window.addEventListener("load", function(){
     if(searchInput) searchInput.focus();
@@ -3973,6 +4092,9 @@ function submitPOSCheckout(e, action){
     if(action === "complete_print" && secondaryBtn){
         secondaryBtn.innerText = "Saving + Printing...";
     }
+
+    posIsSubmittingCheckout = true;
+    posIsNormalNavigation = true;
 
     form.submit();
     return false;
