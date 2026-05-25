@@ -1,12 +1,15 @@
 import json
+import requests
 from decimal import Decimal, InvalidOperation
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Q, Sum, F, Prefetch
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import csrf_exempt
@@ -35,6 +38,106 @@ from .models import (
 from .services.aba_qr import create_real_aba_payment, check_real_aba_payment
 
 from pets.models import PetSale
+
+
+
+# ==================================================
+# TELEGRAM + PET SALE HELPERS
+# ==================================================
+
+def _choice_value(model_class, field_name, candidates, default_value):
+    """
+    Pick a valid value from model field choices.
+    This prevents pet sale status bugs when one project uses completed,
+    another uses sold / complete / done.
+    """
+    try:
+        field = model_class._meta.get_field(field_name)
+        choices = [str(value) for value, _label in (field.choices or [])]
+
+        if not choices:
+            return default_value
+
+        for value in candidates:
+            if value in choices:
+                return value
+
+        if default_value in choices:
+            return default_value
+
+        return choices[0]
+    except Exception:
+        return default_value
+
+
+def _safe_attr(obj, attr, default=""):
+    try:
+        value = getattr(obj, attr, default)
+        return value if value not in [None, ""] else default
+    except Exception:
+        return default
+
+
+def _send_pet_sale_completed_telegram(pet_sale, sale, branch, cashier):
+    """
+    Set these in settings.py / .env:
+    TELEGRAM_BOT_TOKEN = "xxxxx"
+    TELEGRAM_PET_SALE_CHAT_ID = "xxxxx"
+    """
+    bot_token = getattr(settings, "TELEGRAM_BOT_TOKEN", "")
+    chat_id = getattr(settings, "TELEGRAM_PET_SALE_CHAT_ID", "")
+
+    if not bot_token or not chat_id:
+        return False
+
+    pet = getattr(pet_sale, "pet", None)
+
+    breed = (
+        _safe_attr(getattr(pet, "breed_profile", None), "name")
+        or _safe_attr(pet, "breed")
+        or _safe_attr(pet_sale, "breed")
+        or "Pet"
+    )
+
+    pet_type = (
+        _safe_attr(pet, "pet_type")
+        or _safe_attr(pet_sale, "pet_type")
+        or ""
+    )
+
+    customer_name = ""
+    customer_phone = ""
+
+    if getattr(sale, "customer", None):
+        customer_name = sale.customer.name or ""
+        customer_phone = sale.customer.phone or ""
+
+    cashier_name = getattr(cashier, "get_full_name", lambda: "")() or getattr(cashier, "username", "")
+
+    text = (
+        "🐶 Pet Sale Completed\n"
+        f"Branch: {branch.name if branch else '-'}\n"
+        f"POS Sale: #{sale.id}\n"
+        f"Pet Sale: #{pet_sale.id}\n"
+        f"Pet: {pet_type} {breed}\n"
+        f"Total: ${sale.total_amount:.2f}\n"
+        f"Paid: ${sale.paid_amount:.2f}\n"
+        f"Customer: {customer_name or '-'} {customer_phone or ''}\n"
+        f"Cashier: {cashier_name or '-'}"
+    )
+
+    try:
+        response = requests.post(
+            f"https://api.telegram.org/bot{bot_token}/sendMessage",
+            data={
+                "chat_id": chat_id,
+                "text": text,
+            },
+            timeout=5,
+        )
+        return response.ok
+    except Exception:
+        return False
 
 
 # ==================================================
@@ -301,6 +404,111 @@ def _find_best_variant_for_branch(item, branch):
 
 
 # ==================================================
+# AJAX CART HELPERS
+# ==================================================
+
+def _is_ajax(request):
+    return request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+
+def _build_pos_cart_context(request):
+    current_branch = get_pos_branch(request)
+    cart = _get_cart(request)
+    cart_items, subtotal = _build_cart_items(cart, current_branch)
+
+    product_total = Decimal("0.00")
+    grooming_total = Decimal("0.00")
+    service_total = Decimal("0.00")
+    pet_total = Decimal("0.00")
+
+    for cart_item in cart_items:
+        type_name = (cart_item.get("item_type_name") or "").lower()
+        line_total = cart_item["total"]
+
+        if "groom" in type_name:
+            grooming_total += line_total
+        elif "service" in type_name:
+            service_total += line_total
+        elif (
+            "pet" in type_name
+            or "dog" in type_name
+            or "cat" in type_name
+            or "puppy" in type_name
+        ):
+            pet_total += line_total
+        else:
+            product_total += line_total
+
+    selected_pet_sale = None
+    selected_pet_full_price = Decimal("0.00")
+    selected_pet_paid = Decimal("0.00")
+    selected_pet_remaining = Decimal("0.00")
+
+    selected_pet_sale_id = request.session.get("selected_pet_sale_id")
+
+    if selected_pet_sale_id:
+        selected_pet_sale = (
+            PetSale.objects
+            .select_related("pet", "pet__breed_profile")
+            .filter(id=selected_pet_sale_id)
+            .first()
+        )
+
+        if selected_pet_sale:
+            selected_pet_full_price = selected_pet_sale.sale_price or Decimal("0.00")
+            selected_pet_paid = selected_pet_sale.paid_amount or Decimal("0.00")
+            selected_pet_remaining = selected_pet_sale.remaining_amount or Decimal("0.00")
+
+            if selected_pet_remaining <= 0:
+                selected_pet_remaining = selected_pet_full_price - selected_pet_paid
+
+            if selected_pet_remaining < 0:
+                selected_pet_remaining = Decimal("0.00")
+
+    final_total = subtotal + selected_pet_remaining
+
+    return {
+        "cart_items": cart_items,
+        "subtotal": subtotal,
+        "discount": Decimal("0.00"),
+        "tax": Decimal("0.00"),
+        "total": final_total,
+        "product_total": product_total,
+        "grooming_total": grooming_total,
+        "service_total": service_total,
+        "pet_total": pet_total,
+        "selected_pet_sale": selected_pet_sale,
+        "selected_pet_full_price": selected_pet_full_price,
+        "selected_pet_paid": selected_pet_paid,
+        "selected_pet_remaining": selected_pet_remaining,
+        "current_branch": current_branch,
+    }
+
+
+def _cart_ajax_response(request, success=True, message=""):
+    ctx = _build_pos_cart_context(request)
+    cart_html = render_to_string(
+        "pos/partials/cart_panel.html",
+        ctx,
+        request=request,
+    )
+
+    return JsonResponse({
+        "success": success,
+        "message": message,
+        "cart_html": cart_html,
+        "cart_count": sum(int(item["quantity"]) for item in ctx["cart_items"]),
+        "subtotal": f"{ctx['subtotal']:.2f}",
+        "total": f"{ctx['total']:.2f}",
+        "product_total": f"{ctx['product_total']:.2f}",
+        "grooming_total": f"{ctx['grooming_total']:.2f}",
+        "service_total": f"{ctx['service_total']:.2f}",
+        "pet_total": f"{ctx['pet_total']:.2f}",
+        "selected_pet_remaining": f"{ctx['selected_pet_remaining']:.2f}",
+    })
+
+
+# ==================================================
 # POS MAIN / ADMIN BRANCH SWITCH
 # ==================================================
 
@@ -341,17 +549,13 @@ def pos(request):
     current_branch = get_pos_branch(request)
 
     if not current_branch:
-        messages.error(
-            request,
-            "No branch assigned. Please ask admin to set your shop.",
-        )
+        messages.error(request, "No branch assigned. Please ask admin to set your shop.")
         return redirect("dashboard")
 
     branches = Branch.objects.filter(is_active=True).order_by("name")
-    delivery_companies = DeliveryCompany.objects.filter(is_active=True).order_by(
-        "delivery_type",
-        "name",
-    )
+    delivery_companies = DeliveryCompany.objects.filter(
+        is_active=True
+    ).order_by("delivery_type", "name")
 
     raw_q = request.GET.get("q", "").strip()
     q = raw_q
@@ -360,10 +564,12 @@ def pos(request):
     if q.upper().startswith("SKU:"):
         q = q.split(":", 1)[1].strip()
 
-    active_variants_qs = (
-        ItemVariant.objects
-        .filter(is_active=True)
-        .order_by("sale_price", "size", "color", "label", "id")
+    active_variants_qs = ItemVariant.objects.filter(is_active=True).order_by(
+        "sale_price",
+        "size",
+        "color",
+        "label",
+        "id",
     )
 
     items = (
@@ -377,6 +583,9 @@ def pos(request):
     item_types = ItemType.objects.filter(is_active=True).order_by("name")
     customers = Customer.objects.all().order_by("name", "phone")
 
+    # ==================================================
+    # SCAN / SEARCH ADD TO CART
+    # ==================================================
     if q:
         variant = (
             ItemVariant.objects
@@ -411,12 +620,17 @@ def pos(request):
             if active_variants.count() == 1:
                 variant = active_variants.first()
                 _add_to_cart(request, exact_item, variant)
+                messages.success(request, f"Added {exact_item.name}")
                 return redirect("pos")
 
             if active_variants.count() == 0 or is_service_item(exact_item):
                 _add_to_cart(request, exact_item, None)
+                messages.success(request, f"Added {exact_item.name}")
                 return redirect("pos")
 
+    # ==================================================
+    # FILTER PRODUCT LIST
+    # ==================================================
     if q:
         items = items.filter(
             Q(name__icontains=q)
@@ -431,6 +645,9 @@ def pos(request):
     if type_id:
         items = items.filter(item_type_id=type_id)
 
+    # ==================================================
+    # STOCK MAP
+    # ==================================================
     item_stock_map = {}
     variant_stock_map = {}
 
@@ -452,6 +669,9 @@ def pos(request):
         item_stock_map[item_id] = item_stock_map.get(item_id, 0) + qty
         variant_stock_map[variant_id] = qty
 
+    # ==================================================
+    # COMING SOON MAP
+    # ==================================================
     try:
         from purchases.models import PurchaseItem
 
@@ -478,19 +698,20 @@ def pos(request):
 
     for item in items:
         item.branch_stock_total = item_stock_map.get(item.id, 0)
-
         item_coming_soon_qty = 0
 
         for variant in item.variants.all():
             variant.branch_stock_qty = variant_stock_map.get(variant.id, 0)
             variant.coming_soon_qty = coming_map.get(variant.id, 0)
             variant.is_coming_soon = variant.coming_soon_qty > 0
-
             item_coming_soon_qty += variant.coming_soon_qty
 
         item.coming_soon_qty = item_coming_soon_qty
         item.is_coming_soon = item_coming_soon_qty > 0
 
+    # ==================================================
+    # CART TOTAL
+    # ==================================================
     cart = _get_cart(request)
     cart_items, subtotal = _build_cart_items(cart, current_branch)
 
@@ -517,18 +738,58 @@ def pos(request):
         else:
             product_total += line_total
 
+    # ==================================================
+    # SELECTED PET SALE FROM PET MODULE
+    # ==================================================
+    selected_pet_sale = None
+    selected_pet_full_price = Decimal("0.00")
+    selected_pet_paid = Decimal("0.00")
+    selected_pet_remaining = Decimal("0.00")
+
+    selected_pet_sale_id = request.session.get("selected_pet_sale_id")
+
+    if selected_pet_sale_id:
+        selected_pet_sale = (
+            PetSale.objects
+            .select_related("pet", "pet__breed_profile")
+            .filter(id=selected_pet_sale_id)
+            .first()
+        )
+
+        if selected_pet_sale:
+            selected_pet_full_price = selected_pet_sale.sale_price or Decimal("0.00")
+            selected_pet_paid = selected_pet_sale.paid_amount or Decimal("0.00")
+
+            selected_pet_remaining = selected_pet_sale.remaining_amount or Decimal("0.00")
+
+            if selected_pet_remaining <= 0:
+                selected_pet_remaining = selected_pet_full_price - selected_pet_paid
+
+            if selected_pet_remaining < 0:
+                selected_pet_remaining = Decimal("0.00")
+
+    final_total = subtotal + selected_pet_remaining
+
     return render(request, "pos/pos.html", {
         "items": items,
         "item_types": item_types,
         "cart_items": cart_items,
+
         "subtotal": subtotal,
         "discount": Decimal("0.00"),
         "tax": Decimal("0.00"),
-        "total": subtotal,
+        "total": final_total,
+
         "product_total": product_total,
         "grooming_total": grooming_total,
         "service_total": service_total,
         "pet_total": pet_total,
+
+        "selected_pet_sale": selected_pet_sale,
+        "selected_pet_full_price": selected_pet_full_price,
+        "selected_pet_paid": selected_pet_paid,
+        "selected_pet_remaining": selected_pet_remaining,
+
         "khr_rate": get_khr_rate(),
         "selected_type": type_id,
         "q": raw_q,
@@ -537,7 +798,6 @@ def pos(request):
         "current_branch": current_branch,
         "branches": branches,
     })
-
 
 # ==================================================
 # CART ACTIONS
@@ -548,6 +808,12 @@ def pos_add_cart(request, item_id):
     current_branch = get_pos_branch(request)
 
     if not current_branch:
+        if _is_ajax(request):
+            return JsonResponse({
+                "success": False,
+                "message": "No branch assigned. Please ask admin to set your shop.",
+            }, status=400)
+
         messages.error(
             request,
             "No branch assigned. Please ask admin to set your shop.",
@@ -562,21 +828,41 @@ def pos_add_cart(request, item_id):
 
     if is_service_item(item):
         _add_to_cart(request, item, None)
+
+        if _is_ajax(request):
+            return _cart_ajax_response(request, message=f"Added {item.name}")
+
         return redirect("pos")
 
     active_variants = item.variants.filter(is_active=True)
 
     if active_variants.count() > 1:
+        if _is_ajax(request):
+            return JsonResponse({
+                "success": False,
+                "message": "Please select variant first.",
+            }, status=400)
+
         messages.error(request, "Please select variant first.")
         return redirect("pos")
 
     variant = active_variants.first()
 
     if not variant:
+        if _is_ajax(request):
+            return JsonResponse({
+                "success": False,
+                "message": "This product has no active variant.",
+            }, status=400)
+
         messages.error(request, "This product has no active variant.")
         return redirect("pos")
 
     _add_to_cart(request, item, variant)
+
+    if _is_ajax(request):
+        return _cart_ajax_response(request, message=f"Added {item.name}")
+
     return redirect("pos")
 
 
@@ -585,6 +871,12 @@ def pos_add_variant_cart(request, item_id, variant_id):
     current_branch = get_pos_branch(request)
 
     if not current_branch:
+        if _is_ajax(request):
+            return JsonResponse({
+                "success": False,
+                "message": "No branch assigned. Please ask admin to set your shop.",
+            }, status=400)
+
         messages.error(
             request,
             "No branch assigned. Please ask admin to set your shop.",
@@ -605,6 +897,10 @@ def pos_add_variant_cart(request, item_id, variant_id):
     )
 
     _add_to_cart(request, item, variant)
+
+    if _is_ajax(request):
+        return _cart_ajax_response(request, message=f"Added {item.name}")
+
     return redirect("pos")
 
 
@@ -617,6 +913,10 @@ def pos_plus_cart(request, cart_key):
         cart[cart_key]["qty"] = current_qty + 1
 
     _save_cart(request, cart)
+
+    if _is_ajax(request):
+        return _cart_ajax_response(request)
+
     return redirect("pos")
 
 
@@ -631,6 +931,10 @@ def pos_minus_cart(request, cart_key):
             del cart[cart_key]
 
     _save_cart(request, cart)
+
+    if _is_ajax(request):
+        return _cart_ajax_response(request)
+
     return redirect("pos")
 
 
@@ -639,12 +943,20 @@ def pos_remove_cart(request, cart_key):
     cart = _get_cart(request)
     cart.pop(cart_key, None)
     _save_cart(request, cart)
+
+    if _is_ajax(request):
+        return _cart_ajax_response(request)
+
     return redirect("pos")
 
 
 @login_required
 def pos_clear_cart(request):
     _save_cart(request, {})
+
+    if _is_ajax(request):
+        return _cart_ajax_response(request, message="Cart cleared.")
+
     messages.success(request, "Cart cleared.")
     return redirect("pos")
 
@@ -665,12 +977,47 @@ def pos_checkout(request):
         messages.error(request, "Please select a shop/branch first.")
         return redirect("pos")
 
+    # ==================================================
+    # CART + ATTACHED PET SALE
+    # ==================================================
     cart = _get_cart(request)
-    cart_items, subtotal = _build_cart_items(cart, branch)
+    cart_items, cart_subtotal = _build_cart_items(cart, branch)
 
-    if not cart_items:
+    selected_pet_sale = None
+    selected_pet_remaining = Decimal("0.00")
+
+    selected_pet_sale_id = (
+        request.POST.get("selected_pet_sale_id")
+        or request.session.get("selected_pet_sale_id")
+    )
+
+    if selected_pet_sale_id:
+        selected_pet_sale = (
+            PetSale.objects
+            .select_for_update()
+            .select_related("pet")
+            .filter(id=selected_pet_sale_id)
+            .first()
+        )
+
+        if selected_pet_sale:
+            selected_pet_remaining = selected_pet_sale.remaining_amount or Decimal("0.00")
+
+            if selected_pet_remaining <= 0:
+                selected_pet_remaining = (
+                    selected_pet_sale.sale_price or Decimal("0.00")
+                ) - (
+                    selected_pet_sale.paid_amount or Decimal("0.00")
+                )
+
+            if selected_pet_remaining < 0:
+                selected_pet_remaining = Decimal("0.00")
+
+    if not cart_items and not selected_pet_sale:
         messages.error(request, "Cart is empty.")
         return redirect("pos")
+
+    subtotal = cart_subtotal + selected_pet_remaining
 
     checkout_action = request.POST.get("checkout_action", "complete")
     sale_type = request.POST.get("sale_type", "walk_in")
@@ -721,15 +1068,15 @@ def pos_checkout(request):
     )
 
     paid_amount = min(paid_raw, final_total)
-    change_amount = Decimal("0.00")
 
+    change_amount = Decimal("0.00")
     if paid_raw > final_total:
         change_amount = paid_raw - final_total
 
     balance_amount = final_total - paid_amount
 
     # ==================================================
-    # CUSTOMER RECORD FIX
+    # CUSTOMER RECORD
     # ==================================================
     customer = None
 
@@ -747,8 +1094,6 @@ def pos_checkout(request):
         "",
     ).strip()
 
-    # If normal POS customer fields are empty,
-    # use delivery customer fields too.
     if not customer_name and delivery_receiver_name_for_customer:
         customer_name = delivery_receiver_name_for_customer
 
@@ -791,6 +1136,9 @@ def pos_checkout(request):
             updated_by=request.user,
         )
 
+    # ==================================================
+    # CREATE POS SALE
+    # ==================================================
     sale = Sale.objects.create(
         branch=branch,
         customer=customer,
@@ -807,7 +1155,7 @@ def pos_checkout(request):
     )
 
     if customer:
-        earned_points = int(final_total)
+        earned_points = int(cart_subtotal)
         customer.points = int(customer.points or 0) + earned_points
         customer.total_spent = (customer.total_spent or Decimal("0.00")) + final_total
         customer.updated_by = request.user
@@ -818,6 +1166,9 @@ def pos_checkout(request):
             "updated_at",
         ])
 
+    # ==================================================
+    # NORMAL POS ITEMS
+    # ==================================================
     for cart_item in cart_items:
         item = cart_item["item"]
         variant = cart_item["variant"]
@@ -847,6 +1198,9 @@ def pos_checkout(request):
                     branch=branch,
                 )
 
+    # ==================================================
+    # PAYMENT RECORDS
+    # ==================================================
     if cash_usd > 0:
         SalePayment.objects.create(
             sale=sale,
@@ -879,6 +1233,115 @@ def pos_checkout(request):
             note="POS ABA KHR",
         )
 
+    # ==================================================
+    # COMPLETE ATTACHED PET SALE FROM POS
+    # ==================================================
+    pet_sale_completed_now = False
+    pet_sale_partial_now = False
+    telegram_sent = False
+
+    if selected_pet_sale:
+        old_paid = selected_pet_sale.paid_amount or Decimal("0.00")
+        old_remaining = selected_pet_remaining
+
+        if old_remaining < 0:
+            old_remaining = Decimal("0.00")
+
+        # If this whole POS checkout is fully paid, complete the pet sale.
+        # If partial paid, product/cart money is covered first, then leftover goes to pet sale.
+        if paid_amount >= final_total:
+            pet_pay_amount = old_remaining
+        else:
+            money_available_for_pet = paid_amount - cart_subtotal
+
+            if money_available_for_pet < 0:
+                money_available_for_pet = Decimal("0.00")
+
+            pet_pay_amount = min(old_remaining, money_available_for_pet)
+
+        if pet_pay_amount < 0:
+            pet_pay_amount = Decimal("0.00")
+
+        if pet_pay_amount >= old_remaining and old_remaining > 0:
+            try:
+                from pets.views import complete_pet_sale, send_pet_sale_telegram_alert
+
+                complete_pet_sale(
+                    request=request,
+                    sale=selected_pet_sale,
+                    extra_paid=pet_pay_amount,
+                    warranty_days=selected_pet_sale.warranty_days or 3,
+                )
+
+                send_pet_sale_telegram_alert(
+                    selected_pet_sale,
+                    complete_only=True,
+                    first_paid_amount=old_paid,
+                    final_paid_amount=pet_pay_amount,
+                )
+
+                pet_sale_completed_now = True
+                telegram_sent = True
+
+            except Exception:
+                # Fallback if importing pets.views has any issue.
+                selected_pet_sale.paid_amount = old_paid + pet_pay_amount
+                selected_pet_sale.remaining_amount = Decimal("0.00")
+                selected_pet_sale.status = "completed"
+
+                if hasattr(selected_pet_sale, "completed_at"):
+                    selected_pet_sale.completed_at = timezone.now()
+
+                today = timezone.localdate()
+
+                if hasattr(selected_pet_sale, "warranty_start_date"):
+                    selected_pet_sale.warranty_start_date = today
+
+                if hasattr(selected_pet_sale, "warranty_expire_date"):
+                    selected_pet_sale.warranty_expire_date = today + timezone.timedelta(
+                        days=selected_pet_sale.warranty_days or 3
+                    )
+
+                selected_pet_sale.save()
+
+                if selected_pet_sale.pet:
+                    selected_pet_sale.pet.status = "sold"
+                    selected_pet_sale.pet.save(update_fields=["status"])
+
+                pet_sale_completed_now = True
+                telegram_sent = False
+
+        else:
+            selected_pet_sale.paid_amount = old_paid + pet_pay_amount
+            sale_price = selected_pet_sale.sale_price or Decimal("0.00")
+            selected_pet_sale.remaining_amount = sale_price - selected_pet_sale.paid_amount
+
+            if selected_pet_sale.remaining_amount < 0:
+                selected_pet_sale.remaining_amount = Decimal("0.00")
+
+            if selected_pet_sale.remaining_amount <= 0:
+                selected_pet_sale.status = "completed"
+
+                if hasattr(selected_pet_sale, "completed_at"):
+                    selected_pet_sale.completed_at = timezone.now()
+
+                if selected_pet_sale.pet:
+                    selected_pet_sale.pet.status = "sold"
+                    selected_pet_sale.pet.save(update_fields=["status"])
+
+                pet_sale_completed_now = True
+            else:
+                selected_pet_sale.status = "deposit"
+                pet_sale_partial_now = True
+
+            selected_pet_sale.save()
+
+        request.session.pop("selected_pet_sale_id", None)
+        request.session.modified = True
+
+    # ==================================================
+    # PREPARE DELIVERY
+    # ==================================================
     if sale_type == "prepare_delivery":
         receiver_name = request.POST.get("delivery_receiver_name", "").strip()
         delivery_phone = request.POST.get("delivery_phone", "").strip()
@@ -993,9 +1456,30 @@ def pos_checkout(request):
         sale.delivery_created = True
         sale.save(update_fields=["delivery_created"])
 
+    # ==================================================
+    # CLEAR CART + MESSAGES
+    # ==================================================
     _save_cart(request, {})
 
-    if sale_type == "prepare_delivery":
+    if pet_sale_completed_now:
+        if telegram_sent:
+            messages.success(
+                request,
+                f"Sale #{sale.id} completed. Pet sale #{selected_pet_sale.id} completed and Telegram alert sent.",
+            )
+        else:
+            messages.success(
+                request,
+                f"Sale #{sale.id} completed. Pet sale #{selected_pet_sale.id} completed. Telegram alert not sent; check bot setting.",
+            )
+
+    elif pet_sale_partial_now:
+        messages.warning(
+            request,
+            f"Sale #{sale.id} saved. Pet sale #{selected_pet_sale.id} still has balance: ${selected_pet_sale.remaining_amount:.2f}",
+        )
+
+    elif sale_type == "prepare_delivery":
         if balance_amount > 0:
             messages.warning(
                 request,
@@ -1035,6 +1519,7 @@ def pos_checkout(request):
         return redirect("sale_receipt", pk=sale.id)
 
     return redirect("pos")
+
 
 # ==================================================
 # SALES
@@ -1740,181 +2225,6 @@ def combined_payment_display(request):
 
 
 @login_required
-def pos(request):
-    current_branch = get_pos_branch(request)
-
-    if not current_branch:
-        messages.error(request, "No branch assigned. Please ask admin to set your shop.")
-        return redirect("dashboard")
-
-    branches = Branch.objects.filter(is_active=True).order_by("name")
-    delivery_companies = DeliveryCompany.objects.filter(is_active=True).order_by("delivery_type", "name")
-
-    raw_q = request.GET.get("q", "").strip()
-    q = raw_q
-    type_id = request.GET.get("type", "").strip()
-
-    if q.upper().startswith("SKU:"):
-        q = q.split(":", 1)[1].strip()
-
-    active_variants_qs = ItemVariant.objects.filter(is_active=True).order_by(
-        "sale_price", "size", "color", "label", "id"
-    )
-
-    items = (
-        Item.objects
-        .filter(is_active=True)
-        .select_related("item_type")
-        .prefetch_related(Prefetch("variants", queryset=active_variants_qs))
-        .order_by("name")
-    )
-
-    item_types = ItemType.objects.filter(is_active=True).order_by("name")
-    customers = Customer.objects.all().order_by("name", "phone")
-
-    if q:
-        variant = (
-            ItemVariant.objects
-            .select_related("item", "item__item_type")
-            .filter(item__is_active=True, is_active=True, sku__iexact=q)
-            .first()
-        )
-
-        if variant:
-            _add_to_cart(request, variant.item, variant)
-            messages.success(request, f"Added {variant.item.name} - {variant.display_name()}")
-            return redirect("pos")
-
-    if q:
-        items = items.filter(
-            Q(name__icontains=q)
-            | Q(brand__icontains=q)
-            | Q(item_type__name__icontains=q)
-            | Q(variants__sku__icontains=q)
-            | Q(variants__color__icontains=q)
-            | Q(variants__size__icontains=q)
-            | Q(variants__label__icontains=q)
-        ).distinct()
-
-    if type_id:
-        items = items.filter(item_type_id=type_id)
-
-    item_stock_map = {}
-    variant_stock_map = {}
-
-    branch_stocks = (
-        BranchStock.objects
-        .filter(branch=current_branch, variant__item__in=items, variant__is_active=True)
-        .select_related("variant", "variant__item")
-    )
-
-    for stock in branch_stocks:
-        item_stock_map[stock.variant.item_id] = item_stock_map.get(stock.variant.item_id, 0) + int(stock.quantity or 0)
-        variant_stock_map[stock.variant_id] = int(stock.quantity or 0)
-
-    try:
-        from purchases.models import PurchaseItem
-
-        purchase_data = PurchaseItem.objects.values("variant_id").annotate(
-            ordered=Sum("ordered_qty"),
-            received=Sum("received_qty"),
-        )
-
-        coming_map = {}
-        for row in purchase_data:
-            variant_id = row["variant_id"]
-            if not variant_id:
-                continue
-            coming_qty = (row["ordered"] or 0) - (row["received"] or 0)
-            if coming_qty > 0:
-                coming_map[variant_id] = coming_qty
-    except Exception:
-        coming_map = {}
-
-    for item in items:
-        item.branch_stock_total = item_stock_map.get(item.id, 0)
-        item_coming_soon_qty = 0
-
-        for variant in item.variants.all():
-            variant.branch_stock_qty = variant_stock_map.get(variant.id, 0)
-            variant.coming_soon_qty = coming_map.get(variant.id, 0)
-            variant.is_coming_soon = variant.coming_soon_qty > 0
-            item_coming_soon_qty += variant.coming_soon_qty
-
-        item.coming_soon_qty = item_coming_soon_qty
-        item.is_coming_soon = item_coming_soon_qty > 0
-
-    cart = _get_cart(request)
-    cart_items, subtotal = _build_cart_items(cart, current_branch)
-
-    product_total = Decimal("0.00")
-    grooming_total = Decimal("0.00")
-    service_total = Decimal("0.00")
-    pet_total = Decimal("0.00")
-
-    for cart_item in cart_items:
-        type_name = (cart_item.get("item_type_name") or "").lower()
-        line_total = cart_item["total"]
-
-        if "groom" in type_name:
-            grooming_total += line_total
-        elif "service" in type_name:
-            service_total += line_total
-        elif "pet" in type_name or "dog" in type_name or "cat" in type_name or "puppy" in type_name:
-            pet_total += line_total
-        else:
-            product_total += line_total
-
-    selected_pet_sale = None
-    selected_pet_full_price = Decimal("0.00")
-    selected_pet_paid = Decimal("0.00")
-    selected_pet_remaining = Decimal("0.00")
-
-    selected_pet_sale_id = request.session.get("selected_pet_sale_id")
-
-    if selected_pet_sale_id:
-        selected_pet_sale = PetSale.objects.filter(id=selected_pet_sale_id).first()
-
-        if selected_pet_sale:
-            selected_pet_full_price = selected_pet_sale.sale_price or Decimal("0.00")
-            selected_pet_paid = selected_pet_sale.paid_amount or Decimal("0.00")
-            selected_pet_remaining = selected_pet_full_price - selected_pet_paid
-
-            if selected_pet_remaining < 0:
-                selected_pet_remaining = Decimal("0.00")
-
-    final_total = subtotal + selected_pet_remaining
-
-    return render(request, "pos/pos.html", {
-        "items": items,
-        "item_types": item_types,
-        "cart_items": cart_items,
-        "subtotal": subtotal,
-        "discount": Decimal("0.00"),
-        "tax": Decimal("0.00"),
-        "total": final_total,
-
-        "product_total": product_total,
-        "grooming_total": grooming_total,
-        "service_total": service_total,
-        "pet_total": pet_total,
-
-        "selected_pet_sale": selected_pet_sale,
-        "selected_pet_full_price": selected_pet_full_price,
-        "selected_pet_paid": selected_pet_paid,
-        "selected_pet_remaining": selected_pet_remaining,
-
-        "khr_rate": get_khr_rate(),
-        "selected_type": type_id,
-        "q": raw_q,
-        "customers": customers,
-        "delivery_companies": delivery_companies,
-        "current_branch": current_branch,
-        "branches": branches,
-    })
-
-
-@login_required
 def create_aba_qr_for_display(request):
     current_branch = get_pos_branch(request)
 
@@ -1932,9 +2242,9 @@ def create_aba_qr_for_display(request):
         selected_pet_sale = PetSale.objects.filter(id=selected_pet_sale_id).first()
 
         if selected_pet_sale:
-            try:
-                selected_pet_remaining = selected_pet_sale.remaining_amount or Decimal("0.00")
-            except Exception:
+            selected_pet_remaining = selected_pet_sale.remaining_amount or Decimal("0.00")
+
+            if selected_pet_remaining <= 0:
                 selected_pet_remaining = (
                     selected_pet_sale.sale_price or Decimal("0.00")
                 ) - (
@@ -1956,15 +2266,22 @@ def create_aba_qr_for_display(request):
         status=ABAPaymentSession.STATUS_WAITING,
     ).update(status=ABAPaymentSession.STATUS_CANCELLED)
 
-    # Create mock ABA QR session from pos/aba_qr.py
-    aba_session = create_mock_aba_payment(
-        branch=current_branch,
-        cashier=request.user,
-        amount=total,
-    )
+    try:
+        aba_session = create_real_aba_payment(
+            branch=current_branch,
+            cashier=request.user,
+            amount=total,
+        )
 
-    messages.success(
-        request,
-        f"ABA QR created for customer display: ${aba_session.amount:.2f}",
-    )
+        messages.success(
+            request,
+            f"ABA QR created for customer display: ${aba_session.amount:.2f}",
+        )
+
+    except Exception as e:
+        messages.error(
+            request,
+            f"Cannot create ABA QR. Please check ABA setting. Error: {str(e)}",
+        )
+
     return redirect("pos")

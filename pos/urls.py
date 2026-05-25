@@ -19,11 +19,9 @@ urlpatterns = [
         views.pos_add_variant_cart,
         name="pos_add_variant_cart",
     ),
-
     path("plus/<str:cart_key>/", views.pos_plus_cart, name="pos_plus_cart"),
     path("minus/<str:cart_key>/", views.pos_minus_cart, name="pos_minus_cart"),
     path("remove/<str:cart_key>/", views.pos_remove_cart, name="pos_remove_cart"),
-
     path("clear/", views.pos_clear_cart, name="pos_clear_cart"),
     path("checkout/", views.pos_checkout, name="pos_checkout"),
 

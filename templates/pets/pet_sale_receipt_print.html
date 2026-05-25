@@ -3,30 +3,82 @@
 <html lang="km">
 <head>
     <meta charset="UTF-8">
-    <title>BUBU Warranty Receipt #{{ sale.id }}</title>
+    <title>BUBU Pet Sale Invoice #{{ sale.id }}</title>
 
     <style>
         @page {
-            size: 148mm 210mm;
+            size: A4 portrait;
             margin: 0;
+        }
+
+        @font-face {
+            font-family: "TapromLocal";
+            src: url("{% static 'fonts/Taprom-Regular.ttf' %}") format("truetype");
+        }
+
+        @font-face {
+            font-family: "PlaypenLocal";
+            src: url("{% static 'fonts/PlaypenSans-Bold.ttf' %}") format("truetype");
+            font-weight: 700;
+        }
+
+        @font-face {
+            font-family: "MoulLocal";
+            src: url("{% static 'fonts/Moul-Regular.ttf' %}") format("truetype");
+        }
+
+        @font-face {
+            font-family: "DangrekLocal";
+            src: url("{% static 'fonts/Dangrek-Regular.ttf' %}") format("truetype");
+        }
+
+        @font-face {
+            font-family: "InterLocal";
+            src: url("{% static 'fonts/Inter_18pt-Bold.ttf' %}") format("truetype");
+            font-weight: 700;
+        }
+
+        @font-face {
+            font-family: "InterLocal";
+            src: url("{% static 'fonts/Inter_18pt-ExtraBold.ttf' %}") format("truetype");
+            font-weight: 900;
+        }
+
+        @font-face {
+            font-family: "PlayfairLocal";
+            src: url("{% static 'fonts/PlayfairDisplay-ExtraBold.ttf' %}") format("truetype");
+            font-weight: 900;
+        }
+
+        :root {
+            --brown: #3b2317;
+            --soft-brown: #8b5636;
+            --main: #d6a884;
+            --light: #fce5d5;
+            --red: #d91f2a;
+            --black: #17110e;
         }
 
         * {
             box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
         }
 
-        html, body {
-            width: 148mm;
-            height: 210mm;
+        html,
+        body {
+            width: 210mm;
+            height: 297mm;
             margin: 0;
             padding: 0;
-            overflow: hidden;
             background: #ffffff;
+            overflow: hidden;
         }
 
         body {
-            font-family: Arial, "Khmer OS Battambang", "Khmer OS", sans-serif;
-            color: #2f241d;
+            font-family: "DangrekLocal", "Khmer OS Battambang", Arial, sans-serif;
+            color: var(--black);
         }
 
         .print-btn {
@@ -39,181 +91,266 @@
         .print-btn button {
             border: 0;
             border-radius: 999px;
-            background: #7c5338;
-            color: #fff;
-            padding: 10px 18px;
+            background: var(--brown);
+            color: #ffffff;
+            padding: 10px 20px;
+            font-family: Arial, sans-serif;
             font-weight: 900;
             cursor: pointer;
-            box-shadow: 0 8px 20px rgba(0,0,0,.18);
         }
 
-        .page {
-            width: 148mm;
-            height: 210mm;
+        .invoice-page {
+            width: 210mm;
+            height: 297mm;
+            position: relative;
             margin: 0 auto;
-            padding: 6mm 7mm 5mm;
-            background:
-                radial-gradient(circle at top right, rgba(242, 213, 196, 0.45), transparent 40mm),
-                radial-gradient(circle at bottom left, rgba(247, 221, 207, 0.45), transparent 36mm),
-                linear-gradient(180deg, #fffdfa 0%, #fff8f4 100%);
-            position: relative;
+            background: #ffffff;
+            padding: 8mm 14mm 10mm;
             overflow: hidden;
         }
 
-        .content {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            z-index: 2;
-        }
+        /* ================= HEADER ================= */
 
-        /* HEADER */
         .header {
-            text-align: center;
-            margin-bottom: 2mm;
-        }
-
-        .logo-box {
-            width: 30mm;
-            height: 30mm;
-            margin: 0 auto 1.5mm;
-            border-radius: 50%;
-            overflow: hidden;
-            border: 1.5px solid #7c5338;
-            background: #fff;
+            height: 42mm;
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 8mm;
+            margin: 0 auto;
+            padding-left: 0;
         }
 
-        .logo-box img {
-            width: 100%;
-            height: 100%;
+        .logo {
+            width: 50mm;
+            height: 50mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 42mm;
+        }
+
+        .logo img {
+            width: 110%;
+            height: 110%;
             object-fit: contain;
             display: block;
         }
 
+        .brand {
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
         .brand-kh {
-            font-size: 18px;
-            font-weight: 900;
-            color: #8e5f42;
-            line-height: 1.05;
+            font-family: "TapromLocal", "Khmer OS Muol Light", serif;
+            font-size: 40pt;
+            line-height: 1;
+            color: var(--soft-brown);
+            font-weight: 400;
+            letter-spacing: .5px;
             text-shadow:
-                -0.7px -0.7px #2d2017,
-                 0.7px -0.7px #2d2017,
-                -0.7px  0.7px #2d2017,
-                 0.7px  0.7px #2d2017;
+                -1.5px -1.5px 0 #26201d,
+                 1.5px -1.5px 0 #26201d,
+                -1.5px  1.5px 0 #26201d,
+                 1.5px  1.5px 0 #26201d,
+                 0 2.5px 0 #26201d;
         }
 
         .brand-en {
-            font-size: 12px;
-            font-weight: 900;
-            color: #8e5f42;
-            margin-top: .5mm;
+            margin-top: 3mm;
+            font-family: "PlaypenLocal", Arial, sans-serif;
+            font-size: 26pt;
+            line-height: 1;
+            color: var(--soft-brown);
+            font-weight: 700;
+            padding-left: 8mm;
             text-shadow:
-                -0.7px -0.7px #2d2017,
-                 0.7px -0.7px #2d2017,
-                -0.7px  0.7px #2d2017,
-                 0.7px  0.7px #2d2017;
+                -1.2px -1.2px 0 #26201d,
+                 1.2px -1.2px 0 #26201d,
+                -1.2px  1.2px 0 #26201d,
+                 1.2px  1.2px 0 #26201d,
+                 0 2px 0 #26201d;
         }
 
-        /* TOP INFO */
-        .top-grid {
-            margin-top: 1mm;
+        /* ================= TOP INFO ================= */
+
+        .top-area {
             display: grid;
-            grid-template-columns: 30mm 1fr 34mm;
-            gap: 4mm;
-            align-items: start;
+            grid-template-columns: 36mm 1fr;
+            column-gap: 10mm;
+            margin-top: 3mm;
         }
 
-        .invoice-box {
+        .invoice-title {
             text-align: center;
-            padding-top: 2mm;
+            padding-top: 0;
         }
 
-        .invoice-kh {
-            font-size: 11px;
+        .invoice-title-kh {
+            font-family: "MoulLocal", "Khmer OS Muol Light", serif;
+            font-size: 15pt;
+            line-height: 1.1;
+            color: #000;
+        }
+
+        .invoice-title-en {
+            font-family: "PlayfairLocal", Georgia, serif;
+            font-size: 16pt;
+            line-height: 1.1;
+            color: #000;
+            margin-top: 1.5mm;
+            font-weight: 900;
+            letter-spacing: .4px;
+        }
+
+        .invoice-number {
+            margin: 3mm auto 0;
+            width: 31mm;
+            padding-bottom: 1.8mm;
+            border-bottom: 1.2px solid #000;
+            font-family: "InterLocal", Arial, sans-serif;
+            font-size: 14pt;
+            line-height: 1;
+            color: var(--red);
+            font-weight: 900;
+            letter-spacing: .8px;
+        }
+
+        .customer-area {
+            padding-top: 1mm;
+        }
+
+        .date-row {
+            display: grid;
+            grid-template-columns: 85mm 1fr;
+            align-items: center;
+            column-gap: 5mm;
+            margin-bottom: 3mm;
+        }
+
+        .info-pill {
+            height: 10mm;
+            background: var(--light);
+            border-radius: 2.5mm;
+            display: flex;
+            align-items: center;
+            padding: 0 5mm;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .info-label {
+            font-family: "DangrekLocal", "Khmer OS Battambang", sans-serif;
+            font-size: 11pt;
+            font-weight: 400;
+            color: #000;
+            flex: 0 0 auto;
+        }
+
+        .info-value {
+            margin-left: 3mm;
+            min-width: 0;
+            flex: 1 1 auto;
+            font-family: "DangrekLocal", "Khmer OS Battambang", sans-serif;
+            font-size: 11pt;
+            color: #000;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .date-text {
+            font-family: "DangrekLocal", "Khmer OS Battambang", sans-serif;
+            font-size: 14pt;
+            color: #000;
+            white-space: nowrap;
+            text-align: left;
+        }
+
+        .phone-location-row {
+            display: grid;
+            grid-template-columns: 55mm 1fr;
+            column-gap: 3mm;
+        }
+
+        /* ================= TABLE ================= */
+
+        .table-wrap {
+            margin-top: 9mm;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+        }
+
+        .main-table th {
+            height: 16mm;
+            background: var(--main);
+            color: #000;
+            text-align: center;
+            vertical-align: middle;
+            border-right: 1.5px solid #fff;
+            font-family: "DangrekLocal", "Khmer OS Battambang", Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.15;
+            font-weight: 400;
+            padding: 1mm;
+        }
+
+        .main-table th:first-child {
+            border-top-left-radius: 3mm;
+            border-bottom-left-radius: 3mm;
+        }
+
+        .main-table th:last-child {
+            border-right: 0;
+            border-top-right-radius: 3mm;
+            border-bottom-right-radius: 3mm;
+        }
+
+        .main-table .en {
+            display: block;
+            font-family: "InterLocal", Arial, sans-serif;
+            font-size: 10pt;
             font-weight: 900;
             line-height: 1.1;
         }
 
-        .invoice-en {
-            font-size: 10px;
-            font-weight: 900;
-            letter-spacing: .3px;
-        }
-
-        .invoice-no {
-            color: #f02020;
-            font-size: 14px;
-            font-weight: 900;
-            margin-top: 2mm;
-            border-bottom: 1.3px solid #3a2b21;
-            padding-bottom: 1mm;
-            display: inline-block;
-            min-width: 28mm;
-        }
-
-        .middle-info {
-            padding-top: 1mm;
-        }
-
-        .date-line {
+        .main-table td {
+            height: 35mm;
+            background: #fff;
+            border-right: 1px solid #fff;
             text-align: center;
-            font-size: 8.8px;
-            font-weight: 800;
-            color: #5b473a;
-            margin-bottom: 2mm;
-        }
-
-        .info-list {
-            display: grid;
-            gap: 2mm;
-        }
-
-        .info-row {
-            display: grid;
-            grid-template-columns: 22mm 1fr;
-            gap: 2mm;
-        }
-
-        .label {
-            background: #f0d7c8;
-            border: 1px solid #e0b89f;
-            border-radius: 6px;
-            min-height: 8.8mm;
-            padding: 2mm 2.4mm;
-            font-size: 8.5px;
-            font-weight: 900;
-            color: #5f402d;
-            display: flex;
-            align-items: center;
-        }
-
-        .value {
-            background: #f8e9df;
-            border: 1px solid #e6c4af;
-            border-radius: 6px;
-            min-height: 8.8mm;
-            padding: 2mm 2.6mm;
-            font-size: 8.8px;
+            vertical-align: middle;
+            padding: 2mm 3mm;
+            font-family: "InterLocal", Arial, sans-serif;
+            font-size: 11pt;
             font-weight: 700;
-            color: #2f241d;
-            display: flex;
-            align-items: center;
+            color: #000;
         }
+
+        .c-picture { width: 42mm; }
+        .c-kind { width: 32mm; }
+        .c-desc { width: 58mm; }
+        .c-sex { width: 24mm; }
+        .c-price { width: 28mm; }
 
         .pet-photo {
-            width: 34mm;
-            height: 34mm;
-            border: 1.6px solid #d5a786;
-            border-radius: 8px;
-            background: #fff7f2;
+            width: 32mm;
+            height: 32mm;
+            margin: 0 auto;
+            border-radius: 3mm;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
-            margin-top: 4mm;
+            background: #fff8f4;
+            border: 1px solid #f0d3c2;
         }
 
         .pet-photo img {
@@ -223,392 +360,567 @@
             display: block;
         }
 
-        .pet-photo .no-photo {
-            font-size: 10px;
+        .no-photo {
+            font-family: "InterLocal", Arial, sans-serif;
+            font-size: 10pt;
             font-weight: 900;
-            color: #81563b;
+            color: #b8845f;
+            line-height: 1.2;
+        }
+
+        .desc-text {
+            text-align: left;
+            font-family: "DangrekLocal", "Khmer OS Battambang", Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.45;
+            color: #000;
+            font-weight: 400;
+        }
+
+        .price-text,
+        .pet-kind,
+        .pet-sex {
+            font-family: "InterLocal", Arial, sans-serif;
+            font-size: 11pt;
+            font-weight: 900;
+        }
+
+        /* ================= WARRANTY ================= */
+
+        .warranty-bar {
+            margin-top: 8mm;
+            height: 14mm;
+            border-radius: 2.5mm;
+            background: var(--light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: "DangrekLocal", "Khmer OS Battambang", Arial, sans-serif;
+            font-size: 11pt;
+            color: #000;
+        }
+
+        .warranty-bar strong {
+            font-family: "InterLocal", Arial, sans-serif;
+            font-size: 11pt;
+            font-weight: 900;
+        }
+
+        .warranty-line {
+            display: inline-block;
+            min-width: 60mm;
+            border-bottom: 1.2px solid #777;
+            margin-left: 3mm;
             text-align: center;
-            line-height: 1.25;
+            line-height: 1.2;
+            padding-bottom: .8mm;
         }
 
-        /* TABLE */
-        .table-wrap {
-            margin-top: 4mm;
-            border-radius: 6px;
-            overflow: hidden;
-        }
+        /* ================= LOWER ================= */
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-
-        .main-table thead th {
-            background: #d3a07a;
-            color: #2c2018;
-            font-size: 9px;
-            font-weight: 900;
-            padding: 2.5mm 1mm;
-            border-right: 1px solid rgba(255,255,255,.7);
-            text-align: center;
-        }
-
-        .main-table thead th:last-child {
-            border-right: 0;
-        }
-
-        .main-table tbody td {
-            font-size: 8px;
-            font-weight: 700;
-            color: #2f241d;
-            padding: 2.2mm 1.5mm;
-            border-top: 1px solid #fff;
-            border-right: 1px solid #fff;
-            vertical-align: top;
-            height: 12mm;
-        }
-
-        .main-table tbody td:last-child {
-            border-right: 0;
-        }
-
-        .main-table tbody tr:nth-child(odd) td {
-            background: rgba(255,255,255,.88);
-        }
-
-        .main-table tbody tr:nth-child(even) td {
-            background: #f9eee7;
-        }
-
-        .c-no    { width: 9mm; text-align: center; }
-        .c-desc  { width: auto; }
-        .c-qty   { width: 14mm; text-align: center; }
-        .c-price { width: 18mm; text-align: right; }
-        .c-total { width: 18mm; text-align: right; }
-
-        .desc-main {
-            font-size: 8.7px;
-            font-weight: 900;
-            color: #463024;
-            margin-bottom: .6mm;
-        }
-
-        .desc-sub {
-            font-size: 7.4px;
-            line-height: 1.4;
-            color: #3b2d24;
-        }
-
-        /* BOTTOM AREA */
-        .bottom-grid {
-            margin-top: 4mm;
+        .lower {
+            margin-top: 7mm;
             display: grid;
-            grid-template-columns: 1fr 31mm;
-            gap: 4mm;
+            grid-template-columns: 1fr 73mm;
+            column-gap: 10mm;
             align-items: start;
         }
 
-        .policy-box {
-            background: rgba(255,255,255,.55);
-            border: 1px solid #e5c3af;
-            border-radius: 8px;
-            padding: 3mm;
-            min-height: 33mm;
+        .terms {
+            padding-left: 1mm;
         }
 
-        .policy-box p {
-            margin: 0 0 1mm;
-            font-size: 7.3px;
-            line-height: 1.45;
-            font-weight: 800;
-            color: #9b6d4e;
+        .term-item {
+            position: relative;
+            padding-left: 10mm;
+            margin-bottom: 4mm;
+            font-family: "DangrekLocal", "Khmer OS Battambang", Arial, sans-serif;
+            font-size: 13pt;
+            line-height: 1.42;
+            color: #6b422b;
         }
 
-        .policy-box p:last-child {
-            margin-bottom: 0;
+        .term-item::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 1mm;
+            width: 8mm;
+            height: 8mm;
+            background-image: url("{% static 'img/bubu_paw.png' %}");
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center;
         }
 
-        .summary-table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
+        .summary-side {
+            padding-top: 0;
         }
 
-        .summary-table td {
-            border: 1px solid #d9b091;
-            background: rgba(255,255,255,.55);
+        .summary-box {
+            position: relative;
+            height: 23mm;
+            border-radius: 4mm;
+            background: var(--light);
+            margin-bottom: 1.5mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
             text-align: center;
-            padding: 3mm 1.5mm;
-            font-size: 8.6px;
-            font-weight: 900;
-            color: #5d3d2a;
+            font-family: "DangrekLocal", "Khmer OS Battambang", Arial, sans-serif;
+            font-size: 11pt;
+            color: #000;
+            line-height: 1.1;
+            overflow: hidden;
         }
 
-        .summary-table .amount {
+        .summary-box.final {
+            height: 23mm;
+            margin-bottom: 2mm;
+        }
+
+        .summary-box strong {
             display: block;
+            font-family: "InterLocal", Arial, sans-serif;
+            font-size: 10pt;
+            font-weight: 900;
             margin-top: 1mm;
-            font-size: 10.4px;
-            color: #21160f;
         }
 
-        /* SIGNATURES */
+        .summary-amount {
+            display: block;
+            margin-top: 1.5mm;
+            font-family: "InterLocal", Arial, sans-serif;
+            font-size: 12pt;
+            font-weight: 900;
+            color: #000;
+        }
+
+        .paid-stamp {
+            position: absolute;
+            right: 7mm;
+            bottom: 4mm;
+            transform: rotate(-14deg);
+            border: 2px solid #e23b3b;
+            color: #e23b3b;
+            background: rgba(255,255,255,.75);
+            border-radius: 2.5mm;
+            padding: 1.2mm 5mm;
+            font-family: "InterLocal", Arial, sans-serif;
+            font-size: 15pt;
+            font-weight: 900;
+            letter-spacing: 1px;
+            z-index: 2;
+        }
+
+        .thanks {
+            position: relative;
+            min-height: 26mm;      /* was 18mm */
+            padding: 5mm 2mm 0 2mm; /* add more top space */
+            font-family: 'DangrekLocal', "Khmer OS Battambang", Arial, sans-serif;
+            font-size: 10pt;       /* was 9pt */
+            line-height: 1.7;     /* was 1.35 */
+            color: #000;
+            text-align: center;
+        }
+
+        .thanks .brand-red {
+            color: #ef7777;
+            font-family: "InterLocal", Arial, sans-serif;
+            font-weight: 900;
+            font-size: 9pt;
+        }
+
+        .thanks img {
+            position: absolute;
+            right: 1mm;       /* was 0 */
+            bottom: 3mm;     /* was -1mm */
+            width: 18mm;      /* was 20mm */
+            height: 18mm;     /* was 20mm */
+            object-fit: contain;
+        }
+
+        /* ================= SIGNATURE ================= */
+
         .signatures {
-            margin-top: 5mm;
+            position: absolute;
+            left: 24mm;
+            right: 24mm;
+            bottom: 3mm;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10mm;
-            padding: 0 6mm;
+            column-gap: 22mm;
         }
 
-        .sign-box {
-            border-top: 1.2px solid #6e4b34;
-            padding-top: 2mm;
+        .signature-box {
             text-align: center;
-            font-size: 7.6px;
+            font-family: "InterLocal", Arial, sans-serif;
+            font-size: 11pt;
             font-weight: 900;
-            color: #4f382a;
-            min-height: 10mm;
+            color: #000;
         }
 
-        /* FOOTER */
-        .footer {
-            position: absolute;
-            left: 7mm;
-            right: 7mm;
-            bottom: 5mm;
-            display: grid;
-            grid-template-columns: 18mm 1fr;
-            gap: 3mm;
-            align-items: end;
+        .signature-title {
+            margin-bottom: 22mm;
         }
 
-        .footer-pet {
-            text-align: left;
+        .signature-line {
+            width: 100%;
+            border-top: 1.2px solid #777;
+            height: 1mm;
         }
 
-        .footer-pet img {
-            width: 14mm;
-            height: 14mm;
-            object-fit: contain;
-            display: block;
-        }
-
-        .footer-text {
-            text-align: right;
-            font-size: 7.3px;
-            line-height: 1.35;
-            font-weight: 800;
-            color: #5d493c;
-        }
-
-        .footer-brand {
-            color: #8e5f42;
-            font-style: italic;
-            font-size: 8.8px;
-            font-weight: 900;
-        }
+        /* ================= PRINT ================= */
 
         @media print {
-            html, body {
-                width: 148mm !important;
-                height: 210mm !important;
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+
+            html,
+            body {
+                width: 210mm !important;
+                height: 297mm !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 overflow: hidden !important;
-                background: #fff !important;
+                background: #ffffff !important;
             }
 
             .print-btn {
                 display: none !important;
             }
 
-            .page {
-                width: 148mm !important;
-                height: 210mm !important;
+            .invoice-page {
+                width: 210mm !important;
+                height: 297mm !important;
                 margin: 0 !important;
+                padding: 8mm 14mm 10mm !important;
                 page-break-before: avoid !important;
                 page-break-after: avoid !important;
                 page-break-inside: avoid !important;
+                overflow: hidden !important;
             }
         }
     </style>
 </head>
+
 <body>
 
 <div class="print-btn">
     <button onclick="window.print()">🖨 Print</button>
 </div>
 
-<div class="page">
-    <div class="content">
+<div class="invoice-page">
 
-        <div class="header">
-            <div class="logo-box">
-                <img src="{% static 'images/bubu-logo.png' %}" alt="BUBU Logo">
-            </div>
-            <div class="brand-kh">ប៊ូប៊ូ ផេត ស្តរ៍</div>
+    <div class="header">
+        <div class="logo">
+            <img src="{% static 'img/bubu_logo.png' %}" alt="BUBU Logo"
+                 onerror="this.onerror=null; this.src='/static/img/bubu_logo.png';">
+        </div>
+
+        <div class="brand">
+            <div class="brand-kh">ប៊ូប៊ូ ផេត ស្ទ័រ</div>
             <div class="brand-en">BUBU Pet Store</div>
         </div>
+    </div>
 
-        <div class="top-grid">
-            <div class="invoice-box">
-                <div class="invoice-kh">វិក្កយបត្រ</div>
-                <div class="invoice-en">INVOICE</div>
-                <div class="invoice-no">{{ sale.id|stringformat:"06d" }}</div>
-            </div>
+    <div class="top-area">
+        <div class="invoice-title">
+            <div class="invoice-title-kh">វិក្កយបត្រ</div>
+            <div class="invoice-title-en">INVOICE</div>
+            <div class="invoice-number">{{ sale.id|stringformat:"06d" }}</div>
+        </div>
 
-            <div class="middle-info">
-                <div class="date-line">
-                    ថ្ងៃទី {{ sale.created_at|date:"d" }} ខែ {{ sale.created_at|date:"m" }} ឆ្នាំ {{ sale.created_at|date:"Y" }}
+        <div class="customer-area">
+            <div class="date-row">
+                <div class="info-pill">
+                    <span class="info-label">ឈ្មោះអតិថិជន:</span>
+                    <span class="info-value">
+                        {% if sale.customer_name %}
+                            {{ sale.customer_name }}
+                        {% elif sale.customer and sale.customer.name %}
+                            {{ sale.customer.name }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </span>
                 </div>
 
-                <div class="info-list">
-                    <div class="info-row">
-                        <div class="label">ឈ្មោះអតិថិជន</div>
-                        <div class="value">{{ sale.customer_name|default:"-" }}</div>
-                    </div>
-
-                    <div class="info-row">
-                        <div class="label">លេខទូរស័ព្ទ</div>
-                        <div class="value">{{ sale.phone|default:"-" }}</div>
-                    </div>
-
-                    <div class="info-row">
-                        <div class="label">អាសយដ្ឋាន</div>
-                        <div class="value">{{ sale.address|default:"-" }}</div>
-                    </div>
+                <div class="date-text">
+                    {% if sale.created_at %}
+                        ថ្ងៃទី {{ sale.created_at|date:"d" }} ខែ {{ sale.created_at|date:"m" }} ឆ្នាំ {{ sale.created_at|date:"Y" }}
+                    {% else %}
+                        ថ្ងៃទី .............. ខែ .............. ឆ្នាំ 202 .....
+                    {% endif %}
                 </div>
             </div>
 
-            <div class="pet-photo">
-                {% if sale.sale_photo %}
-                    <img src="{{ sale.sale_photo.url }}" alt="Pet Photo">
-                {% elif sale.pet and sale.pet.photo %}
-                    <img src="{{ sale.pet.photo.url }}" alt="Pet Photo">
-                {% elif sale.pet and sale.pet.breed_profile and sale.pet.breed_profile.photo %}
-                    <img src="{{ sale.pet.breed_profile.photo.url }}" alt="Pet Photo">
-                {% else %}
-                    <div class="no-photo">PET<br>PHOTO</div>
+            <div class="phone-location-row">
+                <div class="info-pill">
+                    <span class="info-label">លេខទូរស័ព្ទ:</span>
+                    <span class="info-value">
+                        {% if sale.phone %}
+                            {{ sale.phone }}
+                        {% elif sale.customer and sale.customer.phone %}
+                            {{ sale.customer.phone }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="info-pill">
+                    <span class="info-label">ទីតាំង:</span>
+                    <span class="info-value">
+                        {% if sale.address %}
+                            {{ sale.address }}
+                        {% elif sale.location %}
+                            {{ sale.location }}
+                        {% elif sale.customer and sale.customer.location %}
+                            {{ sale.customer.location }}
+                        {% elif sale.customer and sale.customer.address %}
+                            {{ sale.customer.address }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table class="main-table">
+            <thead>
+                <tr>
+                    <th class="c-picture">រូបសត្វ <span class="en">(Picture)</span></th>
+                    <th class="c-kind">ប្រភេទសត្វ <span class="en">(Breed)</span></th>
+                    <th class="c-desc">ពិពណ៌នា <span class="en">(Description)</span></th>
+                    <th class="c-sex">ភេទ <span class="en">(Sex)</span></th>
+                    <th class="c-price">តម្លៃសរុប <span class="en">(Total Price)</span></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="pet-photo">
+                            {% if sale.sale_photo %}
+                                <img src="{{ sale.sale_photo.url }}" alt="Pet Photo">
+                            {% elif sale.pet and sale.pet.photo %}
+                                <img src="{{ sale.pet.photo.url }}" alt="Pet Photo">
+                            {% elif sale.pet and sale.pet.breed_profile and sale.pet.breed_profile.photo %}
+                                <img src="{{ sale.pet.breed_profile.photo.url }}" alt="Pet Photo">
+                            {% else %}
+                                <div class="no-photo">PET<br>PHOTO</div>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="pet-kind">
+                            {% if sale.pet_type_display %}
+                                {{ sale.pet_type_display }}
+                            {% elif sale.pet and sale.pet.pet_type %}
+                                {{ sale.pet.pet_type|title }}
+                            {% elif sale.pet_type %}
+                                {{ sale.pet_type|title }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="desc-text">
+                            {% if sale.pet_name_display %}
+                                Name: {{ sale.pet_name_display }}<br>
+                            {% elif sale.pet and sale.pet.name %}
+                                Name: {{ sale.pet.name }}<br>
+                            {% endif %}
+
+                            {% if sale.breed_display %}
+                                Breed: {{ sale.breed_display }}<br>
+                            {% elif sale.pet and sale.pet.breed %}
+                                Breed: {{ sale.pet.breed }}<br>
+                            {% elif sale.pet and sale.pet.breed_profile %}
+                                Breed: {{ sale.pet.breed_profile }}<br>
+                            {% endif %}
+
+                            {% if sale.color_display %}
+                                Color: {{ sale.color_display }}<br>
+                            {% elif sale.pet and sale.pet.color %}
+                                Color: {{ sale.pet.color }}<br>
+                            {% endif %}
+
+                            {% if sale.note %}
+                                Note: {{ sale.note }}
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="pet-sex">
+                            {% if sale.gender_display %}
+                                {{ sale.gender_display }}
+                            {% elif sale.pet and sale.pet.gender %}
+                                {{ sale.pet.gender|title }}
+                            {% elif sale.gender %}
+                                {{ sale.gender|title }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="price-text">
+                            $
+                            {% if sale.total_price %}
+                                {{ sale.total_price }}
+                            {% elif sale.sale_price %}
+                                {{ sale.sale_price }}
+                            {% elif sale.final_total %}
+                                {{ sale.final_total }}
+                            {% else %}
+                                0.00
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="warranty-bar">
+        <span>ថ្ងៃធានា <strong>(Warranty Date):</strong></span>
+        <span class="warranty-line">
+            {% if sale.warranty_end_date %}
+                {{ sale.warranty_end_date|date:"Y-m-d" }}
+            {% elif sale.warranty_until %}
+                {{ sale.warranty_until|date:"Y-m-d" }}
+            {% elif sale.deadline %}
+                {{ sale.deadline|date:"Y-m-d" }}
+            {% else %}
+                &nbsp;
+            {% endif %}
+        </span>
+    </div>
+
+    <div class="lower">
+        <div class="terms">
+            <div class="term-item">
+                សូមអោយអតិថិជនបានជាវសត្វពីហាងយើងខ្ញុំ ត្រូវធ្វើតាមការណែនាំពីហាង
+                ពីការផ្តល់អាហារបំប៉ន និងរបបអាហារ។
+            </div>
+
+            <div class="term-item">
+                យើងខ្ញុំមានការធានាជូនសុខភាព រយៈពេល៣ថ្ងៃលើជំងឺ
+                Parvo &amp; Distemper គិតចាប់ពីថ្ងៃដែលភ្ញៀវបានយកចេញពីហាង។
+                ប្រសិនបើសត្វមានបញ្ហាក្នុងអំឡុងពេលធានារបស់ហាង ខាងហាងនឹងជួយព្យាបាល។
+            </div>
+
+            <div class="term-item">
+                សម្រាប់កូនៗមានបញ្ហាត្រូវទំនាក់ទំនងមកកាន់ហាងភ្លាមៗ។
+                ប្រសិនបើភ្ញៀវផ្តល់ដំណឹងហួសការធានា ខាងហាងមិនទទួលខុសត្រូវឡើយ។
+            </div>
+
+            <div class="term-item">
+                យើងមិនមានការទទួលខុសត្រូវទៅលើអតិថិជនដែលធ្វើខុសពីគោលការណ៍ហាង
+                ឬផ្តល់ដំណឹងយឺត ហួសអំឡុងពេលធានានោះទេ។
+            </div>
+        </div>
+
+        <div class="summary-side">
+            <div class="summary-box">
+                តម្លៃសរុប
+                <strong>Total</strong>
+                <span class="summary-amount">
+                    $
+                    {% if sale.total_price %}
+                        {{ sale.total_price }}
+                    {% elif sale.sale_price %}
+                        {{ sale.sale_price }}
+                    {% elif sale.final_total %}
+                        {{ sale.final_total }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="summary-box">
+                បង់រួច
+                <strong>Deposit</strong>
+                <span class="summary-amount">
+                    $
+                    {% if sale.deposit_amount %}
+                        {{ sale.deposit_amount }}
+                    {% elif sale.deposit %}
+                        {{ sale.deposit }}
+                    {% elif sale.paid_amount %}
+                        {{ sale.paid_amount }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="summary-box final">
+                ប្រាក់នៅខ្វះ
+                <strong>Final</strong>
+                <span class="summary-amount">
+                    $
+                    {% if sale.remaining_amount %}
+                        {{ sale.remaining_amount }}
+                    {% elif sale.balance_amount %}
+                        {{ sale.balance_amount }}
+                    {% elif sale.final_amount %}
+                        {{ sale.final_amount }}
+                    {% elif sale.final_total %}
+                        {{ sale.final_total }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </span>
+
+                {% if sale.is_paid or sale.payment_status == 'paid' or sale.status == 'paid' or sale.payment_type == 'paid' or sale.remaining_amount == 0 or sale.balance_amount == 0 %}
+                    <span class="paid-stamp">PAID</span>
                 {% endif %}
             </div>
-        </div>
 
-        <div class="table-wrap">
-            <table class="main-table">
-                <thead>
-                    <tr>
-                        <th class="c-no">ល.រ</th>
-                        <th class="c-desc">ការពិពណ៌នា</th>
-                        <th class="c-qty">ចំនួន</th>
-                        <th class="c-price">តម្លៃ</th>
-                        <th class="c-total">សរុប</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="c-no">1</td>
-                        <td class="c-desc">
-                            <div class="desc-main">
-                                {{ sale.pet_type_display|default:"Dog" }} · {{ sale.breed_display|default:"Poodle" }}
-                            </div>
-                            <div class="desc-sub">
-                                {% if sale.pet_name_display %}Name: {{ sale.pet_name_display }}<br>{% endif %}
-                                Sex: {{ sale.gender_display|default:"Male" }}<br>
-                                {% if sale.deadline %}Deadline: {{ sale.deadline|date:"d/m/Y" }}{% endif %}
-                                {% if sale.note %}<br>Remark: {{ sale.note }}{% endif %}
-                            </div>
-                        </td>
-                        <td class="c-qty">1</td>
-                        <td class="c-price">${{ sale.sale_price }}</td>
-                        <td class="c-total">${{ sale.sale_price }}</td>
-                    </tr>
-
-                    <tr>
-                        <td class="c-no">2</td>
-                        <td class="c-desc">&nbsp;</td>
-                        <td class="c-qty"></td>
-                        <td class="c-price"></td>
-                        <td class="c-total"></td>
-                    </tr>
-
-                    <tr>
-                        <td class="c-no">3</td>
-                        <td class="c-desc">&nbsp;</td>
-                        <td class="c-qty"></td>
-                        <td class="c-price"></td>
-                        <td class="c-total"></td>
-                    </tr>
-
-                    <tr>
-                        <td class="c-no">4</td>
-                        <td class="c-desc">&nbsp;</td>
-                        <td class="c-qty"></td>
-                        <td class="c-price"></td>
-                        <td class="c-total"></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="bottom-grid">
-            <div class="policy-box">
-                <p>- សូមរក្សាវិក្កយបត្រនេះសម្រាប់ការទាមទារការធានា។</p>
-                <p>- ការធានាមានសុពលភាព {{ sale.warranty_days|default:"3" }} ថ្ងៃ ចាប់ពីថ្ងៃទិញ ឬថ្ងៃទទួលសត្វ។</p>
-                <p>- ការធានាគ្របដណ្តប់ជំងឺ Parvo &amp; Distemper បើមានការបញ្ជាក់ពីពេទ្យសត្វ។</p>
-                <p>- សូមទាក់ទងមកហាងភ្លាមៗ ប្រសិនបើសត្វមានអាការៈមិនប្រក្រតី។</p>
-                <p>- BUBU Pet Store សូមរក្សាសិទ្ធិក្នុងការសម្រេចចុងក្រោយ។</p>
-            </div>
-
-            <div>
-                <table class="summary-table">
-                    <tr>
-                        <td>
-                            តម្លៃសរុប
-                            <span class="amount">${{ sale.sale_price }}</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            បានបង់
-                            <span class="amount">${{ sale.paid_amount }}</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            នៅខ្វះ
-                            <span class="amount">${{ sale.remaining_amount }}</span>
-                        </td>
-                    </tr>
-                </table>
+            <div class="thanks">
+                សូមអរគុណសម្រាប់ការគាំទ្រ និងជ្រើសរើសកូនៗពីហាង
+                <span class="brand-red">BUBU PET STORE</span> យើងខ្ញុំ!
+                <img src="{% static 'img/bubu_icon.png' %}" alt="BUBU Dog"
+                     onerror="this.style.display='none';">
             </div>
         </div>
-
-        <div class="signatures">
-            <div class="sign-box">ហត្ថលេខាអតិថិជន</div>
-            <div class="sign-box">ហត្ថលេខាបុគ្គលិក</div>
-        </div>
-
-        <div class="footer">
-            <div class="footer-pet">
-                <img src="{% static 'images/bubu-dog.png' %}" alt="Dog" onerror="this.style.display='none';">
-            </div>
-            <div class="footer-text">
-                សូមអរគុណសម្រាប់ការគាំទ្ររបស់លោកអ្នក 💗<br>
-                ជូនពរអោយសត្វចិញ្ចឹមរបស់អ្នកមានសុខភាពល្អពី
-                <span class="footer-brand">BuBu Pet Store</span>
-            </div>
-        </div>
-
     </div>
+
+    <div class="signatures">
+        <div class="signature-box">
+            <div class="signature-title">Seller Signature</div>
+            <div class="signature-line"></div>
+        </div>
+
+        <div class="signature-box">
+            <div class="signature-title">Customer Signature</div>
+            <div class="signature-line"></div>
+        </div>
+    </div>
+
 </div>
 
 <script>
-window.addEventListener("load", function () {
-    setTimeout(function () {
-        window.print();
-    }, 300);
-});
+    window.addEventListener("load", function () {
+        setTimeout(function () {
+            window.print();
+        }, 300);
+    });
 </script>
 
 </body>
