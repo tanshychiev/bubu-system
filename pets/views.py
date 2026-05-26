@@ -460,28 +460,8 @@ def get_sale_pet_line(sale):
 
 
 def get_sale_seller_block(sale):
-    seller_name = get_sale_seller_name(sale)
-    lead_owner_name = get_sale_lead_owner_name(sale)
-    source_text = get_customer_source_display_safe(sale)
-    commission_text = get_commission_display_safe(sale)
-
-    if source_text == "Staff Chat":
-        return (
-            f"Seller : {seller_name}\n"
-            f"Chat Owner : {lead_owner_name}\n"
-            f"Commission : {commission_text}"
-        )
-
-    if source_text == "Walk-in":
-        return (
-            f"Seller : {seller_name}\n"
-            f"Commission : Shared"
-        )
-
-    return (
-        f"Seller : {seller_name}\n"
-        f"Commission : {commission_text}"
-    )
+    """Clean Telegram seller line."""
+    return f"Seller : {get_sale_seller_name(sale)}"
 
 
 def send_pet_sale_telegram_alert(
@@ -510,27 +490,14 @@ def send_pet_sale_telegram_alert(
     created_date = date_text(sale.created_at.date() if sale.created_at else None)
     completed_date = date_text(sale.completed_at.date() if sale.completed_at else timezone.localdate())
 
-    source_text = get_customer_source_display_safe(sale)
-    seller_block = get_sale_seller_block(sale)
-
-    customer_badge, customer_obj = get_sale_customer_badge(sale)
-    customer_points = getattr(customer_obj, "points", 0) if customer_obj else 0
-    customer_total_spent = getattr(customer_obj, "total_spent", Decimal("0.00")) if customer_obj else Decimal("0.00")
-
-    customer_block = (
-        f"Customer Type : {customer_badge}\n"
-        f"Customer Points : {customer_points}\n"
-        f"Customer Total Spent : {money_text(customer_total_spent)}"
-    )
+    # Keep Telegram alerts clean.
 
     if sale.status == "completed" or complete_only:
         text = (
             "✅ BUBU Pet Sale Completed / Customer Received\n\n"
             f"Sale ID: #{sale.id}\n"
             "Type: completed\n"
-            f"Customer : {source_text}\n"
-            f"{customer_block}\n"
-            f"{seller_block}\n\n"
+            f"Seller : {get_sale_seller_name(sale)}\n\n"
             "🐶 Pet Info\n"
             f"Pet: {get_sale_pet_line(sale)}\n"
             f"Sex: {sale.gender_display or '-'}\n"
@@ -572,9 +539,7 @@ def send_pet_sale_telegram_alert(
             "🛒 BUBU Pet Sale Instock Alert\n\n"
             f"Sale ID: #{sale.id}\n"
             f"Status: {sale.get_status_display()}\n"
-            f"Customer : {source_text}\n"
-            f"{customer_block}\n"
-            f"{seller_block}\n\n"
+            f"Seller : {get_sale_seller_name(sale)}\n\n"
             "🐶 Pet Info\n"
             f"Pet: {get_sale_pet_line(sale)}\n"
             f"Sex: {sale.gender_display or '-'}\n"
