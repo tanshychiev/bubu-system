@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django import forms
 from django.db.models import Q
 
@@ -8,7 +10,6 @@ from .models import (
     PetBreed,
     PetSale,
     PetWarrantyClaim,
-    PetSalePhoto,
 )
 
 
@@ -27,6 +28,45 @@ class PetBreedForm(forms.ModelForm):
             "note",
             "is_active",
         ]
+
+        widgets = {
+            "pet_type": forms.Select(attrs={"class": "form-control"}),
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "photo": forms.ClearableFileInput(attrs={
+                "class": "form-control",
+                "accept": "image/*",
+            }),
+            "default_cost_price": forms.NumberInput(attrs={
+                "class": "form-control",
+                "step": "0.01",
+                "min": "0",
+                "inputmode": "decimal",
+            }),
+            "default_sale_price": forms.NumberInput(attrs={
+                "class": "form-control",
+                "step": "0.01",
+                "min": "0",
+                "inputmode": "decimal",
+            }),
+            "color_options": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Example: White, Cream, Brown, Black",
+            }),
+            "sex_options": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Example: Male,Female",
+            }),
+            "special_type_options": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Example: Teacup, Mini, Standard",
+            }),
+            "note": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Breed note...",
+            }),
+            "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
 
 
 class PetForm(forms.ModelForm):
@@ -52,15 +92,9 @@ class PetForm(forms.ModelForm):
         ]
 
         widgets = {
-            "branch": forms.Select(attrs={
-                "class": "form-control",
-            }),
-            "breed_profile": forms.Select(attrs={
-                "class": "form-control",
-            }),
-            "pet_type": forms.Select(attrs={
-                "class": "form-control",
-            }),
+            "branch": forms.Select(attrs={"class": "form-control"}),
+            "breed_profile": forms.Select(attrs={"class": "form-control"}),
+            "pet_type": forms.Select(attrs={"class": "form-control"}),
             "breed": forms.TextInput(attrs={
                 "class": "form-control",
                 "placeholder": "Breed name if no breed profile",
@@ -110,9 +144,7 @@ class PetForm(forms.ModelForm):
                 "min": "0",
                 "inputmode": "decimal",
             }),
-            "status": forms.Select(attrs={
-                "class": "form-control",
-            }),
+            "status": forms.Select(attrs={"class": "form-control"}),
             "note": forms.Textarea(attrs={
                 "class": "form-control",
                 "rows": 3,
@@ -126,14 +158,12 @@ class PetForm(forms.ModelForm):
         self.fields["branch"].queryset = Branch.objects.filter(
             is_active=True,
         ).order_by("name")
-
         self.fields["branch"].required = False
         self.fields["branch"].empty_label = "Select Branch / Shop"
 
         self.fields["breed_profile"].queryset = PetBreed.objects.filter(
             is_active=True,
         ).order_by("pet_type", "name")
-
         self.fields["breed_profile"].required = False
         self.fields["breed_profile"].empty_label = "Select Breed Master"
 
@@ -174,6 +204,7 @@ class PetSaleForm(forms.ModelForm):
             "phone",
             "address",
             "sale_price",
+            "discount_amount",
             "paid_amount",
             "warranty_days",
             "warranty_start_date",
@@ -182,15 +213,9 @@ class PetSaleForm(forms.ModelForm):
         ]
 
         widgets = {
-            "sale_kind": forms.Select(attrs={
-                "class": "form-control",
-            }),
-            "pet": forms.Select(attrs={
-                "class": "form-control",
-            }),
-            "preorder_pet_type": forms.Select(attrs={
-                "class": "form-control",
-            }),
+            "sale_kind": forms.Select(attrs={"class": "form-control"}),
+            "pet": forms.Select(attrs={"class": "form-control"}),
+            "preorder_pet_type": forms.Select(attrs={"class": "form-control"}),
             "preorder_breed": forms.TextInput(attrs={
                 "class": "form-control",
                 "placeholder": "Breed",
@@ -225,6 +250,12 @@ class PetSaleForm(forms.ModelForm):
                 "placeholder": "Customer location",
             }),
             "sale_price": forms.NumberInput(attrs={
+                "class": "form-control",
+                "step": "0.01",
+                "min": "0",
+                "inputmode": "decimal",
+            }),
+            "discount_amount": forms.NumberInput(attrs={
                 "class": "form-control",
                 "step": "0.01",
                 "min": "0",
@@ -286,6 +317,7 @@ class PetSaleForm(forms.ModelForm):
         self.fields["deadline"].required = False
         self.fields["phone"].required = False
         self.fields["address"].required = False
+        self.fields["discount_amount"].required = False
         self.fields["warranty_start_date"].required = False
         self.fields["sale_photo"].required = False
         self.fields["note"].required = False
@@ -296,8 +328,11 @@ class PetSaleForm(forms.ModelForm):
         sale_kind = cleaned.get("sale_kind")
         pet = cleaned.get("pet")
         preorder_breed = cleaned.get("preorder_breed")
-        sale_price = cleaned.get("sale_price") or 0
-        paid_amount = cleaned.get("paid_amount") or 0
+
+        sale_price = cleaned.get("sale_price") or Decimal("0.00")
+        discount_amount = cleaned.get("discount_amount") or Decimal("0.00")
+        paid_amount = cleaned.get("paid_amount") or Decimal("0.00")
+        final_price = sale_price - discount_amount
 
         if sale_kind == "in_stock" and not pet:
             raise forms.ValidationError("Please select an in-stock dog/cat.")
@@ -305,8 +340,14 @@ class PetSaleForm(forms.ModelForm):
         if sale_kind == "preorder" and not preorder_breed:
             raise forms.ValidationError("Please enter breed for preorder.")
 
-        if paid_amount > sale_price:
-            raise forms.ValidationError("Paid amount cannot be bigger than full price.")
+        if discount_amount < 0:
+            raise forms.ValidationError("Discount cannot be negative.")
+
+        if discount_amount > sale_price:
+            raise forms.ValidationError("Discount cannot be bigger than full price.")
+
+        if paid_amount > final_price:
+            raise forms.ValidationError("Paid amount cannot be bigger than final price after discount.")
 
         return cleaned
 

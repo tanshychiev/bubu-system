@@ -290,8 +290,9 @@ def sync_completed_pet_sale_to_customer(request, sale):
         pet_sale=sale,
     ).order_by("id").first()
 
-    points_to_add = int(sale.sale_price or Decimal("0.00"))
-    amount_to_add = sale.sale_price or Decimal("0.00")
+    final_price = getattr(sale, "final_price", sale.sale_price or Decimal("0.00"))
+    points_to_add = int(final_price or Decimal("0.00"))
+    amount_to_add = final_price or Decimal("0.00")
 
     if existing_customer_pet:
         existing_customer_pet.customer = customer
@@ -369,8 +370,10 @@ def complete_pet_sale(request, sale, extra_paid=None, warranty_days=None):
     if extra_paid is not None:
         sale.paid_amount = (sale.paid_amount or Decimal("0.00")) + extra_paid
 
-    if sale.sale_price and sale.paid_amount < sale.sale_price:
-        sale.paid_amount = sale.sale_price
+    final_price = getattr(sale, "final_price", sale.sale_price or Decimal("0.00"))
+
+    if final_price and sale.paid_amount < final_price:
+        sale.paid_amount = final_price
 
     if warranty_days:
         try:
@@ -491,6 +494,8 @@ def send_pet_sale_telegram_alert(
     complete_topic_id = get_pet_sale_complete_topic_id()
 
     full_price = sale.sale_price or Decimal("0.00")
+    discount_amount = getattr(sale, "discount_amount", Decimal("0.00")) or Decimal("0.00")
+    final_price = getattr(sale, "final_price", full_price - discount_amount)
     paid_amount = sale.paid_amount or Decimal("0.00")
     balance_amount = sale.remaining_amount or Decimal("0.00")
 
@@ -532,6 +537,8 @@ def send_pet_sale_telegram_alert(
             f"Color: {sale.color_display or '-'}\n\n"
             "💵 Payment\n"
             f"Full Price: {money_text(full_price)}\n"
+            f"Discount: {money_text(discount_amount)}\n"
+            f"Final Price: {money_text(final_price)}\n"
             f"First payment: {money_text(first_paid)} on {created_date}\n"
             f"Final payment: {money_text(final_paid)} on {completed_date}\n\n"
             "📅 Date Info\n"
@@ -543,9 +550,7 @@ def send_pet_sale_telegram_alert(
             "📝 BUBU Pet Pre-order Alert\n\n"
             f"Sale ID: #{sale.id}\n"
             f"Status: {sale.get_status_display()}\n"
-            f"Customer : {source_text}\n"
-            f"{customer_block}\n"
-            f"{seller_block}\n\n"
+            f"Seller : {get_sale_seller_name(sale)}\n\n"
             "🐶 Pet Info\n"
             f"Pet: {sale.pet_type_display or 'Pet'} - {sale.breed_display or '-'}\n"
             f"Sex: {sale.gender_display or '-'}\n"
@@ -553,6 +558,8 @@ def send_pet_sale_telegram_alert(
             f"📝 Note: {sale.note or '-'}\n\n"
             "💵 Payment\n"
             f"Full Price: {money_text(full_price)}\n"
+            f"Discount: {money_text(discount_amount)}\n"
+            f"Final Price: {money_text(final_price)}\n"
             f"Paid / Deposit: {money_text(paid_amount)}\n"
             f"Balance: {money_text(balance_amount)}\n\n"
             "📅 Date Info\n"
@@ -574,6 +581,8 @@ def send_pet_sale_telegram_alert(
             f"Color: {sale.color_display or '-'}\n\n"
             "💵 Payment\n"
             f"Full Price: {money_text(full_price)}\n"
+            f"Discount: {money_text(discount_amount)}\n"
+            f"Final Price: {money_text(final_price)}\n"
             f"Paid / Deposit: {money_text(paid_amount)}\n"
             f"Balance: {money_text(balance_amount)}\n\n"
             "📅 Date Info\n"
@@ -1124,6 +1133,8 @@ def pet_sale_list(request):
 
     total_sales = sales.count()
     total_amount = sum((sale.sale_price for sale in sales), Decimal("0.00"))
+    total_discount = sum((getattr(sale, "discount_amount", Decimal("0.00")) for sale in sales), Decimal("0.00"))
+    total_final_amount = sum((getattr(sale, "final_price", sale.sale_price) for sale in sales), Decimal("0.00"))
     total_paid = sum((sale.paid_amount for sale in sales), Decimal("0.00"))
     total_balance = sum((sale.remaining_amount for sale in sales), Decimal("0.00"))
 
@@ -1134,6 +1145,8 @@ def pet_sale_list(request):
         "status": status,
         "total_sales": total_sales,
         "total_amount": total_amount,
+        "total_discount": total_discount,
+        "total_final_amount": total_final_amount,
         "total_paid": total_paid,
         "total_balance": total_balance,
     })
@@ -1175,7 +1188,8 @@ def pet_sale_create(request):
 
             if submit_action in ["save_complete", "save_complete_print"]:
                 first_paid_before_complete = sale.paid_amount or Decimal("0.00")
-                final_paid = (sale.sale_price or Decimal("0.00")) - first_paid_before_complete
+                final_price = getattr(sale, "final_price", sale.sale_price or Decimal("0.00"))
+                final_paid = final_price - first_paid_before_complete
 
                 if final_paid < 0:
                     final_paid = Decimal("0.00")
@@ -1206,6 +1220,7 @@ def pet_sale_create(request):
             "sale_kind": "in_stock",
             "seller": request.user,
             "warranty_days": 3,
+            "discount_amount": Decimal("0.00"),
             "paid_amount": Decimal("0.00"),
             "customer_source": "staff_chat",
             "lead_owner": request.user,
@@ -1272,7 +1287,8 @@ def pet_sale_edit(request, pk):
 
             if submit_action in ["save_complete", "save_complete_print"]:
                 first_paid_before_complete = sale.paid_amount or Decimal("0.00")
-                final_paid = (sale.sale_price or Decimal("0.00")) - first_paid_before_complete
+                final_price = getattr(sale, "final_price", sale.sale_price or Decimal("0.00"))
+                final_paid = final_price - first_paid_before_complete
 
                 if final_paid < 0:
                     final_paid = Decimal("0.00")

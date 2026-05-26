@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -17,7 +18,6 @@ class PetBreed(models.Model):
     pet_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default="dog")
     name = models.CharField(max_length=120)
 
-    # Breed sample/reference photo
     photo = models.ImageField(upload_to="pet_breeds/", blank=True, null=True)
 
     default_cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -98,10 +98,7 @@ class Pet(models.Model):
     )
 
     pet_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default="dog")
-
-    # Keep old breed field for safety / old data
     breed = models.CharField(max_length=120, blank=True)
-
     name = models.CharField(max_length=120, blank=True)
     gender = models.CharField(max_length=30, blank=True)
     color = models.CharField(max_length=80, blank=True)
@@ -118,8 +115,6 @@ class Pet(models.Model):
     )
 
     death_date = models.DateField(null=True, blank=True)
-
-    # Actual real pet photo when stock-in
     photo = models.ImageField(upload_to="pets/", blank=True, null=True)
 
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -198,11 +193,7 @@ class Pet(models.Model):
             return f"{years} year" if years == 1 else f"{years} years"
 
         year_text = f"{years} year" if years == 1 else f"{years} years"
-        month_text = (
-            f"{remain_months} month"
-            if remain_months == 1
-            else f"{remain_months} months"
-        )
+        month_text = f"{remain_months} month" if remain_months == 1 else f"{remain_months} months"
 
         return f"{year_text} {month_text}"
 
@@ -258,7 +249,6 @@ class PetVaccine(models.Model):
 
     vaccine_date = models.DateField(null=True, blank=True)
     next_recommended_date = models.DateField(null=True, blank=True)
-
     note = models.CharField(max_length=255, blank=True, default="")
 
     created_by = models.ForeignKey(
@@ -330,6 +320,7 @@ class PetSale(models.Model):
     address = models.TextField(blank=True)
 
     sale_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     deposit_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     remaining_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -338,16 +329,13 @@ class PetSale(models.Model):
     warranty_start_date = models.DateField(null=True, blank=True)
     warranty_expire_date = models.DateField(null=True, blank=True)
 
-    # Old single photo field kept for old data / fallback
     sale_photo = models.ImageField(upload_to="pet_sales/", blank=True, null=True)
 
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="deposit")
     note = models.TextField(blank=True)
-
     cancel_reason = models.TextField(blank=True)
     refund_reason = models.TextField(blank=True)
 
-    # User who recorded the sale in the system
     created_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -356,7 +344,6 @@ class PetSale(models.Model):
         related_name="created_pet_sales",
     )
 
-    # Real seller/staff who sold the pet
     seller = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -428,6 +415,17 @@ class PetSale(models.Model):
         return "-"
 
     @property
+    def final_price(self):
+        sale_price = self.sale_price or Decimal("0.00")
+        discount = self.discount_amount or Decimal("0.00")
+        final = sale_price - discount
+
+        if final < 0:
+            return Decimal("0.00")
+
+        return final
+
+    @property
     def balance(self):
         return self.remaining_amount
 
@@ -450,6 +448,8 @@ class PetSale(models.Model):
             f"Special Type: {self.special_type_display or '-'}\n"
             f"Remark: {self.note or '-'}\n"
             f"Full Price: ${self.sale_price}\n"
+            f"Discount: ${self.discount_amount}\n"
+            f"Final Price: ${self.final_price}\n"
             f"Deposit: ${self.paid_amount}\n"
             f"Deadline: {deadline_text}\n\n"
             "Customer Info\n"
@@ -460,12 +460,28 @@ class PetSale(models.Model):
         )
 
     def save(self, *args, **kwargs):
-        self.deposit_amount = self.paid_amount
-        self.remaining_amount = self.sale_price - self.paid_amount
+        sale_price = self.sale_price or Decimal("0.00")
+        discount = self.discount_amount or Decimal("0.00")
+        paid = self.paid_amount or Decimal("0.00")
 
-        # Important:
-        # If status is already completed by view button, keep it completed.
-        # Do not change completed back to deposit, even if sale price is $0.
+        if discount < 0:
+            discount = Decimal("0.00")
+
+        if discount > sale_price:
+            discount = sale_price
+
+        self.sale_price = sale_price
+        self.discount_amount = discount
+        self.paid_amount = paid
+
+        final_price = self.final_price
+
+        self.deposit_amount = self.paid_amount
+        self.remaining_amount = final_price - self.paid_amount
+
+        if self.remaining_amount < 0:
+            self.remaining_amount = Decimal("0.00")
+
         if self.status == "completed":
             if not self.completed_at:
                 self.completed_at = timezone.now()
@@ -475,7 +491,7 @@ class PetSale(models.Model):
             pass
 
         else:
-            if self.sale_price > 0 and self.paid_amount >= self.sale_price:
+            if final_price > 0 and self.paid_amount >= final_price:
                 self.status = "completed"
 
                 if not self.completed_at:
@@ -530,9 +546,7 @@ class PetWarrantyClaim(models.Model):
 
     problem_note = models.TextField()
     action_taken = models.TextField(blank=True)
-
     compensation_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
     claim_photo = models.ImageField(upload_to="pet_claims/", blank=True, null=True)
 
     created_by = models.ForeignKey(

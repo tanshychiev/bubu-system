@@ -441,6 +441,18 @@
                         </label>
 
                         <label>
+                            Discount
+                            <input
+                                type="number"
+                                step="0.01"
+                                name="discount_amount"
+                                id="discountAmount"
+                                value="{{ sale.discount_amount|default:'0.00' }}"
+                                oninput="calcSale(); updateCopyBox();"
+                            >
+                        </label>
+
+                        <label>
                             Paid / Deposit
                             <input
                                 type="number"
@@ -457,6 +469,16 @@
                         <div>
                             <span>Full Price</span>
                             <strong id="salePriceShow">$0.00</strong>
+                        </div>
+
+                        <div>
+                            <span>Discount</span>
+                            <strong id="discountShow">$0.00</strong>
+                        </div>
+
+                        <div>
+                            <span>Final Price</span>
+                            <strong id="finalPriceShow">$0.00</strong>
                         </div>
 
                         <div>
@@ -2095,10 +2117,27 @@ function switchSaleMode(){
 
 function calcSale(){
     const price = num("salePrice");
+    let discount = num("discountAmount");
     const paid = num("paidAmount");
-    const remain = price - paid;
+
+    if(discount < 0){
+        discount = 0;
+        const discountInput = document.getElementById("discountAmount");
+        if(discountInput){ discountInput.value = "0.00"; }
+    }
+
+    if(discount > price){
+        discount = price;
+        const discountInput = document.getElementById("discountAmount");
+        if(discountInput){ discountInput.value = discount.toFixed(2); }
+    }
+
+    const finalPrice = Math.max(price - discount, 0);
+    const remain = finalPrice - paid;
 
     setText("salePriceShow", money(price));
+    setText("discountShow", money(discount));
+    setText("finalPriceShow", money(finalPrice));
     setText("paidShow", money(paid));
 
     const remainCard = document.getElementById("remainCard");
@@ -2139,6 +2178,7 @@ function selectPetFromPopup(id, name, gender, color, special, age, price){
     const specShow = document.getElementById("petSpecShow");
     const priceShow = document.getElementById("petPriceShow");
     const salePrice = document.getElementById("salePrice");
+    const discountAmount = document.getElementById("discountAmount");
 
     if(petInput){ petInput.value = id; }
     if(nameShow){ nameShow.innerText = name; }
@@ -2147,6 +2187,10 @@ function selectPetFromPopup(id, name, gender, color, special, age, price){
 
     if(salePrice && Number(salePrice.value || 0) <= 0){
         salePrice.value = Number(price || 0).toFixed(2);
+    }
+
+    if(discountAmount && !discountAmount.value){
+        discountAmount.value = "0.00";
     }
 
     calcSale();
@@ -2290,6 +2334,8 @@ function updateCopyBox(){
     const special = val("preorderSpecialType") || "-";
     const note = val("noteInput") || "-";
     const fullPrice = val("salePrice") || "0.00";
+    const discount = val("discountAmount") || "0.00";
+    const finalPrice = Math.max(Number(fullPrice || 0) - Number(discount || 0), 0).toFixed(2);
     const deposit = val("paidAmount") || "0.00";
     const deadline = val("deadlineInput") || "-";
     const name = val("customerName") || "-";
@@ -2305,6 +2351,8 @@ Color: ${color}
 Special Type: ${special}
 Remark: ${note}
 Full Price: $${fullPrice}
+Discount: $${discount}
+Final Price: $${finalPrice}
 Deposit: $${deposit}
 Deadline: ${deadline}
 
@@ -2365,6 +2413,23 @@ function submitAction(action){
     if(source === "staff_chat" && !leadOwner){
         alert("Please choose Lead / Chat Owner for this customer source.");
         openLeadOwnerPopup();
+        return false;
+    }
+
+    const salePrice = num("salePrice");
+    const discount = num("discountAmount");
+    const paid = num("paidAmount");
+    const finalPrice = Math.max(salePrice - discount, 0);
+
+    if(discount > salePrice){
+        alert("Discount cannot be bigger than full price.");
+        document.getElementById("discountAmount").focus();
+        return false;
+    }
+
+    if(paid > finalPrice){
+        alert("Paid amount cannot be bigger than final price after discount.");
+        document.getElementById("paidAmount").focus();
         return false;
     }
 
