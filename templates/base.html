@@ -126,7 +126,7 @@ button{touch-action:manipulation}
 .menu{
     flex:1 1 auto;
     min-height:0;
-    padding:12px 12px 130px;
+    padding:12px 12px 72px;
     overflow-y:auto;
     overflow-x:hidden;
     scrollbar-width:thin;
@@ -259,7 +259,7 @@ button{touch-action:manipulation}
     bottom:0;
     z-index:20;
     display:block!important;
-    padding:30px 14px calc(12px + env(safe-area-inset-bottom));
+    padding:9px 14px calc(10px + env(safe-area-inset-bottom));
     border:0;
     background:linear-gradient(
         180deg,
@@ -270,17 +270,25 @@ button{touch-action:manipulation}
     box-shadow:none;
 }
 
-.sleep-cat-img{
-    width:162px;
-    height:94px;
-    display:block;
-    object-fit:contain;
-    margin:0 auto 4px;
-    pointer-events:none;
+.sidebar-pet-under-menu{
+    width:100%;
+    padding:10px 0 4px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 }
 
-.mobile-sidebar-bottom,
-.mobile-sleep-cat{
+.sidebar-pet-under-menu img{
+    width:190px;
+    max-width:92%;
+    height:112px;
+    display:block;
+    object-fit:contain;
+    pointer-events:none;
+    filter:drop-shadow(0 8px 14px rgba(120,76,45,.08));
+}
+
+.mobile-sidebar-bottom{
     display:none;
 }
 
@@ -909,7 +917,7 @@ tbody tr:hover{background:#fffaf6}
     .logo small{font-size:9px}
 
     .menu{
-        padding:8px 9px 122px;
+        padding:8px 9px 72px;
     }
 
     .menu a,
@@ -949,13 +957,14 @@ tbody tr:hover{background:#fffaf6}
         );
     }
 
-    .mobile-sleep-cat{
-        width:154px;
-        height:90px;
-        display:block!important;
-        object-fit:contain;
-        margin:0 auto 0;
-        pointer-events:none;
+    .sidebar-pet-under-menu{
+        padding:8px 0 2px;
+    }
+
+    .sidebar-pet-under-menu img{
+        width:168px;
+        height:98px;
+        max-width:94%;
     }
 
     .mobile-logout-form{
@@ -1307,11 +1316,12 @@ tbody tr:hover{background:#fffaf6}
         </div>
         {% endif %}
 
-        <div class="mobile-sidebar-bottom">
+        <div class="sidebar-pet-under-menu">
             <img src="{% static 'img/sleep-cat.png' %}"
-                 class="mobile-sleep-cat"
                  alt="Sleeping cat">
+        </div>
 
+        <div class="mobile-sidebar-bottom">
             <form method="post"
                   action="{% url 'logout' %}"
                   class="mobile-logout-form"
@@ -1326,10 +1336,6 @@ tbody tr:hover{background:#fffaf6}
     </nav>
 
     <div class="sidebar-footer">
-        <img src="{% static 'img/sleep-cat.png' %}"
-             class="sleep-cat-img"
-             alt="Sleeping cat">
-
         <form method="post"
               action="{% url 'logout' %}"
               class="logout-form"
