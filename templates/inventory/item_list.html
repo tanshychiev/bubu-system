@@ -686,6 +686,355 @@ a { text-decoration:none !important; }
         grid-template-columns:1fr;
     }
 }
+/* =========================================================
+   COMPACT PHONE INVENTORY LIST
+========================================================= */
+@media(max-width:700px){
+    .inventory-hero{
+        display:block;
+        margin-bottom:5px;
+    }
+
+    .inventory-title h1{
+        margin:0;
+        font-size:21px;
+        line-height:1.1;
+    }
+
+    .inventory-title p{
+        margin:4px 0 7px;
+        font-size:9px;
+        line-height:1.3;
+    }
+
+    .hero-img{
+        display:none;
+    }
+
+    .tool-row{
+        display:grid;
+        grid-template-columns:minmax(0,1fr) auto auto;
+        gap:4px;
+        margin-top:6px;
+    }
+
+    .search-pill{
+        grid-column:1/-1;
+        width:100%;
+        height:38px;
+        min-height:38px;
+        padding:0 10px;
+        border-radius:10px;
+        font-size:16px!important;
+    }
+
+    .branch-popup-btn{
+        grid-column:1/-1;
+        width:100%;
+        min-width:0;
+        height:36px;
+        min-height:36px;
+        padding:0 9px;
+        border-radius:9px;
+        font-size:9px;
+        box-shadow:none;
+    }
+
+    .btn-search,
+    .btn-reset{
+        width:auto;
+        min-width:72px;
+        height:34px;
+        min-height:34px;
+        padding:0 9px;
+        border-radius:9px;
+        font-size:9px;
+        box-shadow:none;
+    }
+
+    .mobile-action-toggle{
+        width:auto;
+        min-width:108px;
+        height:34px;
+        min-height:34px;
+        border-radius:9px;
+        padding:0 9px;
+        font-size:8px;
+        box-shadow:none;
+    }
+
+    .branch-info-box{
+        margin:5px 0 7px;
+        padding:6px 7px;
+        border-radius:10px;
+        display:grid;
+        grid-template-columns:minmax(0,1fr) auto;
+        gap:5px;
+        align-items:center;
+    }
+
+    .branch-info-left{
+        min-width:0;
+        gap:6px;
+    }
+
+    .branch-icon{
+        width:29px;
+        height:29px;
+        flex:0 0 29px;
+        font-size:14px;
+        box-shadow:none;
+    }
+
+    .branch-info-title{
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        font-size:9px;
+    }
+
+    .branch-info-sub{
+        display:none;
+    }
+
+    .branch-status-badge{
+        width:auto;
+        min-height:26px;
+        margin:0;
+        padding:0 6px;
+        border-radius:8px;
+        font-size:7px;
+    }
+
+    .inventory-panel{
+        padding:6px;
+        border-radius:12px;
+        box-shadow:none;
+    }
+
+    .category-tabs{
+        gap:4px;
+        margin-bottom:6px;
+        padding-bottom:3px;
+        flex-wrap:nowrap;
+        overflow-x:auto;
+        scrollbar-width:none;
+    }
+
+    .category-tabs::-webkit-scrollbar{
+        display:none;
+    }
+
+    .type-tab-wrap{
+        flex:0 0 auto;
+    }
+
+    .tab{
+        min-height:29px;
+        padding:0 9px;
+        border-radius:8px;
+        font-size:8px;
+        box-shadow:none;
+    }
+
+    .product-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:5px;
+    }
+
+    .product-card{
+        min-width:0;
+        padding:6px;
+        border-radius:11px;
+        box-shadow:none;
+    }
+
+    .product-card:hover{
+        transform:none;
+        box-shadow:none;
+    }
+
+    .product-card > .badge{
+        min-height:20px;
+        max-width:100%;
+        margin-bottom:4px;
+        padding:0 5px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        font-size:6px;
+    }
+
+    .product-img{
+        height:92px;
+        border-radius:8px;
+    }
+
+    .placeholder{
+        font-size:35px;
+    }
+
+    .product-name{
+        min-height:24px;
+        margin:5px 0 1px;
+        overflow:hidden;
+        display:-webkit-box;
+        -webkit-box-orient:vertical;
+        -webkit-line-clamp:2;
+        font-size:9px;
+        line-height:1.2;
+    }
+
+    .brand{
+        margin-bottom:3px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        font-size:7px;
+    }
+
+    .stock{
+        max-width:100%;
+        min-height:21px;
+        padding:0 5px;
+        align-items:center;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        font-size:6px;
+    }
+
+    .variant-list{
+        min-height:21px;
+        max-height:43px;
+        margin-top:4px;
+        gap:2px;
+        overflow:hidden;
+    }
+
+    .variant-chip{
+        max-width:100%;
+        padding:2px 4px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        font-size:6px;
+    }
+
+    .variant-chip:nth-child(n+3){
+        display:none;
+    }
+
+    .price-row{
+        margin-top:4px;
+        gap:3px;
+        font-size:7px;
+    }
+
+    .price-row span{
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+
+    .action-row{
+        display:grid;
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        gap:3px;
+        margin-top:5px;
+    }
+
+    .icon-btn{
+        min-width:0;
+        width:100%;
+        height:28px;
+        min-height:28px;
+        padding:0 3px;
+        border-radius:7px;
+        font-size:7px;
+    }
+
+    .branch-popup{
+        left:7px;
+        right:7px;
+        bottom:7px;
+        padding:9px;
+        border-radius:15px;
+    }
+
+    .branch-popup-head{
+        margin-bottom:7px;
+    }
+
+    .branch-popup-head h3{
+        font-size:15px;
+    }
+
+    .branch-popup-head button{
+        width:34px;
+        height:34px;
+    }
+
+    .branch-popup-list{
+        gap:5px;
+    }
+
+    .branch-option{
+        min-height:43px;
+        padding:0 9px;
+        border-radius:10px;
+        font-size:9px;
+    }
+
+    .branch-option span{
+        font-size:15px;
+    }
+
+    .mobile-action-panel{
+        left:7px;
+        right:7px;
+        bottom:7px;
+        padding:9px;
+        border-radius:15px;
+    }
+
+    .mobile-action-panel.active{
+        gap:5px;
+    }
+
+    .mobile-action-panel .add-btn{
+        height:39px;
+        min-height:39px;
+        border-radius:9px;
+        font-size:9px;
+    }
+
+    .empty-box{
+        min-height:180px;
+        font-size:10px;
+    }
+
+    .empty-box > div > div{
+        font-size:42px!important;
+    }
+
+    input,
+    select,
+    textarea{
+        font-size:16px!important;
+    }
+}
+
+@media(max-width:360px){
+    .product-img{
+        height:82px;
+    }
+
+    .product-name{
+        font-size:8px;
+    }
+}
+
 </style>
 
 <div class="inventory-hero">

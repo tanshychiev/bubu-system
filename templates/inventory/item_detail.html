@@ -440,6 +440,325 @@ h2{
         justify-content:center;
     }
 }
+/* =========================================================
+   COMPACT PHONE INVENTORY DETAIL
+========================================================= */
+@media(max-width:700px){
+    .detail-page{
+        width:100%;
+        max-width:none;
+        margin:0;
+    }
+
+    .back-btn{
+        min-height:34px;
+        margin-bottom:7px;
+        padding:0 10px;
+        border-radius:10px;
+        font-size:10px;
+    }
+
+    .detail-card,
+    .variant-card{
+        margin-bottom:8px;
+        padding:8px;
+        border-radius:14px;
+        box-shadow:none;
+    }
+
+    .detail-grid{
+        grid-template-columns:92px minmax(0,1fr);
+        gap:8px;
+        align-items:start;
+    }
+
+    .item-img{
+        width:92px;
+        height:92px;
+        border-radius:11px;
+    }
+
+    .placeholder{
+        font-size:38px;
+    }
+
+    .badge{
+        min-height:23px;
+        margin-bottom:4px;
+        padding:0 7px;
+        border-radius:999px;
+        font-size:8px;
+    }
+
+    h1{
+        margin-bottom:2px;
+        font-size:18px;
+        line-height:1.1;
+    }
+
+    h2{
+        margin-bottom:7px;
+        font-size:15px;
+    }
+
+    .brand{
+        margin-bottom:5px;
+        font-size:9px;
+    }
+
+    .branch-box{
+        grid-column:1/-1;
+        margin:6px 0;
+        padding:7px;
+        border-radius:10px;
+        display:grid;
+        grid-template-columns:minmax(0,1fr) auto;
+        gap:5px;
+        align-items:center;
+    }
+
+    .branch-left{
+        min-width:0;
+        gap:6px;
+    }
+
+    .branch-icon{
+        width:30px;
+        height:30px;
+        flex:0 0 30px;
+        font-size:14px;
+        box-shadow:none;
+    }
+
+    .branch-title{
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        font-size:9px;
+    }
+
+    .branch-sub{
+        display:none;
+    }
+
+    .branch-badge{
+        min-height:27px;
+        width:auto;
+        margin:0;
+        padding:0 7px;
+        border-radius:8px;
+        font-size:7px;
+    }
+
+    .info-grid{
+        grid-column:1/-1;
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        gap:4px;
+        margin-top:6px;
+    }
+
+    .info-box{
+        min-width:0;
+        padding:6px 4px;
+        border-radius:8px;
+        text-align:center;
+    }
+
+    .info-box small{
+        display:block;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        font-size:6px;
+    }
+
+    .info-box h3{
+        margin-top:2px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        font-size:10px;
+    }
+
+    .action-row{
+        grid-column:1/-1;
+        display:grid;
+        grid-template-columns:1.5fr 1fr .75fr;
+        gap:4px;
+        margin-top:6px;
+    }
+
+    .btn-main,
+    .btn-soft,
+    .btn-danger{
+        width:100%;
+        min-height:34px;
+        padding:0 6px;
+        border-radius:9px;
+        font-size:8px;
+        line-height:1.1;
+        text-align:center;
+    }
+
+    .variant-head-row{
+        margin-bottom:6px;
+        flex-wrap:nowrap;
+    }
+
+    .variant-head-row .btn-main{
+        width:auto;
+        min-width:92px;
+        min-height:31px;
+        font-size:8px;
+    }
+
+    .variant-grid{
+        grid-template-columns:1fr;
+        gap:6px;
+    }
+
+    .variant-box{
+        display:grid;
+        grid-template-columns:76px minmax(0,1fr);
+        grid-template-areas:
+            "image title"
+            "image meta"
+            "image stock"
+            "image price"
+            "branch branch"
+            "action action";
+        gap:4px 7px;
+        padding:7px;
+        border-radius:11px;
+    }
+
+    .variant-img{
+        grid-area:image;
+        width:76px;
+        height:76px;
+        margin:0;
+        border-radius:9px;
+    }
+
+    .variant-img-placeholder{
+        font-size:30px;
+    }
+
+    .variant-title{
+        grid-area:title;
+        margin:0;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        font-size:10px;
+    }
+
+    .variant-meta{
+        grid-area:meta;
+        gap:3px;
+        margin:0;
+        max-height:42px;
+        overflow:hidden;
+    }
+
+    .chip{
+        padding:3px 5px;
+        font-size:7px;
+    }
+
+    .stock-good,
+    .stock-low,
+    .stock-zero{
+        grid-area:stock;
+        width:max-content;
+        max-width:100%;
+        min-height:23px;
+        padding:0 6px;
+        align-items:center;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        font-size:7px;
+    }
+
+    .branch-stock-list{
+        grid-area:branch;
+        margin-top:3px;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:3px;
+    }
+
+    .branch-stock-row{
+        min-width:0;
+        padding:5px 6px;
+        border-radius:7px;
+        font-size:7px;
+    }
+
+    .branch-stock-row span,
+    .branch-stock-row strong{
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+
+    .price-row{
+        grid-area:price;
+        margin:0;
+        gap:4px;
+        font-size:8px;
+    }
+
+    .variant-action{
+        grid-area:action;
+        display:grid;
+        grid-template-columns:1.3fr 1.2fr .7fr;
+        gap:4px;
+        margin-top:3px;
+    }
+
+    .variant-stock-btn{
+        width:100%;
+        min-height:31px;
+        padding:0 5px;
+        border-radius:8px;
+        align-items:center;
+        justify-content:center;
+        font-size:7px;
+        text-align:center;
+    }
+
+    .empty-variant{
+        padding:20px 8px;
+        font-size:10px;
+    }
+
+    .empty-variant > div{
+        font-size:38px!important;
+    }
+
+    input,
+    select,
+    textarea{
+        font-size:16px!important;
+    }
+}
+
+@media(max-width:370px){
+    .detail-grid{
+        grid-template-columns:80px minmax(0,1fr);
+    }
+
+    .item-img{
+        width:80px;
+        height:80px;
+    }
+
+    .info-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+}
+
 </style>
 
 <div class="detail-page">
