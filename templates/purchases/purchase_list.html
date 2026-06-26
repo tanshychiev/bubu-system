@@ -5,453 +5,526 @@
 <style>
 *{box-sizing:border-box}
 a{text-decoration:none!important}
+button,input{font:inherit}
 
+:root{
+    --ink:#17152f;
+    --muted:#7b7288;
+    --line:#eaddec;
+    --soft:#fffaf7;
+    --purple:#8e63ff;
+    --orange:#ff8c6b;
+    --green:#20b86b;
+    --blue:#3a86ff;
+    --red:#ff4d7d;
+}
+
+/* =========================
+   PAGE
+========================= */
 .purchase-page{
     max-width:1400px;
     margin:0 auto;
-    padding:28px 34px;
+    padding:28px 34px 44px;
 }
 
+.mobile-only{display:none}
+
+/* =========================
+   HEADER
+========================= */
 .purchase-hero{
     display:grid;
-    grid-template-columns:minmax(0,1fr) 440px;
-    gap:28px;
+    grid-template-columns:minmax(0,1fr) 360px;
+    gap:24px;
     align-items:center;
-    margin-bottom:26px;
+    margin-bottom:22px;
 }
 
 .purchase-title h1{
-    font-size:42px;
     margin:0;
-    color:#17152f;
-    font-weight:1000;
+    color:var(--ink);
+    font-size:40px;
     line-height:1.05;
+    font-weight:1000;
 }
 
 .purchase-title p{
-    color:#7b7288;
-    font-weight:900;
-    font-size:17px;
-    line-height:1.6;
-    margin:14px 0 0;
+    max-width:660px;
+    margin:10px 0 18px;
+    color:var(--muted);
+    font-size:16px;
+    line-height:1.55;
+    font-weight:850;
 }
 
 .hero-img{
     width:100%;
-    height:230px;
+    height:180px;
     object-fit:contain;
 }
 
 .btn-add,
 .btn-search,
 .btn-clear{
+    min-height:50px;
+    border:0;
+    border-radius:999px;
+    padding:0 24px;
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    min-height:58px;
-    padding:0 30px;
-    border-radius:999px;
-    border:none;
-    font-size:16px;
+    gap:8px;
+    font-size:15px;
     font-weight:1000;
     cursor:pointer;
-    text-decoration:none;
 }
 
 .btn-add,
 .btn-search{
     color:white;
-    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
-    box-shadow:0 12px 28px rgba(142,99,255,.22);
+    background:linear-gradient(135deg,var(--purple),var(--orange));
+    box-shadow:0 10px 24px rgba(142,99,255,.2);
 }
 
 .btn-clear{
-    color:#8e63ff;
+    color:var(--purple);
     background:#f7f1ff;
     border:2px solid #e3d5ff;
 }
 
+/* =========================
+   FILTER
+========================= */
+.filter-details{
+    margin-bottom:18px;
+}
+
+.filter-summary{
+    display:none;
+}
+
 .filter-panel{
+    padding:18px;
     background:white;
     border:2px solid #f5e8df;
-    border-radius:30px;
-    padding:20px;
-    box-shadow:0 20px 50px rgba(130,91,60,.10);
-    margin-bottom:24px;
+    border-radius:26px;
+    box-shadow:0 14px 34px rgba(130,91,60,.08);
 }
 
 .filter-form{
     display:grid;
     grid-template-columns:1fr 1fr 1.2fr auto auto;
-    gap:14px;
+    gap:12px;
     align-items:end;
 }
 
 .filter-box{
-    border:2px solid #eaddec;
-    background:#fffaf7;
-    border-radius:24px;
-    padding:12px 14px;
+    padding:10px 12px;
+    border:2px solid var(--line);
+    border-radius:20px;
+    background:var(--soft);
 }
 
 .filter-label{
     display:block;
-    color:#7b7288;
-    font-size:12px;
-    font-weight:1000;
-    margin-bottom:7px;
+    margin-bottom:5px;
+    color:var(--muted);
+    font-size:11px;
+    letter-spacing:.45px;
     text-transform:uppercase;
-    letter-spacing:.5px;
+    font-weight:1000;
 }
 
 .date-pop-btn,
 .status-pop-btn{
     width:100%;
-    min-height:50px;
-    border:none;
-    background:white;
-    border-radius:18px;
-    padding:0 14px;
-    color:#17152f;
-    font-size:15px;
-    font-weight:1000;
-    text-align:left;
+    min-height:46px;
+    border:0;
+    border-radius:15px;
+    padding:0 12px;
     display:flex;
     align-items:center;
     justify-content:space-between;
+    gap:10px;
+    color:var(--ink);
+    background:white;
+    text-align:left;
+    font-size:14px;
+    font-weight:1000;
     cursor:pointer;
 }
 
 .date-pop-btn small,
 .status-pop-btn small{
-    color:#7b7288;
-    font-weight:900;
+    color:var(--muted);
 }
 
+/* =========================
+   SUMMARY
+========================= */
 .summary-card{
-    background:white;
-    border:2px solid #f5e8df;
-    border-radius:30px;
-    padding:22px;
     display:grid;
     grid-template-columns:repeat(4,1fr);
-    gap:18px;
-    box-shadow:0 20px 50px rgba(130,91,60,.10);
-    margin-bottom:28px;
+    gap:12px;
+    margin-bottom:20px;
 }
 
 .summary-item{
+    min-width:0;
+    padding:16px;
+    border:2px solid #f5e8df;
+    border-radius:22px;
+    background:white;
+    box-shadow:0 10px 26px rgba(130,91,60,.06);
     display:flex;
     align-items:center;
-    gap:14px;
-    border-right:1px solid #f1ddd1;
-    min-width:0;
+    gap:12px;
 }
 
-.summary-item:last-child{border-right:none}
-
 .summary-icon{
-    width:62px;
-    height:62px;
-    border-radius:22px;
+    width:50px;
+    height:50px;
+    border-radius:17px;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:28px;
     flex:0 0 auto;
+    font-size:22px;
 }
 
-.summary-icon.purple{background:#efe5ff;color:#8e63ff}
-.summary-icon.green{background:#ddf8ea;color:#20b86b}
+.summary-icon.purple{background:#efe5ff;color:var(--purple)}
+.summary-icon.green{background:#ddf8ea;color:var(--green)}
 .summary-icon.orange{background:#fff0df;color:#ff8b3d}
-.summary-icon.blue{background:#e8f2ff;color:#3a86ff}
+.summary-icon.blue{background:#e8f2ff;color:var(--blue)}
 
 .summary-label{
-    color:#7b7288;
+    color:var(--muted);
+    font-size:12px;
     font-weight:1000;
-    font-size:13px;
 }
 
 .summary-value{
-    font-size:27px;
-    color:#17152f;
-    font-weight:1000;
-    margin:4px 0;
+    margin:2px 0;
+    color:var(--ink);
+    font-size:23px;
     line-height:1.1;
+    font-weight:1000;
 }
 
-.summary-value.green{color:#20b86b}
+.summary-value.green{color:var(--green)}
 .summary-value.orange{color:#ff8b3d}
-.summary-value.blue{color:#3a86ff}
+.summary-value.blue{color:var(--blue)}
 
 .summary-sub{
-    color:#7b7288;
-    font-weight:900;
-    font-size:12px;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:850;
 }
 
+/* =========================
+   RESULT PANEL
+========================= */
 .purchase-panel{
-    background:white;
+    padding:22px;
     border:2px solid #f5e8df;
-    border-radius:30px;
-    padding:26px;
-    box-shadow:0 20px 50px rgba(130,91,60,.10);
+    border-radius:28px;
+    background:white;
+    box-shadow:0 16px 38px rgba(130,91,60,.08);
 }
 
 .panel-head{
+    margin-bottom:18px;
     display:flex;
-    justify-content:space-between;
     align-items:center;
-    gap:16px;
-    margin-bottom:24px;
+    justify-content:space-between;
+    gap:12px;
 }
 
 .panel-head h2{
     margin:0;
-    color:#17152f;
-    font-size:30px;
+    color:var(--ink);
+    font-size:27px;
     font-weight:1000;
 }
 
+.panel-sub{
+    margin-top:4px;
+    color:var(--muted);
+    font-size:13px;
+    font-weight:850;
+}
+
 .sort-pill{
-    border:2px solid #eaddec;
-    background:white;
+    min-height:44px;
+    border:2px solid var(--line);
     border-radius:999px;
-    min-height:48px;
-    padding:0 22px;
+    padding:0 18px;
     display:flex;
     align-items:center;
     color:#6b6178;
+    background:white;
+    font-size:13px;
     font-weight:1000;
 }
 
 .purchase-grid{
     display:grid;
     grid-template-columns:repeat(4,1fr);
-    gap:18px;
+    gap:15px;
 }
 
+/* =========================
+   PURCHASE CARD
+========================= */
 .purchase-card{
-    border:2px solid #eaddec;
-    border-radius:26px;
-    padding:18px;
-    background:linear-gradient(180deg,#ffffff,#fffaf7);
-    box-shadow:0 12px 28px rgba(130,91,60,.06);
     min-width:0;
+    padding:16px;
+    border:2px solid var(--line);
+    border-radius:23px;
+    background:linear-gradient(180deg,#fff,#fffaf7);
+    box-shadow:0 9px 22px rgba(130,91,60,.05);
+}
+
+.purchase-card.status-received{
+    border-color:#cfeedd;
 }
 
 .purchase-top{
     display:flex;
-    justify-content:space-between;
     align-items:center;
-    gap:10px;
-    margin-bottom:14px;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:11px;
 }
 
 .code{
-    padding:8px 13px;
+    max-width:62%;
+    padding:7px 10px;
     border-radius:999px;
-    font-weight:1000;
-    font-size:13px;
+    color:var(--purple);
     background:#efe5ff;
-    color:#8e63ff;
     white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    font-size:12px;
+    font-weight:1000;
 }
 
 .date{
     color:#8b819b;
-    font-size:12px;
-    font-weight:1000;
     white-space:nowrap;
+    font-size:11px;
+    font-weight:1000;
 }
 
 .supplier{
+    min-width:0;
     display:flex;
     align-items:center;
-    gap:12px;
-    margin-bottom:10px;
-    min-width:0;
+    gap:10px;
+    margin-bottom:9px;
 }
 
 .avatar{
-    width:52px;
-    height:52px;
-    border-radius:50%;
+    width:44px;
+    height:44px;
+    border-radius:15px;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-weight:1000;
-    font-size:19px;
-    background:#efe5ff;
-    color:#8e63ff;
     flex:0 0 auto;
+    color:var(--purple);
+    background:#efe5ff;
+    font-size:16px;
+    font-weight:1000;
 }
 
+.supplier-copy{min-width:0}
+
 .supplier-name{
-    font-weight:1000;
-    color:#17152f;
+    color:var(--ink);
+    white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
-    white-space:nowrap;
+    font-size:15px;
+    font-weight:1000;
 }
 
 .supplier-type{
-    color:#7b7288;
-    font-weight:900;
-    font-size:13px;
+    margin-top:2px;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:850;
 }
 
 .status{
+    min-height:32px;
+    padding:0 11px;
+    border-radius:999px;
     display:inline-flex;
     align-items:center;
-    min-height:38px;
-    padding:0 14px;
+    font-size:11px;
+    font-weight:1000;
+}
+
+.status.ordered{background:#fff1c9;color:#d88400}
+.status.partial{background:#e8f2ff;color:var(--blue)}
+.status.received{background:#ddf8ea;color:var(--green)}
+.status.cancelled{background:#ffe3ee;color:var(--red)}
+
+.task-line{
+    margin:12px 0 8px;
+    display:flex;
+    align-items:end;
+    justify-content:space-between;
+    gap:10px;
+}
+
+.task-label{
+    color:var(--muted);
+    font-size:11px;
+    font-weight:1000;
+}
+
+.task-number{
+    color:var(--ink);
+    font-size:23px;
+    line-height:1;
+    font-weight:1000;
+}
+
+.task-number.pending{color:#ff6c43}
+.task-number.done{color:var(--green)}
+
+.progress-track{
+    height:10px;
     border-radius:999px;
-    font-weight:1000;
-    margin:6px 0 14px;
+    overflow:hidden;
+    background:#efe8f6;
 }
 
-.status.ordered{background:#fff1c9;color:#f59f00}
-.status.partial{background:#e8f2ff;color:#3a86ff}
-.status.received{background:#ddf8ea;color:#20b86b}
-.status.cancelled{background:#ffe3ee;color:#ff4d7d}
-
-.qty-row{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:9px;
-    margin:10px 0 14px;
+.progress-fill{
+    height:100%;
+    border-radius:inherit;
+    background:linear-gradient(90deg,var(--purple),var(--green));
 }
 
-.qty-box{
-    background:#fff;
-    border:2px solid #f1ddd1;
-    border-radius:18px;
-    padding:11px 8px;
-    text-align:center;
+.qty-inline{
+    margin-top:7px;
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:900;
 }
 
-.qty-label{
-    font-size:12px;
-    color:#7b7288;
-    font-weight:1000;
-}
-
-.qty-value{
-    font-size:21px;
-    color:#17152f;
-    font-weight:1000;
-    margin-top:4px;
-}
-
-.qty-value.received{color:#20b86b}
-.qty-value.pending{color:#ff8b3d}
+.qty-inline b{color:var(--ink)}
+.qty-inline .pending-text b{color:#ff6c43}
 
 .stock-status{
-    border:2px dashed #eaddec;
-    border-radius:20px;
-    background:white;
-    padding:13px;
     margin-top:12px;
-}
-
-.stock-title{
-    color:#17152f;
-    font-weight:1000;
-    margin-bottom:9px;
-    font-size:13px;
-}
-
-.pill-wrap{
     display:flex;
-    gap:8px;
+    gap:6px;
     flex-wrap:wrap;
 }
 
 .pill{
+    min-height:29px;
+    padding:0 9px;
+    border-radius:999px;
     display:inline-flex;
     align-items:center;
-    border-radius:999px;
-    padding:8px 11px;
-    font-size:12px;
+    font-size:10px;
     font-weight:1000;
 }
 
 .pill.plan{background:#f1e8ff;color:#6d45d8}
 .pill.none{background:#fff1db;color:#d77a00}
-.pill.ok{background:#ddf8ea;color:#20b86b}
-.pill.wait{background:#ffe3ee;color:#ff4d7d}
+.pill.ok{background:#ddf8ea;color:var(--green)}
+.pill.wait{background:#ffe3ee;color:var(--red)}
+
+.amount-row{
+    margin:12px 0;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+}
 
 .amount-label{
-    color:#7b7288;
+    color:var(--muted);
+    font-size:11px;
     font-weight:900;
-    font-size:13px;
-    margin-top:13px;
 }
 
 .amount{
-    font-size:25px;
+    color:var(--purple);
+    font-size:18px;
     font-weight:1000;
-    margin:4px 0 18px;
-    color:#8e63ff;
 }
 
 .card-actions{
     display:grid;
-    grid-template-columns:1fr 52px;
-    gap:10px;
+    grid-template-columns:1fr 46px;
+    gap:8px;
 }
 
 .view-btn,
 .edit-btn{
-    min-height:54px;
-    border-radius:18px;
+    min-height:48px;
+    border-radius:16px;
     display:flex;
     align-items:center;
     justify-content:center;
+    text-align:center;
+    font-size:13px;
     font-weight:1000;
 }
 
 .view-btn{
-    padding:0 12px;
-    text-align:center;
+    padding:0 10px;
+    color:var(--purple);
     background:#f7f1ff;
-    color:#8e63ff;
     border:2px solid #e3d5ff;
 }
 
 .edit-btn{
-    background:#fff6f2;
     color:#ff8b3d;
+    background:#fff6f2;
     border:2px solid #ffd9c8;
-    font-size:18px;
+    font-size:17px;
 }
 
 .empty-box{
     grid-column:1/-1;
-    min-height:330px;
+    min-height:280px;
+    padding:24px;
+    border:2px dashed var(--line);
+    border-radius:24px;
     display:flex;
     align-items:center;
     justify-content:center;
     text-align:center;
-    border:2px dashed #eaddec;
-    border-radius:26px;
-    background:#fffaf7;
+    background:var(--soft);
 }
 
 .empty-box h3{
-    font-size:24px;
     margin:8px 0;
-    color:#17152f;
+    color:var(--ink);
+    font-size:22px;
 }
 
-/* POPUP */
+/* =========================
+   POPUPS
+========================= */
 .popup-backdrop{
     display:none;
     position:fixed;
     inset:0;
-    background:rgba(23,21,47,.42);
     z-index:9000;
+    background:rgba(23,21,47,.42);
 }
 
 .popup-backdrop.active{display:block}
@@ -461,258 +534,670 @@ a{text-decoration:none!important}
     position:fixed;
     left:50%;
     top:50%;
-    transform:translate(-50%,-50%);
+    z-index:9001;
     width:420px;
     max-width:calc(100% - 28px);
-    background:white;
-    border-radius:30px;
-    box-shadow:0 30px 90px rgba(23,21,47,.32);
+    border-radius:28px;
     overflow:hidden;
-    z-index:9001;
+    transform:translate(-50%,-50%);
+    background:white;
+    box-shadow:0 30px 90px rgba(23,21,47,.32);
 }
 
 .phone-popup.active{display:block}
 
 .popup-head{
-    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
-    color:white;
-    padding:18px;
+    padding:16px;
     display:flex;
     align-items:center;
     justify-content:space-between;
+    color:white;
+    background:linear-gradient(135deg,var(--purple),var(--orange));
 }
 
 .popup-head h3{
     margin:0;
-    font-size:22px;
+    font-size:20px;
     font-weight:1000;
 }
 
 .popup-close{
-    width:42px;
-    height:42px;
-    border:none;
+    width:40px;
+    height:40px;
+    border:0;
     border-radius:50%;
-    background:rgba(255,255,255,.22);
     color:white;
-    font-size:18px;
+    background:rgba(255,255,255,.22);
+    font-size:17px;
     font-weight:1000;
     cursor:pointer;
 }
 
-.popup-body{
-    padding:16px;
-}
+.popup-body{padding:15px}
 
 .popup-date-input{
     width:100%;
-    min-height:62px;
-    border:2px solid #eaddec;
-    border-radius:20px;
-    padding:0 16px;
-    font-size:18px;
+    min-height:58px;
+    border:2px solid var(--line);
+    border-radius:18px;
+    padding:0 14px;
+    color:var(--ink);
+    font-size:17px;
     font-weight:1000;
-    color:#17152f;
 }
 
 .quick-date-row{
+    margin-top:10px;
     display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin-top:12px;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
 }
 
 .quick-btn{
-    min-height:54px;
-    border:none;
-    border-radius:18px;
+    min-height:48px;
+    border:0;
+    border-radius:16px;
     color:white;
+    font-size:12px;
     font-weight:1000;
     cursor:pointer;
 }
 
-.quick-btn.today{background:linear-gradient(135deg,#20b86b,#68d99d)}
-.quick-btn.month{background:linear-gradient(135deg,#3a86ff,#8e63ff)}
-.quick-btn.clear{background:linear-gradient(135deg,#8b819b,#17152f)}
+.quick-btn.today{background:linear-gradient(135deg,var(--green),#68d99d)}
+.quick-btn.month{background:linear-gradient(135deg,var(--blue),var(--purple))}
+.quick-btn.clear{background:linear-gradient(135deg,#8b819b,var(--ink))}
 
 .popup-options{
+    padding:14px;
     display:grid;
-    gap:10px;
-    padding:16px;
+    gap:8px;
 }
 
 .status-option{
-    min-height:62px;
-    border:2px solid #eaddec;
-    background:#fffaf7;
-    border-radius:20px;
-    padding:0 16px;
-    color:#17152f;
-    font-weight:1000;
+    min-height:54px;
+    border:2px solid var(--line);
+    border-radius:17px;
+    padding:0 14px;
+    color:var(--ink);
+    background:var(--soft);
     text-align:left;
+    font-size:14px;
+    font-weight:1000;
     cursor:pointer;
 }
 
 .status-option.active,
 .status-option:hover{
-    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
     color:white;
     border-color:transparent;
+    background:linear-gradient(135deg,var(--purple),var(--orange));
 }
 
 .popup-bottom{
-    display:flex;
-    gap:10px;
-    justify-content:flex-end;
-    padding:16px;
+    padding:14px;
     border-top:1px solid #f1ddd1;
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
 }
 
 .popup-ok,
 .popup-cancel{
-    min-height:48px;
-    padding:0 22px;
-    border:none;
+    min-height:46px;
+    border:0;
     border-radius:999px;
+    padding:0 20px;
     font-weight:1000;
     cursor:pointer;
 }
 
 .popup-ok{
-    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
     color:white;
+    background:linear-gradient(135deg,var(--purple),var(--orange));
 }
 
 .popup-cancel{
+    color:var(--purple);
     background:#f7f1ff;
-    color:#8e63ff;
 }
 
-/* iPad */
+/* =========================
+   TABLET
+========================= */
 @media (min-width:768px) and (max-width:1194px){
-    .purchase-page{padding:20px!important}
-    .purchase-hero{grid-template-columns:1fr!important}
-    .hero-img{max-width:260px;margin-left:auto}
-    .summary-card{grid-template-columns:repeat(2,1fr)!important}
-    .purchase-grid{grid-template-columns:repeat(2,1fr)!important;gap:20px!important}
-    .purchase-card{padding:22px!important;border-radius:28px!important}
-    .view-btn,.edit-btn{min-height:64px!important;font-size:16px!important}
-    .filter-form{grid-template-columns:1fr 1fr!important}
+    .purchase-page{padding:20px}
+    .purchase-hero{grid-template-columns:1fr 240px}
+    .hero-img{height:150px}
+    .filter-form{grid-template-columns:1fr 1fr 1fr}
+    .btn-search,.btn-clear{width:100%}
+    .summary-card{grid-template-columns:repeat(2,1fr)}
+    .purchase-grid{grid-template-columns:repeat(2,1fr)}
 }
 
-/* Phone */
+/* =========================
+   PHONE
+========================= */
 @media(max-width:767px){
-    .purchase-page{padding:16px}
-    .purchase-hero{grid-template-columns:1fr;text-align:left}
-    .purchase-title h1{font-size:32px}
-    .purchase-title p{font-size:15px}
-    .hero-img{display:none}
-    .btn-add{width:100%}
-    .filter-form{grid-template-columns:1fr}
-    .btn-search,.btn-clear{width:100%}
-    .summary-card{grid-template-columns:1fr;padding:16px}
-    .summary-item{
-        border-right:none;
-        border-bottom:1px solid #f1ddd1;
-        padding-bottom:16px;
-    }
-    .summary-item:last-child{border-bottom:none}
-    .purchase-panel{padding:16px}
-    .panel-head{align-items:flex-start;flex-direction:column}
-    .sort-pill{width:100%;justify-content:center}
-    .purchase-grid{grid-template-columns:1fr}
-    .purchase-top{align-items:flex-start;flex-direction:column}
-    .date{white-space:normal}
+    body{overflow-x:hidden}
 
+    .desktop-only{display:none!important}
+    .mobile-only{display:flex}
+
+    .purchase-page{
+        width:100%;
+        padding:12px 12px 28px;
+    }
+
+    /* Compact header: list appears immediately */
+    .purchase-hero{
+        display:block;
+        margin-bottom:10px;
+    }
+
+    .purchase-title{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+    }
+
+    .purchase-title h1{
+        font-size:25px;
+        line-height:1.1;
+    }
+
+    .purchase-title p,
+    .hero-img{
+        display:none;
+    }
+
+    .purchase-title .btn-add{
+        min-height:43px;
+        padding:0 15px;
+        flex:0 0 auto;
+        font-size:13px;
+        box-shadow:none;
+    }
+
+    /* Main task bar */
+    .mobile-task-bar{
+        min-height:68px;
+        margin-bottom:10px;
+        padding:10px 12px;
+        border-radius:19px;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        color:white;
+        background:linear-gradient(135deg,#7150e8,#ff8c6b);
+        box-shadow:0 10px 24px rgba(113,80,232,.2);
+    }
+
+    .mobile-task-copy small{
+        display:block;
+        opacity:.9;
+        font-size:11px;
+        font-weight:900;
+    }
+
+    .mobile-task-copy strong{
+        display:block;
+        margin-top:2px;
+        font-size:18px;
+        line-height:1.1;
+        font-weight:1000;
+    }
+
+    .mobile-task-count{
+        min-width:48px;
+        height:48px;
+        padding:0 10px;
+        border-radius:16px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background:rgba(255,255,255,.19);
+        font-size:21px;
+        font-weight:1000;
+    }
+
+    /* Collapsed filter */
+    .filter-details{
+        margin-bottom:10px;
+    }
+
+    .filter-details[open] .filter-summary .filter-chevron{
+        transform:rotate(180deg);
+    }
+
+    .filter-summary{
+        min-height:48px;
+        padding:0 13px;
+        border:2px solid var(--line);
+        border-radius:17px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        color:var(--ink);
+        background:white;
+        list-style:none;
+        font-size:13px;
+        font-weight:1000;
+        cursor:pointer;
+    }
+
+    .filter-summary::-webkit-details-marker{display:none}
+
+    .filter-summary-main{
+        min-width:0;
+        display:flex;
+        align-items:center;
+        gap:8px;
+    }
+
+    .filter-summary-text{
+        min-width:0;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+    }
+
+    .filter-chevron{
+        transition:.2s ease;
+        color:var(--muted);
+    }
+
+    .filter-panel{
+        margin-top:7px;
+        padding:10px;
+        border-radius:19px;
+        box-shadow:none;
+    }
+
+    .filter-form{
+        grid-template-columns:1fr 1fr;
+        gap:8px;
+    }
+
+    .filter-box{
+        padding:8px;
+        border-radius:16px;
+    }
+
+    .filter-box.status-filter-box{
+        grid-column:1/-1;
+    }
+
+    .filter-label{
+        margin-bottom:3px;
+        font-size:9px;
+    }
+
+    .date-pop-btn,
+    .status-pop-btn{
+        min-height:42px;
+        border-radius:12px;
+        padding:0 9px;
+        font-size:12px;
+    }
+
+    .btn-search,
+    .btn-clear{
+        width:100%;
+        min-height:44px;
+        padding:0 10px;
+        font-size:12px;
+    }
+
+    /* Hide large financial summary; keep compact optional row */
+    .summary-card{
+        grid-template-columns:1fr 1fr;
+        gap:7px;
+        margin-bottom:10px;
+    }
+
+    .summary-item{
+        min-height:61px;
+        padding:9px 10px;
+        border-radius:17px;
+        gap:8px;
+        box-shadow:none;
+    }
+
+    .summary-item.mobile-secondary{
+        display:none;
+    }
+
+    .summary-icon{
+        width:36px;
+        height:36px;
+        border-radius:12px;
+        font-size:17px;
+    }
+
+    .summary-label{font-size:10px}
+    .summary-value{font-size:18px}
+    .summary-sub{display:none}
+
+    /* Result area */
+    .purchase-panel{
+        padding:0;
+        border:0;
+        border-radius:0;
+        background:transparent;
+        box-shadow:none;
+    }
+
+    .panel-head{
+        position:sticky;
+        top:0;
+        z-index:30;
+        margin:0 -2px 8px;
+        padding:8px 2px;
+        align-items:center;
+        background:rgba(255,250,247,.94);
+        backdrop-filter:blur(12px);
+    }
+
+    .panel-head h2{
+        font-size:17px;
+    }
+
+    .panel-sub{
+        margin-top:1px;
+        font-size:10px;
+    }
+
+    .sort-pill{
+        min-height:34px;
+        padding:0 10px;
+        border-radius:12px;
+        font-size:10px;
+    }
+
+    .purchase-grid{
+        grid-template-columns:1fr;
+        gap:8px;
+    }
+
+    .purchase-card{
+        padding:12px;
+        border-radius:19px;
+        box-shadow:none;
+    }
+
+    .purchase-top{
+        margin-bottom:8px;
+    }
+
+    .code{
+        max-width:56%;
+        padding:6px 8px;
+        font-size:10px;
+    }
+
+    .date{
+        font-size:10px;
+    }
+
+    .supplier{
+        margin-bottom:7px;
+    }
+
+    .avatar{
+        width:38px;
+        height:38px;
+        border-radius:12px;
+        font-size:14px;
+    }
+
+    .supplier-name{
+        font-size:14px;
+    }
+
+    .supplier-type{
+        display:none;
+    }
+
+    .supplier-status-row{
+        min-width:0;
+        flex:1;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:7px;
+    }
+
+    .supplier-status-row .supplier-copy{
+        flex:1;
+    }
+
+    .status{
+        min-height:28px;
+        padding:0 8px;
+        flex:0 0 auto;
+        font-size:9px;
+    }
+
+    /* Focus on remaining task */
+    .task-line{
+        margin:9px 0 6px;
+    }
+
+    .task-label{
+        font-size:10px;
+    }
+
+    .task-number{
+        font-size:19px;
+    }
+
+    .progress-track{
+        height:8px;
+    }
+
+    .qty-inline{
+        margin-top:5px;
+        font-size:10px;
+    }
+
+    .stock-status{
+        margin-top:8px;
+        gap:5px;
+    }
+
+    .pill{
+        min-height:25px;
+        padding:0 7px;
+        font-size:9px;
+    }
+
+    .amount-row{
+        margin:8px 0;
+    }
+
+    .amount-label{font-size:10px}
+    .amount{font-size:15px}
+
+    .card-actions{
+        grid-template-columns:1fr 43px;
+        gap:7px;
+    }
+
+    .view-btn,
+    .edit-btn{
+        min-height:43px;
+        border-radius:14px;
+    }
+
+    .view-btn{
+        font-size:12px;
+    }
+
+    .empty-box{
+        min-height:230px;
+        border-radius:19px;
+    }
+
+    /* Bottom-sheet popups */
     .phone-popup{
-        left:12px;
-        right:12px;
-        bottom:14px;
+        left:8px;
+        right:8px;
         top:auto;
-        transform:none;
+        bottom:8px;
         width:auto;
         max-width:none;
-        border-radius:28px;
+        max-height:calc(100dvh - 16px);
+        border-radius:23px;
+        transform:none;
     }
 
+    .popup-head{
+        padding:13px;
+    }
+
+    .popup-head h3{font-size:18px}
+
+    .popup-body{padding:12px}
+
     .quick-date-row{
-        grid-template-columns:1fr;
+        grid-template-columns:repeat(3,1fr);
+    }
+
+    .popup-options{
+        max-height:65dvh;
+        overflow-y:auto;
+        -webkit-overflow-scrolling:touch;
     }
 }
+/* Prevent iPhone Safari from zooming when a form control receives focus.
+   iOS auto-zooms controls whose computed font size is below 16px. */
+@media (max-width: 767px) {
+    input,
+    textarea,
+    select {
+        font-size: 16px !important;
+    }
+
+    input[type="date"],
+    input[type="number"],
+    input[type="text"],
+    input[type="search"] {
+        font-size: 16px !important;
+    }
+}
+
 </style>
 
 <div class="purchase-page">
 
     <div class="purchase-hero">
         <div class="purchase-title">
-            <h1>Purchases ✨</h1>
-            <p>
-                Search purchase orders by date and receiving status.<br>
-                Default shows all old orders until today, Ordered + Partial Received.
-            </p>
-            <a href="{% url 'purchase_create' %}" class="btn-add">Add Purchase</a>
+            <div>
+                <h1>Purchases ✨</h1>
+                <p>
+                    Search purchase orders by date and receiving status.
+                    Active purchases are shown first so staff can finish remaining work quickly.
+                </p>
+            </div>
+            <a href="{% url 'purchase_create' %}" class="btn-add">＋ Add Purchase</a>
         </div>
 
         <img src="{% static 'img/purchase-hero.png' %}" class="hero-img" alt="Purchase">
     </div>
 
-    <div class="filter-panel">
-        <form method="get" class="filter-form" id="purchaseFilterForm">
-            <div class="filter-box">
-                <span class="filter-label">From Date</span>
-                <input type="hidden" name="date_from" id="dateFromInput" value="{{ date_from }}">
-                <button type="button" class="date-pop-btn" onclick="openDatePopup('from')">
-                    <span id="dateFromLabel">All dates</span>
-                    <small>📅</small>
-                </button>
-            </div>
-
-            <div class="filter-box">
-                <span class="filter-label">To Date</span>
-                <input type="hidden" name="date_to" id="dateToInput" value="{{ date_to }}">
-                <button type="button" class="date-pop-btn" onclick="openDatePopup('to')">
-                    <span id="dateToLabel">{{ date_to }}</span>
-                    <small>📅</small>
-                </button>
-            </div>
-
-            <div class="filter-box">
-                <span class="filter-label">Status</span>
-                <input type="hidden" name="status" id="statusInput" value="{{ status_filter|default:'active' }}">
-                <button type="button" class="status-pop-btn" onclick="openStatusPopup()">
-                    <span id="statusLabel">
-                        {% if status_filter == "all" %}
-                            All
-                        {% elif status_filter == "complete" %}
-                            Complete
-                        {% elif status_filter == "ordered" %}
-                            Ordered
-                        {% elif status_filter == "partial" %}
-                            Partial Received
-                        {% else %}
-                            Ordered + Partial Received
-                        {% endif %}
-                    </span>
-                    <small>⌄</small>
-                </button>
-            </div>
-
-            <button type="submit" class="btn-search">🔍 Search</button>
-            <a href="{% url 'purchase_list' %}" class="btn-clear">Clear</a>
-        </form>
+    <!-- PHONE: the most important information appears before filters -->
+    <div class="mobile-task-bar mobile-only">
+        <div class="mobile-task-copy">
+            <small>RECEIVING TASKS REMAINING</small>
+            <strong>
+                {% if pending_orders %}
+                    {{ pending_orders }} purchase{{ pending_orders|pluralize }} need action
+                {% else %}
+                    Everything is completed
+                {% endif %}
+            </strong>
+        </div>
+        <div class="mobile-task-count">{{ pending_orders|default:"0" }}</div>
     </div>
+
+    <details class="filter-details" id="filterDetails">
+        <summary class="filter-summary">
+            <span class="filter-summary-main">
+                <span>🔎</span>
+                <span class="filter-summary-text" id="mobileFilterSummary">Filter purchases</span>
+            </span>
+            <span class="filter-chevron">⌄</span>
+        </summary>
+
+        <div class="filter-panel">
+            <form method="get" class="filter-form" id="purchaseFilterForm">
+                <div class="filter-box">
+                    <span class="filter-label">From</span>
+                    <input type="hidden" name="date_from" id="dateFromInput" value="{{ date_from }}">
+                    <button type="button" class="date-pop-btn" onclick="openDatePopup('from')">
+                        <span id="dateFromLabel">All dates</span>
+                        <small>📅</small>
+                    </button>
+                </div>
+
+                <div class="filter-box">
+                    <span class="filter-label">To</span>
+                    <input type="hidden" name="date_to" id="dateToInput" value="{{ date_to }}">
+                    <button type="button" class="date-pop-btn" onclick="openDatePopup('to')">
+                        <span id="dateToLabel">{{ date_to }}</span>
+                        <small>📅</small>
+                    </button>
+                </div>
+
+                <div class="filter-box status-filter-box">
+                    <span class="filter-label">Status</span>
+                    <input type="hidden" name="status" id="statusInput" value="{{ status_filter|default:'active' }}">
+                    <button type="button" class="status-pop-btn" onclick="openStatusPopup()">
+                        <span id="statusLabel">
+                            {% if status_filter == "all" %}
+                                All
+                            {% elif status_filter == "complete" %}
+                                Complete
+                            {% elif status_filter == "ordered" %}
+                                Ordered
+                            {% elif status_filter == "partial" %}
+                                Partial Received
+                            {% else %}
+                                Ordered + Partial
+                            {% endif %}
+                        </span>
+                        <small>⌄</small>
+                    </button>
+                </div>
+
+                <button type="submit" class="btn-search">🔍 Search</button>
+                <a href="{% url 'purchase_list' %}" class="btn-clear">Clear</a>
+            </form>
+        </div>
+    </details>
 
     <div class="summary-card">
         <div class="summary-item">
+            <div class="summary-icon orange">📦</div>
+            <div>
+                <div class="summary-label">Tasks Remaining</div>
+                <div class="summary-value orange">{{ pending_orders|default:"0" }}</div>
+                <div class="summary-sub">Ordered + partial</div>
+            </div>
+        </div>
+
+        <div class="summary-item">
             <div class="summary-icon purple">🛒</div>
             <div>
-                <div class="summary-label">Total Purchases</div>
+                <div class="summary-label">Results</div>
                 <div class="summary-value">{{ total_purchases|default:"0" }}</div>
                 <div class="summary-sub">Current filter</div>
             </div>
         </div>
 
-        <div class="summary-item">
+        <div class="summary-item mobile-secondary">
             <div class="summary-icon green">💵</div>
             <div>
                 <div class="summary-label">Total Spent</div>
@@ -721,16 +1206,7 @@ a{text-decoration:none!important}
             </div>
         </div>
 
-        <div class="summary-item">
-            <div class="summary-icon orange">📦</div>
-            <div>
-                <div class="summary-label">Pending Orders</div>
-                <div class="summary-value orange">{{ pending_orders|default:"0" }}</div>
-                <div class="summary-sub">Ordered + partial</div>
-            </div>
-        </div>
-
-        <div class="summary-item">
+        <div class="summary-item mobile-secondary">
             <div class="summary-icon blue">🗓️</div>
             <div>
                 <div class="summary-label">This Month</div>
@@ -742,84 +1218,111 @@ a{text-decoration:none!important}
 
     <div class="purchase-panel">
         <div class="panel-head">
-            <h2>Purchase Results</h2>
-            <div class="sort-pill">Newest First⌄</div>
+            <div>
+                <h2>
+                    {% if status_filter == "active" or not status_filter %}
+                        Receiving Tasks
+                    {% else %}
+                        Purchase Results
+                    {% endif %}
+                </h2>
+                <div class="panel-sub">Tap a purchase to count or confirm stock</div>
+            </div>
+            <div class="sort-pill">Newest first</div>
         </div>
 
         <div class="purchase-grid">
             {% for purchase in purchases %}
-            <div class="purchase-card">
+            <div class="purchase-card status-{{ purchase.status }}">
                 <div class="purchase-top">
                     <span class="code">#PUR-{{ purchase.id|stringformat:"05d" }}</span>
-                    <span class="date">{{ purchase.created_at|date:"M d, Y" }} 🗓️</span>
+                    <span class="date">{{ purchase.created_at|date:"d M Y" }}</span>
                 </div>
 
                 <div class="supplier">
                     <div class="avatar">{{ purchase.supplier|slice:":2"|upper }}</div>
-                    <div>
-                        <div class="supplier-name">{{ purchase.supplier }}</div>
-                        <div class="supplier-type">Supplier Order</div>
+
+                    <div class="supplier-status-row">
+                        <div class="supplier-copy">
+                            <div class="supplier-name">{{ purchase.supplier }}</div>
+                            <div class="supplier-type">Supplier order</div>
+                        </div>
+
+                        {% if purchase.status == "received" %}
+                            <div class="status received">✓ Complete</div>
+                        {% elif purchase.status == "partial" %}
+                            <div class="status partial">Partial</div>
+                        {% elif purchase.status == "cancelled" %}
+                            <div class="status cancelled">Cancelled</div>
+                        {% else %}
+                            <div class="status ordered">Waiting</div>
+                        {% endif %}
                     </div>
                 </div>
 
-                {% if purchase.status == "received" %}
-                    <div class="status received">✓ Complete</div>
-                {% elif purchase.status == "partial" %}
-                    <div class="status partial">📦 Partial Received</div>
-                {% elif purchase.status == "cancelled" %}
-                    <div class="status cancelled">✕ Cancelled</div>
-                {% else %}
-                    <div class="status ordered">⏳ Ordered</div>
-                {% endif %}
+                <div class="task-line">
+                    <div>
+                        <div class="task-label">ITEMS STILL TO RECEIVE</div>
+                        {% if purchase.total_pending_qty > 0 %}
+                            <div class="task-number pending">{{ purchase.total_pending_qty }}</div>
+                        {% else %}
+                            <div class="task-number done">0 ✓</div>
+                        {% endif %}
+                    </div>
+                    <div class="task-label">
+                        {{ purchase.total_received_qty }} / {{ purchase.total_ordered_qty }} received
+                    </div>
+                </div>
 
-                <div class="qty-row">
-                    <div class="qty-box">
-                        <div class="qty-label">Ordered</div>
-                        <div class="qty-value">{{ purchase.total_ordered_qty }}</div>
-                    </div>
-                    <div class="qty-box">
-                        <div class="qty-label">Received</div>
-                        <div class="qty-value received">{{ purchase.total_received_qty }}</div>
-                    </div>
-                    <div class="qty-box">
-                        <div class="qty-label">Missing</div>
-                        <div class="qty-value pending">{{ purchase.total_pending_qty }}</div>
-                    </div>
+                <div class="progress-track">
+                    {% widthratio purchase.total_received_qty purchase.total_ordered_qty 100 as receive_percent %}
+                    <div class="progress-fill" style="width:{{ receive_percent|default:'0' }}%"></div>
+                </div>
+
+                <div class="qty-inline">
+                    <span>Ordered <b>{{ purchase.total_ordered_qty }}</b></span>
+                    <span>Received <b>{{ purchase.total_received_qty }}</b></span>
+                    <span class="pending-text">Missing <b>{{ purchase.total_pending_qty }}</b></span>
                 </div>
 
                 <div class="stock-status">
-                    <div class="stock-title">📋 Stock Status</div>
-                    <div class="pill-wrap">
-                        {% if purchase.has_plan %}
-                            <span class="pill plan">✅ Plan Set</span>
-                        {% else %}
-                            <span class="pill none">⚠️ No Plan</span>
-                        {% endif %}
+                    {% if purchase.has_plan %}
+                        <span class="pill plan">✓ Shop plan</span>
+                    {% else %}
+                        <span class="pill none">No shop plan</span>
+                    {% endif %}
 
-                        {% if purchase.is_allocated %}
-                            <span class="pill ok">✅ Allocated</span>
-                        {% else %}
-                            <span class="pill wait">⏳ Not Allocated</span>
-                        {% endif %}
-                    </div>
+                    {% if purchase.is_allocated %}
+                        <span class="pill ok">✓ Stock allocated</span>
+                    {% else %}
+                        <span class="pill wait">Not allocated</span>
+                    {% endif %}
                 </div>
 
-                <div class="amount-label">Total Batch Cost</div>
-                <div class="amount">${{ purchase.total_amount|floatformat:2 }}</div>
+                <div class="amount-row">
+                    <span class="amount-label">Batch cost</span>
+                    <span class="amount">${{ purchase.total_amount|floatformat:2 }}</span>
+                </div>
 
                 <div class="card-actions">
-                    <a href="{% url 'purchase_detail' purchase.id %}" class="view-btn">👁 Check / Receive</a>
-                    <a href="{% url 'purchase_update' purchase.id %}" class="edit-btn">✏️</a>
+                    <a href="{% url 'purchase_detail' purchase.id %}" class="view-btn">
+                        {% if purchase.total_pending_qty > 0 %}
+                            📥 Count / Receive
+                        {% else %}
+                            👁 View Purchase
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'purchase_update' purchase.id %}" class="edit-btn" aria-label="Edit purchase">✏️</a>
                 </div>
             </div>
 
             {% empty %}
             <div class="empty-box">
                 <div>
-                    <div style="font-size:90px;">📦✨</div>
+                    <div style="font-size:64px;">📦✨</div>
                     <h3>No purchases found</h3>
-                    <p>No purchases match this date/status filter.</p>
-                    <a href="{% url 'purchase_create' %}" class="btn-add">Add Purchase</a>
+                    <p>No purchases match this filter.</p>
+                    <a href="{% url 'purchase_create' %}" class="btn-add">＋ Add Purchase</a>
                 </div>
             </div>
             {% endfor %}
@@ -849,7 +1352,7 @@ a{text-decoration:none!important}
 
     <div class="popup-bottom">
         <button type="button" class="popup-cancel" onclick="closeDatePopup()">Cancel</button>
-        <button type="button" class="popup-ok" onclick="applyPopupDate()">OK</button>
+        <button type="button" class="popup-ok" onclick="applyPopupDate()">Apply</button>
     </div>
 </div>
 
@@ -863,24 +1366,20 @@ a{text-decoration:none!important}
     </div>
 
     <div class="popup-options">
-        <button type="button" class="status-option" data-value="active" onclick="selectStatus('active','Ordered + Partial Received')">
-            📦 Ordered + Partial Received
+        <button type="button" class="status-option" data-value="active" onclick="selectStatus('active','Ordered + Partial')">
+            📦 Tasks Remaining
         </button>
-
-        <button type="button" class="status-option" data-value="all" onclick="selectStatus('all','All')">
-            📋 All
+        <button type="button" class="status-option" data-value="ordered" onclick="selectStatus('ordered','Ordered')">
+            ⏳ Ordered Only
         </button>
-
+        <button type="button" class="status-option" data-value="partial" onclick="selectStatus('partial','Partial Received')">
+            📥 Partial Received
+        </button>
         <button type="button" class="status-option" data-value="complete" onclick="selectStatus('complete','Complete')">
             ✅ Complete
         </button>
-
-        <button type="button" class="status-option" data-value="ordered" onclick="selectStatus('ordered','Ordered')">
-            ⏳ Ordered
-        </button>
-
-        <button type="button" class="status-option" data-value="partial" onclick="selectStatus('partial','Partial Received')">
-            📦 Partial Received
+        <button type="button" class="status-option" data-value="all" onclick="selectStatus('all','All')">
+            📋 All Purchases
         </button>
     </div>
 </div>
@@ -899,6 +1398,7 @@ const statusInput = document.getElementById("statusInput");
 const statusLabel = document.getElementById("statusLabel");
 const statusPopup = document.getElementById("statusPopup");
 const statusPopupBackdrop = document.getElementById("statusPopupBackdrop");
+const mobileFilterSummary = document.getElementById("mobileFilterSummary");
 
 let activeDateField = "from";
 
@@ -930,18 +1430,27 @@ function formatDateLabel(value){
     });
 }
 
+function refreshMobileFilterSummary(){
+    if(!mobileFilterSummary) return;
+
+    const label = statusLabel.textContent.trim();
+    const fromText = dateFromInput.value ? formatDateLabel(dateFromInput.value) : "All dates";
+    const toText = dateToInput.value ? formatDateLabel(dateToInput.value) : "Today";
+
+    mobileFilterSummary.textContent = `${label} • ${fromText} → ${toText}`;
+}
+
 function refreshDateLabels(){
     if(!dateToInput.value){
         dateToInput.value = todayValue();
     }
 
-    if(dateFromInput.value){
-        dateFromLabel.textContent = formatDateLabel(dateFromInput.value);
-    }else{
-        dateFromLabel.textContent = "All dates";
-    }
+    dateFromLabel.textContent = dateFromInput.value
+        ? formatDateLabel(dateFromInput.value)
+        : "All dates";
 
     dateToLabel.textContent = formatDateLabel(dateToInput.value);
+    refreshMobileFilterSummary();
 }
 
 function openDatePopup(field){
@@ -957,11 +1466,13 @@ function openDatePopup(field){
 
     datePopup.classList.add("active");
     datePopupBackdrop.classList.add("active");
+    document.body.style.overflow = "hidden";
 }
 
 function closeDatePopup(){
     datePopup.classList.remove("active");
     datePopupBackdrop.classList.remove("active");
+    document.body.style.overflow = "";
 }
 
 function setPopupDateToday(){
@@ -991,17 +1502,20 @@ function openStatusPopup(){
     markActiveStatus();
     statusPopup.classList.add("active");
     statusPopupBackdrop.classList.add("active");
+    document.body.style.overflow = "hidden";
 }
 
 function closeStatusPopup(){
     statusPopup.classList.remove("active");
     statusPopupBackdrop.classList.remove("active");
+    document.body.style.overflow = "";
 }
 
 function selectStatus(value, label){
     statusInput.value = value;
     statusLabel.textContent = label;
     markActiveStatus();
+    refreshMobileFilterSummary();
     closeStatusPopup();
 }
 
@@ -1009,22 +1523,19 @@ function markActiveStatus(){
     const value = statusInput.value || "active";
 
     document.querySelectorAll(".status-option").forEach(function(btn){
-        if(btn.getAttribute("data-value") === value){
-            btn.classList.add("active");
-        }else{
-            btn.classList.remove("active");
-        }
+        btn.classList.toggle("active", btn.dataset.value === value);
     });
 }
 
 function initDefaultFilter(){
     if(!statusInput.value){
         statusInput.value = "active";
-        statusLabel.textContent = "Ordered + Partial Received";
+        statusLabel.textContent = "Ordered + Partial";
     }
 
     refreshDateLabels();
     markActiveStatus();
+    refreshMobileFilterSummary();
 }
 
 document.addEventListener("keydown", function(e){

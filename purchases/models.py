@@ -100,6 +100,18 @@ class PurchaseItem(models.Model):
         return max(self.ordered_qty - self.received_qty, 0)
 
     @property
+    def extra_received_qty(self):
+        """Quantity received above the original ordered quantity."""
+        return max(self.received_qty - self.ordered_qty, 0)
+
+    @property
+    def is_fully_received_and_allocated(self):
+        return (
+            self.received_qty >= self.ordered_qty
+            and self.allocated_qty >= self.received_qty
+        )
+
+    @property
     def planned_qty(self):
         return sum(plan.qty for plan in self.branch_plans.all())
 
@@ -220,9 +232,11 @@ class PurchaseReceiveLog(models.Model):
         ordering = ["-created_at", "-id"]
 
     def clean(self):
-        if self.purchase_item_id and self.qty > self.purchase_item.pending_qty:
+        # Real supplier counts may be higher than the purchase order.
+        # Only reject zero/negative values; PositiveIntegerField also protects this.
+        if self.qty is None or self.qty <= 0:
             raise ValidationError({
-                "qty": f"Cannot receive more than pending qty: {self.purchase_item.pending_qty}"
+                "qty": "Receive quantity must be greater than 0."
             })
 
     def save(self, *args, **kwargs):
@@ -231,20 +245,14 @@ class PurchaseReceiveLog(models.Model):
         if is_new:
             self.full_clean()
 
-        purchase_item = self.purchase_item
-        real_qty = min(self.qty, purchase_item.pending_qty)
-
         super().save(*args, **kwargs)
 
         if not is_new:
             return
 
-        if real_qty <= 0:
-            return
-
-        purchase_item.received_qty += real_qty
+        purchase_item = self.purchase_item
+        purchase_item.received_qty += self.qty
         purchase_item.save(update_fields=["received_qty"])
-
         purchase_item.purchase.refresh_status()
 
     def __str__(self):

@@ -1,266 +1,582 @@
 {% load static %}
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#fff4ec">
+
     <title>Login - BUBU Pet Store</title>
 
     <style>
-        *{box-sizing:border-box;font-family:Arial,sans-serif;}
+        :root{
+            --ink:#3f2d3b;
+            --muted:#8d7e89;
+            --pink:#ff8d8b;
+            --pink-dark:#ff716f;
+            --purple:#a878f5;
+            --cream:#fff8f3;
+            --card:#ffffff;
+            --line:#f1ddd4;
+        }
+
+        *{
+            box-sizing:border-box;
+        }
+
+        html{
+            min-height:100%;
+            -webkit-text-size-adjust:100%;
+        }
 
         body{
             margin:0;
             min-height:100vh;
-            background:linear-gradient(135deg,#fff3e8,#fff8fb);
-            overflow:hidden;
-            color:#4b2f3f;
+            min-height:100dvh;
+            color:var(--ink);
+            background:
+                radial-gradient(circle at 8% 5%,rgba(255,208,190,.72),transparent 30%),
+                radial-gradient(circle at 95% 14%,rgba(220,204,255,.72),transparent 34%),
+                linear-gradient(145deg,#fff3e9,#fff9fb 55%,#f8f1ff);
+            font-family:Arial,sans-serif;
+            overflow-x:hidden;
         }
 
-        .page{
-            min-height:100vh;
-            display:grid;
-            grid-template-columns:1fr 460px;
-            gap:36px;
-            align-items:center;
-            justify-content:center;
-            max-width:1450px;
-            margin:0 auto;
-            padding:30px 40px;
+        button,
+        input{
+            font-family:Arial,sans-serif;
+        }
+
+        button{
+            touch-action:manipulation;
+        }
+
+        .login-page{
             position:relative;
-        }
-
-        .hero{
+            min-height:100vh;
+            min-height:100dvh;
+            padding:
+                max(18px,env(safe-area-inset-top))
+                16px
+                calc(20px + env(safe-area-inset-bottom));
             display:flex;
-            align-items:center;
+            align-items:flex-start;
             justify-content:center;
-            padding:38px;
+            overflow:hidden;
         }
 
-        .hero img{
-            width:100%;
-            max-height:760px;
-            object-fit:contain;
+        .paw{
+            position:absolute;
+            z-index:0;
+            opacity:.20;
+            pointer-events:none;
+            animation:floatPaw 7s ease-in-out infinite;
         }
 
-        .side{
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            padding:38px;
+        .paw-one{
+            top:8%;
+            left:7%;
+            font-size:34px;
         }
 
-        .card{
-            width:100%;
-            max-width:460px;
-            background:rgba(255,255,255,.94);
-            border:1px solid #f2dacb;
-            border-radius:34px;
-            padding:38px;
-            text-align:center;
-            box-shadow:0 28px 70px rgba(120,76,45,.16);
+        .paw-two{
+            right:8%;
+            top:18%;
+            font-size:27px;
+            animation-delay:1.4s;
+        }
+
+        .paw-three{
+            left:11%;
+            bottom:12%;
+            font-size:24px;
+            animation-delay:2.3s;
+        }
+
+        .paw-four{
+            right:10%;
+            bottom:8%;
+            font-size:32px;
+            animation-delay:3.1s;
+        }
+
+        .login-card{
             position:relative;
             z-index:2;
+            width:100%;
+            max-width:430px;
+            margin-top:24px;
+            overflow:hidden;
+            border:1px solid rgba(241,221,212,.95);
+            border-radius:30px;
+            background:rgba(255,255,255,.96);
+            box-shadow:0 24px 65px rgba(105,72,63,.16);
+            backdrop-filter:blur(14px);
         }
 
-        .logo{
-            width:92px;
-            height:92px;
+        .cute-top{
+            position:relative;
+            min-height:245px;
+            padding:18px 22px 10px;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:flex-end;
+            background:
+                linear-gradient(
+                    180deg,
+                    rgba(255,235,225,.52),
+                    rgba(244,235,255,.46)
+                ),
+                url("{% static 'img/bubu-login-hero.png' %}") center 70% / 250px auto no-repeat,
+                linear-gradient(145deg,#ffe6d9,#fff1ee 55%,#eee6ff);
+        }
+
+        .cute-top::after{
+            content:"";
+            position:absolute;
+            left:-6%;
+            right:-6%;
+            bottom:-23px;
+            height:50px;
+            border-radius:50%;
+            background:var(--card);
+        }
+
+        .brand-row{
+            position:absolute;
+            top:16px;
+            left:18px;
+            display:flex;
+            align-items:center;
+            gap:8px;
+        }
+
+        .brand-logo{
+            width:48px;
+            height:48px;
             object-fit:contain;
-            margin-bottom:14px;
-            animation:bounce 2.5s infinite;
+        }
+
+        .brand-copy{
+            text-align:left;
+        }
+
+        .brand-copy strong{
+            display:block;
+            font-size:18px;
+            line-height:1.05;
+            font-weight:900;
+        }
+
+        .brand-copy small{
+            color:#9a7b74;
+            font-size:9px;
+            font-weight:800;
+        }
+
+        .hero-pets{
+            display:none;
+        }
+
+        .heart-bubble{
+            position:absolute;
+            right:28px;
+            top:36px;
+            width:40px;
+            height:40px;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:rgba(255,255,255,.78);
+            box-shadow:0 7px 18px rgba(120,76,45,.10);
+            font-size:18px;
+        }
+
+        .form-area{
+            position:relative;
+            z-index:3;
+            padding:30px 24px 22px;
+            text-align:center;
         }
 
         h1{
             margin:0;
-            font-size:34px;
+            font-size:29px;
+            line-height:1.12;
             font-weight:900;
         }
 
         .subtitle{
-            margin:10px 0 26px;
-            color:#8b7b8d;
+            margin:8px 0 22px;
+            color:var(--muted);
+            font-size:13px;
+            line-height:1.45;
             font-weight:700;
         }
 
         .error{
+            margin-bottom:13px;
+            padding:11px 12px;
+            border-radius:13px;
+            color:#e34848;
             background:#fff0f0;
-            color:#ff4d4d;
-            border-radius:16px;
-            padding:12px;
+            font-size:12px;
+            line-height:1.35;
             font-weight:800;
-            margin-bottom:16px;
         }
 
         .input-box{
-            height:58px;
-            border:1.5px solid #f0d7c8;
-            border-radius:16px;
-            background:white;
+            min-height:54px;
+            margin-bottom:11px;
+            padding:0 13px;
+            border:1.5px solid var(--line);
+            border-radius:15px;
             display:flex;
             align-items:center;
-            gap:12px;
-            padding:0 16px;
-            margin-bottom:14px;
+            gap:10px;
+            background:#fffdfc;
+            transition:.18s ease;
+        }
+
+        .input-box:focus-within{
+            border-color:#bfa5f4;
+            background:white;
+            box-shadow:0 0 0 4px rgba(168,120,245,.11);
+        }
+
+        .input-icon{
+            width:32px;
+            height:32px;
+            flex:0 0 32px;
+            border-radius:10px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:#f5edff;
+            font-size:15px;
         }
 
         .input-box input{
             width:100%;
-            border:none;
-            outline:none;
-            font-size:15px;
-            font-weight:800;
+            min-width:0;
+            min-height:50px;
+            padding:0;
+            border:0;
+            outline:0;
+            color:var(--ink);
             background:transparent;
+            font-size:16px;
+            line-height:1.2;
+            font-weight:800;
+        }
+
+        .input-box input::placeholder{
+            color:#b0a2ad;
         }
 
         .show-btn{
-            border:none;
+            min-height:38px;
+            flex:0 0 auto;
+            border:0;
+            padding:0 3px;
+            color:var(--purple);
             background:transparent;
-            color:#a46cf5;
+            font-size:12px;
             font-weight:900;
             cursor:pointer;
-            white-space:nowrap;
         }
 
         .login-btn{
             width:100%;
-            height:60px;
-            border:none;
-            border-radius:999px;
+            min-height:54px;
+            margin-top:2px;
+            border:0;
+            border-radius:16px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
             color:white;
-            font-size:18px;
+            background:linear-gradient(135deg,#ff9a82,#ff7778);
+            box-shadow:0 13px 28px rgba(255,119,120,.26);
+            font-size:16px;
+            line-height:1;
             font-weight:900;
             cursor:pointer;
-            background:linear-gradient(135deg,#ff9b72,#ff7f6e);
-            box-shadow:0 16px 35px rgba(255,127,110,.28);
+            transition:.18s ease;
         }
 
-        .note{
-            margin-top:26px;
-            background:#fff5ed;
-            border-radius:26px;
-            padding:18px;
+        .login-btn:active{
+            transform:scale(.985);
+        }
+
+        .login-note{
+            margin-top:17px;
+            padding:12px 13px;
+            border-radius:16px;
             display:flex;
-            gap:14px;
+            align-items:center;
+            gap:10px;
+            color:#765f70;
+            background:linear-gradient(135deg,#fff5ee,#fbf4ff);
             text-align:left;
+            font-size:11px;
+            line-height:1.4;
             font-weight:800;
-            color:#7a5f6f;
         }
 
-        .footer{
-            position:fixed;
-            bottom:14px;
-            left:0;
-            right:0;
-            text-align:center;
-            color:#9b8a9c;
-            font-weight:800;
-            font-size:13px;
-            z-index:3;
+        .note-icon{
+            width:38px;
+            height:38px;
+            flex:0 0 38px;
+            border-radius:12px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:white;
+            box-shadow:0 6px 15px rgba(120,76,45,.08);
+            font-size:20px;
         }
 
-        .float{
-            position:absolute;
-            font-size:24px;
-            opacity:.75;
-            animation:floatUp 6s infinite ease-in-out;
-            z-index:1;
+        .mini-footer{
+            margin-top:15px;
+            color:#a295a0;
+            font-size:9px;
+            line-height:1.3;
+            font-weight:700;
         }
 
-        .f1{left:8%;bottom:10%;animation-delay:0s;}
-        .f2{left:38%;bottom:18%;animation-delay:1s;}
-        .f3{right:10%;bottom:15%;animation-delay:2s;}
-        .f4{right:32%;bottom:5%;animation-delay:3s;}
-        .f5{left:20%;bottom:35%;animation-delay:1.8s;}
-
-        @keyframes floatUp{
-            0%{transform:translateY(0) scale(1);opacity:.2;}
-            40%{opacity:1;}
-            100%{transform:translateY(-140px) scale(1.3);opacity:0;}
+        @keyframes floatPaw{
+            0%,100%{transform:translateY(0) rotate(0)}
+            50%{transform:translateY(-12px) rotate(8deg)}
         }
 
-        @keyframes bounce{
-            0%,100%{transform:translateY(0);}
-            50%{transform:translateY(-8px);}
+        @media(min-width:768px){
+            .login-card{
+                max-width:440px;
+                margin-top:34px;
+            }
+
+            .cute-top{
+                min-height:270px;
+                background-size:auto,270px auto,auto;
+            }
+
+            .form-area{
+                padding:34px 30px 26px;
+            }
         }
 
-        @media(max-width:900px){
-            .page{grid-template-columns:1fr;}
-            .hero{display:none;}
-            .side{min-height:100vh;padding:24px;}
-            .card{padding:30px;}
+        @media(max-width:430px){
+            .login-page{
+                padding:
+                    max(10px,env(safe-area-inset-top))
+                    10px
+                    calc(10px + env(safe-area-inset-bottom));
+                align-items:flex-start;
+            }
+
+            .login-card{
+                margin-top:10px;
+                border-radius:24px;
+            }
+
+            .cute-top{
+                min-height:215px;
+                padding:14px 18px 7px;
+                background-size:auto,215px auto,auto;
+                background-position:center,center 76%,center;
+            }
+
+            .brand-row{
+                top:12px;
+                left:14px;
+            }
+
+            .brand-logo{
+                width:42px;
+                height:42px;
+            }
+
+            .brand-copy strong{
+                font-size:16px;
+            }
+
+            .heart-bubble{
+                right:18px;
+                top:28px;
+                width:34px;
+                height:34px;
+                font-size:15px;
+            }
+
+            .form-area{
+                padding:27px 16px 16px;
+            }
+
+            h1{
+                font-size:26px;
+            }
+
+            .subtitle{
+                margin-bottom:17px;
+                font-size:12px;
+            }
+
+            .input-box{
+                min-height:52px;
+                border-radius:13px;
+            }
+
+            .input-box input{
+                min-height:48px;
+                font-size:16px;
+            }
+
+            .login-btn{
+                min-height:52px;
+                border-radius:14px;
+            }
+
+            .login-note{
+                margin-top:14px;
+                padding:10px;
+                border-radius:14px;
+                font-size:10px;
+            }
+        }
+
+        @media(max-height:700px) and (max-width:430px){
+            .login-page{
+                align-items:flex-start;
+            }
+
+            .cute-top{
+                min-height:175px;
+                background-size:auto,175px auto,auto;
+            }
+
+            .form-area{
+                padding-top:24px;
+            }
+
+            .login-note{
+                display:none;
+            }
+        }
+
+        @media(prefers-reduced-motion:reduce){
+            *,
+            *::before,
+            *::after{
+                animation:none!important;
+                transition:none!important;
+            }
         }
     </style>
 </head>
 
 <body>
 
-<div class="page">
+<div class="login-page">
+    <div class="paw paw-one">🐾</div>
+    <div class="paw paw-two">🐾</div>
+    <div class="paw paw-three">🐾</div>
+    <div class="paw paw-four">🐾</div>
 
-    <div class="float f1">💕</div>
-    <div class="float f2">✨</div>
-    <div class="float f3">💜</div>
-    <div class="float f4">⭐</div>
-    <div class="float f5">🐾</div>
+    <main class="login-card">
+        <section class="cute-top">
+            <div class="brand-row">
+                <img src="{% static 'img/bubu-logo.png' %}" class="brand-logo" alt="BUBU Logo">
+                <div class="brand-copy">
+                    <strong>BUBU</strong>
+                    <small>Pet Store POS</small>
+                </div>
+            </div>
 
-    <div class="hero">
-        <img src="{% static 'img/bubu-login-hero.png' %}" alt="BUBU Pet Store">
-    </div>
+            <div class="heart-bubble">💕</div>
 
-    <div class="side">
-        <div class="card">
+            <img src="{% static 'img/bubu-login-hero.png' %}"
+                 class="hero-pets"
+                 alt="BUBU Pet Store">
+        </section>
 
-            <img src="{% static 'img/bubu-logo.png' %}" class="logo" alt="BUBU Logo">
-
-            <h1>Welcome back! 💕</h1>
-            <div class="subtitle">Sign in to continue to BUBU Pet Store POS</div>
+        <section class="form-area">
+            <h1>Welcome back! 🐾</h1>
+            <div class="subtitle">Login to manage your pet store</div>
 
             {% if form.errors %}
-                <div class="error">Invalid username or password</div>
+                <div class="error">Username or password is incorrect.</div>
             {% endif %}
 
             <form method="post">
                 {% csrf_token %}
 
+                {% if next %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
+
                 <div class="input-box">
-                    <span>👤</span>
-                    <input type="text" name="username" placeholder="Username" required>
+                    <span class="input-icon">👤</span>
+                    <input
+                        type="text"
+                        name="username"
+                        placeholder="Username"
+                        autocomplete="username"
+                        autocapitalize="none"
+                        spellcheck="false"
+                        required>
                 </div>
 
                 <div class="input-box">
-                    <span>🔒</span>
-                    <input id="passwordInput" type="password" name="password" placeholder="Password" required>
-                    <button class="show-btn" type="button" onclick="togglePassword()">Show</button>
+                    <span class="input-icon">🔒</span>
+                    <input
+                        id="passwordInput"
+                        type="password"
+                        name="password"
+                        placeholder="Password"
+                        autocomplete="current-password"
+                        required>
+                    <button type="button"
+                            class="show-btn"
+                            onclick="togglePassword()">
+                        Show
+                    </button>
                 </div>
 
-                <button type="submit" class="login-btn">🐾 Login</button>
+                <button type="submit" class="login-btn">
+                    <span>🐾</span>
+                    <span>Login</span>
+                </button>
             </form>
 
-            <div class="note">
-                <div style="font-size:34px;">🎁</div>
-                <div>Manage your store,<br>love your pets, grow together! 💜</div>
+            <div class="login-note">
+                <div class="note-icon">🎁</div>
+                <div>Manage your store, care for every pet, and grow together. 💜</div>
             </div>
 
-        </div>
-    </div>
-
-</div>
-
-<div class="footer">
-    © 2026 BUBU Pet Store POS • Made with 💜
+            <div class="mini-footer">
+                © 2026 BUBU Pet Store POS
+            </div>
+        </section>
+    </main>
 </div>
 
 <script>
 function togglePassword(){
     const input = document.getElementById("passwordInput");
-    const btn = document.querySelector(".show-btn");
+    const button = document.querySelector(".show-btn");
 
-    if(input.type === "password"){
-        input.type = "text";
-        btn.innerText = "Hide";
-    }else{
-        input.type = "password";
-        btn.innerText = "Show";
+    if(!input || !button){
+        return;
     }
+
+    const hidden = input.type === "password";
+    input.type = hidden ? "text" : "password";
+    button.textContent = hidden ? "Hide" : "Show";
 }
 </script>
 

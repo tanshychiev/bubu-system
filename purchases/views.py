@@ -5,6 +5,8 @@ from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.urls import reverse
+from django.http import HttpResponseRedirect
 
 from inventory.models import Branch
 
@@ -52,6 +54,164 @@ def _get_plan_rows(request, prefix):
             rows.append((branch_id, qty))
 
     return rows
+
+
+def _purchase_item_detail_url(purchase_item):
+    """Return to the same product card after a receive/allocation action."""
+    base_url = reverse(
+        "purchase_detail",
+        kwargs={"pk": purchase_item.purchase_id},
+    )
+    return f"{base_url}#item-{purchase_item.pk}"
+
+
+def _redirect_to_purchase_item(purchase_item):
+    return HttpResponseRedirect(_purchase_item_detail_url(purchase_item))
+
+
+def _weighted_split(total_qty, plans):
+    """
+    Split an integer quantity by the saved shop-plan weights.
+
+    Example:
+        plan 50/50, actual received 105 -> 53/52
+    """
+    total_qty = max(int(total_qty or 0), 0)
+    plans = list(plans)
+
+    if total_qty <= 0 or not plans:
+        return {}
+
+    total_weight = sum(max(int(plan.qty or 0), 0) for plan in plans)
+    if total_weight <= 0:
+        return {}
+
+    rows = []
+    allocated = 0
+
+    for index, plan in enumerate(plans):
+        weight = max(int(plan.qty or 0), 0)
+        numerator = total_qty * weight
+        base_qty = numerator // total_weight
+        remainder = numerator % total_weight
+
+        rows.append({
+            "plan": plan,
+            "qty": base_qty,
+            "remainder": remainder,
+            "index": index,
+        })
+        allocated += base_qty
+
+    leftover = total_qty - allocated
+
+    # Largest-remainder method keeps the split proportional and deterministic.
+    rows.sort(key=lambda row: (-row["remainder"], row["index"]))
+    for row in rows[:leftover]:
+        row["qty"] += 1
+
+    return {
+        row["plan"].branch_id: row["qty"]
+        for row in rows
+    }
+
+
+def _allocate_all_unallocated_by_plan(purchase_item, user, note):
+    """
+    Send every currently unallocated received piece to shops using the plan ratio.
+
+    It works for:
+    - exact deliveries,
+    - partial deliveries,
+    - over-deliveries,
+    - already-partially allocated items.
+    """
+    purchase_item.refresh_from_db(fields=["received_qty"])
+
+    plans = list(
+        purchase_item.branch_plans
+        .select_related("branch")
+        .order_by("id")
+    )
+
+    if not plans:
+        raise ValidationError("No shop plan exists for this item.")
+
+    if sum(plan.qty for plan in plans) <= 0:
+        raise ValidationError("Shop plan quantity must be greater than 0.")
+
+    unallocated_qty = purchase_item.unallocated_qty
+    if unallocated_qty <= 0:
+        return []
+
+    current_by_branch = {
+        row["branch"]: row["total"] or 0
+        for row in (
+            purchase_item.branch_allocations
+            .values("branch")
+            .annotate(total=Sum("qty"))
+        )
+    }
+
+    target_by_branch = _weighted_split(
+        purchase_item.received_qty,
+        plans,
+    )
+
+    remaining_to_allocate = unallocated_qty
+    allocations = []
+
+    # First move each branch toward its proportional cumulative target.
+    for plan in plans:
+        current_qty = current_by_branch.get(plan.branch_id, 0)
+        target_qty = target_by_branch.get(plan.branch_id, 0)
+        needed_qty = max(target_qty - current_qty, 0)
+        qty = min(needed_qty, remaining_to_allocate)
+
+        if qty > 0:
+            allocations.append((plan, qty))
+            remaining_to_allocate -= qty
+
+        if remaining_to_allocate <= 0:
+            break
+
+    # If earlier manual allocations made the current distribution uneven,
+    # distribute any leftover again by the same shop-plan ratio.
+    if remaining_to_allocate > 0:
+        extra_split = _weighted_split(remaining_to_allocate, plans)
+        for plan in plans:
+            qty = extra_split.get(plan.branch_id, 0)
+            if qty > 0:
+                allocations.append((plan, qty))
+
+    created = []
+    for plan, qty in allocations:
+        if qty <= 0:
+            continue
+
+        # The item may have been prefetched. Clear the relation cache so
+        # PurchaseBranchAllocation.clean() always sees allocations created
+        # earlier in this same transaction.
+        purchase_item._prefetched_objects_cache.pop(
+            "branch_allocations",
+            None,
+        )
+
+        created.append(
+            PurchaseBranchAllocation.objects.create(
+                purchase_item=purchase_item,
+                branch=plan.branch,
+                qty=qty,
+                allocated_by=user,
+                note=note,
+            )
+        )
+
+    purchase_item._prefetched_objects_cache.pop(
+        "branch_allocations",
+        None,
+    )
+    return created
 
 
 @login_required
@@ -249,7 +409,7 @@ def purchase_create(request):
 
             purchase.refresh_status()
             messages.success(request, "Purchase created.")
-            return redirect("purchase_detail", pk=purchase.pk)
+            return redirect("purchase_list")
 
         messages.error(request, "Purchase create failed. Please check item rows.")
 
@@ -392,7 +552,7 @@ def purchase_update(request, pk):
 
             purchase.refresh_status()
             messages.success(request, "Purchase updated.")
-            return redirect("purchase_detail", pk=purchase.pk)
+            return redirect("purchase_list")
 
         messages.error(request, "Purchase update failed. Please check item rows.")
 
@@ -413,35 +573,241 @@ def purchase_update(request, pk):
 @transaction.atomic
 def purchase_receive(request, item_id):
     purchase_item = get_object_or_404(
-        PurchaseItem.objects.select_related("purchase", "variant", "variant__item"),
+        PurchaseItem.objects.select_related(
+            "purchase",
+            "variant",
+            "variant__item",
+        ).prefetch_related(
+            "branch_plans__branch",
+            "branch_allocations",
+        ),
         pk=item_id,
     )
 
-    if request.method == "POST":
-        qty = _to_int(request.POST.get("qty"))
-        note = request.POST.get("note", "").strip()
+    if request.method != "POST":
+        return _redirect_to_purchase_item(purchase_item)
 
-        if qty <= 0:
-            messages.error(request, "Receive qty must be greater than 0.")
-            return redirect("purchase_detail", pk=purchase_item.purchase.pk)
+    follow_plan = request.POST.get("follow_plan") == "1"
+    receive_with_shop_qty = (
+        request.POST.get("receive_with_shop_qty") == "1"
+    )
+    note = request.POST.get("note", "").strip()
 
-        if qty > purchase_item.pending_qty:
-            messages.error(request, f"Cannot receive more than pending qty: {purchase_item.pending_qty}")
-            return redirect("purchase_detail", pk=purchase_item.purchase.pk)
+    plans = list(
+        purchase_item.branch_plans
+        .select_related("branch")
+        .order_by("id")
+    )
+    planned_qty = sum(plan.qty for plan in plans)
 
-        PurchaseReceiveLog.objects.create(
-            purchase_item=purchase_item,
-            qty=qty,
-            note=note,
-            received_by=request.user,
-        )
+    # Most-used action:
+    # receive exactly what is still expected, then send all available stock
+    # to shops according to the saved plan.
+    if follow_plan:
+        if not plans:
+            messages.error(
+                request,
+                "No shop plan exists. Edit the purchase plan first.",
+            )
+            return _redirect_to_purchase_item(purchase_item)
+
+        if planned_qty != purchase_item.ordered_qty:
+            messages.error(
+                request,
+                (
+                    f"Shop plan is {planned_qty}, but ordered quantity is "
+                    f"{purchase_item.ordered_qty}. Edit the plan first."
+                ),
+            )
+            return _redirect_to_purchase_item(purchase_item)
+
+        qty_to_receive = purchase_item.pending_qty
+
+        if qty_to_receive > 0:
+            PurchaseReceiveLog.objects.create(
+                purchase_item=purchase_item,
+                qty=qty_to_receive,
+                note=note or "Confirmed correct quantity",
+                received_by=request.user,
+            )
+
+        purchase_item.refresh_from_db(fields=["received_qty"])
+
+        try:
+            allocations = _allocate_all_unallocated_by_plan(
+                purchase_item,
+                request.user,
+                "Auto sent to shop by purchase plan",
+            )
+        except ValidationError as error:
+            messages.error(request, "; ".join(error.messages))
+            return _redirect_to_purchase_item(purchase_item)
 
         purchase_item.purchase.refresh_status()
 
-        messages.success(request, f"Supplier received {qty} pcs.")
-        return redirect("purchase_detail", pk=purchase_item.purchase.pk)
+        allocated_qty = sum(allocation.qty for allocation in allocations)
+        if qty_to_receive > 0 or allocated_qty > 0:
+            messages.success(
+                request,
+                (
+                    f"Confirmed {qty_to_receive} received and sent "
+                    f"{allocated_qty} pcs to shops by plan."
+                ),
+            )
+        else:
+            messages.info(request, "This item was already completed.")
 
-    return redirect("purchase_detail", pk=purchase_item.purchase.pk)
+        return _redirect_to_purchase_item(purchase_item)
+
+    # Actual supplier count is different.
+    # Staff enters exactly how many pieces go to each planned shop.
+    if receive_with_shop_qty:
+        qty = _to_int(request.POST.get("qty"))
+
+        if qty <= 0:
+            messages.error(
+                request,
+                "Actual received quantity must be greater than 0.",
+            )
+            return _redirect_to_purchase_item(purchase_item)
+
+        if not plans:
+            messages.error(
+                request,
+                "No shop plan exists. Edit the purchase plan first.",
+            )
+            return _redirect_to_purchase_item(purchase_item)
+
+        branch_ids = request.POST.getlist("shop_branch[]")
+        shop_qtys = request.POST.getlist("shop_qty[]")
+
+        if len(branch_ids) != len(shop_qtys):
+            messages.error(request, "Shop quantities are incomplete.")
+            return _redirect_to_purchase_item(purchase_item)
+
+        allowed_plans = {
+            str(plan.branch_id): plan
+            for plan in plans
+        }
+
+        requested_rows = []
+        used_branch_ids = set()
+        shop_total = 0
+
+        for branch_id, raw_shop_qty in zip(branch_ids, shop_qtys):
+            if branch_id not in allowed_plans:
+                messages.error(request, "Invalid shop selected.")
+                return _redirect_to_purchase_item(purchase_item)
+
+            if branch_id in used_branch_ids:
+                messages.error(request, "The same shop cannot be entered twice.")
+                return _redirect_to_purchase_item(purchase_item)
+
+            used_branch_ids.add(branch_id)
+            shop_qty = _to_int(raw_shop_qty, default=-1)
+
+            if shop_qty < 0:
+                messages.error(
+                    request,
+                    "Shop quantity cannot be negative.",
+                )
+                return _redirect_to_purchase_item(purchase_item)
+
+            requested_rows.append(
+                (allowed_plans[branch_id], shop_qty)
+            )
+            shop_total += shop_qty
+
+        if shop_total != qty:
+            messages.error(
+                request,
+                (
+                    f"Shop total must equal received quantity. "
+                    f"Received: {qty}, shop total: {shop_total}."
+                ),
+            )
+            return _redirect_to_purchase_item(purchase_item)
+
+        try:
+            # Nested atomic block ensures the receiving log is rolled back
+            # if any shop allocation unexpectedly fails.
+            with transaction.atomic():
+                PurchaseReceiveLog.objects.create(
+                    purchase_item=purchase_item,
+                    qty=qty,
+                    note=note or "Actual supplier count",
+                    received_by=request.user,
+                )
+
+                purchase_item.refresh_from_db(fields=["received_qty"])
+                purchase_item._prefetched_objects_cache.pop(
+                    "branch_allocations",
+                    None,
+                )
+
+                allocated_qty = 0
+
+                for plan, shop_qty in requested_rows:
+                    if shop_qty <= 0:
+                        continue
+
+                    purchase_item._prefetched_objects_cache.pop(
+                        "branch_allocations",
+                        None,
+                    )
+
+                    PurchaseBranchAllocation.objects.create(
+                        purchase_item=purchase_item,
+                        branch=plan.branch,
+                        qty=shop_qty,
+                        allocated_by=request.user,
+                        note=(
+                            note
+                            or "Added from actual supplier count"
+                        ),
+                    )
+                    allocated_qty += shop_qty
+
+        except ValidationError as error:
+            messages.error(request, "; ".join(error.messages))
+            return _redirect_to_purchase_item(purchase_item)
+
+        purchase_item.refresh_from_db(fields=["received_qty"])
+        purchase_item.purchase.refresh_status()
+
+        success_text = (
+            f"Received {qty} pcs and added {allocated_qty} pcs to shops."
+        )
+
+        if purchase_item.extra_received_qty > 0:
+            success_text += (
+                f" Extra received: {purchase_item.extra_received_qty} pcs."
+            )
+
+        messages.success(request, success_text)
+        return _redirect_to_purchase_item(purchase_item)
+
+    # Legacy/manual receive action. It also permits over-delivery, but does
+    # not allocate automatically. The redesigned detail page uses one of
+    # the two actions above.
+    qty = _to_int(request.POST.get("qty"))
+    if qty <= 0:
+        messages.error(request, "Receive qty must be greater than 0.")
+        return _redirect_to_purchase_item(purchase_item)
+
+    PurchaseReceiveLog.objects.create(
+        purchase_item=purchase_item,
+        qty=qty,
+        note=note,
+        received_by=request.user,
+    )
+
+    purchase_item.purchase.refresh_status()
+    messages.success(
+        request,
+        f"Supplier received {qty} pcs. Stock still needs shop allocation.",
+    )
+    return _redirect_to_purchase_item(purchase_item)
 
 
 @login_required
@@ -459,15 +825,15 @@ def purchase_allocate(request, item_id):
 
         if not branch_id:
             messages.error(request, "Please choose branch.")
-            return redirect("purchase_detail", pk=purchase_item.purchase.pk)
+            return _redirect_to_purchase_item(purchase_item)
 
         if qty <= 0:
             messages.error(request, "Qty must be greater than 0.")
-            return redirect("purchase_detail", pk=purchase_item.purchase.pk)
+            return _redirect_to_purchase_item(purchase_item)
 
         if qty > purchase_item.unallocated_qty:
             messages.error(request, f"Cannot allocate more than available qty: {purchase_item.unallocated_qty}")
-            return redirect("purchase_detail", pk=purchase_item.purchase.pk)
+            return _redirect_to_purchase_item(purchase_item)
 
         branch = get_object_or_404(Branch, pk=branch_id)
 
@@ -482,9 +848,9 @@ def purchase_allocate(request, item_id):
         purchase_item.purchase.refresh_status()
 
         messages.success(request, f"Allocated {qty} pcs to {branch.name}.")
-        return redirect("purchase_detail", pk=purchase_item.purchase.pk)
+        return _redirect_to_purchase_item(purchase_item)
 
-    return redirect("purchase_detail", pk=purchase_item.purchase.pk)
+    return _redirect_to_purchase_item(purchase_item)
 
 
 @login_required
@@ -503,15 +869,15 @@ def purchase_transfer_create(request, item_id):
 
         if not from_branch_id or not to_branch_id:
             messages.error(request, "Please choose from branch and to branch.")
-            return redirect("purchase_detail", pk=purchase_item.purchase.pk)
+            return _redirect_to_purchase_item(purchase_item)
 
         if from_branch_id == to_branch_id:
             messages.error(request, "From branch and to branch cannot be same.")
-            return redirect("purchase_detail", pk=purchase_item.purchase.pk)
+            return _redirect_to_purchase_item(purchase_item)
 
         if qty <= 0:
             messages.error(request, "Transfer qty must be greater than 0.")
-            return redirect("purchase_detail", pk=purchase_item.purchase.pk)
+            return _redirect_to_purchase_item(purchase_item)
 
         from_branch = get_object_or_404(Branch, pk=from_branch_id)
         to_branch = get_object_or_404(Branch, pk=to_branch_id)
@@ -537,15 +903,15 @@ def purchase_transfer_create(request, item_id):
                 for error in e.messages:
                     messages.error(request, error)
 
-            return redirect("purchase_detail", pk=purchase_item.purchase.pk)
+            return _redirect_to_purchase_item(purchase_item)
 
         messages.success(
             request,
             f"Transfer created: {from_branch.name} → {to_branch.name}, {qty} pcs."
         )
-        return redirect("purchase_detail", pk=purchase_item.purchase.pk)
+        return _redirect_to_purchase_item(purchase_item)
 
-    return redirect("purchase_detail", pk=purchase_item.purchase.pk)
+    return _redirect_to_purchase_item(purchase_item)
 
 @login_required
 @transaction.atomic
@@ -563,12 +929,12 @@ def purchase_transfer_receive(request, transfer_id):
     if request.method == "POST":
         if transfer.status != "pending":
             messages.warning(request, "This transfer is already received.")
-            return redirect("purchase_detail", pk=transfer.purchase_item.purchase.pk)
+            return _redirect_to_purchase_item(transfer.purchase_item)
 
         transfer.mark_received(user=request.user)
         messages.success(request, f"{transfer.qty} pcs received at {transfer.to_branch.name}.")
 
-    return redirect("purchase_detail", pk=transfer.purchase_item.purchase.pk)
+    return _redirect_to_purchase_item(transfer.purchase_item)
 
 
 @login_required

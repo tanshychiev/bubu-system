@@ -1223,6 +1223,7 @@ def variant_barcode_label(request, variant_id):
 
     buffer = BytesIO()
     barcode_obj.write(buffer, options={
+        "write_text": False,
         "module_height": 10,
         "module_width": 0.35,
         "font_size": 8,
