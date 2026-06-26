@@ -1,12 +1,23 @@
-from django.contrib import admin
-from django.urls import path, include
-from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.contrib.auth import views as auth_views
+from django.urls import include, path
 from django.views.generic import RedirectView
 
 
 urlpatterns = [
+    # Browser fallback favicon.
+    # Keep this first so /favicon.ico always redirects to the known working PNG.
+    path(
+        "favicon.ico",
+        RedirectView.as_view(
+            url="/static/img/bubu-favicon-32.png?v=20260626-31",
+            permanent=False,
+        ),
+        name="favicon",
+    ),
+
     path("admin/", admin.site.urls),
 
     # Main apps
@@ -23,28 +34,26 @@ urlpatterns = [
     # Staff attendance / payroll / commission
     path("staffs/", include("staffs.urls")),
 
-    # Auth
+    # Authentication
     path(
         "login/",
-        auth_views.LoginView.as_view(template_name="users/login.html"),
+        auth_views.LoginView.as_view(
+            template_name="users/login.html",
+        ),
         name="login",
     ),
     path(
         "logout/",
-        auth_views.LogoutView.as_view(next_page="login"),
+        auth_views.LogoutView.as_view(
+            next_page="login",
+        ),
         name="logout",
     ),
-    
-    path(
-    "favicon.ico",
-    RedirectView.as_view(
-        url="/static/img/bubu-icon-32.png?v=5",
-        permanent=False,
-    ),
-),
 ]
 
 
+# Local development only.
+# In production, Nginx should normally serve /static/ and /media/.
 if settings.DEBUG:
     urlpatterns += static(
         settings.STATIC_URL,
