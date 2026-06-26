@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "name": "BUBU Pet Store POS",
+  "short_name": "BUBU",
+  "description": "BUBU Pet Store POS and management system",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fff6ee",
+  "theme_color": "#8e63ff",
+  "icons": [
+    {
+      "src": "/static/img/bubu-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/img/bubu-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
