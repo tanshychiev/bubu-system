@@ -10,16 +10,26 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get(
     "DJANGO_SECRET_KEY",
-    "django-insecure-change-this-later",
+    "CHANGE-THIS-TO-A-LONG-RANDOM-SECRET-KEY",
 )
 
-DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
+DEBUG = os.environ.get("DJANGO_DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = [
     "5.223.90.183",
     "localhost",
     "127.0.0.1",
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://5.223.90.183:8010",
+]
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
 
 
 # ============================================================
