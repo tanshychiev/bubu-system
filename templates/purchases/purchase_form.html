@@ -3,674 +3,1265 @@
 
 <style>
 *{box-sizing:border-box}
+:root{
+    --ink:#17152f;
+    --muted:#7b7288;
+    --purple:#8e63ff;
+    --purple-soft:#f1e8ff;
+    --pink:#ff4d7d;
+    --green:#20b86b;
+    --orange:#ff8b3d;
+    --line:#eaddec;
+    --warm-line:#f1ddd1;
+    --cream:#fffaf7;
+}
+
+button,input,textarea,select{font:inherit}
+button{touch-action:manipulation}
 
 .purchase-wrap{
     max-width:1280px;
     margin:auto;
-    padding:28px 34px;
+    padding:24px 30px 110px;
+}
+
+.page-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:18px;
 }
 
 .page-title{
+    margin:0;
+    color:var(--ink);
     font-size:34px;
+    line-height:1.1;
     font-weight:1000;
-    color:#17152f;
-    margin:0 0 20px;
+}
+
+.page-subtitle{
+    margin:7px 0 0;
+    color:var(--muted);
+    font-weight:850;
+    font-size:14px;
+}
+
+.back-link{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:46px;
+    padding:0 18px;
+    border-radius:999px;
+    background:var(--purple-soft);
+    color:#6d45d8;
+    text-decoration:none!important;
+    font-weight:1000;
+    white-space:nowrap;
 }
 
 .form-card{
     background:#fff;
     border:2px solid #f3dfd4;
-    border-radius:28px;
-    padding:26px;
-    margin-bottom:24px;
-    box-shadow:0 18px 45px rgba(130,91,60,.08);
+    border-radius:26px;
+    padding:22px;
+    margin-bottom:20px;
+    box-shadow:0 16px 42px rgba(130,91,60,.07);
 }
 
-.form-card h3{
-    margin:0 0 20px;
-    color:#17152f;
-    font-size:24px;
+.card-heading{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:18px;
+}
+
+.card-heading h3{
+    margin:0;
+    color:var(--ink);
+    font-size:23px;
     font-weight:1000;
 }
 
 .info-grid{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:18px;
+    gap:16px;
 }
 
 .field-box label,
 .item-label{
-    font-weight:1000;
-    color:#4a405c;
-    margin-bottom:8px;
     display:block;
+    margin-bottom:7px;
+    color:#4a405c;
+    font-size:13px;
+    font-weight:1000;
 }
 
 .field-box input,
 .field-box textarea,
 .field-box select,
 .item-row input,
+.item-row textarea,
 .item-row select{
     width:100%;
-    border:2px solid #eaddec;
-    border-radius:18px;
-    padding:14px 16px;
+    min-height:56px;
+    border:2px solid var(--line);
+    border-radius:16px;
+    padding:12px 14px;
+    background:#fff;
+    color:var(--ink);
     font-size:16px;
     font-weight:900;
-    background:white;
     outline:none;
 }
+
+.field-box textarea{min-height:82px;resize:vertical}
 
 .field-box input:focus,
 .field-box textarea:focus,
 .field-box select:focus,
-.item-row input:focus{
-    border-color:#8e63ff;
-    box-shadow:0 0 0 5px rgba(142,99,255,.12);
+.item-row input:focus,
+.item-row textarea:focus{
+    border-color:var(--purple);
+    box-shadow:0 0 0 4px rgba(142,99,255,.11);
+}
+
+.optional-info{
+    grid-column:1/-1;
+    border:2px dashed var(--line);
+    border-radius:18px;
+    background:var(--cream);
+    overflow:hidden;
+}
+
+.optional-info summary{
+    cursor:pointer;
+    padding:14px 16px;
+    color:#6d45d8;
+    font-weight:1000;
+    list-style:none;
+}
+.optional-info summary::-webkit-details-marker{display:none}
+.optional-info summary::after{content:"＋";float:right}
+.optional-info[open] summary::after{content:"−"}
+.optional-fields{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    padding:0 14px 14px;
 }
 
 .error-box{
+    margin-bottom:16px;
+    padding:14px 16px;
+    border:2px solid #ffcccc;
+    border-radius:16px;
     background:#fff1f1;
     color:#b42318;
-    border:2px solid #ffcccc;
-    border-radius:18px;
-    padding:14px 16px;
-    margin-bottom:16px;
     font-weight:900;
 }
+.errorlist{margin:7px 0 0;padding-left:18px;color:#b42318;font-size:13px}
 
 .summary-box{
     display:flex;
-    gap:12px;
     flex-wrap:wrap;
-    margin-bottom:18px;
+    gap:10px;
 }
 
 .summary-pill{
-    background:#f1e8ff;
-    color:#6d45d8;
-    padding:13px 20px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    min-height:42px;
+    padding:0 15px;
     border-radius:999px;
+    background:var(--purple-soft);
+    color:#6d45d8;
+    font-size:13px;
     font-weight:1000;
 }
 
 .item-row{
-    border:2px solid #f1ddd1;
-    border-radius:24px;
-    padding:18px;
-    margin-bottom:14px;
-    background:#fffaf7;
+    position:relative;
+    margin-bottom:16px;
+    padding:16px;
+    border:2px solid var(--warm-line);
+    border-radius:23px;
+    background:linear-gradient(180deg,#fffdfb,#fff8f4);
 }
 
-.item-grid{
-    display:grid;
-    grid-template-columns:minmax(260px,1.8fr) 120px 140px minmax(160px,1fr) 76px;
-    gap:14px;
-    align-items:stretch;
-}
-
-.item-grid>div{
-    display:flex;
-    flex-direction:column;
-    justify-content:flex-end;
-    height:100%;
-}
-
-.hidden-select,
-.delete-hidden{
-    display:none;
-}
-
-.item-grid input{
-    height:62px;
-    min-height:62px;
-    border-radius:18px;
-    font-weight:900;
-    box-shadow:0 4px 10px rgba(0,0,0,.03);
-}
-
-.variant-picker{
-    width:100%;
-    height:62px;
-    min-height:62px;
-    border:2px solid #eaddec;
-    border-radius:18px;
-    padding:10px 12px;
-    background:white;
-    text-align:left;
-    font-weight:900;
-    color:#17152f;
-    display:flex;
-    align-items:center;
-    gap:12px;
-    cursor:pointer;
-    box-shadow:0 4px 10px rgba(0,0,0,.03);
-}
-
-.variant-picker.empty{
-    color:#9a90a8;
-}
-
-.picker-img,
-.picker-fallback{
-    width:48px;
-    height:48px;
-    border-radius:14px;
-    background:#f7f1ff;
-    flex:0 0 auto;
-}
-
-.picker-img{
-    object-fit:cover;
-}
-
-.picker-fallback{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:22px;
-}
-
-.delete-box{
-    display:flex;
-    flex-direction:column;
-    justify-content:flex-end;
-    align-items:center;
-}
-
-.remove-btn{
-    width:62px;
-    height:62px;
-    border:0;
-    border-radius:18px;
-    background:#ffe3ee;
-    color:#ff4d7d;
-    font-weight:1000;
-    cursor:pointer;
-    font-size:20px;
-    box-shadow:0 4px 10px rgba(255,77,125,.12);
-}
-
-.plan-box{
-    margin-top:16px;
-    border:2px dashed #eaddec;
-    border-radius:22px;
-    background:white;
-    padding:14px;
-}
-
-.plan-head{
+.item-card-head{
     display:flex;
     align-items:center;
     justify-content:space-between;
     gap:12px;
-    margin-bottom:12px;
+    margin-bottom:14px;
 }
 
-.plan-title{
-    font-weight:1000;
-    color:#17152f;
-}
-
-.plan-summary{
-    font-weight:1000;
-    color:#8e63ff;
-    font-size:13px;
-}
-
-.plan-list{
-    display:grid;
-    gap:10px;
-}
-
-.plan-row{
-    display:grid;
-    grid-template-columns:1fr 130px 52px;
-    gap:10px;
+.item-card-title{
+    min-width:0;
+    display:flex;
     align-items:center;
+    gap:10px;
 }
 
-.plan-shop{
-    border:2px solid #eaddec;
-    border-radius:16px;
-    padding:13px;
-    font-weight:1000;
-    background:#fffaf7;
-}
-
-.plan-qty{
-    min-height:52px;
-}
-
-.plan-remove{
-    border:0;
-    border-radius:14px;
-    background:#ffe3ee;
-    color:#ff4d7d;
-    font-weight:1000;
-    height:52px;
-    cursor:pointer;
-}
-
-.add-plan-btn,
-.add-row-btn,
-.save-btn{
-    border:0;
-    border-radius:999px;
-    padding:15px 28px;
-    font-weight:1000;
-    color:white;
-    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
-    cursor:pointer;
-    min-height:54px;
-}
-
-.add-plan-btn{
-    padding:12px 18px;
-    font-size:13px;
-    min-height:44px;
-}
-
-.cancel-btn{
-    margin-left:12px;
-    font-weight:1000;
-    color:#7b7288;
-    text-decoration:none;
-}
-
-.history-table{
-    width:100%;
-    border-collapse:separate;
-    border-spacing:0 8px;
-}
-
-.history-table th{
-    text-align:left;
-    color:#7b7288;
-    padding:8px;
-    font-size:12px;
-    font-weight:1000;
-}
-
-.history-table td{
-    background:#fffaf7;
-    border-top:1px solid #f1ddd1;
-    border-bottom:1px solid #f1ddd1;
-    padding:12px 10px;
-    font-weight:900;
-}
-
-.history-table td:first-child{
-    border-left:1px solid #f1ddd1;
-    border-radius:14px 0 0 14px;
-}
-
-.history-table td:last-child{
-    border-right:1px solid #f1ddd1;
-    border-radius:0 14px 14px 0;
-}
-
-.old-value{color:#ff4d4d}
-.new-value{color:#20b86b}
-
-.empty-history{
-    padding:16px;
-    background:#fffaf7;
-    border-radius:18px;
-    font-weight:900;
-    color:#7b7288;
-}
-
-.modal-bg{
-    display:none;
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,.38);
-    z-index:9999;
+.item-number{
+    flex:0 0 auto;
+    display:inline-flex;
     align-items:center;
     justify-content:center;
-    padding:20px;
+    min-width:36px;
+    height:36px;
+    padding:0 10px;
+    border-radius:12px;
+    background:linear-gradient(135deg,var(--purple),#b985ff);
+    color:#fff;
+    font-size:13px;
+    font-weight:1000;
 }
 
-.modal-box{
-    background:white;
-    border-radius:30px;
-    width:100%;
-    max-width:820px;
-    max-height:88vh;
+.item-card-name{
     overflow:hidden;
-    box-shadow:0 30px 80px rgba(0,0,0,.25);
+    color:var(--ink);
+    font-size:15px;
+    font-weight:1000;
+    text-overflow:ellipsis;
+    white-space:nowrap;
 }
 
-.modal-head{
-    padding:18px;
-    border-bottom:1px solid #f1ddd1;
-    display:flex;
-    gap:12px;
-}
-
-.modal-head input{
-    flex:1;
-    border:2px solid #eaddec;
-    border-radius:18px;
-    padding:15px 16px;
-    font-size:17px;
-    font-weight:900;
-}
-
-.modal-close{
+.remove-btn{
+    flex:0 0 auto;
+    width:42px;
+    height:42px;
     border:0;
-    background:#fff1f1;
-    color:#ff4d7d;
-    border-radius:16px;
-    padding:0 18px;
+    border-radius:13px;
+    background:#ffe3ee;
+    color:var(--pink);
     font-size:18px;
     font-weight:1000;
     cursor:pointer;
 }
 
-.type-tabs{
-    display:flex;
-    gap:10px;
-    overflow:auto;
-    padding:14px 14px 0;
+.item-grid{
+    display:grid;
+    grid-template-columns:minmax(280px,1.8fr) 120px 140px minmax(170px,1fr);
+    gap:12px;
+    align-items:end;
 }
 
-.type-tab{
-    border:2px solid #eaddec;
+.hidden-select,.delete-hidden{display:none}
+
+.variant-picker{
+    width:100%;
+    min-height:70px;
+    border:2px solid var(--line);
+    border-radius:17px;
+    padding:9px 11px;
     background:#fff;
-    border-radius:999px;
-    padding:11px 18px;
-    font-weight:1000;
-    color:#6b6178;
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    gap:11px;
+    text-align:left;
+    cursor:pointer;
+    box-shadow:0 4px 10px rgba(0,0,0,.025);
+}
+.variant-picker.empty{color:#9a90a8}
+.variant-picker-copy{min-width:0;display:block;line-height:1.3}
+.variant-picker-title,
+.variant-picker-sub{
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
     white-space:nowrap;
+}
+.variant-picker-title{color:var(--ink);font-weight:1000}
+.variant-picker-sub{margin-top:3px;color:var(--muted);font-size:12px;font-weight:850}
+
+.picker-img,.picker-fallback{
+    flex:0 0 auto;
+    width:50px;
+    height:50px;
+    border-radius:14px;
+    background:#f7f1ff;
+}
+.picker-img{object-fit:cover}
+.picker-fallback{display:flex;align-items:center;justify-content:center;font-size:22px}
+
+.plan-box{
+    margin-top:14px;
+    padding:13px;
+    border:2px dashed var(--line);
+    border-radius:19px;
+    background:#fff;
+}
+.plan-box.plan-ok{border-color:#bfead4;background:#fbfffd}
+.plan-box.plan-warning{border-color:#ffd9b8;background:#fffaf5}
+
+.plan-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:10px;
+}
+.plan-title{color:var(--ink);font-weight:1000}
+.plan-summary{margin-top:3px;color:var(--purple);font-size:12px;font-weight:1000}
+.plan-summary.ok{color:var(--green)}
+.plan-summary.warning{color:#d77a00}
+
+.plan-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.add-plan-btn,.equal-plan-btn{
+    min-height:40px;
+    border:0;
+    border-radius:999px;
+    padding:0 14px;
+    font-size:12px;
+    font-weight:1000;
+    cursor:pointer;
+}
+.add-plan-btn{background:linear-gradient(135deg,var(--purple),#ff8c6b);color:#fff}
+.equal-plan-btn{background:var(--purple-soft);color:#6d45d8}
+
+.plan-list{display:grid;gap:8px}
+.plan-row{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 120px 46px;
+    gap:8px;
+    align-items:center;
+}
+.plan-shop{
+    min-width:0;
+    min-height:50px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    padding:10px 12px;
+    border:2px solid var(--line);
+    border-radius:14px;
+    background:var(--cream);
+    color:var(--ink);
+    font-size:13px;
+    font-weight:1000;
+    overflow:hidden;
+    white-space:nowrap;
+}
+
+.plan-shop > span{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.plan-auto-label{
+    display:none;
+    flex:0 0 auto;
+    padding:3px 7px;
+    border-radius:999px;
+    color:var(--green);
+    background:#e8faef;
+    font-size:9px;
+    font-weight:1000;
+}
+
+.plan-row.auto-balanced .plan-auto-label{
+    display:inline-flex;
+}
+
+.plan-row.auto-balanced .plan-qty{
+    border-color:#bde9d0!important;
+    background:#f3fff8!important;
+}
+
+.plan-qty{min-height:50px!important;height:50px!important;padding:8px 10px!important;text-align:center}
+.plan-remove{
+    width:46px;
+    height:50px;
+    border:0;
+    border-radius:13px;
+    background:#ffe3ee;
+    color:var(--pink);
+    font-weight:1000;
     cursor:pointer;
 }
 
-.type-tab.active{
-    background:linear-gradient(135deg,#8e63ff,#b985ff);
+.add-row-btn{
+    width:100%;
+    min-height:58px;
+    border:2px dashed #cdb8ff;
+    border-radius:18px;
+    background:#f8f3ff;
+    color:#6d45d8;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.desktop-form-actions{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+.save-btn{
+    min-height:56px;
+    border:0;
+    border-radius:999px;
+    padding:0 30px;
+    background:linear-gradient(135deg,var(--purple),#ff8c6b);
     color:#fff;
+    font-weight:1000;
+    cursor:pointer;
 }
+.save-btn:disabled,.mobile-save-btn:disabled{opacity:.65;cursor:not-allowed}
+.cancel-btn{color:var(--muted);font-weight:1000;text-decoration:none!important}
 
+.history-details{
+    margin-top:18px;
+    border:2px solid #f3dfd4;
+    border-radius:20px;
+    background:#fff;
+    overflow:hidden;
+}
+.history-details summary{
+    padding:16px 18px;
+    cursor:pointer;
+    color:var(--muted);
+    font-weight:1000;
+}
+.history-inner{padding:0 16px 16px;overflow:auto}
+.history-table{width:100%;border-collapse:separate;border-spacing:0 7px;white-space:nowrap}
+.history-table th{text-align:left;color:var(--muted);padding:7px;font-size:12px;font-weight:1000}
+.history-table td{padding:10px;background:var(--cream);border-top:1px solid var(--warm-line);border-bottom:1px solid var(--warm-line);font-weight:850}
+.old-value{color:#ff4d4d}.new-value{color:var(--green)}
+.empty-history{padding:14px;border-radius:14px;background:var(--cream);color:var(--muted);font-weight:900}
+
+.mobile-action-bar{display:none}
+.inline-mobile-save{display:none}
+
+.modal-bg{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    background:rgba(23,21,47,.46);
+}
+.modal-box{
+    width:100%;
+    max-width:840px;
+    max-height:90vh;
+    min-height:0;
+    overflow:hidden;
+    border-radius:28px;
+    background:#fff;
+    box-shadow:0 30px 80px rgba(0,0,0,.25);
+    display:flex;
+    flex-direction:column;
+}
+.modal-head{
+    flex:0 0 auto;
+    display:flex;
+    gap:10px;
+    padding:16px;
+    border-bottom:1px solid var(--warm-line);
+    background:#fff;
+}
+.modal-head input{
+    flex:1;
+    min-width:0;
+    min-height:56px;
+    border:2px solid var(--line);
+    border-radius:16px;
+    padding:0 14px;
+    font-size:16px;
+    font-weight:900;
+    outline:none;
+}
+.modal-close{
+    flex:0 0 auto;
+    width:56px;
+    border:0;
+    border-radius:16px;
+    background:#fff1f1;
+    color:var(--pink);
+    font-size:18px;
+    font-weight:1000;
+    cursor:pointer;
+}
+.type-tabs{
+    flex:0 0 auto;
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:12px 14px 4px;
+    scrollbar-width:none;
+}
+.type-tabs::-webkit-scrollbar{display:none}
+.type-tab{
+    flex:0 0 auto;
+    min-height:42px;
+    border:2px solid var(--line);
+    border-radius:999px;
+    padding:0 15px;
+    background:#fff;
+    color:#6b6178;
+    font-size:13px;
+    font-weight:1000;
+    cursor:pointer;
+}
+.type-tab.active{border-color:transparent;background:linear-gradient(135deg,var(--purple),#b985ff);color:#fff}
 .variant-list{
-    max-height:60vh;
-    overflow:auto;
-    padding:14px;
+    flex:1 1 auto;
+    min-height:0;
+    overflow-y:auto;
+    overflow-x:hidden;
+    padding:12px 14px 16px;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    touch-action:pan-y;
+    scrollbar-gutter:stable;
 }
-
+.variant-list::-webkit-scrollbar{width:8px}
+.variant-list::-webkit-scrollbar-thumb{background:#d9c8ff;border-radius:999px}
+.variant-list::-webkit-scrollbar-track{background:transparent}
 .variant-option{
     display:flex;
     align-items:center;
-    gap:14px;
-    padding:15px;
-    border:2px solid #f1ddd1;
-    border-radius:20px;
-    margin-bottom:10px;
-    font-weight:900;
-    cursor:pointer;
-    background:#fffaf7;
-}
-
-.variant-img,
-.variant-fallback{
-    width:70px;
-    height:70px;
+    gap:12px;
+    min-height:86px;
+    margin-bottom:9px;
+    padding:12px;
+    border:2px solid var(--warm-line);
     border-radius:18px;
+    background:var(--cream);
+    cursor:pointer;
+}
+.variant-img,.variant-fallback{
+    flex:0 0 auto;
+    width:62px;
+    height:62px;
+    border-radius:16px;
     background:#f7f1ff;
     object-fit:cover;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:30px;
+    font-size:26px;
+}
+.variant-info{flex:1;min-width:0}
+.variant-type{display:inline-flex;margin-bottom:4px;padding:3px 8px;border-radius:999px;background:var(--purple-soft);color:var(--purple);font-size:10px;font-weight:1000}
+.variant-name{overflow:hidden;color:var(--ink);font-size:15px;font-weight:1000;text-overflow:ellipsis;white-space:nowrap}
+.variant-sub{margin-top:3px;color:var(--muted);font-size:12px;font-weight:850}
+.variant-price{flex:0 0 auto;color:var(--green);font-size:15px;font-weight:1000;white-space:nowrap}
+
+
+.item-toggle-main{
+    min-width:0;
+    flex:1;
+    border:0;
+    padding:0;
+    background:transparent;
+    text-align:left;
+    cursor:pointer;
+}
+
+.item-title-copy{
+    min-width:0;
+    display:block;
+}
+
+.item-card-meta{
+    display:block;
+    margin-top:2px;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:900;
+}
+
+.item-card-thumb{
+    width:40px;
+    height:40px;
+    flex:0 0 40px;
+    overflow:hidden;
+    border:1.5px solid var(--line);
+    border-radius:11px;
+    background:#f7f1ff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.item-card-thumb img{
+    width:100%;
+    height:100%;
+    display:block;
+    object-fit:cover;
+}
+
+.item-card-thumb-fallback{
+    font-size:18px;
+}
+
+.item-head-actions{
+    display:flex;
+    align-items:center;
+    gap:7px;
     flex:0 0 auto;
 }
 
-.variant-info{
-    flex:1;
-    min-width:0;
+.collapse-item-btn{
+    width:42px;
+    height:42px;
+    border:0;
+    border-radius:13px;
+    background:var(--purple-soft);
+    color:#6d45d8;
+    font-size:17px;
+    font-weight:1000;
+    cursor:pointer;
 }
 
-.variant-type{
-    display:inline-flex;
-    margin-bottom:5px;
-    padding:4px 9px;
-    border-radius:999px;
-    background:#efe5ff;
-    color:#8e63ff;
+.plan-toggle-btn,
+.mobile-items-actions{
+    display:none;
+}
+
+.quick-add-btn,
+.quick-save-btn{
+    min-height:36px;
+    border:0;
+    border-radius:11px;
+    padding:0 11px;
     font-size:11px;
     font-weight:1000;
+    cursor:pointer;
 }
 
-.variant-name{
-    font-size:16px;
-    color:#17152f;
+.quick-add-btn{
+    color:#6d45d8;
+    background:var(--purple-soft);
 }
 
-.variant-sub{
-    font-size:13px;
-    color:#7b7288;
-    margin-top:4px;
+.quick-save-btn{
+    color:white;
+    background:linear-gradient(135deg,var(--purple),#ff8c6b);
 }
 
-.variant-price{
-    font-size:17px;
-    color:#20b86b;
-    font-weight:1000;
-}
-
-/* iPad 11-inch / tablet landscape + portrait */
 @media (min-width:768px) and (max-width:1194px){
+    .purchase-wrap{max-width:100%;padding:22px 22px 100px}
+    .item-grid{grid-template-columns:minmax(280px,1fr) 115px 125px}
+    .item-grid>div:nth-child(4){grid-column:1/-1}
+}
+
+@media(max-width:767px){
+    body.modal-open{overflow:hidden}
+
     .purchase-wrap{
-        max-width:100%;
-        padding:24px;
+        padding:8px 7px 92px;
+    }
+
+    .page-head{
+        align-items:center;
+        margin-bottom:7px;
+        gap:8px;
     }
 
     .page-title{
-        font-size:32px;
+        font-size:20px;
+    }
+
+    .page-subtitle{
+        display:none;
+    }
+
+    .back-link{
+        min-height:34px;
+        padding:0 10px;
+        border-radius:12px;
+        font-size:11px;
     }
 
     .form-card{
-        padding:22px;
-        border-radius:28px;
+        padding:8px;
+        margin-bottom:8px;
+        border-radius:15px;
+        border-width:1.5px;
+        box-shadow:none;
     }
 
+    .card-heading{
+        margin-bottom:7px;
+    }
+
+    .card-heading h3{
+        font-size:15px;
+    }
+
+    /* Supplier and amount stay on one compact row. */
     .info-grid{
-        grid-template-columns:1fr 1fr;
-        gap:16px;
+        grid-template-columns:minmax(0,1fr) 105px;
+        gap:6px;
+    }
+
+    .info-grid>.field-box:first-child{
+        grid-column:auto;
+    }
+
+    .optional-info{
+        grid-column:1/-1;
+        border-width:1.5px;
+        border-radius:12px;
+    }
+
+    .optional-info summary{
+        padding:9px 10px;
+        font-size:11px;
+    }
+
+    .optional-fields{
+        grid-template-columns:1fr;
+        gap:6px;
+        padding:0 8px 8px;
+    }
+
+    .field-box label,
+    .item-label{
+        margin-bottom:3px;
+        font-size:10px;
+    }
+
+    .field-box input,
+    .field-box textarea,
+    .field-box select,
+    .item-row input,
+    .item-row textarea,
+    .item-row select{
+        min-height:40px;
+        border-width:1.5px;
+        border-radius:11px;
+        padding:7px 9px;
+        font-size:14px;
+    }
+
+    .field-box textarea{
+        min-height:58px;
+    }
+
+    /* Sticky compact item toolbar stays visible while adding 10–20 products. */
+    .items-heading{
+        position:sticky;
+        top:0;
+        z-index:120;
+        min-height:46px;
+        margin:-2px -2px 7px;
+        padding:5px;
+        border:1px solid rgba(234,221,236,.9);
+        border-radius:12px;
+        background:rgba(255,255,255,.94);
+        backdrop-filter:blur(10px);
+        box-shadow:0 5px 14px rgba(23,21,47,.07);
+    }
+
+    .items-heading h3{
+        display:none;
+    }
+
+    .items-heading .summary-box{
+        flex:1;
+        flex-wrap:nowrap;
+        gap:4px;
+    }
+
+    .summary-pill{
+        min-height:29px;
+        padding:0 7px;
+        border-radius:9px;
+        font-size:9px;
+        white-space:nowrap;
+    }
+
+    .mobile-items-actions{
+        display:flex;
+        gap:4px;
+        flex:0 0 auto;
+    }
+
+    .quick-add-btn,
+    .quick-save-btn{
+        min-height:32px;
+        border-radius:9px;
+        padding:0 9px;
+        font-size:10px;
+    }
+
+    .error-box{
+        margin-bottom:7px;
+        padding:9px;
+        border-radius:12px;
+        font-size:11px;
+    }
+
+    /* Each product is a small accordion card. */
+    .item-row{
+        margin-bottom:6px;
+        padding:7px;
+        border-width:1.5px;
+        border-radius:13px;
+        background:#fffdfb;
+    }
+
+    .item-card-head{
+        margin-bottom:6px;
+        gap:5px;
+    }
+
+    .item-card-title{
+        gap:6px;
+    }
+
+    .item-number{
+        min-width:27px;
+        height:27px;
+        padding:0 6px;
+        border-radius:8px;
+        font-size:9px;
+    }
+
+    .item-card-thumb{
+        width:31px;
+        height:31px;
+        flex-basis:31px;
+        border-radius:8px;
+    }
+
+    .item-card-thumb-fallback{
+        font-size:14px;
+    }
+
+    .item-card-name{
+        display:block;
+        font-size:11px;
+    }
+
+    .item-card-meta{
+        font-size:9px;
+    }
+
+    .item-head-actions{
+        gap:4px;
+    }
+
+    .collapse-item-btn,
+    .remove-btn{
+        width:30px;
+        height:30px;
+        border-radius:8px;
+        font-size:13px;
     }
 
     .item-grid{
-        grid-template-columns:1fr 120px 130px;
-        gap:14px;
+        grid-template-columns:minmax(0,1fr) 74px 74px;
+        gap:5px;
     }
 
-    .item-grid > div:nth-child(4){
-        grid-column:1 / 3;
+    .variant-field{
+        grid-column:1/-1;
     }
 
-    .delete-box{
-        grid-column:3 / 4;
-        grid-row:2 / 3;
-        align-items:stretch;
+    .note-field{
+        grid-column:1/-1;
     }
 
-    .remove-btn{
-        width:100%;
+    .variant-picker{
+        min-height:49px;
+        border-width:1.5px;
+        border-radius:11px;
+        padding:5px 7px;
+        gap:7px;
     }
 
-    .variant-picker,
-    .item-grid input,
-    .field-box input,
-    .field-box textarea,
-    .field-box select{
-        min-height:64px;
+    .picker-img,
+    .picker-fallback{
+        width:36px;
+        height:36px;
+        border-radius:9px;
         font-size:17px;
     }
 
-    .plan-row{
-        grid-template-columns:1fr 130px 56px;
+    .variant-picker-title{
+        font-size:11px;
     }
 
-    .plan-shop,
-    .plan-qty,
+    .variant-picker-sub{
+        margin-top:1px;
+        font-size:9px;
+    }
+
+    /* Note is kept but visually smaller because it is rarely needed. */
+    .note-field input{
+        min-height:36px;
+    }
+
+    /* Shop plan is summarized and hidden until staff taps Edit plan. */
+    .plan-box{
+        margin-top:6px;
+        padding:7px;
+        border-width:1.5px;
+        border-radius:12px;
+    }
+
+    .plan-head{
+        margin-bottom:0;
+        align-items:center;
+        flex-direction:row;
+        gap:5px;
+    }
+
+    .plan-title{
+        font-size:10px;
+    }
+
+    .plan-summary{
+        margin-top:1px;
+        font-size:9px;
+    }
+
+    .plan-actions{
+        width:auto;
+        margin-left:auto;
+        display:flex;
+        flex-wrap:nowrap;
+        gap:4px;
+    }
+
+    .plan-toggle-btn{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-height:29px;
+        border:0;
+        border-radius:9px;
+        padding:0 8px;
+        color:#6d45d8;
+        background:var(--purple-soft);
+        font-size:9px;
+        font-weight:1000;
+        cursor:pointer;
+    }
+
+    .plan-box:not(.plan-expanded) .equal-plan-btn,
+    .plan-box:not(.plan-expanded) .add-plan-btn,
+    .plan-box:not(.plan-expanded) .plan-list{
+        display:none;
+    }
+
+    .plan-box.plan-expanded .plan-head{
+        align-items:flex-start;
+        margin-bottom:6px;
+    }
+
+    .plan-box.plan-expanded .plan-actions{
+        display:grid;
+        grid-template-columns:auto 1fr 1fr;
+    }
+
+    .add-plan-btn,
+    .equal-plan-btn{
+        min-height:29px;
+        padding:0 6px;
+        border-radius:9px;
+        font-size:8px;
+    }
+
+    .plan-list{
+        gap:4px;
+    }
+
+    .plan-row{
+        grid-template-columns:minmax(0,1fr) 62px 31px;
+        gap:4px;
+    }
+
+    .plan-shop{
+        min-height:35px;
+        padding:5px 7px;
+        border-width:1.5px;
+        border-radius:9px;
+        font-size:9px;
+    }
+
+    .plan-qty{
+        height:35px!important;
+        min-height:35px!important;
+        padding:4px!important;
+        font-size:12px!important;
+    }
+
     .plan-remove{
-        min-height:56px;
+        width:31px;
+        height:35px;
+        border-radius:8px;
+        font-size:11px;
+    }
+
+    /* Collapsed product: only one small header line remains. */
+    .item-row.item-collapsed{
+        padding:5px 7px;
+        background:#fff;
+    }
+
+    .item-row.item-collapsed .item-card-head{
+        margin-bottom:0;
+    }
+
+    .item-row.item-collapsed .item-grid,
+    .item-row.item-collapsed .plan-box{
+        display:none;
+    }
+
+    .item-row.item-collapsed .collapse-item-btn{
+        transform:rotate(180deg);
+    }
+
+    .add-row-btn{
+        min-height:42px;
+        border-radius:11px;
+        font-size:11px;
+    }
+
+    .desktop-form-actions,
+    .mobile-action-bar{
+        display:none!important;
+    }
+
+    .inline-mobile-save{
+        position:sticky;
+        bottom:7px;
+        z-index:130;
+        display:flex;
+        width:100%;
+        min-height:45px;
+        margin-top:6px;
+        align-items:center;
+        justify-content:center;
+        border:0;
+        border-radius:12px;
+        color:#fff;
+        background:linear-gradient(135deg,var(--purple),#ff8c6b);
+        box-shadow:0 9px 20px rgba(109,69,216,.25);
+        font-size:12px;
+        font-weight:1000;
+        cursor:pointer;
+    }
+
+    .inline-mobile-save:disabled{
+        opacity:.65;
+        cursor:not-allowed;
+    }
+
+    .history-details{
+        margin-top:8px;
+        border-radius:12px;
+    }
+
+    .history-details summary{
+        padding:10px;
+        font-size:11px;
+    }
+
+    /* Phone bottom-sheet selectors */
+    .modal-bg{
+        align-items:flex-end;
+        padding:0;
     }
 
     .modal-box{
-        max-width:92vw;
-        border-radius:32px;
+        width:100%;
+        max-width:none;
+        height:84dvh;
+        max-height:84dvh;
+        min-height:300px;
+        border-radius:19px 19px 0 0;
+    }
+
+    #shopModal .modal-box{
+        height:min(58dvh,480px);
+        max-height:calc(100dvh - 12px);
+        min-height:260px;
+    }
+
+    .modal-head{
+        position:sticky;
+        top:0;
+        z-index:3;
+        padding:7px;
+        gap:5px;
     }
 
     .modal-head input{
-        min-height:62px;
-        font-size:18px;
+        min-height:42px;
+        border-width:1.5px;
+        border-radius:11px;
+        padding:0 9px;
+        font-size:13px;
+    }
+
+    .modal-close{
+        width:42px;
+        border-radius:11px;
+    }
+
+    .type-tabs{
+        padding:7px 7px 3px;
+        gap:4px;
+    }
+
+    .type-tab{
+        min-height:32px;
+        padding:0 9px;
+        border-width:1.5px;
+        font-size:9px;
+    }
+
+    .variant-list{
+        padding:6px 7px calc(18px + env(safe-area-inset-bottom));
     }
 
     .variant-option{
-        min-height:96px;
-        padding:18px;
+        min-height:59px;
+        margin-bottom:5px;
+        padding:6px;
+        border-width:1.5px;
+        border-radius:11px;
+        gap:6px;
     }
 
     .variant-img,
     .variant-fallback{
-        width:76px;
-        height:76px;
-    }
-
-    .variant-name{
-        font-size:18px;
-    }
-
-    .variant-price{
+        width:43px;
+        height:43px;
+        border-radius:10px;
         font-size:19px;
     }
 
-    .history-table{
-        display:block;
-        overflow-x:auto;
-        white-space:nowrap;
-    }
-}
-
-/* small iPad portrait / phone */
-@media(max-width:767px){
-    .purchase-wrap{
-        padding:16px;
+    .variant-type{
+        margin-bottom:2px;
+        padding:2px 5px;
+        font-size:8px;
     }
 
-    .page-title{
-        font-size:28px;
+    .variant-name{
+        font-size:11px;
     }
 
-    .form-card{
-        padding:18px;
-        border-radius:24px;
-    }
-
-    .info-grid,
-    .item-grid,
-    .plan-row{
-        grid-template-columns:1fr;
-    }
-
-    .delete-box{
-        align-items:stretch;
-    }
-
-    .remove-btn{
-        width:100%;
-    }
-
-    .plan-head{
-        align-items:flex-start;
-        flex-direction:column;
-    }
-
-    .add-plan-btn{
-        width:100%;
-    }
-
-    .save-btn{
-        width:100%;
-    }
-
-    .cancel-btn{
-        display:block;
-        margin:14px 0 0;
-        text-align:center;
-    }
-
-    .history-table{
-        display:block;
-        overflow-x:auto;
-        white-space:nowrap;
-    }
-
-    .modal-bg{
-        padding:12px;
-    }
-
-    .modal-box{
-        max-height:92vh;
-        border-radius:24px;
-    }
-
-    .modal-head{
-        gap:8px;
-    }
-
-    .variant-option{
-        align-items:flex-start;
+    .variant-sub{
+        margin-top:1px;
+        font-size:9px;
     }
 
     .variant-price{
-        white-space:nowrap;
+        font-size:10px;
     }
 }
 </style>
 
 <div class="purchase-wrap">
-    <h1 class="page-title">{{ title|default:"Purchase Form" }}</h1>
+    <div class="page-head">
+        <div>
+            <h1 class="page-title">{{ title|default:"Purchase Form" }}</h1>
+            <p class="page-subtitle">Add items, quantity, and shop plan.</p>
+        </div>
+        <a href="{% url 'purchase_list' %}" class="back-link">← Purchases</a>
+    </div>
 
     <form method="post" id="purchaseForm">
         {% csrf_token %}
 
         {% if form.errors or formset.errors or formset.non_form_errors %}
         <div class="error-box">
-            Please check the item rows.
+            Please check the highlighted information.
             {{ form.non_field_errors }}
             {{ formset.non_form_errors }}
         </div>
         {% endif %}
 
         <div class="form-card">
-            <h3>📦 Purchase Info</h3>
+            <div class="card-heading"><h3>📦 Purchase Info</h3></div>
             <div class="info-grid">
-                <div class="field-box"><label>Supplier</label>{{ form.supplier }}{{ form.supplier.errors }}</div>
-                <div class="field-box"><label>Total Amount</label>{{ form.total_amount }}{{ form.total_amount.errors }}</div>
-                <div class="field-box"><label>Shipping Note</label>{{ form.shipping_note }}{{ form.shipping_note.errors }}</div>
-                <div class="field-box"><label>Note</label>{{ form.note }}{{ form.note.errors }}</div>
+                <div class="field-box">
+                    <label>Supplier</label>
+                    {{ form.supplier }}{{ form.supplier.errors }}
+                </div>
+                <div class="field-box">
+                    <label>Total Amount</label>
+                    {{ form.total_amount }}{{ form.total_amount.errors }}
+                </div>
+
+                <details class="optional-info" {% if form.shipping_note.value or form.note.value %}open{% endif %}>
+                    <summary>Shipping note & purchase note</summary>
+                    <div class="optional-fields">
+                        <div class="field-box">
+                            <label>Shipping Note</label>
+                            {{ form.shipping_note }}{{ form.shipping_note.errors }}
+                        </div>
+                        <div class="field-box">
+                            <label>Purchase Note</label>
+                            {{ form.note }}{{ form.note.errors }}
+                        </div>
+                    </div>
+                </details>
             </div>
         </div>
 
         <div class="form-card">
-            <h3>🛒 Purchase Items</h3>
-            {{ formset.management_form }}
+            <div class="card-heading items-heading">
+                <h3>🛒 Purchase Items</h3>
 
-            <div class="summary-box">
-                <div class="summary-pill">📦 Total Variant: <span id="totalItems">0</span></div>
-                <div class="summary-pill">🔢 Total Quantity: <span id="totalQty">0</span></div>
+                <div class="summary-box">
+                    <div class="summary-pill">📦 <span id="totalItems">0</span> items</div>
+                    <div class="summary-pill">🔢 <span id="totalQty">0</span> pcs</div>
+                </div>
+
+                <div class="mobile-items-actions">
+                    <button type="button" class="quick-add-btn" onclick="addRow()">＋ Item</button>
+                    <button type="submit" class="quick-save-btn" id="quickSaveBtn">Save</button>
+                </div>
             </div>
+
+            {{ formset.management_form }}
 
             <div id="itemsBox">
                 {% for item_form in formset %}
                 <div class="item-row" data-prefix="{{ item_form.prefix }}">
                     {% for hidden in item_form.hidden_fields %}{{ hidden }}{% endfor %}
 
+                    <div class="item-card-head">
+                        <button type="button" class="item-card-title item-toggle-main" onclick="toggleItemCard(this)">
+                            <span class="item-number">#1</span>
+                            <span class="item-card-thumb">
+                                <span class="item-card-thumb-fallback">📦</span>
+                            </span>
+                            <span class="item-title-copy">
+                                <span class="item-card-name">Choose item</span>
+                                <span class="item-card-meta">Qty 1 · Plan 0/1</span>
+                            </span>
+                        </button>
+
+                        <div class="item-head-actions">
+                            <button type="button" class="collapse-item-btn" onclick="toggleItemCard(this)" aria-label="Collapse item">⌃</button>
+                            <div class="delete-hidden">{% if item_form.instance.pk %}{{ item_form.DELETE }}{% endif %}</div>
+                            <button type="button" class="remove-btn" onclick="removeRow(this)" aria-label="Delete item">✕</button>
+                        </div>
+                    </div>
+
                     <div class="item-grid">
-                        <div>
+                        <div class="variant-field">
                             <div class="item-label">Variant</div>
                             <select name="{{ item_form.variant.html_name }}" id="{{ item_form.variant.id_for_label }}" class="hidden-select variant-select">
                                 <option value="">Choose Variant</option>
@@ -689,35 +1280,27 @@
                             </select>
                             <button type="button" class="variant-picker empty" onclick="openVariantModal(this)">
                                 <span class="picker-fallback">📦</span>
-                                <span>Choose Variant</span>
+                                <span class="variant-picker-copy">
+                                    <span class="variant-picker-title">Choose Variant</span>
+                                    <span class="variant-picker-sub">Tap to search item</span>
+                                </span>
                             </button>
                             {{ item_form.variant.errors }}
                         </div>
 
                         <div>
                             <div class="item-label">Qty</div>
-                            {{ item_form.ordered_qty }}
-                            {{ item_form.ordered_qty.errors }}
+                            {{ item_form.ordered_qty }}{{ item_form.ordered_qty.errors }}
                         </div>
 
                         <div>
                             <div class="item-label">Cost</div>
-                            {{ item_form.cost_price }}
-                            {{ item_form.cost_price.errors }}
+                            {{ item_form.cost_price }}{{ item_form.cost_price.errors }}
                         </div>
 
-                        <div>
-                            <div class="item-label">Note</div>
-                            {{ item_form.note }}
-                            {{ item_form.note.errors }}
-                        </div>
-
-                        <div class="delete-box">
-                            <div class="item-label">Delete</div>
-                            <div class="delete-hidden">
-                                {% if item_form.instance.pk %}{{ item_form.DELETE }}{% endif %}
-                            </div>
-                            <button type="button" class="remove-btn" onclick="removeRow(this)">✕</button>
+                        <div class="note-field">
+                            <div class="item-label">Item Note</div>
+                            {{ item_form.note }}{{ item_form.note.errors }}
                         </div>
                     </div>
 
@@ -726,10 +1309,14 @@
                             <div>
                                 <div class="plan-title">🏪 Shop Plan</div>
                                 <div class="plan-summary">
-                                    Planned: <span class="planned-total">0</span> / Qty: <span class="item-qty-show">0</span>
+                                    Planned <span class="planned-total">0</span> / <span class="item-qty-show">0</span>
                                 </div>
                             </div>
-                            <button type="button" class="add-plan-btn" onclick="openShopModal(this)">+ Add Shop</button>
+                            <div class="plan-actions">
+                                <button type="button" class="plan-toggle-btn" onclick="togglePlan(this)">Edit plan</button>
+                                <button type="button" class="equal-plan-btn" onclick="resetEqualSplit(this)">↔ Split equally</button>
+                                <button type="button" class="add-plan-btn" onclick="openShopModal(this)">+ Shop</button>
+                            </div>
                         </div>
 
                         <div class="plan-list">
@@ -737,9 +1324,12 @@
                                 {% for plan in item_form.instance.branch_plans.all %}
                                 <div class="plan-row">
                                     <input type="hidden" name="{{ item_form.prefix }}-plan_branch[]" value="{{ plan.branch.id }}">
-                                    <div class="plan-shop">🏪 {{ plan.branch.name }}</div>
-                                    <input class="plan-qty" type="number" name="{{ item_form.prefix }}-plan_qty[]" min="1" value="{{ plan.qty }}" oninput="updatePurchaseTotals()">
-                                    <button type="button" class="plan-remove" onclick="removePlan(this)">✕</button>
+                                    <div class="plan-shop">
+                                        <span>🏪 {{ plan.branch.name }}</span>
+                                        <small class="plan-auto-label">Auto</small>
+                                    </div>
+                                    <input class="plan-qty" type="number" inputmode="numeric" name="{{ item_form.prefix }}-plan_qty[]" min="0" value="{{ plan.qty }}">
+                                    <button type="button" class="plan-remove" onclick="removePlan(this)" aria-label="Remove shop">✕</button>
                                 </div>
                                 {% endfor %}
                             {% endif %}
@@ -749,46 +1339,51 @@
                 {% endfor %}
             </div>
 
-            <button type="button" class="add-row-btn" onclick="addRow()">+ Add Item</button>
+            <button type="button" class="add-row-btn" onclick="addRow()">＋ Add Another Item</button>
+            <button type="submit" class="inline-mobile-save" id="inlineMobileSaveBtn">💾 Save Purchase</button>
         </div>
 
-        <button type="submit" class="save-btn" id="saveBtn">💾 Save Purchase</button>
-        <a href="{% url 'purchase_list' %}" class="cancel-btn">Cancel</a>
+        <div class="desktop-form-actions">
+            <button type="submit" class="save-btn" id="saveBtn">💾 Save Purchase</button>
+            <a href="{% url 'purchase_list' %}" class="cancel-btn">Cancel</a>
+        </div>
+
+        <div class="mobile-action-bar">
+            <div class="mobile-totals">
+                <b><span id="mobileTotalItems">0</span> items</b>
+                <span id="mobileTotalQty">0</span> pcs total
+            </div>
+            <button type="submit" class="mobile-save-btn" id="mobileSaveBtn">💾 Save Purchase</button>
+        </div>
     </form>
 
     {% if purchase %}
-    <div class="form-card">
-        <h3>📜 Edit History</h3>
-
-        {% if purchase.edit_logs.all %}
-        <table class="history-table">
-            <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>Action</th>
-                    <th>Field</th>
-                    <th>From</th>
-                    <th>To</th>
-                    <th>By</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for log in purchase.edit_logs.all %}
-                <tr>
-                    <td>{{ log.created_at|date:"Y-m-d H:i" }}</td>
-                    <td>{{ log.action }}</td>
-                    <td>{{ log.field_name|default:"-" }}</td>
-                    <td class="old-value">{{ log.old_value|default:"-" }}</td>
-                    <td class="new-value">{{ log.new_value|default:"-" }}</td>
-                    <td>{{ log.user|default:"-" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
+    <details class="history-details">
+        <summary>📜 Edit History</summary>
+        <div class="history-inner">
+            {% if purchase.edit_logs.all %}
+            <table class="history-table">
+                <thead>
+                    <tr><th>Time</th><th>Action</th><th>Field</th><th>From</th><th>To</th><th>By</th></tr>
+                </thead>
+                <tbody>
+                    {% for log in purchase.edit_logs.all %}
+                    <tr>
+                        <td>{{ log.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>{{ log.action }}</td>
+                        <td>{{ log.field_name|default:"-" }}</td>
+                        <td class="old-value">{{ log.old_value|default:"-" }}</td>
+                        <td class="new-value">{{ log.new_value|default:"-" }}</td>
+                        <td>{{ log.user|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
             <div class="empty-history">No edit history yet.</div>
-        {% endif %}
-    </div>
+            {% endif %}
+        </div>
+    </details>
     {% endif %}
 </div>
 
@@ -796,8 +1391,26 @@
     <div class="item-row" data-prefix="items-__prefix__">
         {% for hidden in formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
 
+        <div class="item-card-head">
+            <button type="button" class="item-card-title item-toggle-main" onclick="toggleItemCard(this)">
+                <span class="item-number">#1</span>
+                <span class="item-card-thumb">
+                    <span class="item-card-thumb-fallback">📦</span>
+                </span>
+                <span class="item-title-copy">
+                    <span class="item-card-name">Choose item</span>
+                    <span class="item-card-meta">Qty 1 · Plan 0/1</span>
+                </span>
+            </button>
+
+            <div class="item-head-actions">
+                <button type="button" class="collapse-item-btn" onclick="toggleItemCard(this)" aria-label="Collapse item">⌃</button>
+                <button type="button" class="remove-btn" onclick="removeRow(this)" aria-label="Delete item">✕</button>
+            </div>
+        </div>
+
         <div class="item-grid">
-            <div>
+            <div class="variant-field">
                 <div class="item-label">Variant</div>
                 <select name="{{ formset.empty_form.variant.html_name }}" id="{{ formset.empty_form.variant.id_for_label }}" class="hidden-select variant-select">
                     <option value="">Choose Variant</option>
@@ -815,29 +1428,29 @@
                 </select>
                 <button type="button" class="variant-picker empty" onclick="openVariantModal(this)">
                     <span class="picker-fallback">📦</span>
-                    <span>Choose Variant</span>
+                    <span class="variant-picker-copy">
+                        <span class="variant-picker-title">Choose Variant</span>
+                        <span class="variant-picker-sub">Tap to search item</span>
+                    </span>
                 </button>
             </div>
 
             <div><div class="item-label">Qty</div>{{ formset.empty_form.ordered_qty }}</div>
             <div><div class="item-label">Cost</div>{{ formset.empty_form.cost_price }}</div>
-            <div><div class="item-label">Note</div>{{ formset.empty_form.note }}</div>
-
-            <div class="delete-box">
-                <div class="item-label">Delete</div>
-                <button type="button" class="remove-btn" onclick="removeRow(this)">✕</button>
-            </div>
+            <div class="note-field"><div class="item-label">Item Note</div>{{ formset.empty_form.note }}</div>
         </div>
 
         <div class="plan-box">
             <div class="plan-head">
                 <div>
                     <div class="plan-title">🏪 Shop Plan</div>
-                    <div class="plan-summary">
-                        Planned: <span class="planned-total">0</span> / Qty: <span class="item-qty-show">0</span>
-                    </div>
+                    <div class="plan-summary">Planned <span class="planned-total">0</span> / <span class="item-qty-show">0</span></div>
                 </div>
-                <button type="button" class="add-plan-btn" onclick="openShopModal(this)">+ Add Shop</button>
+                <div class="plan-actions">
+                    <button type="button" class="plan-toggle-btn" onclick="togglePlan(this)">Edit plan</button>
+                    <button type="button" class="equal-plan-btn" onclick="resetEqualSplit(this)">↔ Split equally</button>
+                    <button type="button" class="add-plan-btn" onclick="openShopModal(this)">+ Shop</button>
+                </div>
             </div>
             <div class="plan-list"></div>
         </div>
@@ -847,7 +1460,7 @@
 <div class="modal-bg" id="variantModal">
     <div class="modal-box">
         <div class="modal-head">
-            <input type="text" id="variantSearch" placeholder="Search type, item, size, color..." onkeyup="filterVariants()">
+            <input type="text" id="variantSearch" placeholder="Search item, size, color..." oninput="filterVariants()">
             <button type="button" class="modal-close" onclick="closeVariantModal()">✕</button>
         </div>
         <div class="type-tabs" id="typeTabs"></div>
@@ -858,7 +1471,7 @@
 <div class="modal-bg" id="shopModal">
     <div class="modal-box">
         <div class="modal-head">
-            <input type="text" id="shopSearch" placeholder="Search shop..." onkeyup="filterShops()">
+            <input type="text" id="shopSearch" placeholder="Search shop..." oninput="filterShops()">
             <button type="button" class="modal-close" onclick="closeShopModal()">✕</button>
         </div>
         <div class="variant-list" id="shopList">
@@ -867,7 +1480,7 @@
                 <div class="variant-fallback">🏪</div>
                 <div class="variant-info">
                     <div class="variant-name">{{ b.name }}</div>
-                    <div class="variant-sub">Add planned quantity</div>
+                    <div class="variant-sub">Add this shop to the plan</div>
                 </div>
             </div>
             {% endfor %}
@@ -881,8 +1494,260 @@ let activeButton = null;
 let activeType = "ALL";
 let activePlanBox = null;
 let isSaving = false;
+const IS_CREATE_MODE = {% if purchase %}false{% else %}true{% endif %};
 
-function safeText(value){ return (value || "").toString(); }
+function safeText(value){
+    return (value || "").toString()
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function setModalOpen(isOpen){
+    document.body.classList.toggle("modal-open", isOpen);
+}
+
+function getActiveBranches(){
+    return Array.from(document.querySelectorAll("#shopList .shop-option")).map(option => ({
+        id: option.dataset.id,
+        name: option.dataset.name,
+    }));
+}
+
+function createPlanRow(itemRow, branchId, branchName, qtyValue = "", isAuto = false){
+    const prefix = itemRow.dataset.prefix;
+    const div = document.createElement("div");
+    div.className = "plan-row";
+    div.dataset.autoPlan = isAuto ? "true" : "false";
+
+    const qty = qtyValue === "" ? "" : Number(qtyValue);
+    div.innerHTML = `
+        <input type="hidden" name="${prefix}-plan_branch[]" value="${safeText(branchId)}">
+        <div class="plan-shop">
+            <span>🏪 ${safeText(branchName)}</span>
+            <small class="plan-auto-label">Auto</small>
+        </div>
+        <input class="plan-qty" type="number" inputmode="numeric" name="${prefix}-plan_qty[]" min="0" value="${qty}" placeholder="Qty">
+        <button type="button" class="plan-remove" onclick="removePlan(this)" aria-label="Remove shop">✕</button>
+    `;
+    return div;
+}
+
+function getPlanInt(value){
+    return Math.max(parseInt(value || "0", 10) || 0, 0);
+}
+
+function getPlanQtyInputs(itemRow){
+    return Array.from(itemRow.querySelectorAll(".plan-qty"));
+}
+
+function markPlanAutoInput(itemRow, autoInput){
+    getPlanQtyInputs(itemRow).forEach(input => {
+        const isAuto = input === autoInput;
+        input.dataset.autoBalance = isAuto ? "1" : "0";
+        input.closest(".plan-row")?.classList.toggle(
+            "auto-balanced",
+            isAuto
+        );
+    });
+}
+
+function initializePlanAuto(itemRow){
+    const inputs = getPlanQtyInputs(itemRow);
+
+    if(inputs.length < 2){
+        markPlanAutoInput(itemRow, null);
+        return null;
+    }
+
+    let autoInput = inputs.find(
+        input => input.dataset.autoBalance === "1"
+    );
+
+    if(!autoInput){
+        autoInput = inputs[inputs.length - 1];
+    }
+
+    markPlanAutoInput(itemRow, autoInput);
+    return autoInput;
+}
+
+function choosePlanAutoInput(itemRow, editedInput){
+    const inputs = getPlanQtyInputs(itemRow);
+    if(inputs.length < 2){return null;}
+
+    const existingAuto = inputs.find(
+        input => input.dataset.autoBalance === "1"
+    );
+
+    // Keep the current automatic shop unless staff edits that exact shop.
+    if(existingAuto && existingAuto !== editedInput){
+        return existingAuto;
+    }
+
+    // When staff edits the automatic shop, another shop becomes automatic.
+    return inputs.find(input => input !== editedInput) || null;
+}
+
+function balancePlanQuantities(editedInput){
+    const itemRow = editedInput.closest(".item-row");
+    if(!itemRow){return;}
+
+    const qtyInput = itemRow.querySelector(
+        'input[name$="-ordered_qty"]'
+    );
+    const orderedQty = getPlanInt(qtyInput?.value);
+    const inputs = getPlanQtyInputs(itemRow);
+
+    itemRow.dataset.autoSplit = "false";
+
+    if(inputs.length < 2){
+        markPlanAutoInput(itemRow, null);
+        updatePurchaseTotals();
+        return;
+    }
+
+    const autoInput = choosePlanAutoInput(itemRow, editedInput);
+    if(!autoInput){
+        updatePurchaseTotals();
+        return;
+    }
+
+    markPlanAutoInput(itemRow, autoInput);
+
+    let manualTotal = 0;
+    inputs.forEach(input => {
+        if(input !== autoInput){
+            manualTotal += getPlanInt(input.value);
+        }
+    });
+
+    autoInput.value = Math.max(orderedQty - manualTotal, 0);
+    updatePurchaseTotals();
+}
+
+function rebalancePlanFromOrderedQty(itemRow){
+    const inputs = getPlanQtyInputs(itemRow);
+
+    if(inputs.length < 2){
+        updatePurchaseTotals();
+        return;
+    }
+
+    const qtyInput = itemRow.querySelector(
+        'input[name$="-ordered_qty"]'
+    );
+    const orderedQty = getPlanInt(qtyInput?.value);
+    const autoInput = initializePlanAuto(itemRow);
+
+    if(!autoInput){
+        updatePurchaseTotals();
+        return;
+    }
+
+    let manualTotal = 0;
+    inputs.forEach(input => {
+        if(input !== autoInput){
+            manualTotal += getPlanInt(input.value);
+        }
+    });
+
+    autoInput.value = Math.max(orderedQty - manualTotal, 0);
+    updatePurchaseTotals();
+}
+
+function autoSplitRow(itemRow, force = false){
+    if(!itemRow){return;}
+    if(!force && itemRow.dataset.autoSplit !== "true"){return;}
+
+    const branches = getActiveBranches();
+    const planList = itemRow.querySelector(".plan-list");
+    const qtyInput = itemRow.querySelector('input[name$="-ordered_qty"]');
+    if(!planList || branches.length === 0){return;}
+
+    const orderedQty = Math.max(parseInt(qtyInput?.value || "0", 10) || 0, 0);
+    const baseQty = Math.floor(orderedQty / branches.length);
+    const remainder = orderedQty % branches.length;
+
+    itemRow.dataset.autoSplit = "true";
+    planList.innerHTML = "";
+    branches.forEach((branch, index) => {
+        const branchQty = baseQty + (index < remainder ? 1 : 0);
+        planList.appendChild(createPlanRow(itemRow, branch.id, branch.name, branchQty, true));
+    });
+
+    initializePlanAuto(itemRow);
+}
+
+function resetEqualSplit(button){
+    const itemRow = button.closest(".item-row");
+    if(!itemRow){return;}
+    itemRow.dataset.autoSplit = "true";
+    autoSplitRow(itemRow, true);
+    updatePurchaseTotals();
+}
+
+
+function isPhoneScreen(){
+    return window.matchMedia("(max-width: 767px)").matches;
+}
+
+function setItemCollapsed(itemRow, collapsed){
+    if(!itemRow){return;}
+
+    itemRow.classList.toggle("item-collapsed", Boolean(collapsed));
+    const button = itemRow.querySelector(".collapse-item-btn");
+
+    if(button){
+        button.textContent = collapsed ? "⌄" : "⌃";
+        button.setAttribute("aria-label", collapsed ? "Open item" : "Collapse item");
+    }
+}
+
+function toggleItemCard(button){
+    const itemRow = button.closest(".item-row");
+    if(!itemRow){return;}
+    setItemCollapsed(itemRow, !itemRow.classList.contains("item-collapsed"));
+}
+
+function collapseOtherItems(activeRow){
+    if(!isPhoneScreen()){return;}
+
+    document.querySelectorAll("#itemsBox .item-row").forEach(row => {
+        if(row !== activeRow && row.style.display !== "none"){
+            setItemCollapsed(row, true);
+        }
+    });
+}
+
+function togglePlan(button){
+    const planBox = button.closest(".plan-box");
+    if(!planBox){return;}
+
+    const isExpanded = planBox.classList.toggle("plan-expanded");
+    button.textContent = isExpanded ? "Hide plan" : "Edit plan";
+}
+
+function syncPlanToggle(planBox){
+    const button = planBox?.querySelector(".plan-toggle-btn");
+    if(button){
+        button.textContent = planBox.classList.contains("plan-expanded")
+            ? "Hide plan"
+            : "Edit plan";
+    }
+}
+
+function refreshItemNumbers(){
+    let visibleIndex = 0;
+    document.querySelectorAll("#itemsBox .item-row").forEach(row => {
+        if(row.style.display === "none"){return;}
+        visibleIndex += 1;
+        const badge = row.querySelector(".item-number");
+        if(badge){badge.textContent = `#${visibleIndex}`;}
+    });
+}
 
 function updatePurchaseTotals(){
     let totalItems = 0;
@@ -893,57 +1758,96 @@ function updatePurchaseTotals(){
 
         const variant = row.querySelector(".variant-select");
         const qtyInput = row.querySelector('input[name$="-ordered_qty"]');
-        const qty = parseInt(qtyInput?.value || "0");
+        const qty = Math.max(parseInt(qtyInput?.value || "0", 10) || 0, 0);
 
         if(variant && variant.value){
             totalItems += 1;
-            totalQty += qty || 0;
+            totalQty += qty;
         }
 
         let planTotal = 0;
         row.querySelectorAll('input[name$="-plan_qty[]"]').forEach(input => {
-            planTotal += parseInt(input.value || "0") || 0;
+            planTotal += Math.max(parseInt(input.value || "0", 10) || 0, 0);
         });
 
         const plannedTotal = row.querySelector(".planned-total");
         const itemQtyShow = row.querySelector(".item-qty-show");
+        const summary = row.querySelector(".plan-summary");
+        const planBox = row.querySelector(".plan-box");
+        const itemMeta = row.querySelector(".item-card-meta");
 
-        if(plannedTotal){plannedTotal.innerText = planTotal;}
-        if(itemQtyShow){itemQtyShow.innerText = qty || 0;}
+        if(plannedTotal){plannedTotal.textContent = planTotal;}
+        if(itemQtyShow){itemQtyShow.textContent = qty;}
+        if(itemMeta){itemMeta.textContent = `Qty ${qty} · Plan ${planTotal}/${qty}`;}
+
+        if(summary && planBox){
+            const isCorrect = planTotal === qty && qty > 0;
+            summary.classList.toggle("ok", isCorrect);
+            summary.classList.toggle("warning", !isCorrect && qty > 0);
+            planBox.classList.toggle("plan-ok", isCorrect);
+            planBox.classList.toggle("plan-warning", !isCorrect && qty > 0);
+
+            if(isPhoneScreen() && qty > 0 && !isCorrect){
+                planBox.classList.add("plan-expanded");
+            }
+            syncPlanToggle(planBox);
+        }
     });
 
-    document.getElementById("totalItems").innerText = totalItems;
-    document.getElementById("totalQty").innerText = totalQty;
+    document.getElementById("totalItems").textContent = totalItems;
+    document.getElementById("totalQty").textContent = totalQty;
+    document.getElementById("mobileTotalItems").textContent = totalItems;
+    document.getElementById("mobileTotalQty").textContent = totalQty;
+    refreshItemNumbers();
 }
 
 function updatePicker(button, select){
     const option = select.options[select.selectedIndex];
+    const itemRow = button.closest(".item-row");
+    const cardName = itemRow?.querySelector(".item-card-name");
+    const cardThumb = itemRow?.querySelector(".item-card-thumb");
 
     if(!option || !option.value){
         button.classList.add("empty");
-        button.innerHTML = `<span class="picker-fallback">📦</span><span>Choose Variant</span>`;
+        button.innerHTML = `
+            <span class="picker-fallback">📦</span>
+            <span class="variant-picker-copy">
+                <span class="variant-picker-title">Choose Variant</span>
+                <span class="variant-picker-sub">Tap to search item</span>
+            </span>`;
+        if(cardName){cardName.textContent = "Choose item";}
+        if(cardThumb){
+            cardThumb.innerHTML = `<span class="item-card-thumb-fallback">📦</span>`;
+        }
         updatePurchaseTotals();
         return;
     }
 
-    const label = option.dataset.label || option.text;
+    const name = option.dataset.name || option.text;
+    const sub = option.dataset.sub || "";
     const type = option.dataset.type || "No Type";
+    const price = option.dataset.price || "";
     const img = option.dataset.image || "";
 
     button.classList.remove("empty");
-
-    if(img){
-        button.innerHTML = `<img src="${img}" class="picker-img"><span><b>${type}</b><br>${label}</span>`;
-    }else{
-        button.innerHTML = `<span class="picker-fallback">📦</span><span><b>${type}</b><br>${label}</span>`;
+    button.innerHTML = `
+        ${img ? `<img src="${safeText(img)}" class="picker-img" alt="">` : `<span class="picker-fallback">📦</span>`}
+        <span class="variant-picker-copy">
+            <span class="variant-picker-title">${safeText(name)}</span>
+            <span class="variant-picker-sub">${safeText(type)} · ${safeText(sub)} · ${safeText(price)}</span>
+        </span>`;
+    if(cardName){cardName.textContent = `${name} · ${sub}`;}
+    if(cardThumb){
+        cardThumb.innerHTML = img
+            ? `<img src="${safeText(img)}" alt="${safeText(name)}">`
+            : `<span class="item-card-thumb-fallback">📦</span>`;
     }
-
     updatePurchaseTotals();
 }
 
 function openVariantModal(button){
     activeButton = button;
-    activeSelect = button.parentElement.querySelector(".variant-select");
+    activeSelect = button.closest(".variant-field").querySelector(".variant-select");
     activeType = "ALL";
 
     const list = document.getElementById("variantList");
@@ -952,8 +1856,7 @@ function openVariantModal(button){
     tabs.innerHTML = "";
 
     const options = Array.from(activeSelect.options).filter(opt => opt.value);
-    let types = ["ALL"];
-
+    const types = ["ALL"];
     options.forEach(option => {
         const type = option.dataset.type || "No Type";
         if(!types.includes(type)){types.push(type);}
@@ -962,17 +1865,14 @@ function openVariantModal(button){
     types.forEach(type => {
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "type-tab";
-        btn.innerHTML = type === "ALL" ? "▣ All Items" : `🧸 ${safeText(type)}`;
-        if(type === "ALL"){btn.classList.add("active");}
-
+        btn.className = "type-tab" + (type === "ALL" ? " active" : "");
+        btn.textContent = type === "ALL" ? "All Items" : type;
         btn.onclick = function(){
             activeType = type;
-            document.querySelectorAll(".type-tab").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll("#typeTabs .type-tab").forEach(tab => tab.classList.remove("active"));
             btn.classList.add("active");
             filterVariants();
         };
-
         tabs.appendChild(btn);
     });
 
@@ -986,65 +1886,72 @@ function openVariantModal(button){
         const div = document.createElement("div");
         div.className = "variant-option";
         div.dataset.type = type;
-        div.dataset.search = (type + " " + name + " " + sub + " " + price).toLowerCase();
-
+        div.dataset.search = `${type} ${name} ${sub} ${price}`.toLowerCase();
         div.innerHTML = `
-            ${img ? `<img src="${img}" class="variant-img">` : `<div class="variant-fallback">📦</div>`}
+            ${img ? `<img src="${safeText(img)}" class="variant-img" alt="">` : `<div class="variant-fallback">📦</div>`}
             <div class="variant-info">
                 <div class="variant-type">${safeText(type)}</div>
                 <div class="variant-name">${safeText(name)}</div>
                 <div class="variant-sub">${safeText(sub)}</div>
             </div>
-            <div class="variant-price">${safeText(price)}</div>
-        `;
+            <div class="variant-price">${safeText(price)}</div>`;
 
         div.onclick = function(){
             activeSelect.value = option.value;
             updatePicker(activeButton, activeSelect);
             closeVariantModal();
+            const qtyInput = activeButton.closest(".item-row")?.querySelector('input[name$="-ordered_qty"]');
+            if(qtyInput && !qtyInput.value){qtyInput.value = 1;}
+            if(qtyInput){qtyInput.focus();qtyInput.select();}
+            updatePurchaseTotals();
         };
-
         list.appendChild(div);
     });
 
-    document.getElementById("variantSearch").value = "";
-    document.getElementById("variantModal").style.display = "flex";
-    document.getElementById("variantSearch").focus();
+    const modal = document.getElementById("variantModal");
+    const search = document.getElementById("variantSearch");
+    search.value = "";
+    modal.style.display = "flex";
+    setModalOpen(true);
+    list.scrollTop = 0;
+    setTimeout(() => search.focus(), 80);
     filterVariants();
 }
 
 function closeVariantModal(){
     document.getElementById("variantModal").style.display = "none";
+    setModalOpen(false);
 }
 
 function filterVariants(){
-    const keyword = document.getElementById("variantSearch").value.toLowerCase();
-
+    const keyword = document.getElementById("variantSearch").value.toLowerCase().trim();
     document.querySelectorAll("#variantList .variant-option").forEach(option => {
         const matchType = activeType === "ALL" || option.dataset.type === activeType;
         const matchSearch = option.dataset.search.includes(keyword);
-        option.style.display = (matchType && matchSearch) ? "flex" : "none";
+        option.style.display = matchType && matchSearch ? "flex" : "none";
     });
 }
 
-function openShopModal(btn){
-    activePlanBox = btn.closest(".item-row").querySelector(".plan-list");
-    document.getElementById("shopSearch").value = "";
-    document.getElementById("shopModal").style.display = "flex";
-    document.getElementById("shopSearch").focus();
-
-    document.querySelectorAll("#shopList .shop-option").forEach(option => {
-        option.style.display = "flex";
-    });
+function openShopModal(button){
+    activePlanBox = button.closest(".item-row").querySelector(".plan-list");
+    const modal = document.getElementById("shopModal");
+    const search = document.getElementById("shopSearch");
+    search.value = "";
+    modal.style.display = "flex";
+    setModalOpen(true);
+    const shopList = document.getElementById("shopList");
+    shopList.scrollTop = 0;
+    document.querySelectorAll("#shopList .shop-option").forEach(option => option.style.display = "flex");
+    setTimeout(() => search.focus(), 80);
 }
 
 function closeShopModal(){
     document.getElementById("shopModal").style.display = "none";
+    setModalOpen(false);
 }
 
 function filterShops(){
-    const keyword = document.getElementById("shopSearch").value.toLowerCase();
-
+    const keyword = document.getElementById("shopSearch").value.toLowerCase().trim();
     document.querySelectorAll("#shopList .shop-option").forEach(option => {
         option.style.display = option.dataset.search.includes(keyword) ? "flex" : "none";
     });
@@ -1052,66 +1959,81 @@ function filterShops(){
 
 function addPlanRow(branchId, branchName){
     if(!activePlanBox){return;}
-
     const itemRow = activePlanBox.closest(".item-row");
-    const prefix = itemRow.dataset.prefix;
+    const existingInput = Array.from(activePlanBox.querySelectorAll('input[name$="-plan_branch[]"]'))
+        .find(input => input.value === String(branchId));
 
-    const div = document.createElement("div");
-    div.className = "plan-row";
-    div.innerHTML = `
-        <input type="hidden" name="${prefix}-plan_branch[]" value="${branchId}">
-        <div class="plan-shop">🏪 ${safeText(branchName)}</div>
-        <input class="plan-qty" type="number" name="${prefix}-plan_qty[]" min="1" placeholder="Qty" oninput="updatePurchaseTotals()">
-        <button type="button" class="plan-remove" onclick="removePlan(this)">✕</button>
-    `;
+    if(existingInput){
+        closeShopModal();
+        existingInput.closest(".plan-row")?.querySelector(".plan-qty")?.focus();
+        return;
+    }
 
-    activePlanBox.appendChild(div);
+    itemRow.dataset.autoSplit = "false";
+    const row = createPlanRow(itemRow, branchId, branchName, "", false);
+    activePlanBox.appendChild(row);
+    initializePlanAuto(itemRow);
+    rebalancePlanFromOrderedQty(itemRow);
     closeShopModal();
     updatePurchaseTotals();
-
-    const qtyInput = div.querySelector(".plan-qty");
-    if(qtyInput){qtyInput.focus();}
+    row.querySelector(".plan-qty")?.focus();
 }
 
-function removePlan(btn){
-    btn.closest(".plan-row").remove();
-    updatePurchaseTotals();
+function removePlan(button){
+    const itemRow = button.closest(".item-row");
+
+    if(itemRow){
+        itemRow.dataset.autoSplit = "false";
+    }
+
+    button.closest(".plan-row")?.remove();
+
+    if(itemRow){
+        initializePlanAuto(itemRow);
+        rebalancePlanFromOrderedQty(itemRow);
+    }else{
+        updatePurchaseTotals();
+    }
 }
 
-document.addEventListener("click", function(e){
-    const option = e.target.closest(".shop-option");
-    if(option){
-        addPlanRow(option.dataset.id, option.dataset.name);
+document.addEventListener("click", function(event){
+    const shopOption = event.target.closest(".shop-option");
+    if(shopOption){addPlanRow(shopOption.dataset.id, shopOption.dataset.name);}
+
+    if(event.target.classList.contains("modal-bg")){
+        if(event.target.id === "variantModal"){closeVariantModal();}
+        if(event.target.id === "shopModal"){closeShopModal();}
     }
 });
 
 function addRow(){
     const totalForms = document.getElementById("id_items-TOTAL_FORMS");
-    const formIndex = parseInt(totalForms.value || "0");
-
-    let template = document.getElementById("emptyFormTemplate").innerHTML;
-    template = template.replaceAll("__prefix__", formIndex);
+    const formIndex = parseInt(totalForms.value || "0", 10);
+    let template = document.getElementById("emptyFormTemplate").innerHTML.replaceAll("__prefix__", formIndex);
 
     document.getElementById("itemsBox").insertAdjacentHTML("beforeend", template);
     totalForms.value = formIndex + 1;
 
     const newRow = document.querySelector("#itemsBox .item-row:last-child");
     newRow.dataset.prefix = `items-${formIndex}`;
+    newRow.dataset.autoSplit = "true";
+
+    collapseOtherItems(newRow);
+    setItemCollapsed(newRow, false);
 
     const select = newRow.querySelector(".variant-select");
     const picker = newRow.querySelector(".variant-picker");
-
     if(select){select.value = "";}
-    if(picker){
-        picker.classList.add("empty");
-        picker.innerHTML = `<span class="picker-fallback">📦</span><span>Choose Variant</span>`;
-    }
+    if(picker){updatePicker(picker, select);}
 
+    autoSplitRow(newRow, true);
     updatePurchaseTotals();
+    newRow.scrollIntoView({behavior:"smooth",block:"start"});
+    setTimeout(() => openVariantModal(picker), 280);
 }
 
-function removeRow(btn){
-    const row = btn.closest(".item-row");
+function removeRow(button){
+    const row = button.closest(".item-row");
     const deleteInput = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
 
     if(deleteInput){
@@ -1120,7 +2042,6 @@ function removeRow(btn){
     }else{
         row.remove();
     }
-
     updatePurchaseTotals();
 }
 
@@ -1132,38 +2053,83 @@ function cleanBlankRowsBeforeSubmit(){
         const note = row.querySelector('input[name$="-note"]');
         const deleteInput = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
 
-        const hasVariant = select && select.value;
-        const hasQty = qty && qty.value;
-        const hasCost = cost && cost.value;
-        const hasNote = note && note.value.trim();
+        const hasVariant = Boolean(select?.value);
+        const hasQty = Boolean(qty?.value);
+        const hasCost = Boolean(cost?.value);
+        const hasNote = Boolean(note?.value?.trim());
+        if(!hasVariant && !hasQty && !hasCost && !hasNote && deleteInput){deleteInput.checked = true;}
+    });
+}
 
-        if(!hasVariant && !hasQty && !hasCost && !hasNote && deleteInput){
-            deleteInput.checked = true;
-        }
+function setSavingState(){
+    [
+        document.getElementById("saveBtn"),
+        document.getElementById("mobileSaveBtn"),
+        document.getElementById("inlineMobileSaveBtn"),
+        document.getElementById("quickSaveBtn")
+    ].forEach(button => {
+        if(button){button.textContent = "Saving...";button.disabled = true;}
     });
 }
 
 document.addEventListener("DOMContentLoaded", function(){
     document.querySelectorAll(".variant-picker").forEach(button => {
-        const select = button.parentElement.querySelector(".variant-select");
+        const select = button.closest(".variant-field")?.querySelector(".variant-select");
         if(select){updatePicker(button, select);}
     });
 
-    document.addEventListener("input", updatePurchaseTotals);
+    document.querySelectorAll("#itemsBox .item-row").forEach(itemRow => {
+        const hasSavedPlan = itemRow.querySelectorAll(".plan-row").length > 0;
+        if(IS_CREATE_MODE && !hasSavedPlan){
+            itemRow.dataset.autoSplit = "true";
+            autoSplitRow(itemRow, true);
+        }else{
+            itemRow.dataset.autoSplit = "false";
+            initializePlanAuto(itemRow);
+        }
+    });
+
+    document.addEventListener("input", function(event){
+        const target = event.target;
+        const itemRow = target.closest?.(".item-row");
+
+        if(itemRow && target.matches('input[name$="-ordered_qty"]')){
+            if(itemRow.dataset.autoSplit === "true"){
+                autoSplitRow(itemRow);
+            }else{
+                rebalancePlanFromOrderedQty(itemRow);
+            }
+            return;
+        }
+
+        if(itemRow && target.classList.contains("plan-qty")){
+            balancePlanQuantities(target);
+            return;
+        }
+
+        updatePurchaseTotals();
+    });
+
     document.addEventListener("change", updatePurchaseTotals);
     updatePurchaseTotals();
 
-    document.getElementById("purchaseForm").addEventListener("submit", function(e){
+    if(isPhoneScreen()){
+        const visibleRows = Array.from(
+            document.querySelectorAll("#itemsBox .item-row")
+        ).filter(row => row.style.display !== "none");
+
+        visibleRows.forEach((row, index) => {
+            const hasErrors = Boolean(row.querySelector(".errorlist"));
+            const isLast = index === visibleRows.length - 1;
+            setItemCollapsed(row, !hasErrors && !isLast);
+        });
+    }
+
+    document.getElementById("purchaseForm").addEventListener("submit", function(event){
         cleanBlankRowsBeforeSubmit();
-
-        if(isSaving){
-            e.preventDefault();
-            return false;
-        }
-
+        if(isSaving){event.preventDefault();return false;}
         isSaving = true;
-        document.getElementById("saveBtn").innerText = "Saving...";
-        document.getElementById("saveBtn").disabled = true;
+        setSavingState();
     });
 });
 </script>
