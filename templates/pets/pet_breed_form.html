@@ -112,7 +112,7 @@
                         <input
                             name="name"
                             value="{{ breed.name|default:'' }}"
-                            placeholder="Example: Pomeranian"
+                            placeholder="Pomeranian"
                             required
                         >
                     </label>
@@ -158,7 +158,7 @@
                         <input
                             name="sex_options"
                             value="{{ breed.sex_options|default:'Male,Female' }}"
-                            placeholder="Example: Male,Female"
+                            placeholder="Male, Female"
                         >
                     </label>
 
@@ -169,7 +169,7 @@
                         Color Options
                         <textarea
                             name="color_options"
-                            placeholder="Example: White, Cream, Brown, Black"
+                            placeholder="White, Cream, Brown"
                         >{{ breed.color_options|default:'' }}</textarea>
                     </label>
 
@@ -177,7 +177,7 @@
                         Special Type Options
                         <textarea
                             name="special_type_options"
-                            placeholder="Example: Teacup, Mini, Standard, Show Grade, Imported"
+                            placeholder="Teacup, Mini, Standard"
                         >{{ breed.special_type_options|default:'' }}</textarea>
                     </label>
                 </div>
@@ -186,22 +186,10 @@
                     Breed Note / Description
                     <textarea
                         name="note"
-                        placeholder="Example: friendly, small size, popular with customers..."
+                        placeholder="Breed note..."
                     >{{ breed.note|default:'' }}</textarea>
                 </label>
-
-                <div class="example-box">
-                    <h3>Example</h3>
-                    <p>
-                        Breed: Pomeranian<br>
-                        Colors: White, Cream, Brown<br>
-                        Sex: Male, Female<br>
-                        Special Type: Teacup, Mini, Standard<br>
-                        Default Sale Price: $450
-                    </p>
-                </div>
-
-                <div class="actions">
+<div class="actions">
                     <button class="save-btn" type="submit">💾 Save Breed</button>
                     <a href="{% url 'pet_breed_list' %}" class="cancel-btn direct-page-link">
                         Cancel
@@ -1538,6 +1526,326 @@ textarea:focus{
 
     .grid .sex-field{
         grid-column:1/-1!important;
+    }
+}
+
+
+
+/* =========================================================
+   BALANCED PHONE DESIGN V17
+   Bigger readable text, smaller boxes, less wasted space
+========================================================= */
+@media(max-width:760px){
+    html{
+        -webkit-text-size-adjust:100%;
+        text-size-adjust:100%;
+    }
+
+    .breed-form-page{
+        padding:8px 8px 74px!important;
+    }
+
+    .page-top{
+        display:grid!important;
+        grid-template-columns:minmax(0,1fr) auto!important;
+        align-items:center!important;
+        gap:8px!important;
+        margin-bottom:8px!important;
+    }
+
+    .page-top h1{
+        margin:0!important;
+        font-size:22px!important;
+        line-height:1.1!important;
+        letter-spacing:-.2px!important;
+    }
+
+    .page-top p{
+        display:none!important;
+    }
+
+    .top-actions{
+        display:grid!important;
+        grid-template-columns:1fr!important;
+        gap:5px!important;
+        margin:0!important;
+    }
+
+    .soft-btn,
+    .plain-btn{
+        width:104px!important;
+        min-width:104px!important;
+        min-height:38px!important;
+        padding:0 8px!important;
+        border-radius:10px!important;
+        font-size:11px!important;
+        font-weight:1000!important;
+    }
+
+    .form-card{
+        padding:8px!important;
+        border-width:1px!important;
+        border-radius:17px!important;
+        box-shadow:0 8px 20px rgba(130,91,60,.05)!important;
+    }
+
+    .layout{
+        display:block!important;
+    }
+
+    .photo-panel{
+        display:grid!important;
+        grid-template-columns:82px minmax(0,1fr)!important;
+        gap:7px!important;
+        margin-bottom:8px!important;
+        padding:7px!important;
+        border-width:1px!important;
+        border-radius:14px!important;
+    }
+
+    .preview{
+        height:82px!important;
+        border-radius:11px!important;
+        font-size:34px!important;
+    }
+
+    .preview img{
+        padding:2px!important;
+    }
+
+    .photo-x{
+        top:3px!important;
+        right:3px!important;
+        width:27px!important;
+        height:27px!important;
+        font-size:15px!important;
+    }
+
+    .drop-zone{
+        min-height:82px!important;
+        margin:0!important;
+        padding:8px!important;
+        border-width:1px!important;
+        border-radius:11px!important;
+        display:flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+    }
+
+    .drop-title{
+        font-size:13px!important;
+        line-height:1.25!important;
+        text-align:center!important;
+    }
+
+    .drop-sub,
+    .photo-note{
+        display:none!important;
+    }
+
+    /*
+     * Better phone rows:
+     * Pet Type + Active
+     * Breed Name full width
+     * Cost + Sale
+     * Sex full width
+     */
+    .grid{
+        display:grid!important;
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:8px!important;
+    }
+
+    .grid .pet-type-field,
+    .grid .active-field,
+    .grid .cost-field,
+    .grid .sale-field{
+        grid-column:span 1!important;
+    }
+
+    .grid .breed-name-field,
+    .grid .sex-field{
+        grid-column:1/-1!important;
+    }
+
+    .option-area{
+        display:grid!important;
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:8px!important;
+        margin-top:8px!important;
+    }
+
+    label{
+        min-width:0!important;
+        color:#17152f!important;
+        font-size:12px!important;
+        line-height:1.2!important;
+        font-weight:1000!important;
+    }
+
+    input,
+    select,
+    textarea,
+    .touch-select{
+        font-size:16px!important;
+        touch-action:manipulation!important;
+    }
+
+    input,
+    select,
+    .touch-select{
+        width:100%!important;
+        height:46px!important;
+        min-height:46px!important;
+        margin-top:5px!important;
+        padding:0 11px!important;
+        border-width:1.4px!important;
+        border-radius:12px!important;
+        font-weight:900!important;
+    }
+
+    .touch-select{
+        gap:6px!important;
+    }
+
+    .touch-select span{
+        min-width:0!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
+        white-space:nowrap!important;
+    }
+
+    textarea{
+        min-height:72px!important;
+        margin-top:5px!important;
+        padding:10px!important;
+        border-width:1.4px!important;
+        border-radius:12px!important;
+        line-height:1.3!important;
+        resize:none!important;
+        font-weight:800!important;
+    }
+
+    .full{
+        display:block!important;
+        margin-top:8px!important;
+    }
+
+    .full textarea{
+        min-height:68px!important;
+    }
+
+    .actions{
+        position:fixed!important;
+        left:7px!important;
+        right:7px!important;
+        bottom:max(7px,env(safe-area-inset-bottom))!important;
+        z-index:9000!important;
+        display:grid!important;
+        grid-template-columns:1.35fr .65fr!important;
+        gap:6px!important;
+        margin:0!important;
+        padding:6px!important;
+        border:1px solid #e7dbe9!important;
+        border-radius:15px!important;
+        background:rgba(255,255,255,.96)!important;
+        box-shadow:0 10px 28px rgba(20,15,45,.15)!important;
+        backdrop-filter:blur(12px)!important;
+    }
+
+    .save-btn,
+    .cancel-btn{
+        width:100%!important;
+        min-height:46px!important;
+        padding:0 10px!important;
+        border-radius:11px!important;
+        font-size:13px!important;
+        font-weight:1000!important;
+    }
+
+    .option-popup{
+        left:50%!important;
+        right:auto!important;
+        top:50%!important;
+        bottom:auto!important;
+        width:calc(100% - 20px)!important;
+        max-width:400px!important;
+        max-height:82dvh!important;
+        padding:11px!important;
+        transform:translate(-50%,-50%)!important;
+        border-width:1px!important;
+        border-radius:20px!important;
+    }
+
+    .option-head{
+        margin-bottom:8px!important;
+        padding:0!important;
+    }
+
+    .option-head h3{
+        flex:1!important;
+        padding-left:36px!important;
+        font-size:18px!important;
+        text-align:center!important;
+    }
+
+    .option-head button{
+        width:36px!important;
+        height:36px!important;
+        font-size:17px!important;
+    }
+
+    .option-list{
+        gap:7px!important;
+    }
+
+    .option-btn{
+        min-height:50px!important;
+        padding:0 42px!important;
+        border-width:1px!important;
+        border-radius:12px!important;
+        justify-content:center!important;
+        font-size:16px!important;
+        text-align:center!important;
+    }
+
+    .option-btn span{
+        width:100%!important;
+        text-align:center!important;
+    }
+
+    .option-btn b{
+        position:absolute!important;
+        right:13px!important;
+    }
+
+    .error-box{
+        margin-bottom:7px!important;
+        padding:9px 10px!important;
+        border-width:1px!important;
+        border-radius:11px!important;
+        font-size:11px!important;
+    }
+}
+
+@media(max-width:360px){
+    .page-top{
+        grid-template-columns:1fr!important;
+    }
+
+    .top-actions{
+        grid-template-columns:1fr 1fr!important;
+    }
+
+    .soft-btn,
+    .plain-btn{
+        width:100%!important;
+        min-width:0!important;
+    }
+
+    .grid,
+    .option-area{
+        gap:6px!important;
     }
 }
 
