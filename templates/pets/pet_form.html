@@ -90,8 +90,8 @@
                         ondragleave="handleDragLeave(event)"
                         ondrop="handleDrop(event)"
                     >
-                        <div class="drop-title">📸 Upload Pet Photo</div>
-                        <div class="drop-sub">Click, drag image, or paste screenshot with Ctrl + V.</div>
+                        <div class="drop-title">🖼️ Choose Photo from Album</div>
+                        <div class="drop-sub">Select a photo from your phone album.</div>
                     </div>
 
                     <input
@@ -99,8 +99,7 @@
                         name="photo"
                         id="photoInput"
                         accept="image/*"
-                        capture="environment"
-                        class="hidden-file"
+                                                class="hidden-file"
                         onchange="previewPhotoFile(this)"
                     >
                 </div>
@@ -272,10 +271,14 @@
                             </button>
                         </label>
 
-                        <label class="{% if form.cost_price.errors %}field-error{% endif %}">
-                            Cost Price
-                            <input type="number" step="0.01" name="cost_price" id="costPriceInput" value="{{ pet.cost_price|default:'0.00' }}">
-                        </label>
+                        {% if perms.auth.view_user %}
+                            <label class="{% if form.cost_price.errors %}field-error{% endif %}">
+                                Cost Price
+                                <input type="number" step="0.01" name="cost_price" id="costPriceInput" value="{{ pet.cost_price|default:'0.00' }}">
+                            </label>
+                        {% else %}
+                            <input type="hidden" name="cost_price" id="costPriceInput" value="{{ pet.cost_price|default:'0.00' }}">
+                        {% endif %}
 
                         <label class="{% if form.sale_price.errors %}field-error{% endif %}">
                             Sale Price
@@ -609,10 +612,14 @@
                             <input type="number" name="quantity" id="bulkQuantityInput" min="1" max="30" value="2">
                         </label>
 
-                        <label>
-                            Cost Price
-                            <input type="number" step="0.01" name="cost_price" id="bulkCostPriceInput" value="0.00">
-                        </label>
+                        {% if perms.auth.view_user %}
+                            <label>
+                                Cost Price
+                                <input type="number" step="0.01" name="cost_price" id="bulkCostPriceInput" value="0.00">
+                            </label>
+                        {% else %}
+                            <input type="hidden" name="cost_price" id="bulkCostPriceInput" value="0.00">
+                        {% endif %}
 
                         <label>
                             Sale Price *
@@ -666,7 +673,6 @@
                 <strong>No Breed Master</strong>
                 <span>Use manual breed / old data</span>
             </div>
-            <div class="breed-price">$0.00</div>
         </button>
 
         {% for breed in breeds %}
@@ -693,11 +699,6 @@
                 <div class="breed-info">
                     <strong>{{ breed.name }}</strong>
                     <span>{{ breed.get_pet_type_display }}</span>
-                </div>
-
-                <div class="breed-price">
-                    ${{ breed.default_sale_price|floatformat:2 }}
-                    <small>Cost ${{ breed.default_cost_price|floatformat:2 }}</small>
                 </div>
             </button>
         {% endfor %}
@@ -738,11 +739,6 @@
                 <div class="breed-info">
                     <strong>{{ breed.name }}</strong>
                     <span>{{ breed.get_pet_type_display }}</span>
-                </div>
-
-                <div class="breed-price">
-                    ${{ breed.default_sale_price|floatformat:2 }}
-                    <small>Cost ${{ breed.default_cost_price|floatformat:2 }}</small>
                 </div>
             </button>
         {% endfor %}
@@ -856,8 +852,6 @@
         <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','in_stock','🟢 In Stock')"><span>🟢 In Stock</span><b>✓</b></button>
         <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','reserved','🟡 Reserved / Deposit')"><span>🟡 Reserved / Deposit</span><b>✓</b></button>
         <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','sold','🔴 Sold')"><span>🔴 Sold</span><b>✓</b></button>
-        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','sick','🏥 Sick')"><span>🏥 Sick</span><b>✓</b></button>
-        <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','dead','⚫ Dead')"><span>⚫ Dead</span><b>✓</b></button>
         <button type="button" class="option-btn" onclick="chooseOption('statusInput','statusLabel','cancelled','❌ Cancelled')"><span>❌ Cancelled</span><b>✓</b></button>
     </div>
 </div>
@@ -2696,6 +2690,34 @@ textarea:focus{
     }
 }
 
+
+
+/* =========================================================
+   PET STOCK CLEANUP V24
+========================================================= */
+.breed-select-card{
+    grid-template-columns:74px minmax(0,1fr)!important;
+}
+
+@media(max-width:760px){
+    .breed-select-card{
+        grid-template-columns:52px minmax(0,1fr)!important;
+    }
+
+    .drop-zone,
+    .multi-photo-drop{
+        border-style:solid!important;
+        border-color:#ded2ef!important;
+        background:#fbf8ff!important;
+    }
+
+    .drop-title,
+    .multi-photo-drop > div{
+        color:#6248cc!important;
+        font-weight:1000!important;
+    }
+}
+
 </style>
 
 <script>
@@ -3106,10 +3128,14 @@ function generateBulkCards(){
                     </div>
                 </label>
 
+                {% if perms.auth.view_user %}
                 <label>
                     Cost Price
                     <input type="number" step="0.01" name="cost_price_${i}" value="${sharedCost}">
                 </label>
+                {% else %}
+                <input type="hidden" name="cost_price_${i}" value="${sharedCost}">
+                {% endif %}
 
                 <label>
                     Sale Price
@@ -3139,13 +3165,13 @@ function generateBulkCards(){
 
             <div class="multi-photo-box">
                 <div class="multi-photo-head">
-                    <strong>📸 Photos for ${breedName} #${i}</strong>
-                    <small>Upload 1–4 photos. Drag, click, or paste.</small>
+                    <strong>🖼️ Photos for ${breedName} #${i}</strong>
+                    <small>Choose 1–4 photos from the album.</small>
                 </div>
 
                 <div class="multi-photo-drop" id="photoDrop_${i}" onclick="openPhotoPicker(${i})">
-                    <div>＋ Add Photos</div>
-                    <small>Click / drag / paste picture</small>
+                    <div>＋ Choose Photos from Album</div>
+                    <small>Select up to 4 photos</small>
                 </div>
 
                 <input

@@ -83,15 +83,16 @@
             <div class="touch-field">
                 <span>Date</span>
 
-                <input type="hidden" name="date_from" id="dateFromInput" value="{{ date_from|default:'' }}">
-                <input type="hidden" name="date_to" id="dateToInput" value="{{ date_to|default:'' }}">
+                <input type="hidden" name="date_from" id="dateFromInput" value="{% if request.GET.date_scope == 'all' %}{% else %}{{ date_from|default:'' }}{% endif %}">
+                <input type="hidden" name="date_to" id="dateToInput" value="{% if request.GET.date_scope == 'all' %}{% else %}{{ date_to|default:'' }}{% endif %}">
+                <input type="hidden" name="date_scope" id="dateScopeInput" value="{% if request.GET.date_scope == 'all' %}all{% else %}range{% endif %}">
 
                 <button type="button" onclick="openPopup('date')" class="touch-btn">
                     <strong id="dateLabel">
-                        {% if date_from and date_to %}
-                            {{ date_from }} → {{ date_to }}
+                        {% if request.GET.date_scope == "all" or not date_from or not date_to %}
+                            All Date
                         {% else %}
-                            Current Month
+                            {{ date_from }} → {{ date_to }}
                         {% endif %}
                     </strong>
                     <em>⌄</em>
@@ -99,7 +100,7 @@
             </div>
 
             <button type="submit" class="dark-btn">Search</button>
-            <a href="{% url 'pet_list' %}" class="clear-btn">Clear</a>
+            <a href="{% url 'pet_list' %}?status=in_stock&date_scope=all&date_from=&date_to=" class="clear-btn">Clear</a>
         </div>
     </form>
 
@@ -117,11 +118,6 @@
         <button type="button" onclick="quickStatus('sold', 'Sold')" class="summary-card">
             <span>Sold</span>
             <strong>{{ sold_count|default:0 }}</strong>
-        </button>
-
-        <button type="button" onclick="quickStatus('sick_dead', 'Sick / Dead')" class="summary-card danger">
-            <span>Sick / Dead</span>
-            <strong>{{ sick_dead_count|default:0 }}</strong>
         </button>
     </div>
 
@@ -145,7 +141,13 @@
                 {% endif %}
             </b>
             · Date:
-            <b>{{ date_from }} → {{ date_to }}</b>
+            <b>
+                {% if request.GET.date_scope == "all" or not date_from or not date_to %}
+                    All Date
+                {% else %}
+                    {{ date_from }} → {{ date_to }}
+                {% endif %}
+            </b>
         </p>
     </div>
 
@@ -349,8 +351,8 @@
     </div>
 
     <div class="date-popup-body">
-        <input type="hidden" id="dateFromPicker" value="{{ date_from|default:'' }}">
-        <input type="hidden" id="dateToPicker" value="{{ date_to|default:'' }}">
+        <input type="hidden" id="dateFromPicker" value="{% if request.GET.date_scope == 'all' %}{% else %}{{ date_from|default:'' }}{% endif %}">
+        <input type="hidden" id="dateToPicker" value="{% if request.GET.date_scope == 'all' %}{% else %}{{ date_to|default:'' }}{% endif %}">
 
         <div class="date-big-display" id="dateBigDisplay">
             Choose date range
@@ -2291,6 +2293,7 @@ function setLastMonth(){
 function clearDateRange(){
     document.getElementById("dateFromPicker").value = "";
     document.getElementById("dateToPicker").value = "";
+    document.getElementById("dateScopeInput").value = "all";
     setPickingTarget("from");
     renderCalendar();
 }
@@ -2301,6 +2304,7 @@ function applyDateRange(){
 
     document.getElementById("dateFromInput").value = fromValue;
     document.getElementById("dateToInput").value = toValue;
+    document.getElementById("dateScopeInput").value = (fromValue && toValue) ? "range" : "all";
 
     if(fromValue && toValue){
         document.getElementById("dateLabel").innerText = fromValue + " → " + toValue;
@@ -2374,6 +2378,32 @@ function openPetDetailFromCardKey(event, card){
         window.location.assign(url);
     }
 }
+
+
+
+function ensurePetListDefaultsToAllDate(){
+    const params = new URLSearchParams(window.location.search);
+
+    if(
+        !params.has("date_scope") &&
+        !params.has("date_from") &&
+        !params.has("date_to")
+    ){
+        params.set("date_scope", "all");
+        params.set("date_from", "1900-01-01");
+        params.set("date_to", "2999-12-31");
+
+        if(!params.has("status")){
+            params.set("status", "in_stock");
+        }
+
+        window.location.replace(
+            window.location.pathname + "?" + params.toString()
+        );
+    }
+}
+
+document.addEventListener("DOMContentLoaded", ensurePetListDefaultsToAllDate);
 
 </script>
 

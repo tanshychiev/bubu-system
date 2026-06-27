@@ -65,7 +65,7 @@
                     ondragleave="handleDragLeave(event)"
                     ondrop="handleDrop(event)"
                 >
-                    <div class="drop-title">📸 Upload Breed Sample Photo</div>
+                    <div class="drop-title">🖼️ Choose Photo from Album</div>
                     <div class="drop-sub">
                         This is a sample/reference photo for this breed, not the real stock pet photo.
                     </div>
@@ -76,7 +76,6 @@
                     name="photo"
                     id="photoInput"
                     accept="image/*"
-                    capture="environment"
                     class="hidden-file"
                     onchange="previewPhotoFile(this)"
                 >
@@ -179,9 +178,9 @@
                         <button type="button" class="touch-select" onclick="openOptionPopup('sex')">
                             <span id="sexOptionsLabel">
                                 {% if breed.sex_options == "Male" %}
-                                    ♂ Male only
+                                    ♂ Male
                                 {% elif breed.sex_options == "Female" %}
-                                    ♀ Female only
+                                    ♀ Female
                                 {% elif breed.sex_options == "" %}
                                     No sex option
                                 {% else %}
@@ -272,7 +271,7 @@
 
 <div class="option-popup" id="sexPopup">
     <div class="option-head">
-        <h3>Choose Sex Options</h3>
+        <h3>Select Sex Options</h3>
         <button type="button" onclick="closeOptionPopups()">✕</button>
     </div>
 
@@ -288,28 +287,19 @@
         <button
             type="button"
             class="option-btn"
-            onclick="chooseOption('sexOptionsInput','sexOptionsLabel','Male','♂ Male only')"
+            onclick="chooseOption('sexOptionsInput','sexOptionsLabel','Male','♂ Male')"
         >
-            <span>♂ Male only</span><b>✓</b>
+            <span>♂ Male</span><b>✓</b>
         </button>
 
         <button
             type="button"
             class="option-btn"
-            onclick="chooseOption('sexOptionsInput','sexOptionsLabel','Female','♀ Female only')"
+            onclick="chooseOption('sexOptionsInput','sexOptionsLabel','Female','♀ Female')"
         >
-            <span>♀ Female only</span><b>✓</b>
-        </button>
-
-        <button
-            type="button"
-            class="option-btn"
-            onclick="chooseOption('sexOptionsInput','sexOptionsLabel','','No sex option')"
-        >
-            <span>No sex option</span><b>✓</b>
+            <span>♀ Female</span><b>✓</b>
         </button>
     </div>
-</div>
 </div>
 
 <style>
@@ -2119,6 +2109,30 @@ textarea:focus{
 
     .option-btn{
         min-height:52px!important;
+        font-size:16px!important;
+    }
+}
+
+
+
+/* =========================================================
+   PHOTO ALBUM + SEX POPUP V23
+========================================================= */
+@media(max-width:760px){
+    .drop-zone{
+        border-style:solid!important;
+        border-color:#ded2ef!important;
+        background:#fbf8ff!important;
+    }
+
+    .drop-title{
+        color:#5f47c7!important;
+        font-size:14px!important;
+        font-weight:1000!important;
+    }
+
+    #sexPopup .option-btn{
+        min-height:56px!important;
         font-size:16px!important;
     }
 }
