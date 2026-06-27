@@ -1,40 +1,56 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="pet-form-page">
-    <div class="form-head">
-        <h1>{{ title }} 🐾</h1>
-        <p>Owner: {{ customer.name }} · {{ customer.phone|default:"No phone" }}</p>
+<div class="cpf-page">
+    <div class="cpf-head">
+        <div>
+            <h1>{{ title }} 🐾</h1>
+            <p>Owner: {{ customer.name }} · {{ customer.phone|default:"No phone" }}</p>
+        </div>
+
+        <a href="{% url 'customer_detail' customer.id %}" class="cpf-back">← Back</a>
     </div>
 
-    <form method="post" enctype="multipart/form-data" class="pet-form-card">
+    <form method="post" enctype="multipart/form-data" class="cpf-card" id="customerPetForm">
         {% csrf_token %}
 
-        <div class="layout">
-            <div class="photo-box">
-                <div class="photo-preview" id="photoPreviewBox">
+        <div class="cpf-layout">
+            <section class="cpf-photo-panel">
+                <div class="cpf-photo-preview" id="photoPreviewBox">
                     {% if pet and pet.photo %}
-                        <img src="{{ pet.photo.url }}" id="photoPreview">
-                        <div id="photoEmpty" style="display:none;">🐾</div>
+                        <img src="{{ pet.photo.url }}" id="photoPreview" alt="{{ pet.pet_name|default:'Pet photo' }}">
+                        <div id="photoEmpty" hidden>🐾</div>
                     {% else %}
                         <div id="photoEmpty">🐾</div>
-                        <img src="" id="photoPreview" style="display:none;">
+                        <img src="" id="photoPreview" alt="Pet preview" hidden>
                     {% endif %}
                 </div>
 
-                <label class="upload-btn">
-                    Upload Pet Photo
-                    <input type="file" name="photo" id="photoInput" accept="image/*" onchange="previewPhoto(event)">
+                <label class="cpf-upload">
+                    <span>📷 Choose Photo</span>
+                    <input
+                        type="file"
+                        name="photo"
+                        id="photoInput"
+                        accept="image/*"
+                        capture="environment"
+                        onchange="previewPhoto(event)"
+                    >
                 </label>
 
-                <small>Dog/cat profile photo for customer record.</small>
-            </div>
+                <small>Customer pet profile photo.</small>
+            </section>
 
-            <div class="fields">
-                <div class="grid">
+            <section class="cpf-fields">
+                <div class="cpf-grid">
                     <label>
                         Pet Name
-                        <input name="pet_name" value="{{ pet.pet_name|default:'' }}" placeholder="Example: Coco">
+                        <input
+                            name="pet_name"
+                            value="{{ pet.pet_name|default:'' }}"
+                            placeholder="Coco"
+                            autocomplete="off"
+                        >
                     </label>
 
                     <label>
@@ -48,7 +64,12 @@
 
                     <label>
                         Breed
-                        <input name="breed" value="{{ pet.breed|default:'' }}" placeholder="Poodle, Persian...">
+                        <input
+                            name="breed"
+                            value="{{ pet.breed|default:'' }}"
+                            placeholder="Poodle"
+                            autocomplete="off"
+                        >
                     </label>
 
                     <label>
@@ -62,12 +83,22 @@
 
                     <label>
                         Color
-                        <input name="color" value="{{ pet.color|default:'' }}" placeholder="Brown, white...">
+                        <input
+                            name="color"
+                            value="{{ pet.color|default:'' }}"
+                            placeholder="Brown"
+                            autocomplete="off"
+                        >
                     </label>
 
                     <label>
-                        Age Text
-                        <input name="age_text" value="{{ pet.age_text|default:'' }}" placeholder="Example: 8 months">
+                        Age
+                        <input
+                            name="age_text"
+                            value="{{ pet.age_text|default:'' }}"
+                            placeholder="8 months"
+                            autocomplete="off"
+                        >
                     </label>
 
                     <label>
@@ -94,22 +125,27 @@
                         <input type="date" name="warranty_start_date" value="{{ pet.warranty_start_date|date:'Y-m-d' }}">
                     </label>
 
-                    <label>
+                    <label class="cpf-wide-mobile">
                         Warranty Expire
                         <input type="date" name="warranty_expire_date" value="{{ pet.warranty_expire_date|date:'Y-m-d' }}">
                     </label>
                 </div>
 
-                <label class="full">
-                    Remark
-                    <textarea name="note" placeholder="Health, behavior, grooming note...">{{ pet.note|default:'' }}</textarea>
-                </label>
+                <button type="button" class="cpf-optional-toggle" id="remarkToggle" onclick="toggleRemark()">
+                    <span>Add remark (optional)</span>
+                    <b>＋</b>
+                </button>
 
-                <div class="actions">
-                    <button type="submit" class="save-btn">💾 Save Pet Profile</button>
-                    <a href="{% url 'customer_detail' customer.id %}" class="cancel-btn">Cancel</a>
-                </div>
-            </div>
+                <label class="cpf-remark cpf-collapsed" id="remarkField">
+                    Remark
+                    <textarea name="note" placeholder="Health, behavior or grooming note...">{{ pet.note|default:'' }}</textarea>
+                </label>
+            </section>
+        </div>
+
+        <div class="cpf-actions">
+            <button type="submit" class="cpf-save">💾 Save Pet</button>
+            <a href="{% url 'customer_detail' customer.id %}" class="cpf-cancel">Cancel</a>
         </div>
     </form>
 </div>
@@ -118,192 +154,359 @@
 *{box-sizing:border-box}
 a{text-decoration:none}
 
-.pet-form-page{
+html{
+    -webkit-text-size-adjust:100%;
+    text-size-adjust:100%;
+}
+
+.cpf-page{
     padding:24px 28px;
 }
 
-.form-head{
-    margin-bottom:22px;
+.cpf-head{
+    margin-bottom:18px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
 }
 
-.form-head h1{
+.cpf-head h1{
     margin:0;
-    font-size:36px;
-    font-weight:1000;
     color:#17152f;
+    font-size:34px;
+    line-height:1.1;
+    font-weight:1000;
 }
 
-.form-head p{
+.cpf-head p{
+    margin:7px 0 0;
     color:#7b7288;
     font-weight:900;
 }
 
-.pet-form-card{
-    background:white;
+.cpf-back{
+    min-height:46px;
+    padding:0 16px;
+    border-radius:14px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:#334155;
+    background:#f1f5f9;
+    font-weight:1000;
+    white-space:nowrap;
+}
+
+.cpf-card{
+    padding:20px;
     border:1px solid #f1ddd1;
-    border-radius:30px;
-    padding:24px;
-    box-shadow:0 18px 40px rgba(130,91,60,.08);
-}
-
-.layout{
-    display:grid;
-    grid-template-columns:340px 1fr;
-    gap:24px;
-}
-
-.photo-box{
-    background:#fff8f4;
-    border:2px solid #ffe1d6;
-    border-radius:28px;
-    padding:18px;
-}
-
-.photo-preview{
-    height:320px;
-    border-radius:24px;
+    border-radius:26px;
     background:white;
+    box-shadow:0 16px 36px rgba(130,91,60,.07);
+}
+
+.cpf-layout{
+    display:grid;
+    grid-template-columns:300px minmax(0,1fr);
+    gap:20px;
+}
+
+.cpf-photo-panel{
+    padding:15px;
+    border:1px solid #ffe1d6;
+    border-radius:22px;
+    background:#fff8f4;
+}
+
+.cpf-photo-preview{
+    height:280px;
+    border-radius:18px;
     display:flex;
     align-items:center;
     justify-content:center;
     overflow:hidden;
-    font-size:90px;
+    color:#8e63ff;
+    background:white;
+    font-size:76px;
 }
 
-.photo-preview img{
+.cpf-photo-preview img{
     width:100%;
     height:100%;
     object-fit:cover;
 }
 
-.upload-btn{
-    width:100%;
-    min-height:60px;
-    margin-top:16px;
-    border-radius:20px;
-    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
-    color:white;
+.cpf-upload{
+    min-height:48px;
+    margin-top:10px;
+    border-radius:14px;
     display:flex;
     align-items:center;
     justify-content:center;
+    color:white;
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
     font-weight:1000;
     cursor:pointer;
 }
 
-.upload-btn input{
-    display:none;
-}
+.cpf-upload input{display:none}
 
-.photo-box small{
+.cpf-photo-panel small{
     display:block;
-    margin-top:10px;
+    margin-top:7px;
     color:#7b7288;
-    font-weight:900;
     text-align:center;
+    font-size:11px;
+    font-weight:900;
 }
 
-.grid{
+.cpf-grid{
     display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:16px;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
 }
 
-label{
-    font-weight:1000;
+.cpf-fields label{
+    min-width:0;
     color:#17152f;
+    font-size:13px;
+    font-weight:1000;
 }
 
-input,
-select,
-textarea{
+.cpf-fields input,
+.cpf-fields select,
+.cpf-fields textarea{
     width:100%;
-    border:2px solid #eaddec;
-    border-radius:18px;
-    padding:0 16px;
-    margin-top:8px;
+    margin-top:6px;
+    border:1.5px solid #eaddec;
+    border-radius:14px;
+    color:#17152f;
+    background:white;
     font-size:16px;
     font-weight:900;
     outline:none;
-    background:white;
 }
 
-input,
-select{
-    height:60px;
+.cpf-fields input,
+.cpf-fields select{
+    height:50px;
+    padding:0 12px;
 }
 
-textarea{
-    padding:16px;
-    min-height:120px;
+.cpf-fields textarea{
+    min-height:92px;
+    padding:12px;
+    resize:vertical;
 }
 
-input:focus,
-select:focus,
-textarea:focus{
+.cpf-fields input:focus,
+.cpf-fields select:focus,
+.cpf-fields textarea:focus{
     border-color:#8e63ff;
-    box-shadow:0 0 0 5px rgba(142,99,255,.12);
+    box-shadow:0 0 0 3px rgba(142,99,255,.12);
 }
 
-.full{
+.cpf-optional-toggle{
+    display:none;
+}
+
+.cpf-remark{
     display:block;
-    margin-top:16px;
+    margin-top:12px;
 }
 
-.actions{
+.cpf-actions{
+    margin-top:18px;
     display:flex;
     justify-content:flex-end;
-    gap:12px;
-    margin-top:20px;
+    gap:10px;
 }
 
-.save-btn,
-.cancel-btn{
-    min-height:60px;
-    padding:0 24px;
-    border-radius:20px;
+.cpf-save,
+.cpf-cancel{
+    min-height:52px;
+    padding:0 22px;
     border:0;
+    border-radius:16px;
     display:inline-flex;
     align-items:center;
     justify-content:center;
     font-weight:1000;
 }
 
-.save-btn{
-    background:linear-gradient(135deg,#13a85f,#7b5cff);
+.cpf-save{
     color:white;
+    background:linear-gradient(135deg,#13a85f,#7b5cff);
+    cursor:pointer;
 }
 
-.cancel-btn{
-    background:#fff0f0;
+.cpf-cancel{
     color:#ff4d5d;
+    background:#fff0f0;
 }
 
-@media(max-width:1100px){
-    .layout{
-        grid-template-columns:1fr;
+@media(max-width:1050px){
+    .cpf-layout{grid-template-columns:1fr}
+    .cpf-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .cpf-photo-panel{
+        display:grid;
+        grid-template-columns:150px minmax(0,1fr);
+        gap:10px;
+        align-items:center;
     }
-
-    .grid{
-        grid-template-columns:1fr 1fr;
-    }
+    .cpf-photo-preview{height:150px}
+    .cpf-upload{margin-top:0}
+    .cpf-photo-panel small{grid-column:2}
 }
 
 @media(max-width:700px){
-    .pet-form-page{
-        padding:18px;
+    .cpf-page{
+        padding:7px 6px 80px;
     }
 
-    .grid{
-        grid-template-columns:1fr;
+    .cpf-head{
+        margin-bottom:7px;
+        align-items:center;
     }
 
-    .actions{
-        display:grid;
+    .cpf-head h1{
+        font-size:21px;
     }
 
-    .save-btn,
-    .cancel-btn{
+    .cpf-head p{
+        margin-top:3px;
+        max-width:235px;
+        overflow:hidden;
+        font-size:10px;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+
+    .cpf-back{
+        min-height:36px;
+        padding:0 10px;
+        border-radius:10px;
+        font-size:11px;
+    }
+
+    .cpf-card{
+        padding:7px;
+        border-radius:15px;
+    }
+
+    .cpf-layout{
+        gap:7px;
+    }
+
+    .cpf-photo-panel{
+        padding:6px;
+        grid-template-columns:72px minmax(0,1fr);
+        gap:6px;
+        border-radius:13px;
+    }
+
+    .cpf-photo-preview{
+        height:72px;
+        border-radius:10px;
+        font-size:34px;
+    }
+
+    .cpf-upload{
+        min-height:42px;
+        margin:0;
+        border-radius:10px;
+        font-size:11px;
+    }
+
+    .cpf-photo-panel small{
+        display:none;
+    }
+
+    .cpf-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:6px;
+    }
+
+    .cpf-fields label{
+        font-size:10px;
+    }
+
+    .cpf-fields input,
+    .cpf-fields select{
+        height:44px;
+        margin-top:3px;
+        padding:0 8px;
+        border-radius:10px;
+        font-size:16px;
+    }
+
+    .cpf-fields textarea{
+        min-height:58px;
+        margin-top:3px;
+        padding:8px;
+        border-radius:10px;
+        font-size:16px;
+    }
+
+    .cpf-wide-mobile{
+        grid-column:1 / -1;
+    }
+
+    .cpf-optional-toggle{
         width:100%;
+        min-height:38px;
+        margin-top:7px;
+        padding:0 9px;
+        border:1px solid #e5d9ea;
+        border-radius:10px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        color:#665575;
+        background:#faf7fc;
+        font-size:10px;
+        font-weight:1000;
+    }
+
+    .cpf-optional-toggle b{
+        color:#7b5cff;
+        font-size:16px;
+    }
+
+    .cpf-collapsed{
+        display:none;
+    }
+
+    .cpf-remark{
+        margin-top:7px;
+    }
+
+    .cpf-actions{
+        position:fixed;
+        left:6px;
+        right:6px;
+        bottom:calc(6px + env(safe-area-inset-bottom));
+        z-index:5000;
+        height:58px;
+        margin:0;
+        padding:5px;
+        display:grid;
+        grid-template-columns:1.5fr .7fr;
+        gap:5px;
+        border:1px solid rgba(228,213,236,.9);
+        border-radius:15px;
+        background:rgba(255,255,255,.97);
+        box-shadow:0 14px 34px rgba(39,27,61,.18);
+        backdrop-filter:blur(16px);
+    }
+
+    .cpf-save,
+    .cpf-cancel{
+        min-height:46px;
+        padding:0 7px;
+        border-radius:10px;
+        font-size:11px;
     }
 }
 </style>
@@ -315,15 +518,41 @@ function previewPhoto(event){
 
     const img = document.getElementById("photoPreview");
     const empty = document.getElementById("photoEmpty");
-
     const reader = new FileReader();
+
     reader.onload = function(e){
         img.src = e.target.result;
+        img.hidden = false;
         img.style.display = "block";
-        if(empty) empty.style.display = "none";
+        if(empty){
+            empty.hidden = true;
+            empty.style.display = "none";
+        }
     };
+
     reader.readAsDataURL(file);
 }
+
+function toggleRemark(){
+    const field = document.getElementById("remarkField");
+    const button = document.getElementById("remarkToggle");
+    const hidden = field.classList.toggle("cpf-collapsed");
+
+    button.innerHTML = hidden
+        ? "<span>Add remark (optional)</span><b>＋</b>"
+        : "<span>Hide remark</span><b>−</b>";
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+    const field = document.getElementById("remarkField");
+    const hasValue = field && field.querySelector("textarea")?.value.trim();
+
+    if(hasValue && window.matchMedia("(max-width:700px)").matches){
+        field.classList.remove("cpf-collapsed");
+        document.getElementById("remarkToggle").innerHTML =
+            "<span>Hide remark</span><b>−</b>";
+    }
+});
 </script>
 
 {% endblock %}

@@ -3,156 +3,465 @@
 
 {% block content %}
 
-<div class="home-page">
-    <div class="home-card">
-        <div class="home-text">
-            <div class="badge">🐾 BUBU Pet Store</div>
+<div class="bubu-home-page">
+    <section class="bubu-home-card">
+        <div class="bubu-home-copy">
+            <div class="bubu-home-badge">
+                <span class="bubu-badge-icon">🐾</span>
+                <span>BUBU Pet Store</span>
+            </div>
 
             <h1>Bubu Pet Store System</h1>
 
             <p>
-                Manage POS sales, inventory, customers, purchases, delivery, and reports in one cute system.
+                Manage POS sales, inventory, customers, purchases,
+                delivery and reports in one simple system.
             </p>
 
-            <a href="{% url 'dashboard' %}" class="home-btn">
-                Go to Dashboard →
-            </a>
+            <div class="bubu-home-actions">
+                <a href="{% url 'dashboard' %}" class="bubu-primary-btn">
+                    <span>Go to Dashboard</span>
+                    <span aria-hidden="true">→</span>
+                </a>
+            </div>
         </div>
 
-        <div class="home-art">
-            🐶🐱
+        <div class="bubu-home-art" aria-hidden="true">
+            <div class="bubu-pet-card bubu-dog-card">
+                <span class="bubu-pet-face">🐶</span>
+                <small>Dog Care</small>
+            </div>
+
+            <div class="bubu-pet-card bubu-cat-card">
+                <span class="bubu-pet-face">🐱</span>
+                <small>Cat Care</small>
+            </div>
+
+            <div class="bubu-mini-chip bubu-chip-pos">POS</div>
+            <div class="bubu-mini-chip bubu-chip-stock">Stock</div>
+            <div class="bubu-mini-chip bubu-chip-sales">Sales</div>
         </div>
-    </div>
+    </section>
 </div>
 
 <style>
-.home-page{
-    min-height:70vh;
-    padding:36px;
+:root{
+    --bubu-ink:#11103f;
+    --bubu-muted:#756c84;
+    --bubu-purple:#805cff;
+    --bubu-purple-dark:#6542e8;
+    --bubu-coral:#ff8464;
+    --bubu-green:#1da978;
+    --bubu-line:#eadfec;
+    --bubu-card:#ffffff;
+}
+
+*{
+    box-sizing:border-box;
+}
+
+html{
+    -webkit-text-size-adjust:100%;
+    text-size-adjust:100%;
+}
+
+body{
+    overflow-x:hidden;
+}
+
+/* Stops iPhone Safari from zooming when fields are added later. */
+input,
+select,
+textarea{
+    font-size:16px!important;
+}
+
+.bubu-home-page{
+    min-height:calc(100vh - 120px);
+    min-height:calc(100dvh - 120px);
+    padding:28px;
     display:flex;
     align-items:center;
     justify-content:center;
 }
 
-.home-card{
-    width:100%;
-    max-width:1100px;
-    min-height:420px;
+.bubu-home-card{
+    position:relative;
+    width:min(1080px,100%);
+    min-height:430px;
     padding:46px;
-    border-radius:36px;
-    background:linear-gradient(135deg,#fff8f4,#f6f2ff);
-    border:2px solid #f5e0d8;
-    box-shadow:0 24px 60px rgba(130,91,60,.12);
+    overflow:hidden;
+    border:1px solid #f0dfd7;
+    border-radius:34px;
     display:grid;
-    grid-template-columns:1.2fr .8fr;
-    gap:30px;
+    grid-template-columns:minmax(0,1.1fr) minmax(340px,.9fr);
+    gap:34px;
     align-items:center;
+    background:
+        radial-gradient(circle at 92% 10%,rgba(223,210,255,.88),transparent 28%),
+        radial-gradient(circle at 8% 100%,rgba(255,225,214,.78),transparent 32%),
+        linear-gradient(135deg,#fffaf7,#f8f3ff);
+    box-shadow:0 22px 55px rgba(73,48,58,.10);
 }
 
-.badge{
-    display:inline-flex;
-    padding:12px 18px;
+.bubu-home-card::before,
+.bubu-home-card::after{
+    content:"";
+    position:absolute;
+    border-radius:50%;
+    pointer-events:none;
+}
+
+.bubu-home-card::before{
+    width:190px;
+    height:190px;
+    right:-70px;
+    bottom:-70px;
+    background:rgba(255,132,100,.10);
+}
+
+.bubu-home-card::after{
+    width:130px;
+    height:130px;
+    left:-44px;
+    top:-44px;
+    background:rgba(128,92,255,.08);
+}
+
+.bubu-home-copy,
+.bubu-home-art{
+    position:relative;
+    z-index:2;
+}
+
+.bubu-home-badge{
+    width:max-content;
+    max-width:100%;
+    min-height:42px;
+    padding:0 15px;
+    border:1px solid rgba(128,92,255,.12);
     border-radius:999px;
-    background:white;
-    color:#7b5cff;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    color:var(--bubu-purple-dark);
+    background:rgba(255,255,255,.88);
+    box-shadow:0 8px 18px rgba(88,61,122,.07);
+    font-size:14px;
+    font-weight:1000;
+}
+
+.bubu-badge-icon{
+    width:26px;
+    height:26px;
+    border-radius:9px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background:#efe8ff;
+    font-size:14px;
+}
+
+.bubu-home-copy h1{
+    max-width:650px;
+    margin:18px 0 0;
+    color:var(--bubu-ink);
+    font-size:clamp(38px,5vw,58px);
+    line-height:1.02;
+    letter-spacing:-1.3px;
+    font-weight:1000;
+}
+
+.bubu-home-copy p{
+    max-width:610px;
+    margin:18px 0 0;
+    color:var(--bubu-muted);
+    font-size:18px;
+    line-height:1.55;
+    font-weight:800;
+}
+
+.bubu-home-actions{
+    margin-top:28px;
+}
+
+.bubu-primary-btn{
+    min-height:58px;
+    padding:0 24px;
+    border-radius:18px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    color:white;
+    background:linear-gradient(135deg,var(--bubu-purple),var(--bubu-coral));
+    box-shadow:0 14px 26px rgba(128,92,255,.23);
     font-size:16px;
     font-weight:1000;
-    margin-bottom:18px;
+    text-decoration:none;
+    transition:transform .18s ease,box-shadow .18s ease;
 }
 
-.home-text h1{
-    margin:0;
-    font-size:48px;
-    line-height:1.05;
-    font-weight:1000;
-    color:#080634;
+.bubu-primary-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 18px 32px rgba(128,92,255,.28);
 }
 
-.home-text p{
-    max-width:620px;
-    margin:18px 0 30px;
-    font-size:20px;
-    line-height:1.6;
-    font-weight:800;
-    color:#706681;
+.bubu-home-art{
+    min-height:310px;
+    border:1px solid rgba(234,223,236,.9);
+    border-radius:30px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    align-content:center;
+    padding:28px;
+    background:rgba(255,255,255,.72);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+    backdrop-filter:blur(12px);
 }
 
-.home-btn{
-    display:inline-flex;
+.bubu-pet-card{
+    min-height:190px;
+    padding:20px 14px;
+    border-radius:24px;
+    display:flex;
+    flex-direction:column;
     align-items:center;
     justify-content:center;
-    min-height:64px;
-    padding:0 30px;
-    border-radius:999px;
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
-    color:white;
-    font-size:18px;
-    font-weight:1000;
-    text-decoration:none;
-    box-shadow:0 14px 30px rgba(155,124,246,.25);
+    gap:12px;
+    border:1px solid rgba(255,255,255,.85);
+    box-shadow:0 14px 28px rgba(74,52,93,.09);
 }
 
-.home-art{
-    height:260px;
-    border-radius:32px;
-    background:white;
+.bubu-dog-card{
+    background:linear-gradient(160deg,#fff1e9,#fffaf7);
+    transform:rotate(-3deg);
+}
+
+.bubu-cat-card{
+    background:linear-gradient(160deg,#f2ecff,#fbf8ff);
+    transform:rotate(3deg);
+}
+
+.bubu-pet-face{
+    font-size:74px;
+    line-height:1;
+    filter:drop-shadow(0 9px 14px rgba(74,52,93,.12));
+}
+
+.bubu-pet-card small{
+    color:var(--bubu-ink);
+    font-size:13px;
+    font-weight:1000;
+}
+
+.bubu-mini-chip{
+    position:absolute;
+    min-height:34px;
+    padding:0 12px;
+    border-radius:999px;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:100px;
+    border:1px solid rgba(255,255,255,.85);
+    box-shadow:0 8px 18px rgba(74,52,93,.10);
+    font-size:11px;
+    font-weight:1000;
 }
 
-/* iPad */
-@media (min-width:768px) and (max-width:1024px){
-    .home-page{
-        padding:28px;
+.bubu-chip-pos{
+    left:12px;
+    top:16px;
+    color:#704bd6;
+    background:#eee7ff;
+}
+
+.bubu-chip-stock{
+    right:12px;
+    top:24px;
+    color:#15815c;
+    background:#e8f9f2;
+}
+
+.bubu-chip-sales{
+    right:26px;
+    bottom:16px;
+    color:#d9634d;
+    background:#fff0eb;
+}
+
+/* Generic centered popup rules for any popup added to this page later. */
+.bubu-popup-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:9998;
+    background:rgba(17,16,63,.48);
+    backdrop-filter:blur(3px);
+}
+
+.bubu-popup-backdrop.active{
+    display:block;
+}
+
+.bubu-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    z-index:9999;
+    width:min(440px,calc(100% - 24px));
+    max-height:82dvh;
+    overflow-y:auto;
+    transform:translate(-50%,-50%);
+    border-radius:22px;
+    background:white;
+    box-shadow:0 28px 70px rgba(17,16,63,.25);
+}
+
+.bubu-popup.active{
+    display:block;
+}
+
+@media(min-width:768px) and (max-width:1100px){
+    .bubu-home-page{
+        padding:22px;
     }
 
-    .home-card{
-        padding:38px;
+    .bubu-home-card{
+        min-height:auto;
+        padding:34px;
         grid-template-columns:1fr;
+        gap:24px;
+    }
+
+    .bubu-home-copy{
         text-align:center;
     }
 
-    .home-text p{
+    .bubu-home-badge,
+    .bubu-primary-btn{
         margin-left:auto;
         margin-right:auto;
     }
 
-    .home-art{
-        height:190px;
-        font-size:82px;
+    .bubu-home-copy p{
+        margin-left:auto;
+        margin-right:auto;
+    }
+
+    .bubu-home-art{
+        width:min(560px,100%);
+        min-height:260px;
+        margin:auto;
     }
 }
 
-/* Phone */
-@media (max-width:700px){
-    .home-page{
-        padding:18px;
-    }
-
-    .home-card{
-        padding:26px;
-        grid-template-columns:1fr;
-        text-align:center;
+@media(max-width:700px){
+    .bubu-home-page{
         min-height:auto;
+        padding:8px;
+        align-items:flex-start;
     }
 
-    .home-text h1{
-        font-size:34px;
+    .bubu-home-card{
+        min-height:auto;
+        padding:16px;
+        border-radius:20px;
+        grid-template-columns:1fr;
+        gap:16px;
     }
 
-    .home-text p{
-        font-size:16px;
+    .bubu-home-copy{
+        text-align:left;
     }
 
-    .home-art{
-        height:150px;
-        font-size:60px;
+    .bubu-home-badge{
+        min-height:36px;
+        padding:0 11px;
+        font-size:11px;
     }
 
-    .home-btn{
+    .bubu-badge-icon{
+        width:23px;
+        height:23px;
+        border-radius:8px;
+        font-size:12px;
+    }
+
+    .bubu-home-copy h1{
+        margin-top:13px;
+        font-size:30px;
+        line-height:1.08;
+        letter-spacing:-.5px;
+    }
+
+    .bubu-home-copy p{
+        margin-top:10px;
+        font-size:14px;
+        line-height:1.45;
+    }
+
+    .bubu-home-actions{
+        margin-top:16px;
+    }
+
+    .bubu-primary-btn{
         width:100%;
+        min-height:50px;
+        padding:0 16px;
+        border-radius:14px;
+        font-size:14px;
+    }
+
+    .bubu-home-art{
+        min-height:172px;
+        padding:14px;
+        gap:9px;
+        border-radius:18px;
+    }
+
+    .bubu-pet-card{
+        min-height:130px;
+        padding:12px 8px;
+        border-radius:16px;
+        gap:7px;
+    }
+
+    .bubu-pet-face{
+        font-size:49px;
+    }
+
+    .bubu-pet-card small{
+        font-size:10px;
+    }
+
+    .bubu-mini-chip{
+        min-height:27px;
+        padding:0 8px;
+        font-size:8px;
+    }
+
+    .bubu-chip-pos{
+        left:7px;
+        top:8px;
+    }
+
+    .bubu-chip-stock{
+        right:7px;
+        top:10px;
+    }
+
+    .bubu-chip-sales{
+        right:10px;
+        bottom:8px;
+    }
+
+    .bubu-popup{
+        width:calc(100% - 16px);
+        max-height:78dvh;
+        border-radius:18px;
     }
 }
 </style>
