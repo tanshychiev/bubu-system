@@ -986,6 +986,36 @@ body.inventory-form-popup-open{
     }
 }
 
+
+/* =========================================================
+   INVENTORY MEDIA FIX — iPhone Safari / PWA
+========================================================= */
+.inventory-media-image{
+    display:block!important;
+    width:100%!important;
+    height:100%!important;
+    max-width:100%!important;
+    opacity:1!important;
+    visibility:visible!important;
+    object-fit:contain!important;
+    filter:none!important;
+    transform:none!important;
+    background:white!important;
+}
+
+.inventory-media-fallback{
+    width:100%;
+    height:100%;
+    min-height:44px;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    color:#8e63ff;
+    background:linear-gradient(135deg,#f4edff,#fff8f4);
+    font-size:clamp(24px,5vw,54px);
+    line-height:1;
+}
+
 </style>
 
 <div class="form-page">
@@ -1075,7 +1105,7 @@ body.inventory-form-popup-open{
                             <button type="button" class="remove-image-btn" onclick="removeImage(event)">×</button>
 
                             {% if form.instance.image %}
-                                <img src="{{ form.instance.image.url }}" alt="Preview" loading="lazy" onerror="inventoryImageError(this)">
+                                <img class="inventory-media-image" src="{{ form.instance.image.url }}" data-media-src="{{ form.instance.image.url }}" alt="Preview" decoding="async" loading="eager" onerror="inventoryMediaError(this)">
                             {% endif %}
                         </div>
                     </div>
@@ -1428,67 +1458,106 @@ initFakeSelect(typeSelect, typeLabel, "typePopupList", "typePopup");
 initFakeSelect(unitSelect, unitLabel, "unitPopupList", "unitPopup");
 refreshActiveToggleUI();
 
-function inventoryImageError(img){
-    if(!img){
-        return;
-    }
 
-    img.onerror = null;
-
-    const holder = img.parentElement;
-    img.remove();
-
-    if(!holder){
-        return;
-    }
-
-    holder.classList.add("inventory-image-error");
-
-    if(!holder.querySelector(".inventory-image-fallback")){
-        const fallback = document.createElement("span");
-        fallback.className = "inventory-image-fallback";
-        fallback.textContent = "📦";
-        holder.appendChild(fallback);
-    }
-}
-
-function inventoryNormalizeImageUrl(rawUrl){
+function inventoryResolveMediaUrl(rawUrl){
     let value = String(rawUrl || "").trim().replace(/\\/g, "/");
 
     if(!value){
         return "";
     }
 
-    if(/^(data:|blob:|https?:\/\/)/i.test(value)){
+    if(/^(data:|blob:)/i.test(value)){
         return value;
     }
 
-    if(value.startsWith("//")){
-        return window.location.protocol + value;
-    }
+    try{
+        const parsed = new URL(value, window.location.href);
+        const path = parsed.pathname || "";
 
-    if(value.startsWith("/")){
-        return value;
-    }
+        /*
+         * iPhone/PWA can load the page through HTTPS while Django returns
+         * an absolute HTTP image URL. Keep the image path, but use the same
+         * origin and protocol as the current page.
+         */
+        if(
+            path.startsWith("/media/") ||
+            path.includes("/media/") ||
+            parsed.hostname === window.location.hostname
+        ){
+            return window.location.origin + path + parsed.search + parsed.hash;
+        }
 
-    if(value.startsWith("media/") || value.startsWith("static/")){
-        return "/" + value;
-    }
+        return parsed.href;
+    }catch(error){
+        if(value.startsWith("/")){
+            return window.location.origin + value;
+        }
 
-    return "/media/" + value.replace(/^\.?\//, "");
+        if(value.startsWith("media/")){
+            return window.location.origin + "/" + value;
+        }
+
+        return window.location.origin + "/media/" + value.replace(/^\.?\//, "");
+    }
 }
 
-function inventoryImageMarkup(rawUrl){
-    const url = inventoryNormalizeImageUrl(rawUrl);
+function inventoryMediaFallback(img){
+    const holder = img?.parentElement;
 
-    if(!url){
-        return '<span class="inventory-image-fallback">📦</span>';
+    if(img){
+        img.remove();
     }
 
-    const safeUrl = url.replace(/"/g, "&quot;");
+    if(!holder){
+        return;
+    }
 
-    return `<img src="${safeUrl}" alt="Inventory item" loading="lazy" onerror="inventoryImageError(this)">`;
+    if(!holder.querySelector(".inventory-media-fallback")){
+        const fallback = document.createElement("span");
+        fallback.className = "inventory-media-fallback";
+        fallback.textContent = "📦";
+        holder.appendChild(fallback);
+    }
 }
+
+function inventoryMediaError(img){
+    if(!img){
+        return;
+    }
+
+    const original = img.dataset.mediaSrc || img.getAttribute("src") || "";
+    const resolved = inventoryResolveMediaUrl(original);
+
+    if(
+        img.dataset.mediaRetried !== "1" &&
+        resolved &&
+        resolved !== img.getAttribute("src")
+    ){
+        img.dataset.mediaRetried = "1";
+        img.src = resolved;
+        return;
+    }
+
+    inventoryMediaFallback(img);
+}
+
+function inventoryNormalizeMediaImages(root){
+    const scope = root || document;
+
+    scope.querySelectorAll("img.inventory-media-image").forEach(function(img){
+        const raw = img.dataset.mediaSrc || img.getAttribute("src") || "";
+        const resolved = inventoryResolveMediaUrl(raw);
+
+        if(resolved && resolved !== img.getAttribute("src")){
+            img.src = resolved;
+        }
+    });
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+    inventoryNormalizeMediaImages(document);
+});
+
 
 </script>
 

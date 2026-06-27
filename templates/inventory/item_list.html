@@ -1158,6 +1158,33 @@ body.inventory-popup-open{
     }
 }
 
+
+/* iPhone/PWA inventory image fix */
+.inventory-product-photo{
+    display:block!important;
+    width:100%!important;
+    height:100%!important;
+    max-width:100%!important;
+    opacity:1!important;
+    visibility:visible!important;
+    object-fit:contain!important;
+    filter:none!important;
+    transform:none!important;
+    background:white!important;
+}
+
+@media(max-width:700px){
+    .product-img{
+        isolation:isolate!important;
+        background:#fff6ef!important;
+    }
+
+    .inventory-product-photo{
+        position:relative!important;
+        z-index:1!important;
+    }
+}
+
 </style>
 
 <div class="inventory-hero">
@@ -1339,7 +1366,15 @@ body.inventory-popup-open{
             <a href="{% url 'item_detail' item.id %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}">
                 <div class="product-img">
                     {% if item.image %}
-                        <img src="{{ item.image.url }}" alt="{{ item.name }}" loading="lazy" onerror="inventoryImageError(this)">
+                        <img
+                            class="inventory-product-photo"
+                            src="{{ item.image.url }}"
+                            data-media-src="{{ item.image.url }}"
+                            alt="{{ item.name }}"
+                            loading="eager"
+                            decoding="async"
+                            onerror="inventoryImageError(this)"
+                        >
                     {% else %}
                         <div class="placeholder">📦</div>
                     {% endif %}
@@ -1522,15 +1557,44 @@ document.addEventListener("keydown", function(e){
     }
 });
 
-function inventoryImageError(img){
-    if(!img){
-        return;
+function inventorySameOriginMediaUrl(rawUrl){
+    const value = String(rawUrl || "").trim();
+
+    if(!value){
+        return "";
     }
 
-    img.onerror = null;
+    try{
+        const parsed = new URL(value, window.location.href);
 
-    const holder = img.parentElement;
-    img.remove();
+        /*
+         * iPhone/PWA may open the website through HTTPS while an ImageField
+         * returns an absolute HTTP media URL. Safari blocks that mixed content.
+         * Keep the media path but load it from the same origin as the page.
+         */
+        if(
+            parsed.pathname.startsWith("/media/") ||
+            parsed.pathname.includes("/media/")
+        ){
+            return window.location.origin + parsed.pathname + parsed.search;
+        }
+
+        return parsed.href;
+    }catch(error){
+        if(value.startsWith("/")){
+            return window.location.origin + value;
+        }
+
+        return window.location.origin + "/" + value.replace(/^\.?\//, "");
+    }
+}
+
+function inventoryImageFallback(img){
+    const holder = img?.parentElement;
+
+    if(img){
+        img.remove();
+    }
 
     if(!holder){
         return;
@@ -1545,6 +1609,40 @@ function inventoryImageError(img){
         holder.appendChild(fallback);
     }
 }
+
+function inventoryImageError(img){
+    if(!img){
+        return;
+    }
+
+    const original = img.dataset.mediaSrc || img.getAttribute("src") || "";
+    const sameOriginUrl = inventorySameOriginMediaUrl(original);
+
+    /*
+     * Retry once using the page's own domain/protocol.
+     * This fixes HTTPS PWA -> HTTP media URL problems on iPhone Safari.
+     */
+    if(img.dataset.sameOriginRetried !== "1" && sameOriginUrl){
+        img.dataset.sameOriginRetried = "1";
+        img.src = sameOriginUrl;
+        return;
+    }
+
+    inventoryImageFallback(img);
+}
+
+function normalizeInventoryImages(){
+    document.querySelectorAll("img.inventory-product-photo").forEach(function(img){
+        const rawUrl = img.dataset.mediaSrc || img.getAttribute("src") || "";
+        const normalized = inventorySameOriginMediaUrl(rawUrl);
+
+        if(normalized && normalized !== img.src){
+            img.src = normalized;
+        }
+    });
+}
+
+document.addEventListener("DOMContentLoaded", normalizeInventoryImages);
 
 function inventoryNormalizeImageUrl(rawUrl){
     let value = String(rawUrl || "").trim().replace(/\\/g, "/");
