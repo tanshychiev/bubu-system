@@ -1175,33 +1175,291 @@ textarea{
 }
 
 
+
 /* =========================================================
-   INVENTORY MEDIA FIX — iPhone Safari / PWA
+   INVENTORY CONTROL — EXTRA COMPACT PHONE DESIGN
 ========================================================= */
-.inventory-media-image{
-    display:block!important;
-    width:100%!important;
-    height:100%!important;
-    max-width:100%!important;
-    opacity:1!important;
-    visibility:visible!important;
-    object-fit:contain!important;
-    filter:none!important;
-    transform:none!important;
-    background:white!important;
+@media(max-width:700px){
+    .control-page{
+        padding:6px 6px 18px!important;
+    }
+
+    .top-bar{
+        display:grid!important;
+        grid-template-columns:1fr 1fr!important;
+        gap:5px!important;
+        margin-bottom:6px!important;
+    }
+
+    .top-bar .touch-btn,
+    .top-bar .touch-btn-soft{
+        min-height:36px!important;
+        border-radius:9px!important;
+        font-size:8px!important;
+    }
+
+    .hero-card{
+        min-height:58px!important;
+        margin-bottom:6px!important;
+        padding:8px 10px!important;
+        display:flex!important;
+        align-items:center!important;
+        border:1px solid #eadde8!important;
+        border-radius:13px!important;
+        background:linear-gradient(135deg,#fff7fb,#f5f0ff)!important;
+    }
+
+    .hero-card > div{
+        min-width:0!important;
+    }
+
+    .hero-title{
+        overflow:hidden!important;
+        font-size:17px!important;
+        line-height:1.1!important;
+        text-overflow:ellipsis!important;
+        white-space:nowrap!important;
+    }
+
+    .control-center-word{
+        display:none!important;
+    }
+
+    .hero-sub,
+    .hero-img{
+        display:none!important;
+    }
+
+    .summary-grid{
+        display:grid!important;
+        grid-template-columns:repeat(3,minmax(0,1fr))!important;
+        gap:5px!important;
+        margin:0 0 6px!important;
+        padding:0!important;
+        overflow:visible!important;
+    }
+
+    .summary-card{
+        min-width:0!important;
+        min-height:48px!important;
+        padding:6px!important;
+        display:grid!important;
+        grid-template-columns:25px minmax(0,1fr)!important;
+        grid-template-rows:auto auto!important;
+        column-gap:5px!important;
+        border:1px solid #eadde8!important;
+        border-radius:10px!important;
+        background:white!important;
+    }
+
+    .summary-icon{
+        grid-row:1/3!important;
+        width:25px!important;
+        height:25px!important;
+        margin:0!important;
+        align-self:center!important;
+        border-radius:8px!important;
+        font-size:12px!important;
+    }
+
+    .summary-label{
+        align-self:end!important;
+        overflow:hidden!important;
+        font-size:6px!important;
+        line-height:1.1!important;
+        text-overflow:ellipsis!important;
+        white-space:nowrap!important;
+    }
+
+    .summary-value{
+        align-self:start!important;
+        margin:1px 0 0!important;
+        font-size:13px!important;
+        line-height:1!important;
+    }
+
+    .tab-row{
+        display:grid!important;
+        grid-template-columns:repeat(3,1fr)!important;
+        gap:5px!important;
+        margin-bottom:6px!important;
+        overflow:visible!important;
+    }
+
+    .tab-btn{
+        width:100%!important;
+        min-width:0!important;
+        min-height:35px!important;
+        padding:0 5px!important;
+        border-radius:9px!important;
+        font-size:8px!important;
+    }
+
+    .panel{
+        padding:6px!important;
+        margin-bottom:6px!important;
+        border-radius:12px!important;
+    }
+
+    .section-head{
+        margin-bottom:6px!important;
+    }
+
+    .section-title{
+        font-size:14px!important;
+    }
+
+    .section-head .touch-btn{
+        min-height:33px!important;
+        padding:0 7px!important;
+        border-radius:8px!important;
+        font-size:7px!important;
+    }
+
+    .search-row{
+        gap:4px!important;
+        margin-bottom:6px!important;
+    }
+
+    .search-input{
+        min-height:40px!important;
+        border-radius:9px!important;
+    }
+
+    .search-row .touch-btn-soft{
+        min-height:40px!important;
+        padding:0 8px!important;
+        border-radius:9px!important;
+        font-size:8px!important;
+    }
+
+    .helper-box{
+        display:none!important;
+    }
+
+    .create-box{
+        margin-top:5px!important;
+        padding:6px!important;
+        border-radius:10px!important;
+    }
+
+    .form-grid{
+        gap:4px!important;
+    }
+
+    .field-box{
+        margin-bottom:4px!important;
+    }
+
+    .field-box label{
+        font-size:7px!important;
+    }
+
+    .field-box input,
+    .field-box select,
+    .mobile-select-btn{
+        min-height:40px!important;
+        border-radius:8px!important;
+    }
+
+    .check-row{
+        min-height:40px!important;
+        border-radius:8px!important;
+    }
+
+    .list-wrap{
+        gap:5px!important;
+    }
+
+    .list-item{
+        min-height:56px!important;
+        padding:6px!important;
+        border-radius:10px!important;
+    }
+
+    .item-main{
+        gap:6px!important;
+    }
+
+    .item-icon{
+        width:36px!important;
+        height:36px!important;
+        border-radius:9px!important;
+        font-size:16px!important;
+    }
+
+    .item-name{
+        max-width:155px!important;
+        font-size:10px!important;
+    }
+
+    .item-meta{
+        max-width:155px!important;
+        font-size:6px!important;
+    }
+
+    .badge{
+        min-height:25px!important;
+        padding:0 5px!important;
+        font-size:6px!important;
+    }
+
+    .mini-btn,
+    .mini-btn-danger{
+        min-height:29px!important;
+        padding:0 6px!important;
+        border-radius:7px!important;
+        font-size:7px!important;
+    }
+
+    .edit-popup{
+        width:calc(100% - 12px)!important;
+        max-height:88dvh!important;
+        padding:7px!important;
+        border-radius:16px!important;
+    }
+
+    .popup-head{
+        top:-7px!important;
+        margin:0 0 6px!important;
+        padding:7px!important;
+        border-radius:11px!important;
+    }
+
+    .popup-head h3{
+        font-size:14px!important;
+    }
+
+    .option-popup{
+        width:calc(100% - 18px)!important;
+        padding:7px!important;
+        border-radius:16px!important;
+    }
+
+    input,
+    select,
+    textarea,
+    button{
+        font-size:16px;
+    }
 }
 
-.inventory-media-fallback{
-    width:100%;
-    height:100%;
-    min-height:44px;
-    display:flex!important;
-    align-items:center!important;
-    justify-content:center!important;
-    color:#8e63ff;
-    background:linear-gradient(135deg,#f4edff,#fff8f4);
-    font-size:clamp(24px,5vw,54px);
-    line-height:1;
+@media(max-width:360px){
+    .summary-card{
+        grid-template-columns:21px minmax(0,1fr)!important;
+        column-gap:3px!important;
+        padding:4px!important;
+    }
+
+    .summary-icon{
+        width:21px!important;
+        height:21px!important;
+        font-size:10px!important;
+    }
+
+    .summary-value{
+        font-size:12px!important;
+    }
 }
 
 </style>
@@ -1215,7 +1473,7 @@ textarea{
 
     <div class="hero-card">
         <div>
-            <h1 class="hero-title">Inventory Control Center 🐾</h1>
+            <h1 class="hero-title">Inventory Control<span class="control-center-word"> Center</span> 🐾</h1>
             <p class="hero-sub">
                 Search first, then click edit. Manage types, units, item name, picture and edit history.
             </p>
@@ -1525,7 +1783,7 @@ textarea{
                 <div class="item-main">
                     <div class="item-icon">
                         {% if item.image %}
-                            <img class="inventory-media-image" src="{{ item.image.url }}" data-media-src="{{ item.image.url }}" alt="{{ item.name }}" decoding="async" loading="eager" onerror="inventoryMediaError(this)">
+                            <img src="{{ item.image.url }}" alt="{{ item.name }}" onerror="inventoryControlImageFallback(this)">
                         {% else %}
                             📦
                         {% endif %}
@@ -1680,7 +1938,7 @@ textarea{
 
                             {% if item.image %}
                                 <div class="image-preview-wrap current-image-wrap" id="currentImageWrap{{ item.id }}">
-                                    <img src="{{ item.image.url }}" data-media-src="{{ item.image.url }}" class="image-preview inventory-media-image" alt="{{ item.name }}" decoding="async" loading="eager" onerror="inventoryMediaError(this)">
+                                    <img src="{{ item.image.url }}" class="image-preview" alt="{{ item.name }}" onerror="inventoryControlImageFallback(this)">
                                 </div>
 
                                 <label class="check-row">
@@ -2027,108 +2285,20 @@ document.addEventListener("keydown", function(e){
 });
 
 function inventoryControlImageFallback(img){
-    inventoryMediaError(img);
-}
-
-
-function inventoryResolveMediaUrl(rawUrl){
-    let value = String(rawUrl || "").trim().replace(/\\/g, "/");
-
-    if(!value){
-        return "";
-    }
-
-    if(/^(data:|blob:)/i.test(value)){
-        return value;
-    }
-
-    try{
-        const parsed = new URL(value, window.location.href);
-        const path = parsed.pathname || "";
-
-        /*
-         * iPhone/PWA can load the page through HTTPS while Django returns
-         * an absolute HTTP image URL. Keep the image path, but use the same
-         * origin and protocol as the current page.
-         */
-        if(
-            path.startsWith("/media/") ||
-            path.includes("/media/") ||
-            parsed.hostname === window.location.hostname
-        ){
-            return window.location.origin + path + parsed.search + parsed.hash;
-        }
-
-        return parsed.href;
-    }catch(error){
-        if(value.startsWith("/")){
-            return window.location.origin + value;
-        }
-
-        if(value.startsWith("media/")){
-            return window.location.origin + "/" + value;
-        }
-
-        return window.location.origin + "/media/" + value.replace(/^\.?\//, "");
-    }
-}
-
-function inventoryMediaFallback(img){
-    const holder = img?.parentElement;
-
-    if(img){
-        img.remove();
-    }
-
-    if(!holder){
-        return;
-    }
-
-    if(!holder.querySelector(".inventory-media-fallback")){
-        const fallback = document.createElement("span");
-        fallback.className = "inventory-media-fallback";
-        fallback.textContent = "📦";
-        holder.appendChild(fallback);
-    }
-}
-
-function inventoryMediaError(img){
     if(!img){
         return;
     }
 
-    const original = img.dataset.mediaSrc || img.getAttribute("src") || "";
-    const resolved = inventoryResolveMediaUrl(original);
+    const holder = img.parentElement;
+    img.remove();
 
-    if(
-        img.dataset.mediaRetried !== "1" &&
-        resolved &&
-        resolved !== img.getAttribute("src")
-    ){
-        img.dataset.mediaRetried = "1";
-        img.src = resolved;
-        return;
+    if(holder && !holder.querySelector(".inventory-control-fallback")){
+        const fallback = document.createElement("span");
+        fallback.className = "inventory-control-fallback";
+        fallback.textContent = "📦";
+        holder.appendChild(fallback);
     }
-
-    inventoryMediaFallback(img);
 }
-
-function inventoryNormalizeMediaImages(root){
-    const scope = root || document;
-
-    scope.querySelectorAll("img.inventory-media-image").forEach(function(img){
-        const raw = img.dataset.mediaSrc || img.getAttribute("src") || "";
-        const resolved = inventoryResolveMediaUrl(raw);
-
-        if(resolved && resolved !== img.getAttribute("src")){
-            img.src = resolved;
-        }
-    });
-}
-
-document.addEventListener("DOMContentLoaded", function(){
-    inventoryNormalizeMediaImages(document);
-});
 
 </script>
 

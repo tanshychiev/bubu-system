@@ -1523,6 +1523,416 @@ body.inventory-popup-open{
     }
 }
 
+
+
+/* =========================================================
+   FIXED INVENTORY DETAIL POPUP — NO WRONG PAGE NAVIGATION
+========================================================= */
+.inventory-detail-trigger{
+    font:inherit;
+}
+
+.product-image-trigger{
+    width:100%;
+    padding:0;
+    border:0;
+    display:block;
+    background:transparent;
+    cursor:pointer;
+}
+
+.product-name-trigger{
+    width:100%;
+    padding:0;
+    border:0;
+    color:#17152f;
+    background:transparent;
+    text-align:left;
+    font-weight:900;
+    cursor:pointer;
+}
+
+button.icon-btn{
+    cursor:pointer;
+}
+
+.inventory-detail-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:29990;
+    background:rgba(16,10,38,.52);
+    backdrop-filter:blur(4px);
+}
+
+.inventory-detail-backdrop.active{
+    display:block;
+}
+
+.inventory-detail-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    z-index:30000;
+    width:min(720px,calc(100% - 28px));
+    max-height:88dvh;
+    overflow-y:auto;
+    transform:translate(-50%,-50%);
+    border:1px solid #eaddec;
+    border-radius:26px;
+    background:white;
+    box-shadow:0 32px 95px rgba(16,10,38,.34);
+}
+
+.inventory-detail-popup.active{
+    display:block;
+}
+
+.inventory-detail-popup-head{
+    position:sticky;
+    top:0;
+    z-index:3;
+    padding:15px 17px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    color:white;
+    background:linear-gradient(135deg,#8e63ff,#ff8464);
+}
+
+.inventory-detail-popup-head small,
+.inventory-detail-popup-head h2{
+    display:block;
+}
+
+.inventory-detail-popup-head small{
+    margin-bottom:3px;
+    color:rgba(255,255,255,.78);
+    font-size:10px;
+    font-weight:900;
+}
+
+.inventory-detail-popup-head h2{
+    margin:0;
+    font-size:21px;
+    font-weight:900;
+}
+
+.inventory-detail-popup-head button{
+    width:40px;
+    height:40px;
+    flex:0 0 40px;
+    border:0;
+    border-radius:50%;
+    color:white;
+    background:rgba(255,255,255,.22);
+    font-size:18px;
+    font-weight:900;
+    cursor:pointer;
+}
+
+.inventory-detail-popup-body{
+    padding:16px;
+}
+
+.inventory-detail-content{
+    display:grid;
+    grid-template-columns:210px minmax(0,1fr);
+    gap:16px;
+}
+
+.inventory-detail-photo{
+    width:100%;
+    height:210px;
+    border-radius:20px;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(135deg,#fff5ed,#f4edff);
+    font-size:70px;
+}
+
+.inventory-detail-photo img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    background:white;
+}
+
+.inventory-detail-main{
+    min-width:0;
+}
+
+.inventory-detail-type{
+    display:inline-flex;
+    min-height:29px;
+    padding:0 10px;
+    align-items:center;
+    border-radius:999px;
+    color:#7357d4;
+    background:#eee7ff;
+    font-size:11px;
+    font-weight:900;
+}
+
+.inventory-detail-main h3{
+    margin:10px 0 3px;
+    color:#17152f;
+    font-size:24px;
+    font-weight:900;
+}
+
+.inventory-detail-main p{
+    margin:0 0 12px;
+    color:#7b7288;
+    font-weight:800;
+}
+
+.inventory-detail-stats{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+}
+
+.inventory-detail-stats div{
+    min-width:0;
+    padding:10px;
+    border-radius:13px;
+    background:#faf7ff;
+}
+
+.inventory-detail-stats small,
+.inventory-detail-stats strong{
+    display:block;
+}
+
+.inventory-detail-stats small{
+    margin-bottom:3px;
+    color:#8a8096;
+    font-size:9px;
+    font-weight:900;
+}
+
+.inventory-detail-stats strong{
+    overflow:hidden;
+    color:#17152f;
+    font-size:12px;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.inventory-detail-variants{
+    grid-column:1/-1;
+}
+
+.inventory-detail-section-head{
+    margin:2px 0 8px;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    color:#17152f;
+}
+
+.inventory-detail-section-head span{
+    color:#8a8096;
+    font-size:10px;
+    font-weight:900;
+}
+
+.inventory-detail-variant-list{
+    display:grid;
+    gap:6px;
+}
+
+.inventory-detail-variant-row{
+    min-height:50px;
+    padding:8px 10px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    border:1px solid #eee3ec;
+    border-radius:13px;
+    background:#fffafd;
+}
+
+.inventory-detail-variant-row strong,
+.inventory-detail-variant-row small{
+    display:block;
+}
+
+.inventory-detail-variant-row strong{
+    color:#17152f;
+    font-size:12px;
+}
+
+.inventory-detail-variant-row small{
+    margin-top:2px;
+    color:#8a8096;
+    font-size:9px;
+    font-weight:800;
+}
+
+.inventory-detail-variant-row > span{
+    padding:5px 8px;
+    border-radius:999px;
+    font-size:9px;
+    font-weight:900;
+    white-space:nowrap;
+}
+
+.inventory-detail-variant-row > span.good{
+    color:#148b56;
+    background:#e6faef;
+}
+
+.inventory-detail-variant-row > span.zero{
+    color:#df4353;
+    background:#ffe9ec;
+}
+
+.inventory-detail-empty{
+    padding:16px;
+    border-radius:12px;
+    color:#8a8096;
+    background:#fafafa;
+    text-align:center;
+    font-weight:900;
+}
+
+.inventory-detail-actions{
+    grid-column:1/-1;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+}
+
+.inventory-detail-actions a{
+    min-height:46px;
+    border-radius:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+}
+
+.detail-size-btn{
+    color:#148b56;
+    background:#e7faef;
+}
+
+.detail-edit-btn{
+    color:#6e53d8;
+    background:#eee8ff;
+}
+
+body.inventory-detail-open{
+    overflow:hidden!important;
+}
+
+@media(max-width:700px){
+    .inventory-detail-popup{
+        width:calc(100% - 16px);
+        max-height:91dvh;
+        border-radius:20px;
+    }
+
+    .inventory-detail-popup-head{
+        padding:10px 11px;
+    }
+
+    .inventory-detail-popup-head h2{
+        max-width:245px;
+        overflow:hidden;
+        font-size:17px;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+
+    .inventory-detail-popup-head button{
+        width:36px;
+        height:36px;
+        flex-basis:36px;
+    }
+
+    .inventory-detail-popup-body{
+        padding:9px;
+    }
+
+    .inventory-detail-content{
+        grid-template-columns:96px minmax(0,1fr);
+        gap:8px;
+    }
+
+    .inventory-detail-photo{
+        height:105px;
+        border-radius:13px;
+        font-size:38px;
+    }
+
+    .inventory-detail-type{
+        min-height:23px;
+        padding:0 7px;
+        font-size:8px;
+    }
+
+    .inventory-detail-main h3{
+        margin:6px 0 2px;
+        font-size:16px;
+    }
+
+    .inventory-detail-main p{
+        margin-bottom:6px;
+        font-size:9px;
+    }
+
+    .inventory-detail-stats{
+        gap:4px;
+    }
+
+    .inventory-detail-stats div{
+        padding:6px;
+        border-radius:9px;
+    }
+
+    .inventory-detail-stats small{
+        font-size:7px;
+    }
+
+    .inventory-detail-stats strong{
+        font-size:9px;
+    }
+
+    .inventory-detail-section-head{
+        margin-bottom:6px;
+        font-size:11px;
+    }
+
+    .inventory-detail-variant-row{
+        min-height:44px;
+        padding:6px 8px;
+        border-radius:10px;
+    }
+
+    .inventory-detail-variant-row strong{
+        font-size:10px;
+    }
+
+    .inventory-detail-variant-row small,
+    .inventory-detail-variant-row > span{
+        font-size:7px;
+    }
+
+    .inventory-detail-actions a{
+        min-height:42px;
+        border-radius:10px;
+        font-size:10px;
+    }
+}
+
 </style>
 
 <div class="inventory-hero inventory-hero-clean">
@@ -1704,7 +2114,13 @@ body.inventory-popup-open{
                 {% endif %}
             </span>
 
-            <a href="{% url 'item_detail' item.id %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}">
+            <button
+                type="button"
+                class="inventory-detail-trigger product-image-trigger"
+                data-template-id="inventoryItemTemplate{{ item.id }}"
+                onclick="openInventoryItemDetail(this)"
+                aria-label="View {{ item.name }}"
+            >
                 <div class="product-img">
                     {% if item.image %}
                         <img
@@ -1720,12 +2136,17 @@ body.inventory-popup-open{
                         <div class="placeholder">📦</div>
                     {% endif %}
                 </div>
-            </a>
+            </button>
 
             <div class="product-name">
-                <a href="?q={{ item.name|urlencode }}{% if request.user.is_superuser and current_branch %}&branch={{ current_branch.id }}{% endif %}">
+                <button
+                    type="button"
+                    class="inventory-detail-trigger product-name-trigger"
+                    data-template-id="inventoryItemTemplate{{ item.id }}"
+                    onclick="openInventoryItemDetail(this)"
+                >
                     {{ item.name }}
-                </a>
+                </button>
             </div>
 
             <div class="brand">{{ item.brand|default:"No brand" }}</div>
@@ -1767,13 +2188,15 @@ body.inventory-popup-open{
             {% endif %}
 
             <div class="action-row">
-                <a
-                    href="{% url 'item_detail' item.id %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}"
-                    class="icon-btn view-btn"
+                <button
+                    type="button"
+                    class="icon-btn view-btn inventory-detail-trigger"
+                    data-template-id="inventoryItemTemplate{{ item.id }}"
+                    onclick="openInventoryItemDetail(this)"
                     title="View"
                 >
                     👁
-                </a>
+                </button>
 
                 {% if can_manage_inventory %}
                     <a
@@ -1804,6 +2227,102 @@ body.inventory-popup-open{
 
         </div>
 
+        <template id="inventoryItemTemplate{{ item.id }}">
+            <div class="inventory-detail-content">
+                <div class="inventory-detail-photo">
+                    {% if item.image %}
+                        <img
+                            class="inventory-product-photo"
+                            src="{{ item.image.url }}"
+                            data-media-src="{{ item.image.url }}"
+                            alt="{{ item.name }}"
+                            loading="eager"
+                            decoding="async"
+                            onerror="inventoryImageError(this)"
+                        >
+                    {% else %}
+                        <span>📦</span>
+                    {% endif %}
+                </div>
+
+                <div class="inventory-detail-main">
+                    <span class="inventory-detail-type">
+                        {% if item.item_type %}
+                            {{ item.item_type.emoji|default:"📦" }} {{ item.item_type.name }}
+                        {% else %}
+                            📦 No Type
+                        {% endif %}
+                    </span>
+
+                    <h3>{{ item.name }}</h3>
+                    <p>{{ item.brand|default:"No brand" }}</p>
+
+                    <div class="inventory-detail-stats">
+                        <div>
+                            <small>Stock</small>
+                            <strong>{{ item.branch_stock_total }} {{ item.get_unit_display }}</strong>
+                        </div>
+
+                        <div>
+                            <small>Sale Price</small>
+                            <strong>${{ item.sale_price|floatformat:2 }}</strong>
+                        </div>
+
+                        {% if can_view_cost_price %}
+                        <div>
+                            <small>Cost Price</small>
+                            <strong>${{ item.cost_price|floatformat:2 }}</strong>
+                        </div>
+                        {% endif %}
+
+                        <div>
+                            <small>Shop</small>
+                            <strong>
+                                {% if current_branch %}
+                                    {{ current_branch.name }}
+                                {% else %}
+                                    No Shop
+                                {% endif %}
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="inventory-detail-variants">
+                    <div class="inventory-detail-section-head">
+                        <strong>Variants / Sizes</strong>
+                        <span>{{ item.variants.count }} total</span>
+                    </div>
+
+                    <div class="inventory-detail-variant-list">
+                        {% for variant in item.variants.all %}
+                            <div class="inventory-detail-variant-row">
+                                <div>
+                                    <strong>{{ variant.display_name }}</strong>
+                                    <small>{{ variant.sku|default:"No SKU" }}</small>
+                                </div>
+
+                                <span class="{% if variant.branch_stock_qty <= 0 %}zero{% else %}good{% endif %}">
+                                    {{ variant.branch_stock_qty }} stock
+                                </span>
+                            </div>
+                        {% empty %}
+                            <div class="inventory-detail-empty">
+                                No variants added yet.
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% if can_manage_inventory %}
+                    <div class="inventory-detail-actions">
+                        <a href="{% url 'item_variant_create' item.id %}" class="detail-size-btn">＋ Add Size</a>
+                        <a href="{% url 'item_edit' item.id %}" class="detail-edit-btn">✎ Edit Item</a>
+                    </div>
+                {% endif %}
+            </div>
+        </template>
+
         {% empty %}
         <div class="empty-box">
             <div>
@@ -1816,6 +2335,28 @@ body.inventory-popup-open{
 
     </div>
 </div>
+
+
+<div class="inventory-detail-backdrop" id="inventoryDetailBackdrop" onclick="closeInventoryItemDetail()"></div>
+
+<section
+    class="inventory-detail-popup"
+    id="inventoryDetailPopup"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="inventoryDetailPopupTitle"
+>
+    <div class="inventory-detail-popup-head">
+        <div>
+            <small>Inventory detail</small>
+            <h2 id="inventoryDetailPopupTitle">Item Detail</h2>
+        </div>
+
+        <button type="button" onclick="closeInventoryItemDetail()" aria-label="Close">✕</button>
+    </div>
+
+    <div class="inventory-detail-popup-body" id="inventoryDetailPopupBody"></div>
+</section>
 
 <script>
 function openBranchPopup(){
@@ -2028,6 +2569,64 @@ function inventoryImageMarkup(rawUrl){
 
     return `<img src="${safeUrl}" alt="Inventory item" loading="lazy" onerror="inventoryImageError(this)">`;
 }
+
+
+
+function openInventoryItemDetail(trigger){
+    const templateId = trigger?.dataset?.templateId;
+    const template = templateId ? document.getElementById(templateId) : null;
+    const popup = document.getElementById("inventoryDetailPopup");
+    const body = document.getElementById("inventoryDetailPopupBody");
+    const backdrop = document.getElementById("inventoryDetailBackdrop");
+    const title = document.getElementById("inventoryDetailPopupTitle");
+
+    if(!template || !popup || !body){
+        return;
+    }
+
+    body.innerHTML = "";
+    body.appendChild(template.content.cloneNode(true));
+
+    const itemTitle = body.querySelector(".inventory-detail-main h3");
+    if(title && itemTitle){
+        title.textContent = itemTitle.textContent.trim();
+    }
+
+    popup.classList.add("active");
+
+    if(backdrop){
+        backdrop.classList.add("active");
+    }
+
+    document.body.classList.add("inventory-detail-open");
+    normalizeInventoryImages();
+}
+
+function closeInventoryItemDetail(){
+    const popup = document.getElementById("inventoryDetailPopup");
+    const backdrop = document.getElementById("inventoryDetailBackdrop");
+    const body = document.getElementById("inventoryDetailPopupBody");
+
+    if(popup){
+        popup.classList.remove("active");
+    }
+
+    if(backdrop){
+        backdrop.classList.remove("active");
+    }
+
+    if(body){
+        body.innerHTML = "";
+    }
+
+    document.body.classList.remove("inventory-detail-open");
+}
+
+document.addEventListener("keydown", function(event){
+    if(event.key === "Escape"){
+        closeInventoryItemDetail();
+    }
+});
 
 </script>
 
