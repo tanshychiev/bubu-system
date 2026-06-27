@@ -241,12 +241,27 @@
                             <td>
                                 <div class="pet-info">
                                     <div class="mini-photo">
-                                        {% if sale.sale_photo %}
-                                            <img src="{{ sale.sale_photo.url }}" alt="">
-                                        {% elif sale.pet and sale.pet.display_photo %}
-                                            <img src="{{ sale.pet.display_photo.url }}" alt="">
+                                        {% if sale.pet and sale.pet.display_photo %}
+                                            <img
+                                                src="{{ sale.pet.display_photo.url }}?pet={{ sale.pet.updated_at|date:'U' }}&breed={{ sale.pet.breed_profile.updated_at|date:'U' }}"
+                                                alt="{{ sale.breed_display|default:'Pet' }}"
+                                            >
+                                        {% elif sale.sale_photo %}
+                                            <img
+                                                src="{{ sale.sale_photo.url }}?sale={{ sale.created_at|date:'U' }}"
+                                                alt="{{ sale.breed_display|default:'Pet' }}"
+                                            >
                                         {% else %}
-                                            <span>🐾</span>
+                                            {% with first_photo=sale.photos.first %}
+                                                {% if first_photo and first_photo.photo %}
+                                                    <img
+                                                        src="{{ first_photo.photo.url }}?photo={{ first_photo.uploaded_at|date:'U' }}"
+                                                        alt="{{ sale.breed_display|default:'Pet' }}"
+                                                    >
+                                                {% else %}
+                                                    <span>🐾</span>
+                                                {% endif %}
+                                            {% endwith %}
                                         {% endif %}
                                     </div>
 
@@ -333,12 +348,27 @@
 
                     <div class="sale-card-top">
                         <div class="mini-photo">
-                            {% if sale.sale_photo %}
-                                <img src="{{ sale.sale_photo.url }}" alt="{{ sale.breed_display|default:'Pet' }}">
-                            {% elif sale.pet and sale.pet.display_photo %}
-                                <img src="{{ sale.pet.display_photo.url }}" alt="{{ sale.breed_display|default:'Pet' }}">
+                            {% if sale.pet and sale.pet.display_photo %}
+                                <img
+                                    src="{{ sale.pet.display_photo.url }}?pet={{ sale.pet.updated_at|date:'U' }}&breed={{ sale.pet.breed_profile.updated_at|date:'U' }}"
+                                    alt="{{ sale.breed_display|default:'Pet' }}"
+                                >
+                            {% elif sale.sale_photo %}
+                                <img
+                                    src="{{ sale.sale_photo.url }}?sale={{ sale.created_at|date:'U' }}"
+                                    alt="{{ sale.breed_display|default:'Pet' }}"
+                                >
                             {% else %}
-                                <span>🐾</span>
+                                {% with first_photo=sale.photos.first %}
+                                    {% if first_photo and first_photo.photo %}
+                                        <img
+                                            src="{{ first_photo.photo.url }}?photo={{ first_photo.uploaded_at|date:'U' }}"
+                                            alt="{{ sale.breed_display|default:'Pet' }}"
+                                        >
+                                    {% else %}
+                                        <span>🐾</span>
+                                    {% endif %}
+                                {% endwith %}
                             {% endif %}
                         </div>
 
@@ -2034,89 +2064,6 @@ a{text-decoration:none}
     .apply-date-btn{
         min-height:54px;
         border-radius:16px;
-    }
-}
-
-
-
-/* =========================================================
-   CENTERED PHONE POPUPS — BUBU PET PAGES
-========================================================= */
-@media(max-width:760px){
-    .select-popup,
-    .action-popup,
-    .date-popup-panel,
-    .option-popup{
-        position:fixed!important;
-        left:50%!important;
-        right:auto!important;
-        top:50%!important;
-        bottom:auto!important;
-        transform:translate(-50%,-50%)!important;
-        width:calc(100% - 24px)!important;
-        max-width:440px!important;
-        max-height:88dvh!important;
-        overflow-y:auto!important;
-        overscroll-behavior:contain!important;
-        border-radius:24px!important;
-        box-shadow:0 24px 70px rgba(28,20,58,.30)!important;
-    }
-
-    .date-popup,
-    .date-popup-panel{
-        max-width:460px!important;
-        max-height:90dvh!important;
-    }
-
-    .popup-head,
-    .date-popup-head,
-    .option-head{
-        position:sticky;
-        top:0;
-        z-index:5;
-    }
-
-    .popup-head h3,
-    .date-popup-head h3,
-    .date-popup-head strong,
-    .option-head h3{
-        text-align:center!important;
-    }
-
-    .popup-list button,
-    .popup-action,
-    .option-btn,
-    .quick-date-grid button,
-    .apply-date-btn,
-    .date-apply-btn,
-    .date-clear-btn{
-        width:100%!important;
-        min-height:54px!important;
-        display:flex!important;
-        align-items:center!important;
-        justify-content:center!important;
-        text-align:center!important;
-    }
-
-    .popup-action{
-        justify-content:center!important;
-    }
-
-    .option-btn{
-        position:relative!important;
-        justify-content:center!important;
-        padding-left:48px!important;
-        padding-right:48px!important;
-    }
-
-    .option-btn > span{
-        width:100%;
-        text-align:center;
-    }
-
-    .option-btn > b{
-        position:absolute;
-        right:18px;
     }
 }
 

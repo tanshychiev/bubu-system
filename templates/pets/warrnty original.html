@@ -708,23 +708,12 @@
                 <tr>
                     <td>
                         <div class="pet-photo">
-                            {% if sale.pet and sale.pet.display_photo %}
-                                <img
-                                    src="{{ sale.pet.display_photo.url }}?pet={{ sale.pet.updated_at|date:'U' }}&breed={{ sale.pet.breed_profile.updated_at|date:'U' }}"
-                                    alt="Pet Photo"
-                                >
-                            {% elif sale.pet and sale.pet.photo %}
-                                <img
-                                    src="{{ sale.pet.photo.url }}?pet={{ sale.pet.updated_at|date:'U' }}"
-                                    alt="Pet Photo"
-                                >
-                            {% elif sale.pet and sale.pet.breed_profile and sale.pet.breed_profile.photo %}
-                                <img
-                                    src="{{ sale.pet.breed_profile.photo.url }}?breed={{ sale.pet.breed_profile.updated_at|date:'U' }}"
-                                    alt="Pet Photo"
-                                >
-                            {% elif sale.sale_photo %}
+                            {% if sale.sale_photo %}
                                 <img src="{{ sale.sale_photo.url }}" alt="Pet Photo">
+                            {% elif sale.pet and sale.pet.photo %}
+                                <img src="{{ sale.pet.photo.url }}" alt="Pet Photo">
+                            {% elif sale.pet and sale.pet.breed_profile and sale.pet.breed_profile.photo %}
+                                <img src="{{ sale.pet.breed_profile.photo.url }}" alt="Pet Photo">
                             {% else %}
                                 <div class="no-photo">PET<br>PHOTO</div>
                             {% endif %}
@@ -806,16 +795,18 @@
         </table>
     </div>
 
-    <div
-        class="warranty-bar"
-        id="receiptWarrantyRow"
-        data-start="{% if sale.paid_at %}{{ sale.paid_at|date:'Y-m-d' }}{% elif sale.payment_date %}{{ sale.payment_date|date:'Y-m-d' }}{% elif sale.completed_at %}{{ sale.completed_at|date:'Y-m-d' }}{% elif sale.created_at %}{{ sale.created_at|date:'Y-m-d' }}{% endif %}"
-        data-end="{% if sale.warranty_end_date %}{{ sale.warranty_end_date|date:'Y-m-d' }}{% elif sale.warranty_until %}{{ sale.warranty_until|date:'Y-m-d' }}{% elif sale.warranty_expire_date %}{{ sale.warranty_expire_date|date:'Y-m-d' }}{% elif sale.deadline %}{{ sale.deadline|date:'Y-m-d' }}{% endif %}"
-        data-days="3"
-    >
+    <div class="warranty-bar">
         <span>ថ្ងៃធានា <strong>(Warranty Date):</strong></span>
-        <span class="warranty-line" id="receiptWarrantyText">
-            &nbsp;
+        <span class="warranty-line">
+            {% if sale.warranty_end_date %}
+                {{ sale.warranty_end_date|date:"Y-m-d" }}
+            {% elif sale.warranty_until %}
+                {{ sale.warranty_until|date:"Y-m-d" }}
+            {% elif sale.deadline %}
+                {{ sale.deadline|date:"Y-m-d" }}
+            {% else %}
+                &nbsp;
+            {% endif %}
         </span>
     </div>
 
@@ -925,56 +916,7 @@
 </div>
 
 <script>
-    function parseReceiptDate(value) {
-        if (!value) return null;
-
-        var parts = value.split("-").map(Number);
-        if (parts.length !== 3) return null;
-
-        return new Date(parts[0], parts[1] - 1, parts[2]);
-    }
-
-    function formatReceiptDate(date) {
-        if (!date) return "-";
-
-        var year = date.getFullYear();
-        var month = String(date.getMonth() + 1).padStart(2, "0");
-        var day = String(date.getDate()).padStart(2, "0");
-
-        return year + "-" + month + "-" + day;
-    }
-
-    function updateReceiptWarrantyRow() {
-        var row = document.getElementById("receiptWarrantyRow");
-        var text = document.getElementById("receiptWarrantyText");
-
-        if (!row || !text) return;
-
-        var warrantyDays = parseInt(row.dataset.days || "3", 10) || 3;
-        var startDate = parseReceiptDate(row.dataset.start);
-        var endDate = parseReceiptDate(row.dataset.end);
-
-        if (startDate && !endDate) {
-            endDate = new Date(startDate);
-            endDate.setDate(endDate.getDate() + warrantyDays);
-        }
-
-        if (startDate && endDate) {
-            text.textContent =
-                formatReceiptDate(startDate) +
-                "  →  " +
-                formatReceiptDate(endDate) +
-                "  (" +
-                warrantyDays +
-                " days)";
-        } else {
-            text.textContent = "-";
-        }
-    }
-
     window.addEventListener("load", function () {
-        updateReceiptWarrantyRow();
-
         setTimeout(function () {
             window.print();
         }, 300);
