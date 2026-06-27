@@ -115,7 +115,7 @@
 </div>
 
 <nav class="customer-mobile-bar">
-    <a href="{% url 'customer_create' %}" class="main">
+    <a href="{% url 'customer_create' %}" class="customer-dock-main">
         <span>＋</span><b>Add Customer</b>
     </a>
     <button type="button" onclick="focusCustomerSearch()">
@@ -237,9 +237,46 @@ body.delete-modal-open{overflow:hidden}
     .customer-actions a,.customer-actions button{min-height:35px;font-size:9px}
 
     .customer-mobile-bar{position:fixed;left:6px;right:6px;bottom:calc(6px + env(safe-area-inset-bottom));z-index:8500;height:58px;padding:5px;display:grid;grid-template-columns:1.5fr .7fr;gap:5px;border:1px solid rgba(228,213,236,.9);border-radius:15px;background:rgba(255,255,255,.97);box-shadow:0 14px 34px rgba(39,27,61,.18);backdrop-filter:blur(16px)}
-    .customer-mobile-bar a,.customer-mobile-bar button{border:0;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:#655b70;background:#f5f3f7;font-size:13px;font-weight:1000}
-    .customer-mobile-bar b{font-size:8px}
-    .customer-mobile-bar .main{color:#fff;background:linear-gradient(135deg,#8e63ff,#ff8c6b)}
+    .customer-mobile-bar a,
+    .customer-mobile-bar button{
+        width:100%!important;
+        height:46px!important;
+        min-width:0!important;
+        min-height:46px!important;
+        max-height:46px!important;
+        margin:0!important;
+        padding:3px 6px!important;
+        border:0!important;
+        border-radius:10px!important;
+        display:flex!important;
+        flex-direction:column!important;
+        align-items:center!important;
+        justify-content:center!important;
+        gap:1px!important;
+        color:#655b70;
+        background:#f5f3f7;
+        font-size:13px!important;
+        line-height:1!important;
+        font-weight:1000;
+        overflow:hidden!important;
+        box-shadow:none!important;
+        position:static!important;
+        transform:none!important;
+    }
+    .customer-mobile-bar a span,
+    .customer-mobile-bar button span{
+        display:block!important;
+        font-size:15px!important;
+        line-height:15px!important;
+    }
+    .customer-mobile-bar b{
+        display:block!important;
+        margin:0!important;
+        font-size:8px!important;
+        line-height:9px!important;
+        white-space:nowrap!important;
+    }
+    .customer-mobile-bar .customer-dock-main{color:#fff;background:linear-gradient(135deg,#8e63ff,#ff8c6b)}
     body.delete-modal-open .customer-mobile-bar{opacity:0;visibility:hidden;pointer-events:none}
 
     .customer-delete-modal{width:calc(100% - 16px);padding:17px 11px;border-radius:17px}

@@ -43,7 +43,7 @@
 
             <section class="cpf-fields">
                 <div class="cpf-grid">
-                    <label>
+                    <label class="cpf-phone-full">
                         Pet Name
                         <input
                             name="pet_name"
@@ -53,16 +53,29 @@
                         >
                     </label>
 
-                    <label>
-                        Pet Type
-                        <select name="pet_type">
-                            <option value="dog" {% if pet and pet.pet_type == "dog" %}selected{% endif %}>Dog</option>
-                            <option value="cat" {% if pet and pet.pet_type == "cat" %}selected{% endif %}>Cat</option>
-                            <option value="other" {% if pet and pet.pet_type == "other" %}selected{% endif %}>Other</option>
-                        </select>
-                    </label>
+                    <div class="cpf-touch-field">
+                        <span>Pet Type</span>
+                        <input
+                            type="hidden"
+                            name="pet_type"
+                            id="petTypeInput"
+                            value="{% if pet %}{{ pet.pet_type|default:'dog' }}{% else %}dog{% endif %}"
+                        >
+                        <button type="button" class="cpf-touch-btn" onclick="openChoicePopup('petType')">
+                            <strong id="petTypeLabel">
+                                {% if pet and pet.pet_type == "cat" %}
+                                    🐱 Cat
+                                {% elif pet and pet.pet_type == "other" %}
+                                    ✨ Other
+                                {% else %}
+                                    🐶 Dog
+                                {% endif %}
+                            </strong>
+                            <em>⌄</em>
+                        </button>
+                    </div>
 
-                    <label>
+                    <label class="cpf-phone-full">
                         Breed
                         <input
                             name="breed"
@@ -72,14 +85,27 @@
                         >
                     </label>
 
-                    <label>
-                        Sex
-                        <select name="gender">
-                            <option value="">Choose</option>
-                            <option value="Male" {% if pet and pet.gender == "Male" %}selected{% endif %}>Male</option>
-                            <option value="Female" {% if pet and pet.gender == "Female" %}selected{% endif %}>Female</option>
-                        </select>
-                    </label>
+                    <div class="cpf-touch-field">
+                        <span>Sex</span>
+                        <input
+                            type="hidden"
+                            name="gender"
+                            id="genderInput"
+                            value="{{ pet.gender|default:'' }}"
+                        >
+                        <button type="button" class="cpf-touch-btn" onclick="openChoicePopup('gender')">
+                            <strong id="genderLabel">
+                                {% if pet and pet.gender == "Male" %}
+                                    ♂ Male
+                                {% elif pet and pet.gender == "Female" %}
+                                    ♀ Female
+                                {% else %}
+                                    Choose Sex
+                                {% endif %}
+                            </strong>
+                            <em>⌄</em>
+                        </button>
+                    </div>
 
                     <label>
                         Color
@@ -101,34 +127,107 @@
                         >
                     </label>
 
-                    <label>
-                        Birth Date
-                        <input type="date" name="birth_date" value="{{ pet.birth_date|date:'Y-m-d' }}">
-                    </label>
+                    <div class="cpf-touch-field cpf-phone-full">
+                        <span>Birth Date</span>
+                        <input
+                            type="hidden"
+                            name="birth_date"
+                            id="birthDateInput"
+                            value="{{ pet.birth_date|date:'Y-m-d' }}"
+                        >
+                        <button type="button" class="cpf-touch-btn cpf-date-btn" onclick="openDatePopup('birthDate')">
+                            <strong id="birthDateLabel">
+                                {% if pet and pet.birth_date %}
+                                    {{ pet.birth_date|date:"d M Y" }}
+                                {% else %}
+                                    Choose birth date
+                                {% endif %}
+                            </strong>
+                            <em>📅</em>
+                        </button>
+                    </div>
 
-                    <label>
-                        Source
-                        <select name="source">
-                            <option value="customer_own" {% if pet and pet.source == "customer_own" %}selected{% endif %}>Customer Own Pet</option>
-                            <option value="bubu_sale" {% if pet and pet.source == "bubu_sale" %}selected{% endif %}>Bought at BUBU</option>
-                            <option value="bubu_preorder" {% if pet and pet.source == "bubu_preorder" %}selected{% endif %}>BUBU Pre-order</option>
-                        </select>
-                    </label>
+                    <div class="cpf-touch-field cpf-phone-full">
+                        <span>Source</span>
+                        <input
+                            type="hidden"
+                            name="source"
+                            id="sourceInput"
+                            value="{% if pet %}{{ pet.source|default:'customer_own' }}{% else %}customer_own{% endif %}"
+                        >
+                        <button type="button" class="cpf-touch-btn" onclick="openChoicePopup('source')">
+                            <strong id="sourceLabel">
+                                {% if pet and pet.source == "bubu_sale" %}
+                                    ✅ Bought at BUBU
+                                {% elif pet and pet.source == "bubu_preorder" %}
+                                    📝 BUBU Pre-order
+                                {% else %}
+                                    🐾 Customer Own Pet
+                                {% endif %}
+                            </strong>
+                            <em>⌄</em>
+                        </button>
+                    </div>
 
-                    <label>
-                        Bought Date
-                        <input type="date" name="bought_date" value="{{ pet.bought_date|date:'Y-m-d' }}">
-                    </label>
+                    <div class="cpf-touch-field cpf-phone-full">
+                        <span>Bought Date</span>
+                        <input
+                            type="hidden"
+                            name="bought_date"
+                            id="boughtDateInput"
+                            value="{{ pet.bought_date|date:'Y-m-d' }}"
+                        >
+                        <button type="button" class="cpf-touch-btn cpf-date-btn" onclick="openDatePopup('boughtDate')">
+                            <strong id="boughtDateLabel">
+                                {% if pet and pet.bought_date %}
+                                    {{ pet.bought_date|date:"d M Y" }}
+                                {% else %}
+                                    Choose bought date
+                                {% endif %}
+                            </strong>
+                            <em>📅</em>
+                        </button>
+                    </div>
 
-                    <label>
-                        Warranty Start
-                        <input type="date" name="warranty_start_date" value="{{ pet.warranty_start_date|date:'Y-m-d' }}">
-                    </label>
+                    <div class="cpf-touch-field cpf-phone-full">
+                        <span>Warranty Start</span>
+                        <input
+                            type="hidden"
+                            name="warranty_start_date"
+                            id="warrantyStartInput"
+                            value="{{ pet.warranty_start_date|date:'Y-m-d' }}"
+                        >
+                        <button type="button" class="cpf-touch-btn cpf-date-btn" onclick="openDatePopup('warrantyStart')">
+                            <strong id="warrantyStartLabel">
+                                {% if pet and pet.warranty_start_date %}
+                                    {{ pet.warranty_start_date|date:"d M Y" }}
+                                {% else %}
+                                    Choose warranty start
+                                {% endif %}
+                            </strong>
+                            <em>📅</em>
+                        </button>
+                    </div>
 
-                    <label class="cpf-wide-mobile">
-                        Warranty Expire
-                        <input type="date" name="warranty_expire_date" value="{{ pet.warranty_expire_date|date:'Y-m-d' }}">
-                    </label>
+                    <div class="cpf-touch-field cpf-phone-full">
+                        <span>Warranty Expire</span>
+                        <input
+                            type="hidden"
+                            name="warranty_expire_date"
+                            id="warrantyExpireInput"
+                            value="{{ pet.warranty_expire_date|date:'Y-m-d' }}"
+                        >
+                        <button type="button" class="cpf-touch-btn cpf-date-btn" onclick="openDatePopup('warrantyExpire')">
+                            <strong id="warrantyExpireLabel">
+                                {% if pet and pet.warranty_expire_date %}
+                                    {{ pet.warranty_expire_date|date:"d M Y" }}
+                                {% else %}
+                                    Choose warranty expire
+                                {% endif %}
+                            </strong>
+                            <em>📅</em>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="button" class="cpf-optional-toggle" id="remarkToggle" onclick="toggleRemark()">
@@ -150,6 +249,143 @@
     </form>
 </div>
 
+<!-- PET TYPE POPUP -->
+<div class="cpf-backdrop" id="petTypeBackdrop" onclick="closeChoicePopup('petType')"></div>
+<div class="cpf-choice-popup" id="petTypePopup">
+    <div class="cpf-popup-head">
+        <div>
+            <small>Pet profile</small>
+            <h3>Choose Pet Type</h3>
+        </div>
+        <button type="button" onclick="closeChoicePopup('petType')">×</button>
+    </div>
+
+    <div class="cpf-choice-list">
+        <button type="button" onclick="setPetType('dog','🐶 Dog')">
+            <span class="cpf-choice-icon dog">🐶</span>
+            <span><strong>Dog</strong><small>Dog profile</small></span>
+            <em>›</em>
+        </button>
+
+        <button type="button" onclick="setPetType('cat','🐱 Cat')">
+            <span class="cpf-choice-icon cat">🐱</span>
+            <span><strong>Cat</strong><small>Cat profile</small></span>
+            <em>›</em>
+        </button>
+
+        <button type="button" onclick="setPetType('other','✨ Other')">
+            <span class="cpf-choice-icon other">✨</span>
+            <span><strong>Other</strong><small>Another pet type</small></span>
+            <em>›</em>
+        </button>
+    </div>
+</div>
+
+<!-- GENDER POPUP -->
+<div class="cpf-backdrop" id="genderBackdrop" onclick="closeChoicePopup('gender')"></div>
+<div class="cpf-choice-popup" id="genderPopup">
+    <div class="cpf-popup-head">
+        <div>
+            <small>Pet profile</small>
+            <h3>Choose Sex</h3>
+        </div>
+        <button type="button" onclick="closeChoicePopup('gender')">×</button>
+    </div>
+
+    <div class="cpf-choice-list">
+        <button type="button" onclick="setGender('Male','♂ Male')">
+            <span class="cpf-choice-icon male">♂</span>
+            <span><strong>Male</strong><small>Male pet</small></span>
+            <em>›</em>
+        </button>
+
+        <button type="button" onclick="setGender('Female','♀ Female')">
+            <span class="cpf-choice-icon female">♀</span>
+            <span><strong>Female</strong><small>Female pet</small></span>
+            <em>›</em>
+        </button>
+
+        <button type="button" onclick="setGender('','Choose Sex')">
+            <span class="cpf-choice-icon none">−</span>
+            <span><strong>No selection</strong><small>Leave this empty</small></span>
+            <em>›</em>
+        </button>
+    </div>
+</div>
+
+<!-- SOURCE POPUP -->
+<div class="cpf-backdrop" id="sourceBackdrop" onclick="closeChoicePopup('source')"></div>
+<div class="cpf-choice-popup" id="sourcePopup">
+    <div class="cpf-popup-head">
+        <div>
+            <small>Pet origin</small>
+            <h3>Choose Source</h3>
+        </div>
+        <button type="button" onclick="closeChoicePopup('source')">×</button>
+    </div>
+
+    <div class="cpf-choice-list">
+        <button type="button" onclick="setSource('customer_own','🐾 Customer Own Pet')">
+            <span class="cpf-choice-icon own">🐾</span>
+            <span><strong>Customer Own Pet</strong><small>Customer already owns this pet</small></span>
+            <em>›</em>
+        </button>
+
+        <button type="button" onclick="setSource('bubu_sale','✅ Bought at BUBU')">
+            <span class="cpf-choice-icon sale">✅</span>
+            <span><strong>Bought at BUBU</strong><small>Sold from BUBU stock</small></span>
+            <em>›</em>
+        </button>
+
+        <button type="button" onclick="setSource('bubu_preorder','📝 BUBU Pre-order')">
+            <span class="cpf-choice-icon preorder">📝</span>
+            <span><strong>BUBU Pre-order</strong><small>Ordered through BUBU</small></span>
+            <em>›</em>
+        </button>
+    </div>
+</div>
+
+<!-- DATE POPUP -->
+<div class="cpf-backdrop" id="dateBackdrop" onclick="closeDatePopup()"></div>
+<div class="cpf-date-popup" id="datePopup">
+    <div class="cpf-date-header">
+        <div>
+            <small>Choose date</small>
+            <strong id="dateSelectedText">Select Date</strong>
+        </div>
+        <button type="button" onclick="closeDatePopup()">×</button>
+    </div>
+
+    <div class="cpf-date-body">
+        <div class="cpf-date-shortcuts">
+            <button type="button" onclick="dateQuickPick('today')">Today</button>
+            <button type="button" onclick="dateQuickPick('yesterday')">Yesterday</button>
+            <button type="button" onclick="dateQuickPick('tomorrow')">Tomorrow</button>
+            <button type="button" onclick="dateQuickPick('plus7')">+7 Days</button>
+        </div>
+
+        <div class="cpf-month-row">
+            <strong id="dateMonthTitle">Month Year</strong>
+            <div>
+                <button type="button" onclick="changeDateMonth(-1)">‹</button>
+                <button type="button" onclick="changeDateMonth(1)">›</button>
+            </div>
+        </div>
+
+        <div class="cpf-weekdays">
+            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span>
+            <span>Th</span><span>Fr</span><span>Sa</span>
+        </div>
+
+        <div class="cpf-calendar-grid" id="dateCalendarGrid"></div>
+
+        <div class="cpf-date-actions">
+            <button type="button" class="clear" onclick="clearDateValue()">Clear</button>
+            <button type="button" class="apply" onclick="applyDateValue()">Use Date</button>
+        </div>
+    </div>
+</div>
+
 <style>
 *{box-sizing:border-box}
 a{text-decoration:none}
@@ -159,9 +395,12 @@ html{
     text-size-adjust:100%;
 }
 
-.cpf-page{
-    padding:24px 28px;
+body.cpf-popup-open{
+    overflow:hidden;
+    touch-action:none;
 }
+
+.cpf-page{padding:24px 28px}
 
 .cpf-head{
     margin-bottom:18px;
@@ -267,7 +506,8 @@ html{
     gap:12px;
 }
 
-.cpf-fields label{
+.cpf-fields label,
+.cpf-touch-field > span{
     min-width:0;
     color:#17152f;
     font-size:13px;
@@ -275,7 +515,6 @@ html{
 }
 
 .cpf-fields input,
-.cpf-fields select,
 .cpf-fields textarea{
     width:100%;
     margin-top:6px;
@@ -288,8 +527,7 @@ html{
     outline:none;
 }
 
-.cpf-fields input,
-.cpf-fields select{
+.cpf-fields input{
     height:50px;
     padding:0 12px;
 }
@@ -301,15 +539,47 @@ html{
 }
 
 .cpf-fields input:focus,
-.cpf-fields select:focus,
 .cpf-fields textarea:focus{
     border-color:#8e63ff;
     box-shadow:0 0 0 3px rgba(142,99,255,.12);
 }
 
-.cpf-optional-toggle{
-    display:none;
+.cpf-touch-btn{
+    width:100%;
+    min-height:50px;
+    margin-top:6px;
+    padding:0 12px;
+    border:1.5px solid #eaddec;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    color:#17152f;
+    background:linear-gradient(180deg,#fff,#fffafd);
+    font-size:16px;
+    font-weight:1000;
+    text-align:left;
+    cursor:pointer;
 }
+
+.cpf-touch-btn strong{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.cpf-touch-btn em{
+    color:#8e63ff;
+    font-style:normal;
+}
+
+.cpf-date-btn{
+    background:linear-gradient(135deg,#fbf8ff,#fff8f4);
+}
+
+.cpf-optional-toggle{display:none}
 
 .cpf-remark{
     display:block;
@@ -344,6 +614,267 @@ html{
 .cpf-cancel{
     color:#ff4d5d;
     background:#fff0f0;
+}
+
+/* popup backdrop */
+.cpf-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:19990;
+    background:rgba(25,18,55,.48);
+    backdrop-filter:blur(3px);
+}
+
+.cpf-backdrop.active{display:block}
+
+.cpf-choice-popup,
+.cpf-date-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    z-index:20000;
+    width:min(430px,calc(100% - 24px));
+    max-height:82dvh;
+    overflow:hidden;
+    transform:translate(-50%,-50%);
+    border-radius:24px;
+    background:white;
+    box-shadow:0 30px 80px rgba(25,18,55,.28);
+}
+
+.cpf-choice-popup.active,
+.cpf-date-popup.active{
+    display:block;
+}
+
+.cpf-popup-head,
+.cpf-date-header{
+    padding:16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    color:white;
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+}
+
+.cpf-popup-head small,
+.cpf-date-header small{
+    display:block;
+    margin-bottom:3px;
+    font-size:10px;
+    font-weight:900;
+    opacity:.9;
+}
+
+.cpf-popup-head h3{
+    margin:0;
+    font-size:19px;
+    font-weight:1000;
+}
+
+.cpf-popup-head > button,
+.cpf-date-header > button{
+    width:38px;
+    height:38px;
+    border:0;
+    border-radius:50%;
+    color:white;
+    background:rgba(255,255,255,.22);
+    font-size:23px;
+    font-weight:1000;
+}
+
+.cpf-choice-list{
+    padding:10px;
+    display:grid;
+    gap:7px;
+    max-height:65dvh;
+    overflow-y:auto;
+}
+
+.cpf-choice-list > button{
+    width:100%;
+    min-height:64px;
+    padding:8px 10px;
+    border:1px solid #eaddec;
+    border-radius:16px;
+    display:grid;
+    grid-template-columns:44px minmax(0,1fr) auto;
+    gap:10px;
+    align-items:center;
+    color:#17152f;
+    background:linear-gradient(135deg,#fff,#fffafd);
+    text-align:left;
+    cursor:pointer;
+}
+
+.cpf-choice-icon{
+    width:44px;
+    height:44px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:21px;
+}
+
+.cpf-choice-icon.dog,
+.cpf-choice-icon.sale{background:#fff1e8}
+.cpf-choice-icon.cat,
+.cpf-choice-icon.own{background:#efe8ff}
+.cpf-choice-icon.other,
+.cpf-choice-icon.preorder{background:#eaf8ff}
+.cpf-choice-icon.male{color:#3b82f6;background:#eaf4ff}
+.cpf-choice-icon.female{color:#ec4899;background:#fff0f7}
+.cpf-choice-icon.none{color:#64748b;background:#f1f5f9}
+
+.cpf-choice-list strong{
+    display:block;
+    font-size:14px;
+    font-weight:1000;
+}
+
+.cpf-choice-list small{
+    display:block;
+    margin-top:2px;
+    color:#7b7288;
+    font-size:10px;
+    font-weight:900;
+}
+
+.cpf-choice-list em{
+    color:#8e63ff;
+    font-size:22px;
+    font-style:normal;
+}
+
+/* date popup */
+.cpf-date-header strong{
+    display:block;
+    font-size:21px;
+    font-weight:1000;
+}
+
+.cpf-date-body{
+    max-height:68dvh;
+    padding:12px;
+    overflow-y:auto;
+}
+
+.cpf-date-shortcuts{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:6px;
+    margin-bottom:10px;
+}
+
+.cpf-date-shortcuts button{
+    min-height:40px;
+    border:0;
+    border-radius:11px;
+    color:#6d4ce8;
+    background:#f1ebff;
+    font-size:11px;
+    font-weight:1000;
+}
+
+.cpf-month-row{
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+}
+
+.cpf-month-row > strong{
+    color:#17152f;
+    font-size:17px;
+    font-weight:1000;
+}
+
+.cpf-month-row > div{
+    display:flex;
+    gap:5px;
+}
+
+.cpf-month-row button{
+    width:36px;
+    height:36px;
+    border:0;
+    border-radius:50%;
+    color:#8e63ff;
+    background:#f1ebff;
+    font-size:21px;
+    font-weight:1000;
+}
+
+.cpf-weekdays,
+.cpf-calendar-grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:3px;
+}
+
+.cpf-weekdays{
+    margin-bottom:4px;
+}
+
+.cpf-weekdays span{
+    padding:4px 0;
+    color:#8d84a7;
+    text-align:center;
+    font-size:9px;
+    font-weight:1000;
+}
+
+.cpf-calendar-day{
+    aspect-ratio:1;
+    min-height:36px;
+    border:0;
+    border-radius:50%;
+    color:#17152f;
+    background:transparent;
+    font-size:11px;
+    font-weight:1000;
+}
+
+.cpf-calendar-day.muted{color:#c2b8d1}
+.cpf-calendar-day.today{border:1.5px solid #bca9ff}
+.cpf-calendar-day.selected{
+    color:white;
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+    box-shadow:0 7px 15px rgba(142,99,255,.25);
+}
+
+.cpf-date-actions{
+    position:sticky;
+    bottom:0;
+    margin-top:10px;
+    padding-top:7px;
+    display:grid;
+    grid-template-columns:.8fr 1.2fr;
+    gap:7px;
+    background:white;
+}
+
+.cpf-date-actions button{
+    min-height:44px;
+    border:0;
+    border-radius:12px;
+    font-weight:1000;
+}
+
+.cpf-date-actions .clear{
+    color:#475569;
+    background:#f1f5f9;
+}
+
+.cpf-date-actions .apply{
+    color:white;
+    background:linear-gradient(135deg,#13a85f,#7b5cff);
 }
 
 @media(max-width:1050px){
@@ -395,9 +926,7 @@ html{
         border-radius:15px;
     }
 
-    .cpf-layout{
-        gap:7px;
-    }
+    .cpf-layout{gap:7px}
 
     .cpf-photo-panel{
         padding:6px;
@@ -419,26 +948,36 @@ html{
         font-size:11px;
     }
 
-    .cpf-photo-panel small{
-        display:none;
-    }
+    .cpf-photo-panel small{display:none}
 
     .cpf-grid{
         grid-template-columns:repeat(2,minmax(0,1fr));
         gap:6px;
     }
 
-    .cpf-fields label{
+    /* Important text fields and every date/source field use one full row. */
+    .cpf-phone-full{
+        grid-column:1 / -1;
+    }
+
+    .cpf-fields label,
+    .cpf-touch-field > span{
         font-size:10px;
     }
 
     .cpf-fields input,
-    .cpf-fields select{
+    .cpf-fields textarea,
+    .cpf-touch-btn{
+        font-size:16px!important;
+    }
+
+    .cpf-fields input,
+    .cpf-touch-btn{
         height:44px;
+        min-height:44px;
         margin-top:3px;
         padding:0 8px;
         border-radius:10px;
-        font-size:16px;
     }
 
     .cpf-fields textarea{
@@ -446,11 +985,10 @@ html{
         margin-top:3px;
         padding:8px;
         border-radius:10px;
-        font-size:16px;
     }
 
-    .cpf-wide-mobile{
-        grid-column:1 / -1;
+    .cpf-touch-btn strong{
+        font-size:12px;
     }
 
     .cpf-optional-toggle{
@@ -474,13 +1012,9 @@ html{
         font-size:16px;
     }
 
-    .cpf-collapsed{
-        display:none;
-    }
+    .cpf-collapsed{display:none}
 
-    .cpf-remark{
-        margin-top:7px;
-    }
+    .cpf-remark{margin-top:7px}
 
     .cpf-actions{
         position:fixed;
@@ -508,10 +1042,63 @@ html{
         border-radius:10px;
         font-size:11px;
     }
+
+    body.cpf-popup-open .cpf-actions{
+        opacity:0;
+        visibility:hidden;
+        pointer-events:none;
+    }
+
+    .cpf-choice-popup,
+    .cpf-date-popup{
+        width:calc(100% - 16px);
+        max-height:78dvh;
+        border-radius:18px;
+    }
+
+    .cpf-popup-head,
+    .cpf-date-header{
+        padding:11px;
+    }
+
+    .cpf-popup-head h3{
+        font-size:16px;
+    }
+
+    .cpf-choice-list{
+        padding:7px;
+        gap:5px;
+    }
+
+    .cpf-choice-list > button{
+        min-height:58px;
+        padding:7px;
+        border-radius:12px;
+        grid-template-columns:40px minmax(0,1fr) auto;
+    }
+
+    .cpf-choice-icon{
+        width:40px;
+        height:40px;
+        border-radius:11px;
+        font-size:19px;
+    }
+
+    .cpf-choice-list strong{font-size:12px}
+    .cpf-choice-list small{font-size:9px}
+
+    .cpf-date-body{padding:8px}
+    .cpf-date-shortcuts{grid-template-columns:repeat(4,1fr);gap:4px}
+    .cpf-date-shortcuts button{min-height:35px;padding:0 2px;font-size:8px}
+    .cpf-calendar-day{min-height:34px}
 }
 </style>
 
 <script>
+function setPopupState(open){
+    document.body.classList.toggle("cpf-popup-open", Boolean(open));
+}
+
 function previewPhoto(event){
     const file = event.target.files && event.target.files[0];
     if(!file) return;
@@ -524,6 +1111,7 @@ function previewPhoto(event){
         img.src = e.target.result;
         img.hidden = false;
         img.style.display = "block";
+
         if(empty){
             empty.hidden = true;
             empty.style.display = "none";
@@ -531,6 +1119,228 @@ function previewPhoto(event){
     };
 
     reader.readAsDataURL(file);
+}
+
+function openChoicePopup(type){
+    document.getElementById(type + "Popup").classList.add("active");
+    document.getElementById(type + "Backdrop").classList.add("active");
+    setPopupState(true);
+}
+
+function closeChoicePopup(type){
+    document.getElementById(type + "Popup").classList.remove("active");
+    document.getElementById(type + "Backdrop").classList.remove("active");
+    setPopupState(false);
+}
+
+function setPetType(value, label){
+    document.getElementById("petTypeInput").value = value;
+    document.getElementById("petTypeLabel").textContent = label;
+    closeChoicePopup("petType");
+}
+
+function setGender(value, label){
+    document.getElementById("genderInput").value = value;
+    document.getElementById("genderLabel").textContent = label;
+    closeChoicePopup("gender");
+}
+
+function setSource(value, label){
+    document.getElementById("sourceInput").value = value;
+    document.getElementById("sourceLabel").textContent = label;
+    closeChoicePopup("source");
+}
+
+/* Shared cute calendar */
+const dateFieldMap = {
+    birthDate: {
+        input: "birthDateInput",
+        label: "birthDateLabel",
+        empty: "Choose birth date"
+    },
+    boughtDate: {
+        input: "boughtDateInput",
+        label: "boughtDateLabel",
+        empty: "Choose bought date"
+    },
+    warrantyStart: {
+        input: "warrantyStartInput",
+        label: "warrantyStartLabel",
+        empty: "Choose warranty start"
+    },
+    warrantyExpire: {
+        input: "warrantyExpireInput",
+        label: "warrantyExpireLabel",
+        empty: "Choose warranty expire"
+    }
+};
+
+let activeDateField = null;
+let selectedDate = null;
+let calendarViewDate = new Date();
+
+function parseISODate(value){
+    if(!value) return null;
+
+    const parts = value.split("-").map(Number);
+
+    if(parts.length !== 3 || parts.some(Number.isNaN)){
+        return null;
+    }
+
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+}
+
+function toISODate(date){
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
+
+function formatDate(date){
+    return date.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    });
+}
+
+function sameDay(a, b){
+    return a &&
+           b &&
+           a.getFullYear() === b.getFullYear() &&
+           a.getMonth() === b.getMonth() &&
+           a.getDate() === b.getDate();
+}
+
+function openDatePopup(fieldName){
+    activeDateField = fieldName;
+
+    const config = dateFieldMap[fieldName];
+    const current = parseISODate(document.getElementById(config.input).value);
+
+    selectedDate = current ? new Date(current) : null;
+    calendarViewDate = current ? new Date(current) : new Date();
+
+    document.getElementById("datePopup").classList.add("active");
+    document.getElementById("dateBackdrop").classList.add("active");
+    setPopupState(true);
+
+    renderDateCalendar();
+}
+
+function closeDatePopup(){
+    document.getElementById("datePopup").classList.remove("active");
+    document.getElementById("dateBackdrop").classList.remove("active");
+    setPopupState(false);
+}
+
+function renderDateCalendar(){
+    const grid = document.getElementById("dateCalendarGrid");
+    const title = document.getElementById("dateMonthTitle");
+    const selectedText = document.getElementById("dateSelectedText");
+    const year = calendarViewDate.getFullYear();
+    const month = calendarViewDate.getMonth();
+
+    title.textContent = calendarViewDate.toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric"
+    });
+
+    selectedText.textContent = selectedDate ? formatDate(selectedDate) : "Select Date";
+    grid.innerHTML = "";
+
+    const first = new Date(year, month, 1);
+    const start = new Date(year, month, 1 - first.getDay());
+    const today = new Date();
+
+    for(let index = 0; index < 42; index++){
+        const date = new Date(
+            start.getFullYear(),
+            start.getMonth(),
+            start.getDate() + index
+        );
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "cpf-calendar-day";
+        button.textContent = date.getDate();
+
+        if(date.getMonth() !== month){
+            button.classList.add("muted");
+        }
+
+        if(sameDay(date, today)){
+            button.classList.add("today");
+        }
+
+        if(selectedDate && sameDay(date, selectedDate)){
+            button.classList.add("selected");
+        }
+
+        button.onclick = function(){
+            selectedDate = new Date(date);
+            calendarViewDate = new Date(date);
+            renderDateCalendar();
+        };
+
+        grid.appendChild(button);
+    }
+}
+
+function changeDateMonth(amount){
+    calendarViewDate = new Date(
+        calendarViewDate.getFullYear(),
+        calendarViewDate.getMonth() + amount,
+        1
+    );
+
+    renderDateCalendar();
+}
+
+function dateQuickPick(type){
+    const date = new Date();
+
+    if(type === "yesterday"){
+        date.setDate(date.getDate() - 1);
+    }else if(type === "tomorrow"){
+        date.setDate(date.getDate() + 1);
+    }else if(type === "plus7"){
+        date.setDate(date.getDate() + 7);
+    }
+
+    selectedDate = date;
+    calendarViewDate = new Date(date);
+    renderDateCalendar();
+}
+
+function applyDateValue(){
+    if(!activeDateField || !selectedDate){
+        return;
+    }
+
+    const config = dateFieldMap[activeDateField];
+
+    document.getElementById(config.input).value = toISODate(selectedDate);
+    document.getElementById(config.label).textContent = formatDate(selectedDate);
+
+    closeDatePopup();
+}
+
+function clearDateValue(){
+    if(!activeDateField){
+        return;
+    }
+
+    const config = dateFieldMap[activeDateField];
+
+    document.getElementById(config.input).value = "";
+    document.getElementById(config.label).textContent = config.empty;
+
+    selectedDate = null;
+    closeDatePopup();
 }
 
 function toggleRemark(){
@@ -551,6 +1361,24 @@ document.addEventListener("DOMContentLoaded", function(){
         field.classList.remove("cpf-collapsed");
         document.getElementById("remarkToggle").innerHTML =
             "<span>Hide remark</span><b>−</b>";
+    }
+});
+
+document.addEventListener("keydown", function(event){
+    if(event.key !== "Escape"){
+        return;
+    }
+
+    ["petType", "gender", "source"].forEach(function(type){
+        const popup = document.getElementById(type + "Popup");
+
+        if(popup.classList.contains("active")){
+            closeChoicePopup(type);
+        }
+    });
+
+    if(document.getElementById("datePopup").classList.contains("active")){
+        closeDatePopup();
     }
 });
 </script>
