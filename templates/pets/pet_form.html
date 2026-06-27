@@ -2491,6 +2491,211 @@ textarea:focus{
     }
 }
 
+
+/* =========================================================
+   PHONE POPUP POSITION + SAFARI INPUT ZOOM FIX V4
+========================================================= */
+@media(max-width:760px){
+    html,
+    body{
+        -webkit-text-size-adjust:100%!important;
+        text-size-adjust:100%!important;
+    }
+
+    body.pet-popup-open{
+        overflow:hidden!important;
+        touch-action:none;
+    }
+
+    /* Safari zooms focused fields when text is below 16px. */
+    input,
+    select,
+    textarea,
+    .popup-search{
+        font-size:16px!important;
+        line-height:1.25!important;
+    }
+
+    input,
+    select,
+    textarea,
+    button{
+        -webkit-appearance:none;
+        appearance:none;
+    }
+
+    input,
+    select,
+    textarea,
+    .touch-select,
+    .touch-date-btn,
+    .option-btn,
+    .breed-select-card{
+        touch-action:manipulation;
+    }
+
+    /* Hide the fixed save bar while any picker is open. */
+    body.pet-popup-open .actions{
+        opacity:0!important;
+        visibility:hidden!important;
+        pointer-events:none!important;
+    }
+
+    .select-backdrop,
+    .date-backdrop{
+        z-index:19990!important;
+        background:rgba(20,15,45,.50)!important;
+        backdrop-filter:blur(2px);
+    }
+
+    /* Standard option popups open in the center, not at the bottom. */
+    .option-popup{
+        left:10px!important;
+        right:10px!important;
+        top:50%!important;
+        bottom:auto!important;
+        width:auto!important;
+        max-width:440px!important;
+        max-height:76dvh!important;
+        margin:0 auto!important;
+        transform:translateY(-50%)!important;
+        overflow-y:auto!important;
+        overscroll-behavior:contain;
+        border-radius:18px!important;
+        z-index:20000!important;
+    }
+
+    /* Searchable breed picker is slightly higher so keyboard has room. */
+    .breed-style-popup{
+        top:44%!important;
+        max-height:72dvh!important;
+    }
+
+    /* Date picker is centered and compact instead of filling the screen. */
+    .date-popup{
+        left:10px!important;
+        right:10px!important;
+        top:50%!important;
+        bottom:auto!important;
+        width:auto!important;
+        max-width:430px!important;
+        max-height:80dvh!important;
+        margin:0 auto!important;
+        transform:translateY(-50%)!important;
+        overflow-y:auto!important;
+        overscroll-behavior:contain;
+        border-radius:18px!important;
+        z-index:20000!important;
+    }
+
+    .breed-popup-head,
+    .option-head,
+    .date-top{
+        position:sticky!important;
+        top:0!important;
+        z-index:3!important;
+        padding:9px 11px!important;
+    }
+
+    .date-title{
+        margin-top:2px!important;
+        font-size:18px!important;
+    }
+
+    .date-label{
+        font-size:11px!important;
+    }
+
+    .date-close,
+    .option-head button,
+    .breed-popup-head button{
+        width:38px!important;
+        height:38px!important;
+        min-height:38px!important;
+    }
+
+    .date-shortcuts{
+        gap:6px!important;
+        padding:8px!important;
+    }
+
+    .date-shortcuts button{
+        min-height:40px!important;
+        padding:0 7px!important;
+        border-radius:10px!important;
+        font-size:11px!important;
+    }
+
+    .calendar-wrap{
+        padding:8px!important;
+    }
+
+    .calendar-head{
+        margin-bottom:6px!important;
+    }
+
+    .calendar-head h3,
+    .calendar-head strong{
+        font-size:15px!important;
+    }
+
+    .calendar-head button{
+        width:37px!important;
+        height:37px!important;
+        min-height:37px!important;
+        border-radius:10px!important;
+    }
+
+    .calendar-grid{
+        gap:2px!important;
+    }
+
+    .calendar-weekdays{
+        gap:2px!important;
+        margin-bottom:3px!important;
+    }
+
+    .calendar-weekdays span{
+        font-size:9px!important;
+    }
+
+    .date-cell{
+        min-height:34px!important;
+        height:34px!important;
+        padding:0!important;
+        border-radius:9px!important;
+        font-size:11px!important;
+    }
+
+    .date-actions{
+        position:sticky!important;
+        bottom:0!important;
+        z-index:3!important;
+        gap:7px!important;
+        padding:8px!important;
+        background:rgba(255,255,255,.97)!important;
+        backdrop-filter:blur(10px);
+    }
+
+    .date-actions button{
+        min-height:42px!important;
+        border-radius:11px!important;
+        font-size:12px!important;
+    }
+
+    .popup-search{
+        height:44px!important;
+        min-height:44px!important;
+    }
+
+    .breed-option-list,
+    .option-list{
+        max-height:58dvh!important;
+        overflow-y:auto!important;
+        overscroll-behavior:contain;
+    }
+}
+
 </style>
 
 <script>
@@ -2694,6 +2899,7 @@ function openOptionPopup(type){
 
     if(backdrop){ backdrop.classList.add("active"); }
     if(popup){ popup.classList.add("active"); }
+    document.body.classList.add("pet-popup-open");
 
     if(type === "breed"){
         const search = document.getElementById("breedSearchInput");
@@ -2713,6 +2919,7 @@ function closeOptionPopups(){
 
     const backdrop = document.getElementById("selectBackdrop");
     if(backdrop){ backdrop.classList.remove("active"); }
+    document.body.classList.remove("pet-popup-open");
 }
 
 function chooseOption(inputId, labelId, value, label){
@@ -3336,6 +3543,7 @@ function openDatePicker(inputId, labelId){
 
     document.getElementById("dateBackdrop").classList.add("active");
     document.getElementById("datePopup").classList.add("active");
+    document.body.classList.add("pet-popup-open");
 
     renderCalendar();
 }
@@ -3343,6 +3551,7 @@ function openDatePicker(inputId, labelId){
 function closeDatePicker(){
     document.getElementById("dateBackdrop").classList.remove("active");
     document.getElementById("datePopup").classList.remove("active");
+    document.body.classList.remove("pet-popup-open");
 }
 
 function parseYMD(value){
