@@ -89,7 +89,7 @@
             <div class="fields">
                 <div class="grid">
 
-                    <label class="compact-field">
+                    <label class="phone-half-field pet-type-field">
                         Pet Type
                         <input type="hidden" name="pet_type" id="petTypeInput" value="{% if breed %}{{ breed.pet_type }}{% else %}dog{% endif %}">
 
@@ -107,7 +107,7 @@
                         </button>
                     </label>
 
-                    <label class="wide-field">
+                    <label class="phone-full-field breed-name-field">
                         Breed Name
                         <input
                             name="name"
@@ -117,7 +117,7 @@
                         >
                     </label>
 
-                    <label class="compact-field">
+                    <label class="phone-half-field active-field">
                         Active
                         <input type="hidden" name="is_active" id="activeInput" value="{% if breed and not breed.is_active %}False{% else %}True{% endif %}">
 
@@ -133,7 +133,7 @@
                         </button>
                     </label>
 
-                    <label>
+                    <label class="phone-third-field cost-field">
                         Default Cost Price
                         <input
                             type="number"
@@ -143,7 +143,7 @@
                         >
                     </label>
 
-                    <label>
+                    <label class="phone-third-field sale-field">
                         Default Sale Price
                         <input
                             type="number"
@@ -153,7 +153,7 @@
                         >
                     </label>
 
-                    <label class="wide-field">
+                    <label class="phone-third-field sex-field">
                         Sex Options
                         <input
                             name="sex_options"
@@ -1376,6 +1376,168 @@ textarea:focus{
     .grid,
     .option-area{
         gap:4px!important;
+    }
+}
+
+
+
+/* =========================================================
+   PHONE MULTI-COLUMN V16
+   Row 1: Pet Type + Active
+   Row 2: Breed Name
+   Row 3: Cost + Sale + Sex
+   Row 4: Color + Special Type
+========================================================= */
+@media(max-width:760px){
+    .breed-form-page{
+        padding:6px 6px 74px!important;
+    }
+
+    .page-top{
+        grid-template-columns:minmax(0,1fr) auto!important;
+        gap:6px!important;
+        margin-bottom:6px!important;
+    }
+
+    .page-top h1{
+        font-size:18px!important;
+    }
+
+    .top-actions{
+        grid-template-columns:1fr!important;
+        gap:3px!important;
+    }
+
+    .soft-btn,
+    .plain-btn{
+        min-width:88px!important;
+        min-height:32px!important;
+        padding:0 7px!important;
+        border-radius:8px!important;
+        font-size:8px!important;
+    }
+
+    .form-card{
+        padding:5px!important;
+        border-radius:12px!important;
+    }
+
+    .photo-panel{
+        grid-template-columns:62px minmax(0,1fr)!important;
+        gap:4px!important;
+        margin-bottom:5px!important;
+        padding:4px!important;
+        border-radius:10px!important;
+    }
+
+    .preview{
+        height:62px!important;
+        border-radius:8px!important;
+        font-size:26px!important;
+    }
+
+    .drop-zone{
+        min-height:62px!important;
+        padding:4px!important;
+        border-radius:8px!important;
+    }
+
+    .drop-title{
+        font-size:9px!important;
+    }
+
+    /*
+     * Use a 6-column layout so fields can share rows cleanly.
+     */
+    .grid{
+        display:grid!important;
+        grid-template-columns:repeat(6,minmax(0,1fr))!important;
+        gap:4px!important;
+    }
+
+    .grid .pet-type-field{
+        grid-column:span 3!important;
+    }
+
+    .grid .active-field{
+        grid-column:span 3!important;
+    }
+
+    .grid .breed-name-field{
+        grid-column:1/-1!important;
+    }
+
+    .grid .cost-field,
+    .grid .sale-field,
+    .grid .sex-field{
+        grid-column:span 2!important;
+    }
+
+    .option-area{
+        display:grid!important;
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:4px!important;
+        margin-top:4px!important;
+    }
+
+    label{
+        font-size:8px!important;
+        line-height:1.1!important;
+    }
+
+    input,
+    select,
+    .touch-select{
+        height:38px!important;
+        min-height:38px!important;
+        margin-top:2px!important;
+        padding:0 6px!important;
+        border-radius:8px!important;
+        font-size:16px!important;
+    }
+
+    textarea{
+        min-height:50px!important;
+        margin-top:2px!important;
+        padding:5px!important;
+        border-radius:8px!important;
+        font-size:16px!important;
+    }
+
+    .full{
+        margin-top:4px!important;
+    }
+
+    .full textarea{
+        min-height:46px!important;
+    }
+
+    .actions{
+        left:4px!important;
+        right:4px!important;
+        bottom:max(4px,env(safe-area-inset-bottom))!important;
+        gap:3px!important;
+        padding:3px!important;
+        border-radius:10px!important;
+    }
+
+    .save-btn,
+    .cancel-btn{
+        min-height:38px!important;
+        border-radius:8px!important;
+        font-size:10px!important;
+    }
+}
+
+/* Very narrow phones: Cost and Sale stay together, Sex gets full row. */
+@media(max-width:350px){
+    .grid .cost-field,
+    .grid .sale-field{
+        grid-column:span 3!important;
+    }
+
+    .grid .sex-field{
+        grid-column:1/-1!important;
     }
 }
 

@@ -7,12 +7,10 @@ from django.views.generic import RedirectView
 
 
 urlpatterns = [
-    # Browser fallback favicon.
-    # Keep this first so /favicon.ico always redirects to the known working PNG.
     path(
         "favicon.ico",
         RedirectView.as_view(
-            url="/static/img/bubu-favicon-32.png?v=20260626-31",
+            url="/static/img/bubu-logo.png?v=20260626-60",
             permanent=False,
         ),
         name="favicon",
@@ -20,7 +18,6 @@ urlpatterns = [
 
     path("admin/", admin.site.urls),
 
-    # Main apps
     path("", include("core.urls")),
     path("users/", include("users.urls")),
     path("inventory/", include("inventory.urls")),
@@ -30,11 +27,8 @@ urlpatterns = [
     path("purchases/", include("purchases.urls")),
     path("services/", include("services.urls")),
     path("pets/", include("pets.urls")),
-
-    # Staff attendance / payroll / commission
     path("staffs/", include("staffs.urls")),
 
-    # Authentication
     path(
         "login/",
         auth_views.LoginView.as_view(
@@ -52,8 +46,6 @@ urlpatterns = [
 ]
 
 
-# Local development only.
-# In production, Nginx should normally serve /static/ and /media/.
 if settings.DEBUG:
     urlpatterns += static(
         settings.STATIC_URL,
@@ -64,3 +56,4 @@ if settings.DEBUG:
         settings.MEDIA_URL,
         document_root=settings.MEDIA_ROOT,
     )
+    

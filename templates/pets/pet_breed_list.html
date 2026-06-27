@@ -3,290 +3,337 @@
 
 {% block content %}
 
-<div class="breed-form-page">
-    <div class="page-top">
+<div class="breed-list-page">
+
+    <div class="breed-list-head">
         <div>
-            <h1>{% if breed %}Edit Breed{% else %}Add Breed Master{% endif %} 🐶🐱</h1>
-            <p>Breed master is the product template: sample photo, default price, colors, sex and special type options.</p>
+            <span class="page-kicker">PET MASTER</span>
+            <h1>Breed Master 🐶🐱</h1>
+            <p>All created breed templates.</p>
         </div>
 
-        <div class="top-actions">
-            <a href="{% url 'pet_breed_list' %}" class="soft-btn">← Breed List</a>
-            <a href="{% url 'pet_list' %}" class="plain-btn">Pet Stock</a>
+        <div class="head-actions">
+            <a href="{% url 'pet_list' %}" class="btn-soft">Pet Stock</a>
+            <a href="{% url 'pet_breed_create' %}" class="btn-main">＋ Add Breed</a>
         </div>
     </div>
 
-    <form method="post" enctype="multipart/form-data" class="form-card">
-        {% csrf_token %}
-
-        {% if form.errors %}
-            <div class="error-box">
-                <strong>Cannot save. Please check:</strong>
-                <ul>
-                    {% for field in form %}
-                        {% for error in field.errors %}
-                            <li>{{ field.label }}: {{ error }}</li>
-                        {% endfor %}
-                    {% endfor %}
-                    {% for error in form.non_field_errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
-
-        <div class="layout">
-
-            <div class="photo-panel">
-                <div class="preview" id="previewBox">
-                    {% if breed and breed.photo %}
-                        <img src="{{ breed.photo.url }}" id="photoPreview">
-                        <div id="photoEmpty" style="display:none;">🐾</div>
-                        <button type="button" class="photo-x" id="photoX" onclick="removeCurrentPhoto(event)">×</button>
-                    {% else %}
-                        <div id="photoEmpty">🐾</div>
-                        <img src="" id="photoPreview" style="display:none;">
-                        <button type="button" class="photo-x" id="photoX" style="display:none;" onclick="clearNewPhoto(event)">×</button>
-                    {% endif %}
+    {% if messages %}
+        <div class="message-stack">
+            {% for message in messages %}
+                <div class="message-box {{ message.tags }}">
+                    {{ message }}
                 </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 
-                <input type="hidden" name="remove_photo" id="removePhotoInput" value="0">
+    <form method="get" class="filter-card">
+        <div class="search-box">
+            <span>🔎</span>
+            <input
+                type="search"
+                name="q"
+                value="{{ q }}"
+                placeholder="Search breed, color, sex, special type..."
+                autocomplete="off"
+            >
+        </div>
 
-                <div
-                    class="drop-zone"
-                    id="dropZone"
-                    onclick="document.getElementById('photoInput').click()"
-                    ondragover="handleDragOver(event)"
-                    ondragleave="handleDragLeave(event)"
-                    ondrop="handleDrop(event)"
-                >
-                    <div class="drop-title">📸 Upload Breed Sample Photo</div>
-                    <div class="drop-sub">
-                        This is a sample/reference photo for this breed, not the real stock pet photo.
+        <input type="hidden" name="pet_type" value="{{ pet_type }}">
+
+        <button type="submit" class="search-btn">Search</button>
+
+        {% if q or pet_type %}
+            <a href="{% url 'pet_breed_list' %}" class="reset-btn">Reset</a>
+        {% endif %}
+    </form>
+
+    <div class="type-tabs">
+        <a
+            href="{% url 'pet_breed_list' %}{% if q %}?q={{ q|urlencode }}{% endif %}"
+            class="type-tab {% if not pet_type %}active{% endif %}"
+        >
+            🐾 All
+        </a>
+
+        <a
+            href="{% url 'pet_breed_list' %}?pet_type=dog{% if q %}&q={{ q|urlencode }}{% endif %}"
+            class="type-tab {% if pet_type == 'dog' %}active{% endif %}"
+        >
+            🐶 Dog
+        </a>
+
+        <a
+            href="{% url 'pet_breed_list' %}?pet_type=cat{% if q %}&q={{ q|urlencode }}{% endif %}"
+            class="type-tab {% if pet_type == 'cat' %}active{% endif %}"
+        >
+            🐱 Cat
+        </a>
+
+        <a
+            href="{% url 'pet_breed_list' %}?pet_type=other{% if q %}&q={{ q|urlencode }}{% endif %}"
+            class="type-tab {% if pet_type == 'other' %}active{% endif %}"
+        >
+            🐾 Other
+        </a>
+    </div>
+
+    <div class="breed-summary">
+        <strong>{{ breeds|length }}</strong>
+        <span>breed{{ breeds|length|pluralize }} found</span>
+    </div>
+
+    <div class="breed-grid">
+        {% for breed in breeds %}
+            <article class="breed-card">
+                <div class="breed-card-top">
+
+                    <div class="breed-photo">
+                        {% if breed.photo %}
+                            <img src="{{ breed.photo.url }}" alt="{{ breed.name }}">
+                        {% else %}
+                            <div class="breed-placeholder">
+                                {% if breed.pet_type == "cat" %}
+                                    🐱
+                                {% elif breed.pet_type == "dog" %}
+                                    🐶
+                                {% else %}
+                                    🐾
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="breed-main">
+                        <div class="breed-title-row">
+                            <div>
+                                <span class="breed-type">
+                                    {% if breed.pet_type == "cat" %}
+                                        🐱 Cat
+                                    {% elif breed.pet_type == "dog" %}
+                                        🐶 Dog
+                                    {% else %}
+                                        🐾 Other
+                                    {% endif %}
+                                </span>
+
+                                <h2>{{ breed.name }}</h2>
+                            </div>
+
+                            {% if breed.is_active %}
+                                <span class="status active">Active</span>
+                            {% else %}
+                                <span class="status inactive">Inactive</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="price-grid">
+                            <div>
+                                <small>Default Cost</small>
+                                <strong>${{ breed.default_cost_price|default:"0.00"|floatformat:2 }}</strong>
+                            </div>
+
+                            <div>
+                                <small>Default Sale</small>
+                                <strong>${{ breed.default_sale_price|default:"0.00"|floatformat:2 }}</strong>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <input
-                    type="file"
-                    name="photo"
-                    id="photoInput"
-                    accept="image/*"
-                    capture="environment"
-                    class="hidden-file"
-                    onchange="previewPhotoFile(this)"
-                >
+                <div class="breed-options">
 
-                <div class="photo-note">
-                    Breed photo will show as fallback if stock pet has no actual photo.
+                    <div class="option-line">
+                        <span>Sex</span>
+                        <strong>{{ breed.sex_options|default:"Not set" }}</strong>
+                    </div>
+
+                    <div class="option-line">
+                        <span>Colors</span>
+                        <strong>{{ breed.color_options|default:"Not set" }}</strong>
+                    </div>
+
+                    <div class="option-line">
+                        <span>Special Type</span>
+                        <strong>{{ breed.special_type_options|default:"Not set" }}</strong>
+                    </div>
+
+                    {% if breed.note %}
+                        <div class="breed-note">
+                            {{ breed.note|truncatechars:120 }}
+                        </div>
+                    {% endif %}
                 </div>
+
+                <div class="breed-actions">
+                    <a
+                        href="{% url 'pet_create' %}?breed={{ breed.id }}"
+                        class="stock-btn"
+                    >
+                        ＋ Stock In
+                    </a>
+
+                    <a
+                        href="{% url 'pet_breed_edit' breed.id %}"
+                        class="edit-btn"
+                    >
+                        ✎ Edit
+                    </a>
+                </div>
+            </article>
+        {% empty %}
+            <div class="empty-state">
+                <div>🐾</div>
+                <h2>No breeds found</h2>
+                <p>Create your first breed template.</p>
+                <a href="{% url 'pet_breed_create' %}" class="btn-main">
+                    ＋ Add Breed
+                </a>
             </div>
-
-            <div class="fields">
-                <div class="grid">
-
-                    <label>
-                        Pet Type
-                        <input type="hidden" name="pet_type" id="petTypeInput" value="{% if breed %}{{ breed.pet_type }}{% else %}dog{% endif %}">
-
-                        <button type="button" class="touch-select" onclick="openOptionPopup('type')">
-                            <span id="petTypeLabel">
-                                {% if breed.pet_type == "cat" %}
-                                    🐱 Cat
-                                {% elif breed.pet_type == "other" %}
-                                    🐾 Other
-                                {% else %}
-                                    🐶 Dog
-                                {% endif %}
-                            </span>
-                            <b>⌄</b>
-                        </button>
-                    </label>
-
-                    <label>
-                        Breed Name
-                        <input
-                            name="name"
-                            value="{{ breed.name|default:'' }}"
-                            placeholder="Example: Pomeranian"
-                            required
-                        >
-                    </label>
-
-                    <label>
-                        Active
-                        <input type="hidden" name="is_active" id="activeInput" value="{% if breed and not breed.is_active %}False{% else %}True{% endif %}">
-
-                        <button type="button" class="touch-select" onclick="openOptionPopup('active')">
-                            <span id="activeLabel">
-                                {% if breed and not breed.is_active %}
-                                    🔴 Inactive
-                                {% else %}
-                                    🟢 Active
-                                {% endif %}
-                            </span>
-                            <b>⌄</b>
-                        </button>
-                    </label>
-
-                    <label>
-                        Default Cost Price
-                        <input
-                            type="number"
-                            step="0.01"
-                            name="default_cost_price"
-                            value="{{ breed.default_cost_price|default:'0.00' }}"
-                        >
-                    </label>
-
-                    <label>
-                        Default Sale Price
-                        <input
-                            type="number"
-                            step="0.01"
-                            name="default_sale_price"
-                            value="{{ breed.default_sale_price|default:'0.00' }}"
-                        >
-                    </label>
-
-                    <label>
-                        Sex Options
-                        <input
-                            name="sex_options"
-                            value="{{ breed.sex_options|default:'Male,Female' }}"
-                            placeholder="Example: Male,Female"
-                        >
-                    </label>
-
-                </div>
-
-                <div class="option-area">
-                    <label>
-                        Color Options
-                        <textarea
-                            name="color_options"
-                            placeholder="Example: White, Cream, Brown, Black"
-                        >{{ breed.color_options|default:'' }}</textarea>
-                    </label>
-
-                    <label>
-                        Special Type Options
-                        <textarea
-                            name="special_type_options"
-                            placeholder="Example: Teacup, Mini, Standard, Show Grade, Imported"
-                        >{{ breed.special_type_options|default:'' }}</textarea>
-                    </label>
-                </div>
-
-                <label class="full">
-                    Breed Note / Description
-                    <textarea
-                        name="note"
-                        placeholder="Example: friendly, small size, popular with customers..."
-                    >{{ breed.note|default:'' }}</textarea>
-                </label>
-
-                <div class="example-box">
-                    <h3>Example</h3>
-                    <p>
-                        Breed: Pomeranian<br>
-                        Colors: White, Cream, Brown<br>
-                        Sex: Male, Female<br>
-                        Special Type: Teacup, Mini, Standard<br>
-                        Default Sale Price: $450
-                    </p>
-                </div>
-
-                <div class="actions">
-                    <button class="save-btn" type="submit">💾 Save Breed</button>
-                    <a href="{% url 'pet_breed_list' %}" class="cancel-btn">Cancel</a>
-                </div>
-            </div>
-        </div>
-    </form>
-</div>
-
-<div class="select-backdrop" id="selectBackdrop" onclick="closeOptionPopups()"></div>
-
-<div class="option-popup" id="typePopup">
-    <div class="option-head">
-        <h3>Choose Pet Type</h3>
-        <button type="button" onclick="closeOptionPopups()">✕</button>
+        {% endfor %}
     </div>
 
-    <div class="option-list">
-        <button type="button" class="option-btn" onclick="chooseOption('petTypeInput','petTypeLabel','dog','🐶 Dog')">
-            <span>🐶 Dog</span><b>✓</b>
-        </button>
-
-        <button type="button" class="option-btn" onclick="chooseOption('petTypeInput','petTypeLabel','cat','🐱 Cat')">
-            <span>🐱 Cat</span><b>✓</b>
-        </button>
-
-        <button type="button" class="option-btn" onclick="chooseOption('petTypeInput','petTypeLabel','other','🐾 Other')">
-            <span>🐾 Other</span><b>✓</b>
-        </button>
-    </div>
-</div>
-
-<div class="option-popup" id="activePopup">
-    <div class="option-head">
-        <h3>Active Status</h3>
-        <button type="button" onclick="closeOptionPopups()">✕</button>
-    </div>
-
-    <div class="option-list">
-        <button type="button" class="option-btn" onclick="chooseOption('activeInput','activeLabel','True','🟢 Active')">
-            <span>🟢 Active</span><b>✓</b>
-        </button>
-
-        <button type="button" class="option-btn" onclick="chooseOption('activeInput','activeLabel','False','🔴 Inactive')">
-            <span>🔴 Inactive</span><b>✓</b>
-        </button>
-    </div>
 </div>
 
 <style>
-*{box-sizing:border-box}
-a{text-decoration:none}
-
-.breed-form-page{
-    padding:24px 28px;
+*{
+    box-sizing:border-box;
 }
 
-.page-top{
+a{
+    text-decoration:none;
+}
+
+.breed-list-page{
+    max-width:1280px;
+    margin:0 auto;
+}
+
+.breed-list-head{
     display:flex;
+    align-items:center;
     justify-content:space-between;
     gap:18px;
-    margin-bottom:22px;
+    margin-bottom:18px;
 }
 
-.page-top h1{
-    margin:0;
+.page-kicker{
+    display:inline-flex;
+    min-height:28px;
+    padding:0 10px;
+    align-items:center;
+    border-radius:999px;
+    color:#7654dd;
+    background:#f0eaff;
+    font-size:10px;
+    font-weight:1000;
+}
+
+.breed-list-head h1{
+    margin:7px 0 0;
+    color:#17152f;
     font-size:34px;
     font-weight:1000;
-    color:#080634;
 }
 
-.page-top p{
-    margin:8px 0 0;
+.breed-list-head p{
+    margin:5px 0 0;
     color:#7b7288;
+    font-weight:800;
+}
+
+.head-actions{
+    display:flex;
+    align-items:center;
+    gap:9px;
+}
+
+.btn-main,
+.btn-soft{
+    min-height:46px;
+    padding:0 18px;
+    border-radius:14px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+}
+
+.btn-main{
+    color:white;
+    background:linear-gradient(135deg,#8e63ff,#ff8464);
+    box-shadow:0 9px 20px rgba(142,99,255,.18);
+}
+
+.btn-soft{
+    color:#6f57d9;
+    background:#f4efff;
+    border:1px solid #e2d8ff;
+}
+
+.message-stack{
+    display:grid;
+    gap:7px;
+    margin-bottom:12px;
+}
+
+.message-box{
+    padding:11px 13px;
+    border-radius:12px;
+    color:#148858;
+    background:#e9fbf2;
     font-weight:900;
 }
 
-.top-actions{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
+.message-box.error{
+    color:#d94150;
+    background:#ffecef;
 }
 
-.soft-btn,
-.plain-btn,
-.save-btn,
-.cancel-btn{
-    min-height:60px;
-    padding:0 22px;
-    border-radius:20px;
+.filter-card{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto auto;
+    gap:8px;
+    margin-bottom:10px;
+    padding:10px;
+    border:1px solid #eadfec;
+    border-radius:17px;
+    background:white;
+    box-shadow:0 8px 22px rgba(62,43,80,.05);
+}
+
+.search-box{
+    min-width:0;
+    min-height:46px;
+    padding:0 12px;
+    border:1.5px solid #eaddec;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:#fff;
+}
+
+.search-box input{
+    width:100%;
+    min-width:0;
+    height:44px;
+    padding:0;
     border:0;
+    outline:0;
+    color:#17152f;
+    background:transparent;
+    font-size:16px;
+    font-weight:800;
+}
+
+.search-btn,
+.reset-btn{
+    min-height:46px;
+    padding:0 16px;
+    border:0;
+    border-radius:12px;
     display:inline-flex;
     align-items:center;
     justify-content:center;
@@ -294,745 +341,501 @@ a{text-decoration:none}
     cursor:pointer;
 }
 
-.soft-btn,
-.plain-btn{
-    background:#f1f5f9;
-    color:#334155;
+.search-btn{
+    color:white;
+    background:linear-gradient(135deg,#8e63ff,#ff8464);
 }
 
-.form-card{
+.reset-btn{
+    color:#6b6178;
+    background:#f5f2f6;
+}
+
+.type-tabs{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    margin-bottom:10px;
+    overflow-x:auto;
+    scrollbar-width:none;
+}
+
+.type-tabs::-webkit-scrollbar{
+    display:none;
+}
+
+.type-tab{
+    min-height:39px;
+    padding:0 14px;
+    border:1px solid #eadfec;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:#6c6278;
     background:white;
-    border:2px solid #f5e0d8;
-    border-radius:30px;
-    padding:22px;
-    box-shadow:0 18px 40px rgba(130,91,60,.08);
+    font-size:12px;
+    font-weight:1000;
+    white-space:nowrap;
 }
 
-.error-box{
-    background:#fff0f0;
-    color:#e03131;
-    border-radius:18px;
-    padding:14px 18px;
+.type-tab.active{
+    color:white;
+    border-color:transparent;
+    background:linear-gradient(135deg,#8e63ff,#ff8464);
+}
+
+.breed-summary{
+    margin-bottom:9px;
+    color:#7b7288;
+    font-size:12px;
     font-weight:900;
-    margin-bottom:16px;
-    border:2px solid #ffc9c9;
 }
 
-.error-box ul{
-    margin:8px 0 0;
-    padding-left:18px;
+.breed-summary strong{
+    color:#17152f;
+    font-size:16px;
 }
 
-.layout{
+.breed-grid{
     display:grid;
-    grid-template-columns:340px 1fr;
-    gap:24px;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:13px;
 }
 
-.photo-panel{
-    background:#fff8f4;
-    border:2px solid #ffe1d6;
-    border-radius:28px;
-    padding:18px;
-}
-
-.preview{
-    height:320px;
-    border-radius:24px;
+.breed-card{
+    min-width:0;
+    overflow:hidden;
+    border:1px solid #eadfec;
+    border-radius:20px;
     background:white;
+    box-shadow:0 9px 24px rgba(62,43,80,.06);
+}
+
+.breed-card-top{
+    display:grid;
+    grid-template-columns:150px minmax(0,1fr);
+    min-height:150px;
+}
+
+.breed-photo{
+    width:150px;
+    height:150px;
+    overflow:hidden;
+    background:linear-gradient(135deg,#fff4ed,#f3edff);
+}
+
+.breed-photo img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.breed-placeholder{
+    width:100%;
+    height:100%;
     display:flex;
     align-items:center;
     justify-content:center;
-    overflow:hidden;
-    font-size:84px;
-    position:relative;
+    font-size:58px;
 }
 
-.preview img{
-    width:100%;
-    height:100%;
-    object-fit:contain;
-    padding:10px;
-    background:white;
-}
-
-.photo-x{
-    position:absolute;
-    top:12px;
-    right:12px;
-    width:42px;
-    height:42px;
-    border-radius:50%;
-    border:0;
-    background:#ff4d5d;
-    color:white;
-    font-size:24px;
-    font-weight:1000;
-    cursor:pointer;
-    box-shadow:0 10px 20px rgba(255,77,93,.25);
-    z-index:5;
-}
-
-.drop-zone{
-    margin-top:16px;
-    border-radius:22px;
-    border:2px dashed #e8d4e6;
-    padding:18px;
-    background:white;
-    cursor:pointer;
-    text-align:center;
-    transition:.2s;
-}
-
-.drop-zone:hover,
-.drop-zone.dragover{
-    border-color:#9b7cf6;
-    background:#fbf8ff;
-    box-shadow:0 0 0 5px rgba(155,124,246,.12);
-}
-
-.drop-title{
-    font-size:18px;
-    font-weight:1000;
-    color:#080634;
-}
-
-.drop-sub{
-    margin-top:6px;
-    color:#7b7288;
-    font-size:13px;
-    font-weight:900;
-    line-height:1.5;
-}
-
-.photo-note{
-    margin-top:14px;
+.breed-main{
+    min-width:0;
     padding:14px;
-    border-radius:18px;
-    background:#f8f6ff;
-    color:#7b5cff;
-    font-weight:900;
-    line-height:1.5;
 }
 
-.hidden-file{
-    display:none;
-}
-
-.grid{
-    display:grid;
-    grid-template-columns:1fr 1fr 1fr;
-    gap:16px;
-}
-
-label{
-    font-weight:1000;
-    color:#080634;
-}
-
-input,
-select,
-textarea{
-    width:100%;
-    border:2px solid #eaddec;
-    border-radius:18px;
-    padding:0 16px;
-    margin-top:8px;
-    font-size:17px;
-    font-weight:900;
-    background:white;
-    outline:0;
-}
-
-input,
-select{
-    height:62px;
-}
-
-textarea{
-    padding:16px;
-    min-height:120px;
-    resize:vertical;
-}
-
-input:focus,
-select:focus,
-textarea:focus{
-    border-color:#9b7cf6;
-    box-shadow:0 0 0 5px rgba(155,124,246,.12);
-}
-
-.touch-select{
-    width:100%;
-    height:62px;
-    border-radius:18px;
-    border:2px solid #eaddec;
-    background:white;
-    padding:0 16px;
-    margin-top:8px;
-    font-size:17px;
-    font-weight:1000;
-    color:#080634;
+.breed-title-row{
     display:flex;
-    align-items:center;
+    align-items:flex-start;
     justify-content:space-between;
-    cursor:pointer;
+    gap:8px;
 }
 
-.option-area{
+.breed-type{
+    display:inline-flex;
+    min-height:27px;
+    padding:0 9px;
+    align-items:center;
+    border-radius:999px;
+    color:#7357d4;
+    background:#eee7ff;
+    font-size:10px;
+    font-weight:1000;
+}
+
+.breed-title-row h2{
+    margin:7px 0 0;
+    overflow:hidden;
+    color:#17152f;
+    font-size:23px;
+    font-weight:1000;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.status{
+    min-height:28px;
+    padding:0 9px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:9px;
+    font-weight:1000;
+}
+
+.status.active{
+    color:#148858;
+    background:#e5faee;
+}
+
+.status.inactive{
+    color:#d94150;
+    background:#ffecef;
+}
+
+.price-grid{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:16px;
-    margin-top:16px;
+    gap:7px;
+    margin-top:17px;
 }
 
-.full{
+.price-grid div{
+    min-width:0;
+    padding:9px;
+    border-radius:11px;
+    background:#faf7ff;
+}
+
+.price-grid small,
+.price-grid strong{
     display:block;
-    margin-top:16px;
 }
 
-.example-box{
-    margin-top:16px;
-    padding:18px;
-    border-radius:22px;
-    background:#fffaf0;
-    border:2px dashed #f3c987;
-}
-
-.example-box h3{
-    margin:0 0 8px;
-    color:#080634;
-    font-weight:1000;
-}
-
-.example-box p{
-    margin:0;
-    color:#625a74;
+.price-grid small{
+    color:#8a8096;
+    font-size:8px;
     font-weight:900;
-    line-height:1.6;
 }
 
-.actions{
-    margin-top:22px;
-    display:flex;
-    gap:12px;
-    justify-content:flex-end;
+.price-grid strong{
+    margin-top:3px;
+    overflow:hidden;
+    color:#17152f;
+    font-size:14px;
+    text-overflow:ellipsis;
+    white-space:nowrap;
 }
 
-.save-btn{
-    background:linear-gradient(135deg,#13a85f,#7b5cff);
-    color:white;
-}
-
-.cancel-btn{
-    background:#fff0f0;
-    color:#ff4d5d;
-}
-
-.select-backdrop{
-    display:none;
-    position:fixed;
-    inset:0;
-    background:rgba(8,6,52,.42);
-    z-index:8000;
-}
-
-.select-backdrop.active{
-    display:block;
-}
-
-.option-popup{
-    display:none;
-    position:fixed;
-    left:50%;
-    top:50%;
-    transform:translate(-50%,-50%);
-    width:420px;
-    max-width:calc(100% - 28px);
-    max-height:80vh;
-    overflow:auto;
-    background:white;
-    border:2px solid #f5e0d8;
-    border-radius:30px;
-    padding:18px;
-    z-index:8001;
-    box-shadow:0 30px 90px rgba(8,6,52,.25);
-}
-
-.option-popup.active{
-    display:block;
-}
-
-.option-head{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    margin-bottom:14px;
-}
-
-.option-head h3{
-    margin:0;
-    font-size:24px;
-    font-weight:1000;
-    color:#080634;
-}
-
-.option-head button{
-    width:44px;
-    height:44px;
-    border-radius:50%;
-    border:0;
-    background:#fff0f0;
-    color:#ff4d5d;
-    font-size:20px;
-    font-weight:1000;
-    cursor:pointer;
-}
-
-.option-list{
+.breed-options{
     display:grid;
-    gap:10px;
+    gap:6px;
+    padding:10px 13px;
+    border-top:1px solid #f2e9ef;
+    border-bottom:1px solid #f2e9ef;
 }
 
-.option-btn{
-    width:100%;
-    min-height:64px;
-    border-radius:22px;
-    border:2px solid #eaddec;
-    background:#fff9fc;
-    color:#080634;
-    font-size:17px;
-    font-weight:1000;
+.option-line{
+    display:grid;
+    grid-template-columns:78px minmax(0,1fr);
+    gap:8px;
+    align-items:start;
+}
+
+.option-line span{
+    color:#8a8096;
+    font-size:9px;
+    font-weight:900;
+}
+
+.option-line strong{
+    overflow:hidden;
+    color:#4e455b;
+    font-size:10px;
+    line-height:1.3;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.breed-note{
+    margin-top:2px;
+    padding:7px 8px;
+    border-radius:9px;
+    color:#746a7e;
+    background:#fff9f5;
+    font-size:9px;
+    font-weight:800;
+    line-height:1.35;
+}
+
+.breed-actions{
+    display:grid;
+    grid-template-columns:1.25fr .75fr;
+    gap:7px;
+    padding:10px;
+}
+
+.stock-btn,
+.edit-btn{
+    min-height:43px;
+    border-radius:11px;
     display:flex;
     align-items:center;
-    justify-content:space-between;
-    padding:0 18px;
-    cursor:pointer;
+    justify-content:center;
+    font-size:11px;
+    font-weight:1000;
 }
 
-.option-btn:hover{
-    border-color:transparent;
+.stock-btn{
     color:white;
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    background:linear-gradient(135deg,#20b978,#63d5a4);
 }
 
-@media(max-width:1194px){
-    .page-top{
-        display:block;
-    }
+.edit-btn{
+    color:#6e53d8;
+    background:#eee8ff;
+}
 
-    .top-actions{
-        margin-top:16px;
-    }
+.empty-state{
+    grid-column:1/-1;
+    min-height:330px;
+    padding:24px;
+    border:1px dashed #dbcfe3;
+    border-radius:20px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    color:#7b7288;
+    background:white;
+    text-align:center;
+}
 
-    .layout{
+.empty-state > div{
+    font-size:60px;
+}
+
+.empty-state h2{
+    margin:10px 0 4px;
+    color:#17152f;
+}
+
+.empty-state p{
+    margin:0 0 14px;
+    font-weight:800;
+}
+
+@media(max-width:900px){
+    .breed-grid{
         grid-template-columns:1fr;
-    }
-
-    .grid,
-    .option-area{
-        grid-template-columns:1fr 1fr;
     }
 }
 
 @media(max-width:700px){
-    .breed-form-page{
-        padding:18px;
+    html{
+        -webkit-text-size-adjust:100%;
+        text-size-adjust:100%;
     }
 
-    .page-top h1{
-        font-size:28px;
+    .breed-list-page{
+        padding:0 0 76px;
     }
 
-    .top-actions,
-    .grid,
-    .option-area,
-    .actions{
+    .breed-list-head{
+        display:grid;
+        grid-template-columns:minmax(0,1fr) auto;
+        gap:7px;
+        margin-bottom:8px;
+    }
+
+    .page-kicker{
+        min-height:22px;
+        padding:0 7px;
+        font-size:8px;
+    }
+
+    .breed-list-head h1{
+        margin-top:4px;
+        font-size:21px;
+        line-height:1.1;
+    }
+
+    .breed-list-head p{
+        display:none;
+    }
+
+    .head-actions{
         display:grid;
         grid-template-columns:1fr;
+        gap:4px;
     }
 
-    .soft-btn,
-    .plain-btn,
-    .save-btn,
-    .cancel-btn{
-        width:100%;
-        min-height:70px;
-        font-size:18px;
+    .btn-main,
+    .btn-soft{
+        min-height:35px;
+        padding:0 9px;
+        border-radius:9px;
+        font-size:9px;
+        box-shadow:none;
     }
 
-    .preview{
-        height:280px;
+    .filter-card{
+        grid-template-columns:minmax(0,1fr) 62px;
+        gap:5px;
+        margin-bottom:7px;
+        padding:6px;
+        border-radius:12px;
+        box-shadow:none;
+    }
+
+    .search-box{
+        min-height:40px;
+        padding:0 8px;
+        border-radius:9px;
+    }
+
+    .search-box input{
+        height:38px;
+        font-size:16px;
+    }
+
+    .search-btn,
+    .reset-btn{
+        min-height:40px;
+        padding:0 8px;
+        border-radius:9px;
+        font-size:8px;
+    }
+
+    .reset-btn{
+        grid-column:1/-1;
+    }
+
+    .type-tabs{
+        gap:5px;
+        margin-bottom:7px;
+    }
+
+    .type-tab{
+        min-height:34px;
+        padding:0 10px;
+        font-size:9px;
+    }
+
+    .breed-summary{
+        margin-bottom:6px;
+        font-size:9px;
+    }
+
+    .breed-summary strong{
+        font-size:12px;
+    }
+
+    .breed-grid{
+        gap:7px;
+    }
+
+    .breed-card{
+        border-radius:15px;
+        box-shadow:none;
+    }
+
+    .breed-card-top{
+        grid-template-columns:96px minmax(0,1fr);
+        min-height:96px;
+    }
+
+    .breed-photo{
+        width:96px;
+        height:96px;
+    }
+
+    .breed-placeholder{
+        font-size:38px;
+    }
+
+    .breed-main{
+        padding:8px;
+    }
+
+    .breed-type{
+        min-height:22px;
+        padding:0 7px;
+        font-size:7px;
+    }
+
+    .breed-title-row h2{
+        margin-top:4px;
+        font-size:16px;
+    }
+
+    .status{
+        min-height:23px;
+        padding:0 7px;
+        font-size:7px;
+    }
+
+    .price-grid{
+        gap:4px;
+        margin-top:8px;
+    }
+
+    .price-grid div{
+        padding:6px;
+        border-radius:8px;
+    }
+
+    .price-grid small{
+        font-size:6px;
+    }
+
+    .price-grid strong{
+        font-size:10px;
+    }
+
+    .breed-options{
+        gap:4px;
+        padding:7px 8px;
+    }
+
+    .option-line{
+        grid-template-columns:60px minmax(0,1fr);
+        gap:5px;
+    }
+
+    .option-line span{
+        font-size:7px;
+    }
+
+    .option-line strong{
+        font-size:8px;
+    }
+
+    .breed-note{
+        padding:5px 6px;
+        font-size:7px;
+    }
+
+    .breed-actions{
+        gap:5px;
+        padding:7px;
+    }
+
+    .stock-btn,
+    .edit-btn{
+        min-height:38px;
+        border-radius:9px;
+        font-size:9px;
     }
 
     input,
     select,
-    .touch-select{
-        height:66px;
-        font-size:18px;
-    }
-
-    .option-popup{
-        left:14px;
-        right:14px;
-        top:auto;
-        bottom:16px;
-        width:auto;
-        max-width:none;
-        max-height:78vh;
-        transform:none;
-        border-radius:28px;
-    }
-
-    .option-btn{
-        min-height:70px;
-        font-size:18px;
+    textarea{
+        font-size:16px!important;
     }
 }
-
-
-/* =========================================================
-   FULL MOBILE COMPACT UPDATE — original form logic preserved
-   ========================================================= */
-@media(max-width:760px){
-    .breed-form-page{padding:10px 10px 88px}
-    .page-top{margin-bottom:10px}
-    .page-top h1{font-size:24px;line-height:1.15}
-    .page-top p{font-size:12px;line-height:1.35;margin-top:5px}
-    .top-actions{
-        display:flex!important;flex-wrap:nowrap;overflow-x:auto;gap:7px;margin-top:9px!important;
-        scrollbar-width:none;
-    }
-    .top-actions::-webkit-scrollbar{display:none}
-    .soft-btn,.plain-btn{width:auto!important;min-width:max-content;min-height:42px!important;padding:0 13px;border-radius:13px;font-size:13px!important}
-
-    .form-card{padding:10px;border-radius:18px;border-width:1.5px;box-shadow:0 8px 24px rgba(130,91,60,.06)}
-    .layout{display:block}
-    .photo-panel{
-        display:grid;grid-template-columns:100px minmax(0,1fr);gap:8px;padding:8px;
-        border-radius:15px;border-width:1.5px;margin-bottom:10px;
-    }
-    .preview{height:100px;border-radius:12px;font-size:42px}
-    .preview img{padding:3px}
-    .photo-x{top:5px;right:5px;width:30px;height:30px;font-size:17px}
-    .drop-zone{margin:0;padding:9px;border-radius:12px;display:flex;flex-direction:column;justify-content:center}
-    .drop-title{font-size:14px}.drop-sub{font-size:10px;line-height:1.3;margin-top:3px}
-    .photo-note{grid-column:1/-1;margin:0;padding:7px 9px;border-radius:10px;font-size:10px;line-height:1.3}
-
-    .grid,.option-area{display:grid!important;grid-template-columns:1fr!important;gap:9px}
-    .option-area{margin-top:9px}
-    label{font-size:12px}
-    input,select,.touch-select{height:49px!important;margin-top:5px;border-radius:13px;padding:0 12px;font-size:14px!important}
-    textarea{min-height:78px;margin-top:5px;border-radius:13px;padding:11px;font-size:14px}
-    .full{margin-top:9px}
-    .example-box{margin-top:9px;padding:10px;border-radius:13px}
-    .example-box h3{font-size:14px}.example-box p{font-size:11px;line-height:1.45}
-
-    .actions{
-        position:fixed;left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));z-index:8000;
-        display:grid!important;grid-template-columns:1.45fr .75fr!important;gap:7px;padding:7px;
-        background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border:1px solid #eaddec;
-        border-radius:17px;box-shadow:0 12px 35px rgba(20,15,45,.18);
-    }
-    .save-btn,.cancel-btn{width:100%!important;min-height:48px!important;border-radius:12px;font-size:14px!important}
-
-    .option-popup{left:8px!important;right:8px!important;bottom:8px!important;max-height:82vh!important;border-radius:22px!important}
-    .option-head{padding:12px}.option-head h3{font-size:18px}.option-head button{width:38px;height:38px}
-    .option-list{gap:7px}.option-btn{min-height:54px!important;border-radius:14px;font-size:15px!important;padding:0 14px}
-    .error-box{padding:10px 12px;border-radius:13px;font-size:12px;margin-bottom:9px}
-}
-
-
-/* =========================================================
-   CENTERED PHONE POPUPS — BUBU PET PAGES
-========================================================= */
-@media(max-width:760px){
-    .select-popup,
-    .action-popup,
-    .date-popup-panel,
-    .option-popup{
-        position:fixed!important;
-        left:50%!important;
-        right:auto!important;
-        top:50%!important;
-        bottom:auto!important;
-        transform:translate(-50%,-50%)!important;
-        width:calc(100% - 24px)!important;
-        max-width:440px!important;
-        max-height:88dvh!important;
-        overflow-y:auto!important;
-        overscroll-behavior:contain!important;
-        border-radius:24px!important;
-        box-shadow:0 24px 70px rgba(28,20,58,.30)!important;
-    }
-
-    .date-popup,
-    .date-popup-panel{
-        max-width:460px!important;
-        max-height:90dvh!important;
-    }
-
-    .popup-head,
-    .date-popup-head,
-    .option-head{
-        position:sticky;
-        top:0;
-        z-index:5;
-    }
-
-    .popup-head h3,
-    .date-popup-head h3,
-    .date-popup-head strong,
-    .option-head h3{
-        text-align:center!important;
-    }
-
-    .popup-list button,
-    .popup-action,
-    .option-btn,
-    .quick-date-grid button,
-    .apply-date-btn,
-    .date-apply-btn,
-    .date-clear-btn{
-        width:100%!important;
-        min-height:54px!important;
-        display:flex!important;
-        align-items:center!important;
-        justify-content:center!important;
-        text-align:center!important;
-    }
-
-    .popup-action{
-        justify-content:center!important;
-    }
-
-    .option-btn{
-        position:relative!important;
-        justify-content:center!important;
-        padding-left:48px!important;
-        padding-right:48px!important;
-    }
-
-    .option-btn > span{
-        width:100%;
-        text-align:center;
-    }
-
-    .option-btn > b{
-        position:absolute;
-        right:18px;
-    }
-}
-
 </style>
-
-<script>
-function openOptionPopup(type){
-    closeOptionPopups();
-
-    const backdrop = document.getElementById("selectBackdrop");
-    const popup = document.getElementById(type + "Popup");
-
-    if(backdrop){
-        backdrop.classList.add("active");
-    }
-
-    if(popup){
-        popup.classList.add("active");
-    }
-}
-
-function closeOptionPopups(){
-    document.querySelectorAll(".option-popup").forEach(function(popup){
-        popup.classList.remove("active");
-    });
-
-    const backdrop = document.getElementById("selectBackdrop");
-
-    if(backdrop){
-        backdrop.classList.remove("active");
-    }
-}
-
-function chooseOption(inputId, labelId, value, label){
-    document.getElementById(inputId).value = value;
-    document.getElementById(labelId).innerText = label;
-    closeOptionPopups();
-}
-
-function previewPhotoFile(input){
-    if(input.files && input.files.length > 0){
-        setPhotoFile(input.files[0]);
-    }
-}
-
-function setPhotoFile(file){
-    if(!file || !file.type.startsWith("image/")){
-        alert("Please choose an image file.");
-        return;
-    }
-
-    const input = document.getElementById("photoInput");
-    const preview = document.getElementById("photoPreview");
-    const empty = document.getElementById("photoEmpty");
-    const removeInput = document.getElementById("removePhotoInput");
-    const xBtn = document.getElementById("photoX");
-
-    const dataTransfer = new DataTransfer();
-    dataTransfer.items.add(file);
-    input.files = dataTransfer.files;
-
-    const reader = new FileReader();
-
-    reader.onload = function(e){
-        preview.src = e.target.result;
-        preview.style.display = "block";
-
-        if(empty){
-            empty.style.display = "none";
-        }
-
-        if(xBtn){
-            xBtn.style.display = "block";
-            xBtn.onclick = clearNewPhoto;
-        }
-    };
-
-    reader.readAsDataURL(file);
-
-    if(removeInput){
-        removeInput.value = "0";
-    }
-}
-
-function clearNewPhoto(e){
-    if(e){
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    const input = document.getElementById("photoInput");
-    const preview = document.getElementById("photoPreview");
-    const empty = document.getElementById("photoEmpty");
-    const removeInput = document.getElementById("removePhotoInput");
-    const xBtn = document.getElementById("photoX");
-
-    if(input){
-        input.value = "";
-    }
-
-    if(preview){
-        preview.src = "";
-        preview.style.display = "none";
-    }
-
-    if(empty){
-        empty.style.display = "block";
-    }
-
-    if(removeInput){
-        removeInput.value = "0";
-    }
-
-    if(xBtn){
-        xBtn.style.display = "none";
-    }
-}
-
-function removeCurrentPhoto(e){
-    if(e){
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    const input = document.getElementById("photoInput");
-    const preview = document.getElementById("photoPreview");
-    const empty = document.getElementById("photoEmpty");
-    const removeInput = document.getElementById("removePhotoInput");
-    const xBtn = document.getElementById("photoX");
-
-    if(input){
-        input.value = "";
-    }
-
-    if(preview){
-        preview.src = "";
-        preview.style.display = "none";
-    }
-
-    if(empty){
-        empty.style.display = "block";
-    }
-
-    if(removeInput){
-        removeInput.value = "1";
-    }
-
-    if(xBtn){
-        xBtn.style.display = "none";
-    }
-}
-
-function handleDragOver(e){
-    e.preventDefault();
-
-    const zone = document.getElementById("dropZone");
-
-    if(zone){
-        zone.classList.add("dragover");
-    }
-}
-
-function handleDragLeave(e){
-    e.preventDefault();
-
-    const zone = document.getElementById("dropZone");
-
-    if(zone){
-        zone.classList.remove("dragover");
-    }
-}
-
-function handleDrop(e){
-    e.preventDefault();
-
-    const zone = document.getElementById("dropZone");
-
-    if(zone){
-        zone.classList.remove("dragover");
-    }
-
-    const files = e.dataTransfer.files;
-
-    if(files && files.length > 0){
-        setPhotoFile(files[0]);
-    }
-}
-
-document.addEventListener("paste", function(e){
-    const items = e.clipboardData && e.clipboardData.items;
-
-    if(!items){
-        return;
-    }
-
-    for(let i = 0; i < items.length; i++){
-        const item = items[i];
-
-        if(item.type.indexOf("image") !== -1){
-            const file = item.getAsFile();
-            setPhotoFile(file);
-            break;
-        }
-    }
-});
-
-document.addEventListener("keydown", function(e){
-    if(e.key === "Escape"){
-        closeOptionPopups();
-    }
-});
-</script>
 
 {% endblock %}
