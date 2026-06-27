@@ -2127,6 +2127,370 @@ textarea:focus{
     .full,.pet-history-field{grid-column:1/-1}
     .vaccine-note-row{grid-template-columns:1fr 42px!important}
 }
+
+/* =========================================================
+   FINAL PHONE COMPACT FORM V3
+   Fewer rows, paired fields and optional sections collapsed.
+========================================================= */
+.mobile-section-toggle,
+.mobile-field-toggle{
+    display:none;
+}
+
+@media(max-width:760px){
+    .form-page{
+        padding:6px 6px 82px!important;
+    }
+
+    .page-top{
+        margin-bottom:7px!important;
+    }
+
+    .page-top h1{
+        font-size:21px!important;
+    }
+
+    .page-top p{
+        display:none!important;
+    }
+
+    .page-top .soft-btn{
+        min-height:36px!important;
+        margin-top:5px!important;
+        padding:0 10px!important;
+        font-size:12px!important;
+    }
+
+    .form-card{
+        padding:7px!important;
+        border-radius:15px!important;
+    }
+
+    .mode-box{
+        top:4px!important;
+        gap:5px!important;
+        margin-bottom:7px!important;
+        padding:4px!important;
+        border-radius:13px!important;
+    }
+
+    .mode-card{
+        min-height:48px!important;
+        padding:6px!important;
+        grid-template-columns:23px 1fr!important;
+        border-radius:10px!important;
+    }
+
+    .mode-icon{
+        font-size:19px!important;
+    }
+
+    .mode-card strong{
+        font-size:12px!important;
+        line-height:1.15!important;
+    }
+
+    .mode-card small{
+        display:none!important;
+    }
+
+    .photo-panel{
+        grid-template-columns:72px minmax(0,1fr)!important;
+        gap:6px!important;
+        padding:6px!important;
+        margin-bottom:7px!important;
+        border-radius:13px!important;
+    }
+
+    .preview{
+        height:72px!important;
+        font-size:32px!important;
+        border-radius:10px!important;
+    }
+
+    .drop-zone{
+        min-height:72px!important;
+        padding:6px!important;
+        border-radius:10px!important;
+    }
+
+    .drop-title{
+        font-size:12px!important;
+    }
+
+    .drop-sub,
+    .field-help,
+    .bulk-help,
+    .bulk-info-box,
+    .vaccine-head p,
+    .history-head p,
+    .multi-photo-head small,
+    .multi-photo-drop small{
+        display:none!important;
+    }
+
+    .grid,
+    .bulk-grid,
+    .vaccine-grid,
+    .bulk-pet-grid{
+        display:grid!important;
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:6px!important;
+    }
+
+    #breedMasterWrap{
+        grid-column:1 / -1!important;
+    }
+
+    .full,
+    .pet-history-field{
+        grid-column:1 / -1!important;
+    }
+
+    label{
+        min-width:0!important;
+        font-size:10px!important;
+        line-height:1.2!important;
+    }
+
+    input,
+    select,
+    .touch-select,
+    .touch-date-btn{
+        width:100%!important;
+        min-width:0!important;
+        height:44px!important;
+        min-height:44px!important;
+        margin-top:3px!important;
+        padding:0 9px!important;
+        border-radius:10px!important;
+        font-size:13px!important;
+    }
+
+    .touch-select span,
+    .touch-date-btn span{
+        min-width:0!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
+        white-space:nowrap!important;
+    }
+
+    textarea{
+        min-height:52px!important;
+        margin-top:3px!important;
+        padding:8px 9px!important;
+        border-radius:10px!important;
+        font-size:13px!important;
+    }
+
+    .age-input-wrap span{
+        min-width:50px!important;
+        padding:0 7px!important;
+        font-size:9px!important;
+        border-radius:0 10px 10px 0!important;
+    }
+
+    .inline-small{
+        display:none!important;
+    }
+
+    .age-box{
+        margin-top:6px!important;
+        padding:6px 8px!important;
+        font-size:10px!important;
+    }
+
+    .bulk-shared-card,
+    .vaccine-section,
+    .history-card{
+        margin-top:7px!important;
+        padding:7px!important;
+        border-radius:13px!important;
+    }
+
+    .bulk-shared-card h3,
+    .vaccine-head h3,
+    .history-head h3{
+        margin:0!important;
+        font-size:14px!important;
+    }
+
+    .generate-btn,
+    .add-vaccine-btn{
+        min-height:38px!important;
+        margin-top:7px!important;
+        padding:0 10px!important;
+        border-radius:10px!important;
+        font-size:11px!important;
+    }
+
+    .vaccine-head{
+        margin-bottom:5px!important;
+    }
+
+    .vaccine-row,
+    .bulk-pet-card{
+        margin-top:6px!important;
+        padding:7px!important;
+        border-radius:11px!important;
+    }
+
+    .vaccine-note-row{
+        grid-template-columns:minmax(0,1fr) 38px!important;
+        gap:5px!important;
+    }
+
+    .remove-vaccine-btn{
+        width:38px!important;
+        height:38px!important;
+        min-height:38px!important;
+        font-size:13px!important;
+    }
+
+    .bulk-pet-top{
+        margin-bottom:5px!important;
+    }
+
+    .bulk-pet-top h4{
+        font-size:13px!important;
+    }
+
+    .pet-card-badge{
+        width:auto!important;
+        min-width:36px!important;
+        height:25px!important;
+        padding:0 7px!important;
+        font-size:9px!important;
+    }
+
+    .mobile-optional-pet-note,
+    .pet-history-field{
+        display:none!important;
+    }
+
+    .multi-photo-box{
+        margin-top:6px!important;
+        padding:6px!important;
+        border-radius:10px!important;
+    }
+
+    .multi-photo-head strong{
+        font-size:11px!important;
+    }
+
+    .multi-photo-drop{
+        min-height:42px!important;
+        margin-top:5px!important;
+        padding:5px!important;
+        border-radius:9px!important;
+        font-size:11px!important;
+    }
+
+    .photo-preview-grid{
+        grid-template-columns:repeat(4,minmax(0,1fr))!important;
+        gap:4px!important;
+    }
+
+    .pet-photo-preview{
+        height:62px!important;
+    }
+
+    .mobile-section-toggle,
+    .mobile-field-toggle{
+        width:100%;
+        min-height:40px;
+        margin:7px 0 0;
+        padding:0 10px;
+        border:1px solid #e5d9ea;
+        border-radius:11px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        color:#665575;
+        background:#faf7fc;
+        font-size:11px;
+        font-weight:1000;
+    }
+
+    .mobile-section-toggle strong,
+    .mobile-field-toggle strong{
+        color:#7b5cff;
+        font-size:16px;
+    }
+
+    .mobile-section-hidden,
+    .mobile-field-hidden{
+        display:none!important;
+    }
+
+    .actions{
+        left:6px!important;
+        right:6px!important;
+        bottom:max(6px,env(safe-area-inset-bottom))!important;
+        z-index:7000!important;
+        grid-template-columns:1.55fr .7fr!important;
+        gap:5px!important;
+        padding:5px!important;
+        border-radius:14px!important;
+    }
+
+    .save-btn,
+    .cancel-btn{
+        min-height:45px!important;
+        border-radius:10px!important;
+        font-size:13px!important;
+    }
+
+    /* Popups must cover the sticky Save bar. */
+    .select-backdrop,
+    .date-backdrop{
+        z-index:11900!important;
+    }
+
+    .option-popup,
+    .date-popup{
+        left:5px!important;
+        right:5px!important;
+        bottom:5px!important;
+        z-index:12000!important;
+        max-height:88dvh!important;
+        border-radius:18px!important;
+    }
+
+    .breed-popup-head,
+    .option-head,
+    .date-top{
+        padding:9px!important;
+    }
+
+    .breed-popup-head h3,
+    .option-head h3,
+    .date-title{
+        font-size:15px!important;
+    }
+
+    .option-btn{
+        min-height:46px!important;
+        font-size:13px!important;
+    }
+
+    .breed-select-card{
+        min-height:58px!important;
+        grid-template-columns:46px minmax(0,1fr) auto!important;
+    }
+
+    .breed-photo,
+    .breed-icon{
+        width:46px!important;
+        height:46px!important;
+    }
+
+    .popup-search{
+        height:42px!important;
+        font-size:16px!important;
+    }
+}
+
 </style>
 
 <script>
@@ -2555,7 +2919,7 @@ function generateBulkCards(){
                     <input type="text" name="special_type_${i}" placeholder="Optional">
                 </label>
 
-                <label>
+                <label class="mobile-optional-pet-note">
                     Pet Note
                     <input type="text" name="note_${i}" placeholder="Optional individual note">
                 </label>
@@ -3119,6 +3483,88 @@ function applyBreedFromQuery(){
 }
 
 document.addEventListener('DOMContentLoaded', applyBreedFromQuery);
+
+/* Compact optional sections on phones. */
+function setupCompactPetFormMobile(){
+    if(!window.matchMedia("(max-width:760px)").matches){
+        return;
+    }
+
+    function addSectionToggle(section, showText, hideText){
+        if(!section || section.dataset.mobileToggleReady === "1"){
+            return;
+        }
+
+        section.dataset.mobileToggleReady = "1";
+        section.classList.add("mobile-section-hidden");
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "mobile-section-toggle";
+        button.innerHTML = `<span>${showText}</span><strong>＋</strong>`;
+
+        button.addEventListener("click", function(){
+            const hidden = section.classList.toggle("mobile-section-hidden");
+            button.innerHTML = hidden
+                ? `<span>${showText}</span><strong>＋</strong>`
+                : `<span>${hideText}</span><strong>−</strong>`;
+        });
+
+        section.parentNode.insertBefore(button, section);
+    }
+
+    function addFieldToggle(field, showText, hideText){
+        if(!field || field.dataset.mobileToggleReady === "1"){
+            return;
+        }
+
+        field.dataset.mobileToggleReady = "1";
+        field.classList.add("mobile-field-hidden");
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "mobile-field-toggle";
+        button.innerHTML = `<span>${showText}</span><strong>＋</strong>`;
+
+        button.addEventListener("click", function(){
+            const hidden = field.classList.toggle("mobile-field-hidden");
+            button.innerHTML = hidden
+                ? `<span>${showText}</span><strong>＋</strong>`
+                : `<span>${hideText}</span><strong>−</strong>`;
+        });
+
+        field.parentNode.insertBefore(button, field);
+    }
+
+    addSectionToggle(
+        document.querySelector("#bulkStockBox .batch-edit-card"),
+        "Batch details (optional)",
+        "Hide batch details"
+    );
+
+    addSectionToggle(
+        document.querySelector("#singleStockBox .vaccine-section"),
+        "Vaccine records (optional)",
+        "Hide vaccine records"
+    );
+
+    document.querySelectorAll("#singleStockBox .history-card").forEach(function(card){
+        addSectionToggle(card, "Notes & history (optional)", "Hide notes & history");
+    });
+
+    const singleNote = document.querySelector('#singleStockBox textarea[name="note"]');
+    if(singleNote){
+        addFieldToggle(singleNote.closest("label"), "Add pet note (optional)", "Hide pet note");
+    }
+
+    const sharedNote = document.querySelector('#bulkStockBox input[name="note"]');
+    if(sharedNote){
+        addFieldToggle(sharedNote.closest("label"), "Add shared note (optional)", "Hide shared note");
+    }
+}
+
+document.addEventListener("DOMContentLoaded", setupCompactPetFormMobile);
+
 </script>
 
 {% endblock %}
