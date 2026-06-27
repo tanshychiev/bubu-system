@@ -560,6 +560,31 @@
     </form>
 </div>
 
+
+<!-- MOBILE SALE ACTIONS -->
+<div class="mobile-sale-actions" aria-label="Pet sale actions">
+    <button type="submit"
+            form="petSaleForm"
+            class="mobile-save"
+            onclick="return submitAction('save')">
+        💾 Save
+    </button>
+
+    <button type="submit"
+            form="petSaleForm"
+            class="mobile-complete"
+            onclick="return submitAction('save_complete')">
+        ✅ Complete
+    </button>
+
+    <button type="submit"
+            form="petSaleForm"
+            class="mobile-print"
+            onclick="return submitAction('save_complete_print')">
+        🖨️ Print
+    </button>
+</div>
+
 <!-- PET SELECT POPUP -->
 <div class="popup-backdrop" id="petBackdrop" onclick="closePetPopup()"></div>
 
@@ -1882,6 +1907,709 @@ textarea:focus{
     .calendar-selected{font-size:26px}
     .calendar-day{height:44px;font-size:15px}
 }
+
+/* =========================================================
+   COMPACT PHONE PET SALE FORM
+========================================================= */
+.mobile-sale-actions,
+.mobile-collapse-toggle{
+    display:none;
+}
+
+@media(max-width:760px){
+    html,
+    body{
+        -webkit-text-size-adjust:100%!important;
+        text-size-adjust:100%!important;
+    }
+
+    body.sale-popup-open{
+        overflow:hidden!important;
+        touch-action:none;
+    }
+
+    .sale-page{
+        padding:7px 6px 82px!important;
+    }
+
+    .page-top{
+        margin-bottom:7px!important;
+    }
+
+    .page-top h1{
+        font-size:21px!important;
+        line-height:1.15!important;
+    }
+
+    .page-top p{
+        display:none!important;
+    }
+
+    .top-actions{
+        display:flex!important;
+        flex-wrap:nowrap!important;
+        gap:5px!important;
+        margin-top:6px!important;
+        overflow-x:auto!important;
+        scrollbar-width:none!important;
+    }
+
+    .top-actions::-webkit-scrollbar{
+        display:none!important;
+    }
+
+    .top-actions .soft-btn,
+    .top-actions .add-pos-top-btn{
+        width:auto!important;
+        min-width:max-content!important;
+        min-height:38px!important;
+        padding:0 10px!important;
+        border-radius:10px!important;
+        font-size:11px!important;
+    }
+
+    .sale-card{
+        padding:7px!important;
+        border-width:1px!important;
+        border-radius:15px!important;
+        box-shadow:0 7px 20px rgba(130,91,60,.06)!important;
+    }
+
+    .mode-tabs{
+        position:sticky!important;
+        top:4px!important;
+        z-index:20!important;
+        grid-template-columns:1fr 1fr!important;
+        gap:5px!important;
+        margin-bottom:7px!important;
+        padding:4px!important;
+        border:1px solid #eaddec!important;
+        border-radius:13px!important;
+        background:rgba(255,255,255,.96)!important;
+        backdrop-filter:blur(12px)!important;
+    }
+
+    .mode-card{
+        min-height:48px!important;
+        padding:6px!important;
+        grid-template-columns:22px minmax(0,1fr)!important;
+        align-items:center!important;
+        gap:4px!important;
+        border-width:1px!important;
+        border-radius:10px!important;
+    }
+
+    .mode-card span{
+        grid-row:1!important;
+        font-size:18px!important;
+    }
+
+    .mode-card strong{
+        grid-row:1!important;
+        font-size:11px!important;
+        line-height:1.15!important;
+    }
+
+    .mode-card small{
+        display:none!important;
+    }
+
+    .sale-layout,
+    .left,
+    .right{
+        display:grid!important;
+        grid-template-columns:1fr!important;
+        gap:7px!important;
+    }
+
+    .box{
+        padding:8px!important;
+        border-width:1px!important;
+        border-radius:14px!important;
+        box-shadow:0 6px 16px rgba(130,91,60,.05)!important;
+    }
+
+    .box h2{
+        margin:0 0 7px!important;
+        font-size:15px!important;
+        line-height:1.2!important;
+    }
+
+    .grid2{
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:6px!important;
+    }
+
+    .money-grid{
+        grid-template-columns:repeat(3,minmax(0,1fr))!important;
+        gap:5px!important;
+    }
+
+    label,
+    .touch-field > span{
+        min-width:0!important;
+        font-size:10px!important;
+        line-height:1.2!important;
+    }
+
+    input,
+    select,
+    textarea,
+    .popup-search{
+        font-size:16px!important;
+        line-height:1.25!important;
+        -webkit-appearance:none!important;
+        appearance:none!important;
+    }
+
+    input,
+    select,
+    .touch-btn{
+        width:100%!important;
+        min-width:0!important;
+        height:44px!important;
+        min-height:44px!important;
+        margin-top:3px!important;
+        padding:0 8px!important;
+        border-width:1.5px!important;
+        border-radius:10px!important;
+    }
+
+    textarea{
+        min-height:52px!important;
+        margin-top:3px!important;
+        padding:8px!important;
+        border-width:1.5px!important;
+        border-radius:10px!important;
+    }
+
+    .touch-btn strong{
+        min-width:0!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
+        white-space:nowrap!important;
+        font-size:12px!important;
+    }
+
+    .field-note,
+    .photo-help,
+    .add-pos-help,
+    .add-pos-btn small,
+    #customerCheckDetail{
+        display:none!important;
+    }
+
+    .seller-line{
+        margin-top:6px!important;
+    }
+
+    .customer-live-box{
+        margin-top:6px!important;
+    }
+
+    .customer-check-card{
+        min-height:45px!important;
+        padding:6px 8px!important;
+        border-width:1px!important;
+        border-radius:10px!important;
+        display:grid!important;
+        grid-template-columns:minmax(0,1fr) auto!important;
+        gap:5px!important;
+    }
+
+    .customer-check-left strong{
+        font-size:11px!important;
+    }
+
+    .customer-check-right{
+        min-width:0!important;
+        margin:0!important;
+        text-align:right!important;
+    }
+
+    .customer-check-right span{
+        font-size:11px!important;
+    }
+
+    .customer-check-right small{
+        margin-top:1px!important;
+        font-size:8px!important;
+    }
+
+    .customer-live-results{
+        margin-top:5px!important;
+        padding:5px!important;
+        gap:5px!important;
+        border-width:1px!important;
+        border-radius:11px!important;
+    }
+
+    .customer-live-card{
+        padding:7px!important;
+        gap:2px!important;
+        border-width:1px!important;
+        border-radius:9px!important;
+    }
+
+    .customer-live-card strong{
+        font-size:11px!important;
+    }
+
+    .customer-live-card span,
+    .customer-live-card small{
+        font-size:9px!important;
+    }
+
+    .pet-popup-btn{
+        min-height:58px!important;
+        padding:7px 9px!important;
+        gap:6px!important;
+        border-width:1.5px!important;
+        border-radius:11px!important;
+    }
+
+    .pet-popup-btn strong{
+        font-size:12px!important;
+    }
+
+    .pet-popup-btn small{
+        max-height:27px!important;
+        margin-top:2px!important;
+        overflow:hidden!important;
+        font-size:9px!important;
+        line-height:1.35!important;
+    }
+
+    .pet-popup-btn > span{
+        font-size:14px!important;
+    }
+
+    .deadline-line{
+        grid-template-columns:repeat(3,1fr)!important;
+        gap:4px!important;
+        margin-top:4px!important;
+    }
+
+    .deadline-line button{
+        min-height:34px!important;
+        padding:0 3px!important;
+        border-radius:8px!important;
+        font-size:9px!important;
+    }
+
+    .copy-card{
+        margin-top:6px!important;
+        padding:7px!important;
+        border-width:1px!important;
+        border-radius:11px!important;
+    }
+
+    .copy-head{
+        margin-bottom:5px!important;
+    }
+
+    .copy-head strong{
+        font-size:11px!important;
+    }
+
+    .copy-head button{
+        min-height:34px!important;
+        padding:0 10px!important;
+        font-size:10px!important;
+    }
+
+    #copyBox{
+        min-height:110px!important;
+        font-size:16px!important;
+    }
+
+    .photo-preview{
+        height:86px!important;
+        border-radius:11px!important;
+        font-size:35px!important;
+    }
+
+    .upload-btn{
+        min-height:40px!important;
+        margin-top:6px!important;
+        padding:0 10px!important;
+        border-radius:10px!important;
+        font-size:11px!important;
+    }
+
+    .multi-preview{
+        grid-template-columns:repeat(4,minmax(0,1fr))!important;
+        gap:4px!important;
+        margin-top:6px!important;
+    }
+
+    .thumb{
+        height:63px!important;
+        border-width:1px!important;
+        border-radius:9px!important;
+    }
+
+    .thumb button{
+        top:3px!important;
+        right:3px!important;
+        width:24px!important;
+        height:24px!important;
+        min-height:24px!important;
+        font-size:14px!important;
+    }
+
+    .sticky{
+        position:relative!important;
+        top:auto!important;
+    }
+
+    .result{
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:5px!important;
+        margin:7px 0!important;
+    }
+
+    .result div{
+        min-width:0!important;
+        padding:7px!important;
+        border-radius:9px!important;
+        display:block!important;
+    }
+
+    .result span{
+        display:block!important;
+        font-size:9px!important;
+    }
+
+    .result strong{
+        display:block!important;
+        margin-top:2px!important;
+        font-size:13px!important;
+    }
+
+    #remainCard{
+        grid-column:1 / -1!important;
+        display:flex!important;
+        align-items:center!important;
+        justify-content:space-between!important;
+    }
+
+    #remainCard span,
+    #remainCard strong{
+        display:block!important;
+        margin:0!important;
+    }
+
+    .add-pos-btn{
+        min-height:42px!important;
+        margin:6px 0!important;
+        padding:6px 8px!important;
+        border-radius:10px!important;
+        font-size:11px!important;
+    }
+
+    .right .sticky > .save-btn,
+    .right .sticky > .complete-btn,
+    .right .sticky > .print-btn{
+        display:none!important;
+    }
+
+    .mobile-collapse-toggle{
+        width:100%!important;
+        min-height:38px!important;
+        margin:6px 0 0!important;
+        padding:0 9px!important;
+        border:1px solid #e5d9ea!important;
+        border-radius:10px!important;
+        display:flex!important;
+        align-items:center!important;
+        justify-content:space-between!important;
+        color:#665575!important;
+        background:#faf7fc!important;
+        font-size:10px!important;
+        font-weight:1000!important;
+    }
+
+    .mobile-collapse-toggle strong{
+        color:#7b5cff!important;
+        font-size:16px!important;
+    }
+
+    .mobile-collapsed{
+        display:none!important;
+    }
+
+    .mobile-sale-actions{
+        position:fixed!important;
+        left:6px!important;
+        right:6px!important;
+        bottom:max(6px,env(safe-area-inset-bottom))!important;
+        z-index:8500!important;
+        height:58px!important;
+        padding:5px!important;
+        display:grid!important;
+        grid-template-columns:1.15fr 1fr .72fr!important;
+        gap:5px!important;
+        border:1px solid rgba(228,213,236,.9)!important;
+        border-radius:15px!important;
+        background:rgba(255,255,255,.97)!important;
+        box-shadow:0 14px 34px rgba(39,27,61,.18)!important;
+        backdrop-filter:blur(16px)!important;
+    }
+
+    .mobile-sale-actions button{
+        min-width:0!important;
+        min-height:46px!important;
+        padding:0 5px!important;
+        border:0!important;
+        border-radius:10px!important;
+        color:white!important;
+        font-size:10px!important;
+        font-weight:1000!important;
+    }
+
+    .mobile-save{
+        background:linear-gradient(135deg,#13a85f,#7b5cff)!important;
+    }
+
+    .mobile-complete{
+        background:linear-gradient(135deg,#22c55e,#16a34a)!important;
+    }
+
+    .mobile-print{
+        background:linear-gradient(135deg,#ff8c6b,#ff5d73)!important;
+    }
+
+    body.sale-popup-open .mobile-sale-actions{
+        opacity:0!important;
+        visibility:hidden!important;
+        pointer-events:none!important;
+    }
+
+    .popup-backdrop,
+    .calendar-backdrop{
+        z-index:19990!important;
+        background:rgba(20,15,45,.50)!important;
+        backdrop-filter:blur(2px)!important;
+    }
+
+    .select-popup,
+    .pet-select-popup,
+    .calendar-popup{
+        left:8px!important;
+        right:8px!important;
+        top:50%!important;
+        bottom:auto!important;
+        width:auto!important;
+        max-width:440px!important;
+        max-height:80dvh!important;
+        margin:0 auto!important;
+        transform:translateY(-50%)!important;
+        overflow-y:auto!important;
+        overscroll-behavior:contain!important;
+        border-radius:18px!important;
+        z-index:20000!important;
+    }
+
+    .pet-select-popup{
+        padding:8px!important;
+        max-height:76dvh!important;
+    }
+
+    .popup-head,
+    .pet-popup-head{
+        position:sticky!important;
+        top:0!important;
+        z-index:3!important;
+        margin:0!important;
+        padding:8px 9px!important;
+        background:white!important;
+    }
+
+    .popup-head{
+        color:#080634!important;
+        border-bottom:1px solid #eee4ef!important;
+    }
+
+    .popup-head h3,
+    .pet-popup-head h3{
+        font-size:15px!important;
+    }
+
+    .popup-head button,
+    .pet-popup-head button{
+        width:36px!important;
+        height:36px!important;
+        min-height:36px!important;
+        font-size:20px!important;
+    }
+
+    .popup-list{
+        gap:5px!important;
+        max-height:61dvh!important;
+        padding:7px!important;
+    }
+
+    .popup-list button{
+        min-height:45px!important;
+        padding:6px 9px!important;
+        border-width:1px!important;
+        border-radius:10px!important;
+        font-size:12px!important;
+    }
+
+    .popup-search{
+        height:43px!important;
+        min-height:43px!important;
+        margin:5px 0!important;
+        border-radius:10px!important;
+    }
+
+    .pet-option-list{
+        gap:5px!important;
+    }
+
+    .pet-select-card{
+        grid-template-columns:49px minmax(0,1fr) auto!important;
+        gap:6px!important;
+        padding:6px!important;
+        border-radius:11px!important;
+    }
+
+    .pet-popup-photo{
+        width:49px!important;
+        height:49px!important;
+        border-radius:9px!important;
+    }
+
+    .pet-popup-info strong{
+        font-size:11px!important;
+    }
+
+    .pet-popup-info span{
+        margin-top:2px!important;
+        font-size:9px!important;
+    }
+
+    .pet-popup-tags{
+        gap:3px!important;
+        margin-top:3px!important;
+    }
+
+    .pet-popup-tags em{
+        padding:3px 5px!important;
+        font-size:8px!important;
+    }
+
+    .pet-popup-price{
+        grid-column:auto!important;
+        width:auto!important;
+        min-width:60px!important;
+        min-height:42px!important;
+        padding:5px!important;
+        border-radius:9px!important;
+        font-size:11px!important;
+    }
+
+    .pet-popup-price small{
+        font-size:8px!important;
+    }
+
+    .calendar-popup{
+        max-height:82dvh!important;
+        overflow:hidden!important;
+    }
+
+    .calendar-header{
+        padding:9px 11px!important;
+    }
+
+    .calendar-header-top{
+        margin-bottom:2px!important;
+        font-size:10px!important;
+    }
+
+    .calendar-selected{
+        font-size:17px!important;
+    }
+
+    .calendar-body{
+        max-height:70dvh!important;
+        padding:8px!important;
+        overflow-y:auto!important;
+    }
+
+    .calendar-quick-actions{
+        grid-template-columns:repeat(3,1fr)!important;
+        gap:4px!important;
+        margin-bottom:7px!important;
+    }
+
+    .quick-btn{
+        min-height:35px!important;
+        padding:0 3px!important;
+        border-radius:8px!important;
+        font-size:9px!important;
+    }
+
+    .calendar-month-nav{
+        margin-bottom:6px!important;
+    }
+
+    .calendar-month-title{
+        font-size:15px!important;
+    }
+
+    .calendar-arrows{
+        gap:4px!important;
+    }
+
+    .calendar-arrows button{
+        width:35px!important;
+        height:35px!important;
+        min-height:35px!important;
+        font-size:19px!important;
+    }
+
+    .calendar-weekdays,
+    .calendar-grid{
+        gap:2px!important;
+    }
+
+    .calendar-weekdays{
+        margin-bottom:3px!important;
+    }
+
+    .calendar-weekdays span{
+        padding:3px 0!important;
+        font-size:9px!important;
+    }
+
+    .calendar-day{
+        height:34px!important;
+        min-height:34px!important;
+        padding:0!important;
+        font-size:11px!important;
+    }
+
+    .calendar-bottom-actions{
+        position:sticky!important;
+        bottom:0!important;
+        z-index:3!important;
+        gap:5px!important;
+        margin-top:7px!important;
+        padding-top:6px!important;
+        background:white!important;
+    }
+
+    .calendar-clear-btn,
+    .calendar-ok-btn{
+        min-height:42px!important;
+        border-radius:10px!important;
+        font-size:11px!important;
+    }
+}
+
 </style>
 
 <script>
@@ -2162,6 +2890,7 @@ function calcSale(){
 function openPetPopup(){
     document.getElementById("petPopup")?.classList.add("active");
     document.getElementById("petBackdrop")?.classList.add("active");
+    setSalePopupState(true);
 
     const search = document.getElementById("petSearchInput");
     if(search){ setTimeout(function(){ search.focus(); }, 100); }
@@ -2170,6 +2899,7 @@ function openPetPopup(){
 function closePetPopup(){
     document.getElementById("petPopup")?.classList.remove("active");
     document.getElementById("petBackdrop")?.classList.remove("active");
+    setSalePopupState(false);
 }
 
 function selectPetFromPopup(id, name, gender, color, special, age, price){
@@ -2211,11 +2941,13 @@ function filterPetPopup(){
 function openSellerPopup(){
     document.getElementById("sellerPopup")?.classList.add("active");
     document.getElementById("sellerBackdrop")?.classList.add("active");
+    setSalePopupState(true);
 }
 
 function closeSellerPopup(){
     document.getElementById("sellerPopup")?.classList.remove("active");
     document.getElementById("sellerBackdrop")?.classList.remove("active");
+    setSalePopupState(false);
 }
 
 function selectSeller(id, label){
@@ -2240,11 +2972,13 @@ function selectSeller(id, label){
 function openSourcePopup(){
     document.getElementById("sourcePopup")?.classList.add("active");
     document.getElementById("sourceBackdrop")?.classList.add("active");
+    setSalePopupState(true);
 }
 
 function closeSourcePopup(){
     document.getElementById("sourcePopup")?.classList.remove("active");
     document.getElementById("sourceBackdrop")?.classList.remove("active");
+    setSalePopupState(false);
 }
 
 function selectSource(value, label){
@@ -2296,11 +3030,13 @@ function updateLeadOwnerVisibility(){
 function openLeadOwnerPopup(){
     document.getElementById("leadOwnerPopup")?.classList.add("active");
     document.getElementById("leadOwnerBackdrop")?.classList.add("active");
+    setSalePopupState(true);
 }
 
 function closeLeadOwnerPopup(){
     document.getElementById("leadOwnerPopup")?.classList.remove("active");
     document.getElementById("leadOwnerBackdrop")?.classList.remove("active");
+    setSalePopupState(false);
 }
 
 function selectLeadOwner(id, label){
@@ -2312,11 +3048,13 @@ function selectLeadOwner(id, label){
 function openCommissionPopup(){
     document.getElementById("commissionPopup")?.classList.add("active");
     document.getElementById("commissionBackdrop")?.classList.add("active");
+    setSalePopupState(true);
 }
 
 function closeCommissionPopup(){
     document.getElementById("commissionPopup")?.classList.remove("active");
     document.getElementById("commissionBackdrop")?.classList.remove("active");
+    setSalePopupState(false);
 }
 
 function selectCommissionMode(value, label){
@@ -2556,11 +3294,13 @@ document.addEventListener("paste", function(e){
 function openPopup(type){
     document.getElementById(type + "Popup")?.classList.add("active");
     document.getElementById(type + "Backdrop")?.classList.add("active");
+    setSalePopupState(true);
 }
 
 function closePopup(type){
     document.getElementById(type + "Popup")?.classList.remove("active");
     document.getElementById(type + "Backdrop")?.classList.remove("active");
+    setSalePopupState(false);
 }
 
 function selectPetType(value, label){
@@ -2651,6 +3391,7 @@ function openCalendarPicker(target){
 
     document.getElementById("calendarBackdrop").classList.add("active");
     document.getElementById("calendarPopup").classList.add("active");
+    setSalePopupState(true);
 
     renderCalendar();
 }
@@ -2658,6 +3399,7 @@ function openCalendarPicker(target){
 function closeCalendarPicker(){
     document.getElementById("calendarBackdrop")?.classList.remove("active");
     document.getElementById("calendarPopup")?.classList.remove("active");
+    setSalePopupState(false);
 }
 
 function changeCalendarMonth(step){
@@ -2887,6 +3629,97 @@ window.addEventListener("load", function(){
         setDeadlineDays(7);
     }
 });
+
+/* =========================================================
+   MOBILE COLLAPSIBLE SECTIONS + POPUP STATE
+========================================================= */
+function setSalePopupState(open){
+    document.body.classList.toggle("sale-popup-open", Boolean(open));
+}
+
+function setupMobileSaleForm(){
+    if(!window.matchMedia("(max-width:760px)").matches){
+        return;
+    }
+
+    function makeToggle(target, showText, hideText){
+        if(!target || target.dataset.mobileToggleReady === "1"){
+            return;
+        }
+
+        target.dataset.mobileToggleReady = "1";
+        target.classList.add("mobile-collapsed");
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "mobile-collapse-toggle";
+        button.innerHTML = `<span>${showText}</span><strong>＋</strong>`;
+
+        button.addEventListener("click", function(){
+            const hidden = target.classList.toggle("mobile-collapsed");
+
+            button.innerHTML = hidden
+                ? `<span>${showText}</span><strong>＋</strong>`
+                : `<span>${hideText}</span><strong>−</strong>`;
+        });
+
+        target.parentNode.insertBefore(button, target);
+    }
+
+    const advancedTracking = document.getElementById("leadCommissionRow");
+    makeToggle(
+        advancedTracking,
+        "Lead & commission (optional)",
+        "Hide lead & commission"
+    );
+
+    const copyCard = document.querySelector("#preorderBox .copy-card");
+    makeToggle(
+        copyCard,
+        "Copy preorder chat text",
+        "Hide preorder chat text"
+    );
+
+    const photoBox = document.getElementById("dropPhotoBox")?.closest(".box");
+    makeToggle(
+        photoBox,
+        "Sale photos (optional)",
+        "Hide sale photos"
+    );
+
+    const paymentBox = document.querySelector(".right .box.sticky");
+    const warrantyHeading = paymentBox
+        ? Array.from(paymentBox.querySelectorAll("h2")).find(function(item){
+            return item.textContent.trim().toLowerCase() === "warranty";
+        })
+        : null;
+
+    const firstSaveButton = paymentBox?.querySelector(".save-btn");
+
+    if(paymentBox && warrantyHeading && firstSaveButton && !paymentBox.querySelector(".mobile-warranty-wrap")){
+        const wrapper = document.createElement("div");
+        wrapper.className = "mobile-warranty-wrap";
+
+        paymentBox.insertBefore(wrapper, warrantyHeading);
+
+        let node = warrantyHeading;
+
+        while(node && node !== firstSaveButton){
+            const next = node.nextSibling;
+            wrapper.appendChild(node);
+            node = next;
+        }
+
+        makeToggle(
+            wrapper,
+            "Warranty, remark & POS (optional)",
+            "Hide warranty, remark & POS"
+        );
+    }
+}
+
+document.addEventListener("DOMContentLoaded", setupMobileSaleForm);
+
 </script>
 
 {% endblock %}
