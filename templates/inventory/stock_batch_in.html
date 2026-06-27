@@ -629,6 +629,175 @@ body.stock-popup-open{
     line-height:1;
 }
 
+
+
+/* =========================================================
+   CLEAN BATCH SHOP SELECTOR
+========================================================= */
+.batch-shop-selector-wrap{
+    margin-bottom:14px;
+}
+
+.batch-shop-selector{
+    width:100%;
+    min-height:68px;
+    border:1px solid #eaddec;
+    border-radius:20px;
+    padding:10px 14px;
+    display:grid;
+    grid-template-columns:44px minmax(0,1fr) auto;
+    align-items:center;
+    gap:10px;
+    background:linear-gradient(135deg,#fff,#fff7fb);
+    color:#17152f;
+    cursor:pointer;
+    text-align:left;
+}
+
+.batch-shop-selector.locked{
+    cursor:default;
+    background:linear-gradient(135deg,#f2fff8,#fff);
+}
+
+.batch-shop-icon{
+    width:44px;
+    height:44px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(135deg,#eee8ff,#fff0ea);
+    font-size:21px;
+}
+
+.batch-shop-selector small,
+.batch-shop-selector strong{
+    display:block;
+}
+
+.batch-shop-selector small{
+    color:#8a8096;
+    font-size:11px;
+    font-weight:900;
+    margin-bottom:3px;
+}
+
+.batch-shop-selector strong{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:16px;
+}
+
+.batch-shop-selector b{
+    color:#7b5cff;
+    font-size:12px;
+    white-space:nowrap;
+}
+
+@media(max-width:700px){
+    .batch-page{
+        padding:8px;
+    }
+
+    .back-btn{
+        min-height:38px;
+        margin-bottom:8px;
+        padding:0 13px;
+        border-radius:12px;
+        font-size:11px;
+        align-items:center;
+    }
+
+    .batch-card{
+        padding:10px;
+        margin-bottom:10px;
+        border-radius:18px;
+        box-shadow:none;
+    }
+
+    .batch-card h1{
+        font-size:23px;
+        margin-bottom:4px;
+    }
+
+    .batch-card > p{
+        margin:0 0 10px;
+        font-size:11px;
+        line-height:1.35;
+    }
+
+    .batch-shop-selector-wrap{
+        margin-bottom:9px;
+    }
+
+    .batch-shop-selector{
+        min-height:58px;
+        grid-template-columns:38px minmax(0,1fr) auto;
+        padding:7px 9px;
+        border-radius:15px;
+    }
+
+    .batch-shop-icon{
+        width:38px;
+        height:38px;
+        border-radius:12px;
+        font-size:18px;
+    }
+
+    .batch-shop-selector small{
+        font-size:9px;
+    }
+
+    .batch-shop-selector strong{
+        font-size:14px;
+    }
+
+    .batch-shop-selector b{
+        font-size:9px;
+    }
+
+    .scan-row{
+        display:grid;
+        grid-template-columns:minmax(0,1fr) 76px;
+        gap:6px;
+    }
+
+    .scan-input{
+        min-width:0;
+        height:44px;
+        padding:0 11px;
+        border-radius:12px;
+        font-size:16px!important;
+    }
+
+    .scan-row .btn-main{
+        width:76px;
+        height:44px;
+        padding:0 8px;
+        border-radius:12px;
+        font-size:11px;
+    }
+
+    .help{
+        margin-top:7px;
+        padding:8px;
+        border-radius:11px;
+        font-size:9px;
+        line-height:1.3;
+    }
+
+    .shop-popup{
+        width:calc(100% - 22px)!important;
+        max-height:82dvh!important;
+        border-radius:22px!important;
+    }
+
+    .shop-option{
+        min-height:55px!important;
+    }
+}
+
 </style>
 
 <div class="batch-page">
@@ -650,45 +819,38 @@ body.stock-popup-open{
             </div>
         {% endif %}
 
-        <div class="branch-box">
-            <div class="branch-left">
-                <div class="branch-icon">🏪</div>
-
-                <div>
-                    <div class="branch-title">
-                        Stock will add to:
-                        {% if selected_branch %}
-                            {{ selected_branch.name }}
-                        {% else %}
-                            No Shop
-                        {% endif %}
-                    </div>
-
-                    <div class="branch-sub">
-                        {% if request.user.is_superuser %}
-                            Admin can choose shop before batch stock in.
-                        {% else %}
-                            Locked to your assigned staff shop. Branch A and Branch B will not mix stock.
-                        {% endif %}
-                    </div>
+        <div class="batch-shop-selector-wrap">
+            {% if request.user.is_superuser %}
+                <button type="button" class="batch-shop-selector" onclick="openShopPopup()">
+                    <span class="batch-shop-icon">🏪</span>
+                    <span>
+                        <small>Stock will add to</small>
+                        <strong>
+                            {% if selected_branch %}
+                                {{ selected_branch.name }}
+                            {% else %}
+                                Choose Shop
+                            {% endif %}
+                        </strong>
+                    </span>
+                    <b>Change ›</b>
+                </button>
+            {% else %}
+                <div class="batch-shop-selector locked">
+                    <span class="batch-shop-icon">🔒</span>
+                    <span>
+                        <small>Assigned shop</small>
+                        <strong>
+                            {% if selected_branch %}
+                                {{ selected_branch.name }}
+                            {% else %}
+                                No Shop
+                            {% endif %}
+                        </strong>
+                    </span>
+                    <b>Locked</b>
                 </div>
-            </div>
-
-            <div class="branch-actions">
-                <div class="branch-badge {% if not request.user.is_superuser %}locked{% endif %}">
-                    {% if request.user.is_superuser %}
-                        Admin Shop View
-                    {% else %}
-                        🔒 Branch Locked
-                    {% endif %}
-                </div>
-
-                {% if request.user.is_superuser %}
-                    <button type="button" class="branch-popup-btn" onclick="openShopPopup()">
-                        🔄 Change Shop
-                    </button>
-                {% endif %}
-            </div>
+            {% endif %}
         </div>
 
         <div class="scan-row">
@@ -781,9 +943,9 @@ body.stock-popup-open{
                 <strong>{{ branch.name }}</strong>
 
                 {% if selected_branch and selected_branch.id == branch.id %}
-                    <em>Current</em>
+                    <em>Selected</em>
                 {% else %}
-                    <em>Choose</em>
+                    <em>Use this shop</em>
                 {% endif %}
             </button>
         {% endfor %}

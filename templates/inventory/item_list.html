@@ -1185,29 +1185,362 @@ body.inventory-popup-open{
     }
 }
 
+
+
+/* =========================================================
+   CLEAN PHONE INVENTORY — SINGLE SHOP SELECTOR
+========================================================= */
+.inventory-title-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+}
+
+.staff-shop-chip{
+    min-height:42px;
+    padding:0 14px;
+    border-radius:14px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background:#ecfff6;
+    color:#128653;
+    font-weight:900;
+    white-space:nowrap;
+}
+
+.shop-selector-card{
+    width:100%;
+    min-height:66px;
+    border:1px solid #eaddec;
+    border-radius:20px;
+    padding:10px 13px;
+    background:linear-gradient(135deg,#fff,#fff7fb);
+    display:grid;
+    grid-template-columns:44px minmax(0,1fr) 28px;
+    align-items:center;
+    gap:10px;
+    color:#17152f;
+    cursor:pointer;
+    box-shadow:0 10px 25px rgba(86,63,114,.08);
+}
+
+.shop-selector-icon{
+    width:44px;
+    height:44px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    background:linear-gradient(135deg,#eee8ff,#fff0ea);
+}
+
+.shop-selector-text{
+    min-width:0;
+    text-align:left;
+}
+
+.shop-selector-text small,
+.shop-selector-text strong{
+    display:block;
+}
+
+.shop-selector-text small{
+    color:#897f95;
+    font-size:11px;
+    font-weight:900;
+    margin-bottom:3px;
+}
+
+.shop-selector-text strong{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:16px;
+}
+
+.shop-selector-arrow{
+    font-size:30px;
+    color:#8e63ff;
+    line-height:1;
+}
+
+.inventory-command-row{
+    display:grid;
+    grid-template-columns:1.2fr .8fr 1fr;
+    gap:8px;
+}
+
+.action-popup-head{
+    display:none;
+}
+
+.branch-popup-note{
+    margin-bottom:10px;
+    padding:10px 12px;
+    border-radius:13px;
+    background:#f7f3ff;
+    color:#6f57d9;
+    font-size:12px;
+    font-weight:900;
+    text-align:center;
+}
+
+@media(max-width:700px){
+    .inventory-hero-clean{
+        margin:0 0 8px!important;
+        padding:10px!important;
+        border:1px solid #f0e2ea;
+        border-radius:20px;
+        background:linear-gradient(145deg,#fff,#fff7fb);
+        box-shadow:0 8px 24px rgba(69,48,91,.06);
+    }
+
+    .inventory-title-row{
+        align-items:center;
+    }
+
+    .inventory-title h1{
+        font-size:24px!important;
+    }
+
+    .inventory-title p{
+        margin:4px 0 9px!important;
+        font-size:11px!important;
+    }
+
+    .staff-shop-chip{
+        max-width:145px;
+        min-height:34px;
+        padding:0 9px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        font-size:10px;
+    }
+
+    .clean-tool-row{
+        display:grid!important;
+        grid-template-columns:1fr!important;
+        gap:7px!important;
+        margin-top:0!important;
+    }
+
+    .shop-selector-card{
+        grid-column:auto!important;
+        min-height:58px!important;
+        border-radius:16px!important;
+        padding:7px 10px!important;
+        box-shadow:none!important;
+    }
+
+    .shop-selector-icon{
+        width:38px;
+        height:38px;
+        border-radius:12px;
+        font-size:19px;
+    }
+
+    .shop-selector-text small{
+        font-size:9px;
+    }
+
+    .shop-selector-text strong{
+        font-size:14px;
+    }
+
+    .search-pill{
+        grid-column:auto!important;
+        height:45px!important;
+        min-height:45px!important;
+        border-radius:13px!important;
+        font-size:16px!important;
+    }
+
+    .inventory-command-row{
+        grid-template-columns:1.15fr .75fr 1fr;
+        gap:6px;
+    }
+
+    .inventory-command-row .btn-search,
+    .inventory-command-row .btn-reset,
+    .inventory-command-row .mobile-action-toggle{
+        width:100%!important;
+        min-width:0!important;
+        height:42px!important;
+        min-height:42px!important;
+        padding:0 7px!important;
+        border-radius:12px!important;
+        font-size:11px!important;
+    }
+
+    .inventory-panel{
+        padding:8px!important;
+        border-radius:17px!important;
+    }
+
+    .category-tabs{
+        margin-bottom:8px!important;
+        gap:6px!important;
+    }
+
+    .tab{
+        min-height:36px!important;
+        padding:0 12px!important;
+        border-radius:11px!important;
+        font-size:10px!important;
+    }
+
+    .product-grid{
+        gap:8px!important;
+    }
+
+    .product-card{
+        padding:7px!important;
+        border-radius:14px!important;
+    }
+
+    .product-img{
+        height:110px!important;
+        border-radius:11px!important;
+    }
+
+    .product-name{
+        min-height:28px!important;
+        font-size:10.5px!important;
+    }
+
+    .brand,
+    .stock,
+    .variant-chip,
+    .price-row{
+        font-size:8px!important;
+    }
+
+    .icon-btn{
+        height:32px!important;
+        min-height:32px!important;
+        font-size:9px!important;
+    }
+
+    .branch-popup{
+        width:calc(100% - 22px)!important;
+        max-height:82dvh!important;
+        padding:10px!important;
+        border-radius:22px!important;
+    }
+
+    .branch-popup-head{
+        top:-10px!important;
+        margin:-1px -1px 9px!important;
+        padding:10px!important;
+        border-radius:15px!important;
+    }
+
+    .branch-popup-head > div{
+        min-width:0;
+    }
+
+    .branch-popup-head small{
+        display:block;
+        color:rgba(255,255,255,.78);
+        font-size:9px;
+        font-weight:900;
+        margin-bottom:2px;
+    }
+
+    .branch-popup-head h3{
+        margin:0!important;
+        font-size:18px!important;
+    }
+
+    .branch-option{
+        min-height:55px!important;
+        grid-template-columns:32px minmax(0,1fr) auto;
+        display:grid!important;
+        gap:8px!important;
+        padding:0 10px!important;
+        font-size:12px!important;
+    }
+
+    .branch-option span{
+        font-size:18px!important;
+    }
+
+    .branch-option em{
+        max-width:94px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        font-size:8px!important;
+    }
+
+    .action-popup-head{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        padding:2px 2px 7px;
+    }
+
+    .action-popup-head small,
+    .action-popup-head strong{
+        display:block;
+    }
+
+    .action-popup-head small{
+        color:#8b8096;
+        font-size:9px;
+        font-weight:900;
+    }
+
+    .action-popup-head strong{
+        margin-top:2px;
+        color:#17152f;
+        font-size:13px;
+    }
+
+    .action-popup-head button{
+        width:36px;
+        height:36px;
+        border:0;
+        border-radius:50%;
+        color:#ff4d5d;
+        background:#fff0f0;
+        font-weight:900;
+    }
+
+    .mobile-action-panel{
+        width:calc(100% - 22px)!important;
+        max-width:420px!important;
+        border-radius:22px!important;
+    }
+
+    .mobile-action-panel .add-btn{
+        min-height:48px!important;
+        font-size:12px!important;
+    }
+}
+
 </style>
 
-<div class="inventory-hero">
+<div class="inventory-hero inventory-hero-clean">
     <div class="inventory-title">
-        <h1>Pet Inventory 🐾</h1>
+        <div class="inventory-title-row">
+            <div>
+                <h1>Pet Inventory 🐾</h1>
+                <p>Choose a shop, then search or manage its inventory.</p>
+            </div>
 
-        <p>
-            Inventory is separated by shop/branch.
-            {% if current_branch %}
-                You are viewing stock for <strong>{{ current_branch.name }}</strong>.
-            {% else %}
-                No branch selected.
+            {% if not request.user.is_superuser %}
+                <div class="staff-shop-chip">
+                    🔒 {% if current_branch %}{{ current_branch.name }}{% else %}No Shop{% endif %}
+                </div>
             {% endif %}
-        </p>
+        </div>
 
-        <form method="get" class="tool-row" id="filterForm">
-            <input
-                class="search-pill"
-                type="text"
-                name="q"
-                placeholder="🔍 Search pet product..."
-                value="{{ request.GET.q }}"
-            >
+        <form method="get" class="tool-row clean-tool-row" id="filterForm">
 
             {% if request.user.is_superuser %}
                 <input
@@ -1217,38 +1550,75 @@ body.inventory-popup-open{
                     value="{% if current_branch %}{{ current_branch.id }}{% endif %}"
                 >
 
-                <button type="button" class="branch-popup-btn" onclick="openBranchPopup()">
-                    🏪 {% if current_branch %}{{ current_branch.name }}{% else %}Choose Shop{% endif %}
+                <button type="button" class="shop-selector-card" onclick="openBranchPopup()">
+                    <span class="shop-selector-icon">🏪</span>
+                    <span class="shop-selector-text">
+                        <small>Viewing inventory</small>
+                        <strong>
+                            {% if current_branch %}
+                                {{ current_branch.name }}
+                            {% else %}
+                                Choose Shop
+                            {% endif %}
+                        </strong>
+                    </span>
+                    <span class="shop-selector-arrow">›</span>
                 </button>
             {% endif %}
+
+            <input
+                class="search-pill"
+                type="text"
+                name="q"
+                placeholder="🔍 Search product..."
+                value="{{ request.GET.q }}"
+            >
 
             {% if selected_type %}
                 <input type="hidden" name="type" value="{{ selected_type }}">
             {% endif %}
 
-            <button class="btn-search" type="submit">Search</button>
+            <div class="inventory-command-row">
+                <button class="btn-search" type="submit">Search</button>
+                <a
+                    href="{% url 'item_list' %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}"
+                    class="btn-reset"
+                >
+                    Reset
+                </a>
 
-            <a href="{% url 'item_list' %}" class="btn-reset">Reset</a>
+                {% if can_manage_inventory %}
+                    <button type="button" class="mobile-action-toggle" onclick="openMobileActions()">
+                        ＋ Actions
+                    </button>
+                {% endif %}
+            </div>
 
             {% if can_manage_inventory %}
-                <button type="button" class="mobile-action-toggle" onclick="openMobileActions()">
-                    ＋ Inventory Actions
-                </button>
-
                 <div class="mobile-action-backdrop" id="mobileActionBackdrop" onclick="closeMobileActions()"></div>
 
                 <div class="mobile-action-panel" id="mobileActionPanel">
+                    <div class="action-popup-head">
+                        <div>
+                            <small>Inventory tools</small>
+                            <strong>
+                                {% if current_branch %}{{ current_branch.name }}{% else %}Choose a shop first{% endif %}
+                            </strong>
+                        </div>
+                        <button type="button" onclick="closeMobileActions()">✕</button>
+                    </div>
+
                     <a href="{% url 'inventory_control_center' %}" class="add-btn control-btn">⚙️ Control Center</a>
-                    <a href="{% url 'item_type_create' %}" class="add-btn type-btn">+ Create Type</a>
-                    <a href="{% url 'item_create' %}" class="add-btn">+ Add Item</a>
+                    <a href="{% url 'item_type_create' %}" class="add-btn type-btn">＋ Create Type</a>
+                    <a href="{% url 'item_create' %}" class="add-btn">＋ Add Item</a>
 
                     {% if current_branch and request.user.is_superuser %}
                         <a href="{% url 'stock_batch_in' %}?branch={{ current_branch.id }}" class="add-btn stock-batch-btn">
-                            + Batch Stock In
+                            ＋ Batch Stock In
                         </a>
                     {% else %}
                         <a href="{% url 'stock_batch_in' %}" class="add-btn stock-batch-btn">
-                            + Batch Stock In
+                            ＋ Batch Stock In
                         </a>
                     {% endif %}
                 </div>
@@ -1260,8 +1630,15 @@ body.inventory-popup-open{
 
             <div class="branch-popup" id="branchPopup">
                 <div class="branch-popup-head">
-                    <h3>Choose Shop</h3>
+                    <div>
+                        <small>Shop inventory</small>
+                        <h3>Choose Shop</h3>
+                    </div>
                     <button type="button" onclick="closeBranchPopup()">✕</button>
+                </div>
+
+                <div class="branch-popup-note">
+                    Tap a shop to load and display its inventory.
                 </div>
 
                 <div class="branch-popup-list">
@@ -1269,14 +1646,17 @@ body.inventory-popup-open{
                         <button
                             type="button"
                             class="branch-option {% if current_branch and current_branch.id == branch.id %}active{% endif %}"
-                            onclick="selectBranch('{{ branch.id }}')"
+                            onclick="selectBranch('{{ branch.id }}', this)"
                         >
                             <span>🏪</span>
                             <strong>{{ branch.name }}</strong>
-
-                            {% if current_branch and current_branch.id == branch.id %}
-                                <em>Current</em>
-                            {% endif %}
+                            <em>
+                                {% if current_branch and current_branch.id == branch.id %}
+                                    Viewing
+                                {% else %}
+                                    View inventory
+                                {% endif %}
+                            </em>
                         </button>
                     {% endfor %}
                 </div>
@@ -1286,45 +1666,6 @@ body.inventory-popup-open{
 
     <img src="{% static 'img/inventory-hero.png' %}" class="hero-img">
 </div>
-
-<div class="branch-info-box">
-    <div class="branch-info-left">
-        <div class="branch-icon">🏪</div>
-
-        <div>
-            <div class="branch-info-title">
-                Current Shop:
-                {% if current_branch %}
-                    {{ current_branch.name }}
-                {% else %}
-                    No shop selected
-                {% endif %}
-            </div>
-
-            <div class="branch-info-sub">
-                {% if request.user.is_superuser %}
-                    Admin can choose which shop inventory to view.
-                {% else %}
-                    Stock view is locked to your assigned staff shop.
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <div class="branch-status-badge {% if not request.user.is_superuser %}locked{% endif %}">
-        {% if request.user.is_superuser %}
-            Admin Shop View
-        {% else %}
-            🔒 Branch Locked
-        {% endif %}
-    </div>
-</div>
-
-{% if can_manage_inventory %}
-<div style="margin-bottom:18px;">
-    <a href="{% url 'inventory_control_center' %}" class="add-btn control-btn">⚙️ Inventory Control Center</a>
-</div>
-{% endif %}
 
 <div class="inventory-panel">
 
@@ -1507,7 +1848,13 @@ function closeBranchPopup(){
     document.body.classList.remove("inventory-popup-open");
 }
 
-function selectBranch(branchId){
+function selectBranch(branchId, button){
+    if(button){
+        button.disabled = true;
+        const label = button.querySelector("em");
+        if(label){ label.innerText = "Loading..."; }
+    }
+
     const input = document.getElementById("branchInput");
     const form = document.getElementById("filterForm");
 
