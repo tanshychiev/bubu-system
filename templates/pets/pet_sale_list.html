@@ -11,9 +11,18 @@
         </div>
 
         <div class="top-actions">
-            <a href="{% url 'pet_list' %}" class="soft-btn">← Pet Stock</a>
-            <a href="{% url 'pet_available_for_sale' %}" class="green-btn">🐾 Sell In-stock</a>
-            <a href="{% url 'pet_sale_create' %}" class="main-btn">＋ New Sale / Pre-order</a>
+            <a href="{% url 'pet_list' %}" class="soft-btn">
+                <span class="action-icon">←</span>
+                <span class="action-label">Pet Stock</span>
+            </a>
+            <a href="{% url 'pet_available_for_sale' %}" class="green-btn">
+                <span class="action-icon">🐾</span>
+                <span class="action-label">Sell In-stock</span>
+            </a>
+            <a href="{% url 'pet_sale_create' %}" class="main-btn">
+                <span class="action-icon">＋</span>
+                <span class="action-label">New Sale</span>
+            </a>
         </div>
     </div>
 
@@ -28,6 +37,17 @@
                     placeholder="Customer, phone, breed, color, seller..."
                 >
             </label>
+
+            <button
+                type="button"
+                class="mobile-filter-toggle"
+                id="mobileFilterToggle"
+                aria-expanded="false"
+                onclick="toggleMobileFilters()"
+            >
+                <span>⚙️ More Filters</span>
+                <b id="mobileFilterToggleText">Show</b>
+            </button>
 
             <div class="touch-field">
                 <span>Sale Type</span>
@@ -298,27 +318,48 @@
 
         <div class="mobile-list">
             {% for sale in sales %}
-                <div
+                <article
                     class="sale-card sale-data-row"
                     data-kind="{{ sale.sale_kind|default:'' }}"
                     data-pet-type="{% if sale.pet %}{{ sale.pet.pet_type|default:'' }}{% else %}{{ sale.preorder_pet_type|default:'' }}{% endif %}"
                 >
+                    <div class="sale-card-headline">
+                        <span class="sale-number">#{{ sale.id }}</span>
+                        <div class="mobile-tags">
+                            <span class="status status-{{ sale.status }}">{{ sale.get_status_display }}</span>
+                            <span class="kind">{{ sale.get_sale_kind_display }}</span>
+                        </div>
+                    </div>
+
                     <div class="sale-card-top">
                         <div class="mini-photo">
                             {% if sale.sale_photo %}
-                                <img src="{{ sale.sale_photo.url }}" alt="">
+                                <img src="{{ sale.sale_photo.url }}" alt="{{ sale.breed_display|default:'Pet' }}">
                             {% elif sale.pet and sale.pet.display_photo %}
-                                <img src="{{ sale.pet.display_photo.url }}" alt="">
+                                <img src="{{ sale.pet.display_photo.url }}" alt="{{ sale.breed_display|default:'Pet' }}">
                             {% else %}
                                 <span>🐾</span>
                             {% endif %}
                         </div>
 
+                        <div class="sale-card-main">
+                            <h3>{{ sale.breed_display|default:"-" }}</h3>
+                            <p class="pet-meta">
+                                {{ sale.pet_type_display|default:"Pet" }}
+                                {% if sale.gender_display %} · {{ sale.gender_display }}{% endif %}
+                                {% if sale.color_display %} · {{ sale.color_display }}{% endif %}
+                            </p>
+                            <p class="customer-mobile">
+                                <strong>{{ sale.customer_name|default:"Walk-in" }}</strong>
+                                <span>{{ sale.phone|default:"No phone" }}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="sale-card-meta">
                         <div>
-                            <h3>#{{ sale.id }} · {{ sale.breed_display|default:"-" }}</h3>
-                            <p>{{ sale.customer_name|default:"Walk-in" }} · {{ sale.phone|default:"No phone" }}</p>
-                            <p class="seller-mobile">
-                                Seller:
+                            <span>Seller</span>
+                            <strong>
                                 {% if sale.seller %}
                                     {{ sale.seller.get_full_name|default:sale.seller.username }}
                                 {% elif sale.created_by %}
@@ -328,7 +369,11 @@
                                 {% else %}
                                     -
                                 {% endif %}
-                            </p>
+                            </strong>
+                        </div>
+                        <div>
+                            <span>Created</span>
+                            <strong>{{ sale.created_at|date:"d M Y, H:i" }}</strong>
                         </div>
                     </div>
 
@@ -343,19 +388,21 @@
                             <strong>${{ sale.paid_amount|floatformat:2 }}</strong>
                         </div>
 
-                        <div>
+                        <div class="balance-box {% if sale.remaining_amount > 0 %}has-balance{% endif %}">
                             <span>Balance</span>
                             <strong>${{ sale.remaining_amount|floatformat:2 }}</strong>
                         </div>
                     </div>
 
-                    <div class="mobile-tags">
-                        <span class="status status-{{ sale.status }}">{{ sale.get_status_display }}</span>
-                        <span class="kind">{{ sale.get_sale_kind_display }}</span>
+                    <div class="card-actions">
+                        {% if sale.phone %}
+                            <a href="tel:{{ sale.phone }}" class="call-btn">☎ Call</a>
+                        {% else %}
+                            <span class="call-btn disabled">☎ No Phone</span>
+                        {% endif %}
+                        <a href="{% url 'pet_sale_detail' sale.id %}" class="view-btn full-view">View Detail →</a>
                     </div>
-
-                    <a href="{% url 'pet_sale_detail' sale.id %}" class="view-btn full-view">View Detail</a>
-                </div>
+                </article>
             {% empty %}
                 <div class="empty-box">
                     <div class="paw-empty">🐾</div>
@@ -1314,6 +1361,682 @@ a{text-decoration:none}
         max-height:88vh;
     }
 }
+
+
+/* =========================
+   PHONE-FIRST IMPROVEMENTS
+   ========================= */
+.action-icon{
+    font-size:18px;
+    line-height:1;
+}
+
+.action-label{
+    margin-left:7px;
+}
+
+.mobile-filter-toggle{
+    display:none;
+}
+
+@media(min-width:701px) and (max-width:1194px){
+    .sale-card-headline{
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap:10px;
+        margin-bottom:12px;
+    }
+
+    .sale-number{
+        padding:7px 10px;
+        border-radius:999px;
+        background:#080634;
+        color:white;
+        font-size:12px;
+        font-weight:1000;
+    }
+
+    .sale-card-main{
+        min-width:0;
+    }
+
+    .customer-mobile{
+        display:flex;
+        flex-direction:column;
+        gap:3px;
+    }
+
+    .sale-card-meta{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+        margin-top:12px;
+    }
+
+    .sale-card-meta > div{
+        padding:10px 12px;
+        border-radius:14px;
+        background:#faf8fc;
+    }
+
+    .sale-card-meta span,
+    .sale-card-meta strong{
+        display:block;
+    }
+
+    .sale-card-meta span{
+        color:#9287a4;
+        font-size:11px;
+        font-weight:1000;
+    }
+
+    .sale-card-meta strong{
+        margin-top:4px;
+        color:#362d48;
+        font-size:12px;
+    }
+
+    .card-actions{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+    }
+
+    .call-btn{
+        min-height:54px;
+        border-radius:18px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background:#e8fff1;
+        color:#138a46;
+        font-weight:1000;
+    }
+
+    .call-btn.disabled{
+        background:#f1f5f9;
+        color:#94a3b8;
+    }
+}
+
+@media(max-width:700px){
+    body{
+        overflow-x:hidden;
+    }
+
+    .sale-list-page{
+        padding:12px 10px calc(98px + env(safe-area-inset-bottom));
+    }
+
+    .page-top{
+        margin-bottom:12px;
+    }
+
+    .page-top h1{
+        font-size:25px;
+        line-height:1.15;
+    }
+
+    .page-top p{
+        margin-top:5px;
+        font-size:12px;
+        line-height:1.45;
+    }
+
+    /* Fixed thumb-friendly action bar */
+    .top-actions{
+        position:fixed;
+        left:8px;
+        right:8px;
+        bottom:calc(8px + env(safe-area-inset-bottom));
+        z-index:8500;
+        display:grid !important;
+        grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+        gap:7px;
+        padding:8px;
+        margin:0;
+        border:1px solid rgba(123,92,255,.16);
+        border-radius:22px;
+        background:rgba(255,255,255,.96);
+        box-shadow:0 16px 42px rgba(28,20,58,.22);
+        backdrop-filter:blur(14px);
+    }
+
+    .top-actions .main-btn,
+    .top-actions .green-btn,
+    .top-actions .soft-btn{
+        width:auto;
+        min-width:0;
+        min-height:58px;
+        padding:6px 5px;
+        border-radius:16px;
+        display:flex;
+        flex-direction:column;
+        gap:5px;
+        font-size:11px;
+        line-height:1.05;
+        text-align:center;
+    }
+
+    .top-actions .action-label{
+        margin:0;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        max-width:100%;
+    }
+
+    .top-actions .action-icon{
+        font-size:19px;
+    }
+
+    /* Compact search + expandable filters */
+    .filter-card{
+        padding:11px;
+        margin-bottom:12px;
+        border-radius:21px;
+        box-shadow:0 10px 25px rgba(130,91,60,.07);
+    }
+
+    .filter-grid{
+        display:grid !important;
+        grid-template-columns:minmax(0,1fr) 104px !important;
+        gap:9px;
+        align-items:end;
+    }
+
+    .filter-grid > label{
+        order:1;
+        grid-column:1 / -1;
+        font-size:13px;
+    }
+
+    .filter-grid input{
+        height:54px;
+        margin-top:6px;
+        padding:0 14px;
+        border-radius:15px;
+        font-size:16px;
+    }
+
+    .mobile-filter-toggle{
+        order:2;
+        display:flex;
+        min-width:0;
+        height:52px;
+        padding:0 12px;
+        border:2px solid #e7ddff;
+        border-radius:15px;
+        background:#f7f4ff;
+        color:#5f46d8;
+        align-items:center;
+        justify-content:space-between;
+        gap:6px;
+        font-size:13px;
+        font-weight:1000;
+        cursor:pointer;
+    }
+
+    .mobile-filter-toggle b{
+        font-size:11px;
+        color:#8b7da6;
+    }
+
+    .mobile-filter-toggle.has-active-filter{
+        border-color:#9b7cf6;
+        box-shadow:0 0 0 3px rgba(123,92,255,.10);
+    }
+
+    .filter-grid > .dark-btn{
+        order:3;
+        width:100%;
+        min-height:52px;
+        padding:0 10px;
+        border-radius:15px;
+        font-size:15px;
+    }
+
+    .filter-grid > .touch-field{
+        order:4;
+        display:none;
+        min-width:0;
+        font-size:12px;
+    }
+
+    .filter-grid > .touch-field:nth-of-type(1),
+    .filter-grid > .touch-field:nth-of-type(2){
+        grid-column:auto;
+    }
+
+    .filter-grid > .date-touch-field{
+        grid-column:1 / -1;
+    }
+
+    .filter-grid > .clear-btn{
+        order:5;
+        display:none;
+        grid-column:1 / -1;
+        width:100%;
+        min-height:50px;
+        border-radius:15px;
+        font-size:14px;
+    }
+
+    .filter-card.mobile-filters-open .touch-field,
+    .filter-card.mobile-filters-open .clear-btn{
+        display:block;
+    }
+
+    .filter-card.mobile-filters-open .clear-btn{
+        display:flex;
+    }
+
+    .touch-field span{
+        margin:0 0 6px;
+    }
+
+    .touch-btn{
+        height:54px;
+        padding:0 12px;
+        border-radius:15px;
+        font-size:13px;
+    }
+
+    .touch-btn strong{
+        max-width:calc(100% - 24px);
+    }
+
+    /* Swipe summaries instead of a very long vertical stack */
+    .result-summary{
+        display:flex !important;
+        grid-template-columns:none !important;
+        gap:9px;
+        margin:0 -10px 12px;
+        padding:0 10px 4px;
+        overflow-x:auto;
+        scroll-snap-type:x proximity;
+        scrollbar-width:none;
+    }
+
+    .result-summary::-webkit-scrollbar{
+        display:none;
+    }
+
+    .result-summary > div{
+        flex:0 0 124px;
+        min-width:124px;
+        padding:12px;
+        border-radius:18px;
+        scroll-snap-align:start;
+    }
+
+    .result-summary span{
+        font-size:12px;
+    }
+
+    .result-summary strong{
+        margin-top:3px;
+        font-size:24px;
+    }
+
+    .result-summary small{
+        display:none;
+    }
+
+    .money-summary{
+        display:grid !important;
+        grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+        gap:9px;
+        margin-bottom:12px;
+    }
+
+    .money-summary > div{
+        min-width:0;
+        padding:12px;
+        border-radius:18px;
+    }
+
+    .money-summary span{
+        font-size:11px;
+    }
+
+    .money-summary strong{
+        margin-top:4px;
+        font-size:20px;
+        overflow-wrap:anywhere;
+    }
+
+    .active-filter-card{
+        padding:12px 13px;
+        margin-bottom:12px;
+        border-radius:20px;
+    }
+
+    .active-filter-card > div{
+        display:flex;
+        align-items:baseline;
+        gap:6px;
+    }
+
+    .active-filter-card strong{
+        font-size:25px;
+    }
+
+    .active-filter-card p{
+        margin-top:5px;
+        font-size:11px;
+        line-height:1.55;
+    }
+
+    /* Remove the unnecessary outer card around phone cards */
+    .sale-table-card{
+        padding:0;
+        border:0;
+        background:transparent;
+        box-shadow:none;
+    }
+
+    .mobile-list{
+        gap:10px;
+    }
+
+    .sale-card{
+        position:relative;
+        padding:13px;
+        border:1px solid #eddfe7;
+        border-radius:21px;
+        background:white;
+        box-shadow:0 8px 22px rgba(54,37,81,.07);
+    }
+
+    .sale-card-headline{
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap:8px;
+        margin-bottom:10px;
+    }
+
+    .sale-number{
+        display:inline-flex;
+        min-height:27px;
+        padding:0 9px;
+        border-radius:999px;
+        align-items:center;
+        background:#080634;
+        color:white;
+        font-size:12px;
+        font-weight:1000;
+        flex:0 0 auto;
+    }
+
+    .mobile-tags{
+        display:flex;
+        justify-content:flex-end;
+        flex-wrap:wrap;
+        gap:5px;
+        margin:0;
+    }
+
+    .mobile-tags .status,
+    .mobile-tags .kind{
+        margin:0;
+        padding:6px 8px;
+        font-size:10px;
+    }
+
+    .sale-card-top{
+        display:grid;
+        grid-template-columns:72px minmax(0,1fr);
+        gap:11px;
+        align-items:center;
+    }
+
+    .sale-card .mini-photo{
+        width:72px;
+        height:72px;
+        border-radius:18px;
+        background:#fff7f2;
+    }
+
+    .sale-card .mini-photo img{
+        object-fit:cover;
+        padding:0;
+    }
+
+    .sale-card-main{
+        min-width:0;
+    }
+
+    .sale-card h3{
+        margin:0;
+        font-size:18px;
+        line-height:1.2;
+        overflow-wrap:anywhere;
+    }
+
+    .sale-card .pet-meta{
+        margin:4px 0 0;
+        font-size:11px;
+        line-height:1.35;
+    }
+
+    .customer-mobile{
+        display:flex;
+        flex-direction:column;
+        gap:2px;
+        margin-top:7px !important;
+    }
+
+    .customer-mobile strong{
+        color:#080634;
+        font-size:14px;
+        overflow-wrap:anywhere;
+    }
+
+    .customer-mobile span{
+        color:#7b7288;
+        font-size:12px;
+        overflow-wrap:anywhere;
+    }
+
+    .sale-card-meta{
+        display:grid;
+        grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+        gap:8px;
+        margin-top:11px;
+    }
+
+    .sale-card-meta > div{
+        min-width:0;
+        padding:9px 10px;
+        border-radius:13px;
+        background:#faf8fc;
+    }
+
+    .sale-card-meta span{
+        display:block;
+        color:#9287a4;
+        font-size:10px;
+        font-weight:1000;
+    }
+
+    .sale-card-meta strong{
+        display:block;
+        margin-top:3px;
+        color:#362d48;
+        font-size:11px;
+        line-height:1.3;
+        overflow-wrap:anywhere;
+    }
+
+    .mobile-money{
+        display:grid;
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        gap:7px;
+        margin:10px 0;
+    }
+
+    .mobile-money div{
+        min-width:0;
+        padding:10px 7px;
+        border:1px solid #eee8f7;
+        border-radius:14px;
+        text-align:center;
+        background:#f9f7ff;
+    }
+
+    .mobile-money span{
+        font-size:10px;
+    }
+
+    .mobile-money strong{
+        margin-top:3px;
+        font-size:13px;
+        overflow-wrap:anywhere;
+    }
+
+    .mobile-money .has-balance{
+        border-color:#fecaca;
+        background:#fff1f2;
+    }
+
+    .mobile-money .has-balance strong{
+        color:#dc2626;
+    }
+
+    .card-actions{
+        display:grid;
+        grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);
+        gap:8px;
+    }
+
+    .call-btn,
+    .card-actions .view-btn{
+        width:100%;
+        min-height:50px;
+        padding:0 10px;
+        border-radius:15px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:14px;
+        font-weight:1000;
+    }
+
+    .call-btn{
+        background:#e8fff1;
+        color:#138a46;
+    }
+
+    .call-btn.disabled{
+        background:#f1f5f9;
+        color:#94a3b8;
+    }
+
+    .card-actions .view-btn{
+        background:linear-gradient(135deg,#7b5cff,#9b7cf6);
+        color:white;
+    }
+
+    .empty-box{
+        padding:28px 16px;
+        border:1px solid #eddfe7;
+        border-radius:21px;
+        background:white;
+    }
+
+    .empty-box .main-btn{
+        width:100%;
+        min-height:56px;
+        font-size:15px;
+    }
+
+    /* Bottom-sheet popups */
+    .select-popup,
+    .date-popup-panel{
+        left:8px;
+        right:8px;
+        bottom:calc(8px + env(safe-area-inset-bottom));
+        width:auto;
+        max-width:none;
+        border-radius:24px;
+    }
+
+    .popup-head,
+    .date-popup-head{
+        padding:15px;
+    }
+
+    .popup-list{
+        gap:8px;
+        padding:10px;
+    }
+
+    .popup-list button{
+        min-height:58px;
+        border-radius:16px;
+        font-size:15px;
+    }
+
+    .date-popup-panel{
+        max-height:89vh;
+    }
+
+    .quick-date-grid{
+        gap:8px;
+        padding:10px;
+    }
+
+    .quick-date-grid button{
+        min-height:50px;
+        border-radius:15px;
+        font-size:14px;
+    }
+
+    .calendar-top{
+        padding:0 13px 9px;
+    }
+
+    .calendar-top button{
+        width:42px;
+        height:42px;
+    }
+
+    .selected-range-box,
+    .week-row,
+    .calendar-grid{
+        padding-left:13px;
+        padding-right:13px;
+    }
+
+    .calendar-day{
+        height:43px;
+        min-height:43px;
+        border-radius:13px;
+        font-size:13px;
+    }
+
+    .time-box{
+        display:none;
+    }
+
+    .date-popup-actions{
+        position:sticky;
+        bottom:0;
+        padding:10px;
+        background:white;
+        box-shadow:0 -8px 20px rgba(28,20,58,.06);
+    }
+
+    .all-date-btn,
+    .apply-date-btn{
+        min-height:54px;
+        border-radius:16px;
+    }
+}
+
 </style>
 
 <script>
@@ -1612,9 +2335,40 @@ function calculateResultSummary(){
     }
 }
 
+
+
+function toggleMobileFilters(){
+    const card = document.querySelector(".filter-card");
+    const button = document.getElementById("mobileFilterToggle");
+    const label = document.getElementById("mobileFilterToggleText");
+
+    if(!card || !button || !label){ return; }
+
+    const isOpen = card.classList.toggle("mobile-filters-open");
+    button.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    label.innerText = isOpen ? "Hide" : "Show";
+}
+
+function markMobileFiltersActive(){
+    const params = new URLSearchParams(window.location.search);
+    const hasAdvancedFilter = Boolean(
+        params.get("sale_kind") ||
+        params.get("status") ||
+        params.has("date_from") ||
+        params.has("date_to")
+    );
+
+    const button = document.getElementById("mobileFilterToggle");
+    if(button && hasAdvancedFilter){
+        button.classList.add("has-active-filter");
+    }
+}
+
+
 document.addEventListener("DOMContentLoaded", function(){
     setDefaultThisMonthOnEmptyDate();
     calculateResultSummary();
+    markMobileFiltersActive();
 });
 </script>
 

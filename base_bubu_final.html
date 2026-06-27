@@ -1,0 +1,1581 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+    <title>BUBU Pet Store</title>
+
+    <!-- Browser and app colors -->
+    <meta name="theme-color" content="#8e63ff">
+    <meta name="msapplication-TileColor" content="#8e63ff">
+    <meta name="application-name" content="BUBU Pet Store POS">
+
+    <!-- iPhone / iPad Add to Home Screen -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="BUBU">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <!-- Android / other mobile browsers -->
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- Browser tab icon -->
+    <link rel="icon"
+          type="image/x-icon"
+          href="/static/img/favicon.ico?v=20260626-20">
+
+    <link rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="/static/img/bubu-favicon-32.png?v=20260626-20">
+
+    <link rel="shortcut icon"
+          type="image/png"
+          href="/static/img/bubu-favicon-32.png?v=20260626-20">
+
+    <!-- iPhone Home Screen icon -->
+    <link rel="apple-touch-icon"
+          sizes="180x180"
+          href="/static/img/bubu-apple-touch-180.png?v=20260626-20">
+
+    <!-- Installed web app -->
+    <link rel="manifest"
+          href="/static/manifest.json?v=20260626-20">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap"
+          rel="stylesheet">
+
+<style>
+:root{
+    --ink:#17152f;
+    --muted:#7b7288;
+    --purple:#8e63ff;
+    --purple-dark:#7047db;
+    --purple-soft:#f3edff;
+    --orange:#ff8464;
+    --green:#25b982;
+    --cream:#fffaf6;
+    --surface:#ffffff;
+    --line:#eadfec;
+    --warm-line:#f2ded1;
+    --sidebar-width:260px;
+}
+
+*{box-sizing:border-box}
+
+html{
+    width:100%;
+    min-height:100%;
+    scroll-behavior:smooth;
+    -webkit-text-size-adjust:100%;
+}
+
+body{
+    width:100%;
+    min-height:100%;
+    margin:0;
+    overflow-x:hidden;
+    color:var(--ink);
+    background:var(--cream);
+    font-family:'Nunito',sans-serif;
+}
+
+body.sidebar-open{overflow:hidden}
+
+a{
+    color:inherit;
+    text-decoration:none;
+}
+
+button,
+input,
+select,
+textarea{
+    font-family:'Nunito',sans-serif;
+}
+
+button{touch-action:manipulation}
+
+/* =========================================================
+   SIDEBAR — CLEAN, FLAT, MODERN
+========================================================= */
+.sidebar{
+    position:fixed;
+    inset:0 auto 0 0;
+    z-index:2000;
+    width:var(--sidebar-width);
+    height:100vh;
+    height:100dvh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    padding-bottom:62px;
+    background:
+        radial-gradient(circle at 20% 0,#fff0e6 0,transparent 34%),
+        linear-gradient(180deg,#fffdfb,#fff6ee);
+    border-right:1px solid #eee4df;
+    box-shadow:8px 0 30px rgba(65,42,32,.04);
+    transition:transform .24s ease;
+}
+
+.logo{
+    flex:0 0 auto;
+    min-height:104px;
+    padding:16px 18px 13px;
+    display:grid;
+    grid-template-columns:64px minmax(0,1fr);
+    grid-template-rows:auto auto;
+    column-gap:12px;
+    align-items:center;
+    border-bottom:1px solid rgba(234,223,236,.65);
+    text-align:left;
+}
+
+.logo-img{
+    grid-row:1/3;
+    width:64px;
+    height:64px;
+    margin:0;
+    object-fit:contain;
+}
+
+.logo h3{
+    align-self:end;
+    margin:0;
+    color:#3d2e2a;
+    font-size:23px;
+    line-height:1.05;
+    font-weight:1000;
+}
+
+.logo small{
+    align-self:start;
+    color:#9a7666;
+    font-size:11px;
+    line-height:1.2;
+    font-weight:900;
+}
+
+.menu{
+    flex:1 1 auto;
+    min-height:0;
+    padding:12px 12px 72px;
+    overflow-y:auto;
+    overflow-x:hidden;
+    scrollbar-width:thin;
+    scrollbar-color:#d8c7f8 transparent;
+}
+
+.menu::-webkit-scrollbar{width:5px}
+.menu::-webkit-scrollbar-track{background:transparent}
+.menu::-webkit-scrollbar-thumb{
+    background:#d8c7f8;
+    border-radius:999px;
+}
+
+.menu a,
+.menu-main{
+    position:relative;
+    width:100%;
+    min-height:46px;
+    margin:3px 0;
+    padding:8px 11px;
+    border:0;
+    border-radius:11px;
+    display:flex;
+    align-items:center;
+    color:#625750;
+    background:transparent;
+    font-size:13px;
+    line-height:1.15;
+    font-weight:900;
+    text-align:left;
+    cursor:pointer;
+    transition:background .16s ease,color .16s ease;
+}
+
+.menu a{gap:9px}
+
+.menu a > span:first-child,
+.menu-main-left > span:first-child{
+    width:28px;
+    height:28px;
+    flex:0 0 28px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:17px;
+    line-height:1;
+}
+
+.menu a > span:last-child,
+.menu-main-left > span:last-child{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.menu a:hover,
+.menu-main:hover{
+    color:var(--ink);
+    background:rgba(142,99,255,.07);
+}
+
+.menu a.active{
+    color:var(--purple-dark);
+    background:rgba(142,99,255,.10);
+}
+
+.menu a.active::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:9px;
+    bottom:9px;
+    width:3px;
+    border-radius:999px;
+    background:linear-gradient(180deg,var(--purple),var(--orange));
+}
+
+.menu-main{
+    justify-content:space-between;
+    gap:7px;
+}
+
+.menu-main.active{
+    color:var(--ink);
+    background:transparent;
+}
+
+.menu-main-left{
+    min-width:0;
+    display:flex;
+    align-items:center;
+    gap:9px;
+}
+
+.menu-arrow{
+    flex:0 0 auto;
+    color:#8d817b;
+    font-size:8px;
+    transition:transform .18s ease;
+}
+
+.menu-main.active .menu-arrow{
+    transform:rotate(180deg);
+}
+
+.menu-sub{
+    max-height:0;
+    padding-left:15px;
+    overflow:hidden;
+    opacity:0;
+    transition:max-height .22s ease,opacity .17s ease;
+}
+
+.menu-sub.show{
+    max-height:900px;
+    opacity:1;
+}
+
+.menu-sub a{
+    min-height:40px;
+    padding:7px 10px;
+    font-size:12px;
+}
+
+.sidebar-footer{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:20;
+    display:block!important;
+    padding:9px 14px calc(10px + env(safe-area-inset-bottom));
+    border:0;
+    background:linear-gradient(
+        180deg,
+        rgba(255,250,246,0) 0%,
+        rgba(255,250,246,.96) 22%,
+        #fffaf6 38%
+    );
+    box-shadow:none;
+}
+
+.sidebar-pet-under-menu{
+    width:100%;
+    padding:10px 0 4px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.sidebar-pet-under-menu img{
+    width:230px;
+    max-width:92%;
+    height:140px;
+    display:block;
+    object-fit:contain;
+    pointer-events:none;
+    filter:drop-shadow(0 8px 14px rgba(120,76,45,.08));
+}
+
+.mobile-sidebar-bottom{
+    display:none;
+}
+
+.logout-form{
+    width:100%;
+    margin:0;
+}
+
+.logout-btn{
+    width:100%;
+    min-height:44px;
+    border:0;
+    border-radius:11px;
+    padding:0 12px;
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    gap:9px;
+    color:#e85d43!important;
+    background:rgba(255,132,100,.07);
+    font-size:13px;
+    line-height:1;
+    font-weight:1000;
+    transition:.16s ease;
+}
+
+.logout-btn > span:first-child{
+    width:24px;
+    height:24px;
+    flex:0 0 24px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.logout-btn:hover{
+    color:#d94f38!important;
+    background:rgba(255,132,100,.13);
+}
+
+.mobile-logout-form{
+    display:none;
+    width:100%;
+    margin:0;
+}
+
+.mobile-logout-link{
+    display:none!important;
+}
+
+.sidebar-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:1800;
+    background:rgba(23,21,47,.45);
+    backdrop-filter:blur(3px);
+}
+
+.sidebar-overlay.active{display:block}
+
+/* =========================================================
+   MAIN + MINIMAL TOP NAVIGATION
+========================================================= */
+.main{
+    min-height:100vh;
+    margin-left:var(--sidebar-width);
+    overflow-x:hidden;
+    background:
+        radial-gradient(circle at 92% 8%,rgba(255,232,241,.70),transparent 28%),
+        linear-gradient(135deg,#fffaf6,#fff);
+}
+
+.topbar{
+    position:sticky;
+    top:0;
+    z-index:1500;
+    min-height:62px;
+    padding:0 24px;
+    border-bottom:1px solid rgba(234,223,236,.85);
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(16px);
+}
+
+.menu-toggle{
+    display:none;
+    width:42px;
+    height:42px;
+    min-height:42px;
+    flex:0 0 42px;
+    padding:0;
+    border:0;
+    border-radius:10px;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    background:linear-gradient(135deg,var(--purple),var(--orange));
+    box-shadow:0 8px 18px rgba(142,99,255,.20);
+    font-size:19px;
+    line-height:1;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.topbar-spacer{flex:1 1 auto}
+
+.top-actions{
+    min-width:0;
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:4px;
+}
+
+.top-quick-link{
+    position:relative;
+    min-height:48px;
+    padding:0 16px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    color:#756a82;
+    background:transparent;
+    border-radius:0;
+    font-size:11px;
+    line-height:1;
+    font-weight:1000;
+    text-align:center;
+    white-space:nowrap;
+    transition:color .16s ease,background .16s ease;
+}
+
+.top-quick-link:hover{
+    color:var(--ink);
+    background:rgba(142,99,255,.05);
+}
+
+.top-quick-link.active{
+    color:var(--purple-dark);
+}
+
+.top-quick-link.active::after{
+    content:"";
+    position:absolute;
+    left:11px;
+    right:11px;
+    bottom:2px;
+    height:3px;
+    border-radius:999px;
+    background:linear-gradient(90deg,var(--purple),var(--orange));
+}
+
+.quick-icon{
+    font-size:17px;
+    line-height:1;
+}
+
+.top-avatar{
+    width:34px;
+    height:34px;
+    flex:0 0 34px;
+    margin-left:5px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fff1db;
+    font-size:17px;
+    line-height:1;
+}
+
+.content{
+    min-width:0;
+    padding:30px;
+    overflow-x:hidden;
+}
+
+/* =========================================================
+   COMMON PAGE ELEMENTS
+========================================================= */
+.page-head{
+    margin-bottom:20px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:18px;
+}
+
+h1{
+    margin:0 0 6px;
+    color:var(--ink);
+    font-size:32px;
+    line-height:1.15;
+    letter-spacing:-.35px;
+    font-weight:1000;
+}
+
+.page-subtitle{
+    margin:0 0 20px;
+    color:var(--muted);
+    line-height:1.45;
+    font-weight:800;
+}
+
+.pet-hero-img,
+.dashboard-hero{
+    width:300px;
+    max-width:100%;
+    object-fit:contain;
+    margin-top:-18px;
+}
+
+.tool-row{
+    margin-bottom:20px;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    flex-wrap:wrap;
+}
+
+/* =========================================================
+   FORM CONTROLS
+========================================================= */
+.search-input,
+input,
+select,
+textarea{
+    max-width:100%;
+    border:1.5px solid var(--line);
+    border-radius:13px;
+    padding:10px 12px;
+    color:var(--ink);
+    background:white;
+    font-size:15px;
+    line-height:1.25;
+    font-weight:800;
+    outline:none;
+}
+
+input,
+select{
+    min-height:42px;
+}
+
+textarea{
+    min-height:88px;
+    resize:vertical;
+}
+
+.search-input{
+    width:230px;
+    min-height:42px;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+    border-color:#b99cff;
+    box-shadow:0 0 0 3px rgba(155,124,246,.12);
+}
+
+.btn,
+button,
+.mini-btn,
+.badge,
+.top-quick-link,
+.menu a,
+.menu-main,
+.logout-btn{
+    line-height:1.2;
+}
+
+.btn,
+button{
+    min-height:42px;
+    padding:0 16px;
+    border:0;
+    border-radius:13px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    font-weight:1000;
+    text-align:center;
+    cursor:pointer;
+    transition:.16s ease;
+}
+
+.btn:hover,
+button:hover,
+.mini-btn:hover{
+    transform:translateY(-1px);
+}
+
+.btn-search,
+.btn-add,
+.btn-primary{
+    color:white;
+    background:linear-gradient(135deg,var(--purple),var(--orange));
+    box-shadow:0 8px 18px rgba(155,124,246,.18);
+}
+
+.btn-reset{
+    color:#6b6178;
+    background:white;
+    border:1px solid var(--line);
+}
+
+.btn-danger{
+    color:white;
+    background:linear-gradient(135deg,#ff7a7a,#ff9a6b);
+}
+
+.mini-btn{
+    min-height:32px;
+    margin:2px;
+    padding:0 10px;
+    border-radius:9px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    font-size:11px;
+    font-weight:1000;
+    text-align:center;
+}
+
+.btn-view{color:#3a96ee;background:#eaf6ff}
+.btn-edit{color:#7e57e8;background:#f0e9ff}
+.btn-delete{color:#ff6b4a;background:#ffe8e2}
+
+/* =========================================================
+   CARDS + TABLES
+========================================================= */
+.card,
+.table-card{
+    border:1px solid #f1e6e0;
+    border-radius:18px;
+    background:rgba(255,255,255,.95);
+    box-shadow:0 10px 28px rgba(130,91,60,.06);
+}
+
+.card{
+    margin-bottom:16px;
+    padding:18px;
+}
+
+.table-card{
+    width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+thead{
+    background:linear-gradient(135deg,#f5efff,#fff4f7);
+}
+
+th,
+td{
+    padding:12px;
+    text-align:center;
+    vertical-align:middle;
+}
+
+th{
+    color:var(--ink);
+    font-size:11px;
+    line-height:1.25;
+    font-weight:1000;
+}
+
+td{
+    border-top:1px solid #f7eee8;
+    color:#514a5f;
+    font-size:12px;
+    line-height:1.3;
+    font-weight:800;
+}
+
+tbody tr:hover{background:#fffaf6}
+
+.empty-box{
+    min-height:280px;
+    padding:22px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+}
+
+.empty-icon{
+    margin-bottom:9px;
+    font-size:58px;
+    line-height:1;
+    opacity:.75;
+}
+
+.empty-box h3{
+    margin:0 0 7px;
+    font-size:18px;
+    font-weight:1000;
+}
+
+.empty-box p{
+    margin:0 0 18px;
+    color:var(--muted);
+    line-height:1.45;
+    font-weight:800;
+}
+
+.badge{
+    min-height:29px;
+    padding:0 9px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:10px;
+    font-weight:1000;
+    text-align:center;
+}
+
+.badge-green{color:#28c76f;background:#e5faee}
+.badge-blue{color:#2299e8;background:#e7f5ff}
+.badge-purple{color:#a855f7;background:#f3e8ff}
+.badge-orange{color:#ff9f1a;background:#fff3dd}
+.badge-red{color:#ff4d6d;background:#ffe7ec}
+
+/* =========================================================
+   DASHBOARD COMMON
+========================================================= */
+.grid-cards{
+    margin-bottom:18px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+}
+
+.grid-main{
+    display:grid;
+    grid-template-columns:2fr 1fr 1fr;
+    gap:14px;
+}
+
+.stat{
+    min-height:116px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.stat small{
+    color:#6b6480;
+    font-size:12px;
+    font-weight:1000;
+}
+
+.stat h2{
+    margin:7px 0 3px;
+    font-size:26px;
+}
+
+.stat span{
+    font-size:11px;
+    font-weight:1000;
+}
+
+.stat .icon{
+    width:56px;
+    height:56px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:25px;
+    line-height:1;
+}
+
+.stat.purple{background:linear-gradient(135deg,#fbf7ff,#f0e7ff)}
+.stat.orange{background:linear-gradient(135deg,#fffaf6,#fff0e8)}
+.stat.blue{background:linear-gradient(135deg,#f8fcff,#eaf6ff)}
+.stat.green{background:linear-gradient(135deg,#fbfffc,#eafaf1)}
+.stat.purple .icon{background:#e6d4ff}
+.stat.orange .icon{background:#ffd9c8}
+.stat.blue .icon{background:#d8ecff}
+.stat.green .icon{background:#d9f5e4}
+
+.card.big,
+.card.side{min-height:310px}
+
+.card.big{position:relative}
+
+.fake-chart{
+    height:140px;
+    margin:16px 0;
+    border-radius:15px;
+    background:
+        linear-gradient(180deg,rgba(155,124,246,.28),rgba(155,124,246,.04)),
+        repeating-linear-gradient(to bottom,transparent 0 38px,#efe8ff 39px 40px);
+}
+
+.chart-footer{
+    display:flex;
+    gap:9px;
+}
+
+.chart-footer>div{
+    flex:1;
+    padding:11px;
+    border:1px solid #f1e4ef;
+    border-radius:11px;
+    background:#fff7fb;
+    font-weight:800;
+}
+
+.chart-cat{
+    position:absolute;
+    right:14px;
+    bottom:6px;
+    width:95px;
+}
+
+.order,
+.stock{
+    padding:9px 0;
+    border-bottom:1px solid #f5e8ef;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-weight:800;
+}
+
+.alert-dog{
+    width:95px;
+    float:right;
+    margin-top:7px;
+}
+
+.footer-box{
+    margin-top:16px;
+    background:linear-gradient(135deg,#f5eaff,#fff0f9);
+}
+
+.footer{
+    margin-top:26px;
+    padding-bottom:7px;
+    color:#9a91a7;
+    text-align:center;
+    font-size:11px;
+    font-weight:800;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+@media(max-width:1100px){
+    .grid-cards{grid-template-columns:repeat(2,1fr)}
+    .grid-main{grid-template-columns:1fr}
+}
+
+@media(min-width:768px) and (max-width:1194px){
+    .sidebar{
+        transform:translateX(-100%);
+        box-shadow:0 22px 60px rgba(23,21,47,.25);
+    }
+
+    .sidebar.active{transform:translateX(0)}
+    .main{margin-left:0}
+
+    .topbar{
+        min-height:62px;
+        padding:0 16px;
+    }
+
+    .menu-toggle{display:inline-flex}
+    .content{padding:20px}
+
+    .pet-hero-img,
+    .dashboard-hero{
+        width:205px;
+        margin-top:0;
+    }
+
+    .grid-cards{grid-template-columns:repeat(2,1fr)}
+    .grid-main{grid-template-columns:1fr}
+    .search-input{width:100%}
+
+    input,
+    select,
+    textarea{
+        font-size:16px;
+    }
+}
+
+@media(max-width:767px){
+    .sidebar{
+        width:min(82vw,290px);
+        transform:translateX(-100%);
+        box-shadow:0 22px 60px rgba(23,21,47,.28);
+    }
+
+    .sidebar.active{transform:translateX(0)}
+
+    .logo{
+        min-height:86px;
+        padding:11px 12px 9px;
+        grid-template-columns:50px minmax(0,1fr);
+    }
+
+    .logo-img{
+        width:50px;
+        height:50px;
+    }
+
+    .logo h3{font-size:19px}
+    .logo small{font-size:9px}
+
+    .menu{
+        padding:8px 9px 72px;
+    }
+
+    .menu a,
+    .menu-main{
+        min-height:38px;
+        margin:1px 0;
+        padding:6px 8px;
+        border-radius:8px;
+        font-size:11px;
+    }
+
+    .menu-sub{padding-left:12px}
+    .menu-sub a{
+        min-height:34px;
+        font-size:10px;
+    }
+
+    /* Phone uses an integrated bottom area inside the same menu surface. */
+    .sidebar-footer{
+        display:none!important;
+    }
+
+    .mobile-sidebar-bottom{
+        position:sticky;
+        left:0;
+        right:0;
+        bottom:0;
+        z-index:30;
+        display:block!important;
+        margin-top:12px;
+        padding:20px 0 calc(2px + env(safe-area-inset-bottom));
+        background:linear-gradient(
+            180deg,
+            rgba(255,250,246,0) 0%,
+            rgba(255,250,246,.96) 26%,
+            #fffaf6 43%
+        );
+    }
+
+    .sidebar-pet-under-menu{
+        padding:8px 0 2px;
+    }
+
+    .sidebar-pet-under-menu img{
+        width:168px;
+        height:98px;
+        max-width:94%;
+    }
+
+    .mobile-logout-form{
+        display:block!important;
+        margin:0!important;
+    }
+
+    .mobile-logout-link{
+        width:100%!important;
+        min-height:40px!important;
+        margin:0!important;
+        padding:0 9px!important;
+        border:0!important;
+        border-radius:8px!important;
+        display:flex!important;
+        align-items:center!important;
+        justify-content:flex-start!important;
+        gap:9px!important;
+        color:#e85d43!important;
+        background:rgba(255,132,100,.07)!important;
+        box-shadow:none!important;
+        font-size:10px!important;
+        font-weight:1000!important;
+    }
+
+    .mobile-logout-link > span:first-child{
+        width:24px;
+        height:24px;
+        flex:0 0 24px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+    }
+
+    .mobile-logout-link::before{
+        display:none!important;
+    }
+
+    .mobile-logout-link:hover{
+        color:#d94f38!important;
+        background:rgba(255,132,100,.13)!important;
+    }
+
+    .main{margin-left:0}
+
+    .topbar{
+        min-height:56px;
+        padding:0 7px;
+        gap:4px;
+    }
+
+    .menu-toggle{
+        display:inline-flex;
+        width:38px;
+        height:38px;
+        min-height:38px;
+        flex-basis:38px;
+        border-radius:9px;
+        font-size:17px;
+    }
+
+    .topbar-spacer{display:none}
+
+    .top-actions{
+        flex:1 1 auto;
+        justify-content:space-around;
+        gap:0;
+    }
+
+    .top-quick-link{
+        flex:1 1 0;
+        min-width:0;
+        min-height:46px;
+        padding:0 4px;
+        gap:3px;
+        flex-direction:column;
+        border-radius:0;
+        font-size:8px;
+        white-space:nowrap;
+    }
+
+    .top-quick-link.active::after{
+        left:20%;
+        right:20%;
+        bottom:0;
+        height:2px;
+    }
+
+    .quick-icon{
+        font-size:14px;
+    }
+
+    .top-avatar{display:none}
+
+    .content{
+        padding:8px;
+    }
+
+    .page-head{
+        display:block;
+        margin-bottom:12px;
+    }
+
+    h1{font-size:23px}
+
+    .page-subtitle{
+        margin-bottom:12px;
+        font-size:12px;
+    }
+
+    .pet-hero-img,
+    .dashboard-hero{
+        display:none;
+    }
+
+    .tool-row{
+        display:grid;
+        grid-template-columns:1fr;
+        gap:6px;
+        margin-bottom:12px;
+    }
+
+    .search-input{width:100%}
+
+    .btn,
+    button{
+        min-height:40px;
+        padding:0 12px;
+    }
+
+    .card{
+        padding:11px;
+        border-radius:14px;
+    }
+
+    .table-card{border-radius:14px}
+
+    th,
+    td{
+        padding:8px;
+        font-size:10px;
+        white-space:nowrap;
+    }
+
+    .grid-cards,
+    .grid-main{
+        grid-template-columns:1fr;
+        gap:8px;
+    }
+
+    .chart-footer{flex-direction:column}
+
+    .footer{
+        margin-top:18px;
+        font-size:9px;
+    }
+
+    /* Prevent iPhone Safari from zooming into fields. */
+    input,
+    textarea,
+    select,
+    .search-input{
+        font-size:16px!important;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="logo">
+        <img src="{% static 'img/bubu-logo.png' %}" class="logo-img" alt="BUBU Logo">
+        <h3>BUBU</h3>
+        <small>Pet Store POS</small>
+    </div>
+
+    <nav class="menu" id="sideMenu">
+        <a href="{% url 'dashboard' %}"
+           onclick="saveMenuStateAndClose()"
+           class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <span>🏠</span><span>Dashboard</span>
+        </a>
+
+        <a href="{% url 'pos' %}"
+           onclick="saveMenuStateAndClose()"
+           class="{% if request.resolver_match.url_name == 'pos' %}active{% endif %}">
+            <span>🛍️</span><span>POS</span>
+        </a>
+
+        <a href="{% url 'sale_list' %}"
+           onclick="saveMenuStateAndClose()"
+           class="{% if request.resolver_match.url_name == 'sale_list' %}active{% endif %}">
+            <span>📊</span><span>Sales</span>
+        </a>
+
+        <!-- PETS -->
+        <button type="button" class="menu-main" data-menu="pets">
+            <span class="menu-main-left"><span>🐾</span><span>Pets</span></span>
+            <span class="menu-arrow">▼</span>
+        </button>
+
+        <div class="menu-sub" id="menu-pets">
+            <a href="{% url 'pet_list' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'pet_list' or request.resolver_match.url_name == 'pet_create' or request.resolver_match.url_name == 'pet_detail' or request.resolver_match.url_name == 'pet_edit' %}active{% endif %}">
+                <span>🐾</span><span>Pet List</span>
+            </a>
+
+            <a href="{% url 'pet_breed_list' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'pet_breed_list' or request.resolver_match.url_name == 'pet_breed_create' or request.resolver_match.url_name == 'pet_breed_edit' %}active{% endif %}">
+                <span>🐕</span><span>Breed Master</span>
+            </a>
+
+            <a href="{% url 'pet_sale_list' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'pet_sale_list' or request.resolver_match.url_name == 'pet_sale_detail' or request.resolver_match.url_name == 'pet_sale_edit' %}active{% endif %}">
+                <span>📋</span><span>Pet Sale List</span>
+            </a>
+
+            <a href="{% url 'pet_available_for_sale' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'pet_available_for_sale' %}active{% endif %}">
+                <span>🐶</span><span>Sell In-stock</span>
+            </a>
+
+            <a href="{% url 'pet_sale_create' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'pet_sale_create' %}active{% endif %}">
+                <span>💰</span><span>New Pet Sale</span>
+            </a>
+        </div>
+
+        <!-- INVENTORY -->
+        <button type="button" class="menu-main" data-menu="inventory">
+            <span class="menu-main-left"><span>📦</span><span>Inventory</span></span>
+            <span class="menu-arrow">▼</span>
+        </button>
+
+        <div class="menu-sub" id="menu-inventory">
+            <a href="{% url 'item_list' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'item_list' %}active{% endif %}">
+                <span>📦</span><span>Inventory List</span>
+            </a>
+
+            <a href="{% url 'purchase_list' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'purchase_list' or request.resolver_match.url_name == 'purchase_create' or request.resolver_match.url_name == 'purchase_update' or request.resolver_match.url_name == 'purchase_detail' %}active{% endif %}">
+                <span>🛒</span><span>Purchases</span>
+            </a>
+        </div>
+
+        <!-- OPERATIONS -->
+        <button type="button" class="menu-main" data-menu="operations">
+            <span class="menu-main-left"><span>🚚</span><span>Operations</span></span>
+            <span class="menu-arrow">▼</span>
+        </button>
+
+        <div class="menu-sub" id="menu-operations">
+            <a href="{% url 'delivery_list' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'delivery_list' %}active{% endif %}">
+                <span>🚚</span><span>Delivery</span>
+            </a>
+
+            <a href="{% url 'service_list' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'service_list' %}active{% endif %}">
+                <span>✂️</span><span>Services</span>
+            </a>
+        </div>
+
+        <!-- CUSTOMERS -->
+        <button type="button" class="menu-main" data-menu="customers">
+            <span class="menu-main-left"><span>👥</span><span>Customers</span></span>
+            <span class="menu-arrow">▼</span>
+        </button>
+
+        <div class="menu-sub" id="menu-customers">
+            <a href="{% url 'customer_list' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'customer_list' %}active{% endif %}">
+                <span>👥</span><span>Customers</span>
+            </a>
+
+            <a href="{% url 'branch_list' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'branch_list' %}active{% endif %}">
+                <span>🏪</span><span>Shops</span>
+            </a>
+        </div>
+
+        <!-- STAFF -->
+        <button type="button" class="menu-main" data-menu="staff">
+            <span class="menu-main-left"><span>👤</span><span>Staff</span></span>
+            <span class="menu-arrow">▼</span>
+        </button>
+
+        <div class="menu-sub" id="menu-staff">
+            <a href="{% url 'staff_my_dashboard' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'staff_my_dashboard' %}active{% endif %}">
+                <span>👤</span><span>My Staff Page</span>
+            </a>
+
+            <a href="{% url 'staff_permission_create' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'staff_permission_create' %}active{% endif %}">
+                <span>📝</span><span>Ask Permission</span>
+            </a>
+
+            {% if perms.auth.view_user %}
+            <a href="{% url 'staff_setting_list' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'staff_setting_list' or request.resolver_match.url_name == 'staff_setting_create' or request.resolver_match.url_name == 'staff_setting_edit' %}active{% endif %}">
+                <span>⚙️</span><span>Staff Settings</span>
+            </a>
+
+            <a href="{% url 'staff_attendance_report' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'staff_attendance_report' or request.resolver_match.url_name == 'staff_attendance_adjust' %}active{% endif %}">
+                <span>📊</span><span>Attendance Report</span>
+            </a>
+
+            <a href="{% url 'staff_qr_list' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'staff_qr_list' or request.resolver_match.url_name == 'staff_qr_create' or request.resolver_match.url_name == 'staff_scan_page' or request.resolver_match.url_name == 'staff_scan_submit' %}active{% endif %}">
+                <span>📲</span><span>Attendance QR</span>
+            </a>
+            {% endif %}
+        </div>
+
+        {% if perms.auth.view_user %}
+        <button type="button" class="menu-main" data-menu="admin">
+            <span class="menu-main-left"><span>🔒</span><span>Admin</span></span>
+            <span class="menu-arrow">▼</span>
+        </button>
+
+        <div class="menu-sub" id="menu-admin">
+            <a href="{% url 'user_list' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'user_list' %}active{% endif %}">
+                <span>🔒</span><span>Users</span>
+            </a>
+        </div>
+        {% endif %}
+
+        <div class="sidebar-pet-under-menu">
+            <img src="{% static 'img/sleep-cat.png' %}"
+                 alt="Sleeping cat">
+        </div>
+
+        <div class="mobile-sidebar-bottom">
+            <form method="post"
+                  action="{% url 'logout' %}"
+                  class="mobile-logout-form"
+                  onsubmit="clearBubuMenuState()">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'login' %}">
+                <button type="submit" class="mobile-logout-link">
+                    <span>↪</span><span>Logout</span>
+                </button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="sidebar-footer">
+        <form method="post"
+              action="{% url 'logout' %}"
+              class="logout-form"
+              onsubmit="clearBubuMenuState()">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'login' %}">
+            <button type="submit" class="logout-btn">
+                <span>↪</span><span>Logout</span>
+            </button>
+        </form>
+    </div>
+</aside>
+
+<div class="main">
+    <header class="topbar">
+        <button type="button"
+                class="menu-toggle"
+                aria-label="Open menu"
+                onclick="toggleSidebar()">☰</button>
+
+        <div class="topbar-spacer"></div>
+
+        <nav class="top-actions" aria-label="Quick navigation">
+            <a href="{% url 'pos' %}"
+               class="top-quick-link {% if request.resolver_match.url_name == 'pos' %}active{% endif %}">
+                <span class="quick-icon">🛍️</span>
+                <span>POS</span>
+            </a>
+
+            <a href="{% url 'pet_list' %}"
+               class="top-quick-link {% if request.resolver_match.url_name == 'pet_list' or request.resolver_match.url_name == 'pet_create' or request.resolver_match.url_name == 'pet_detail' or request.resolver_match.url_name == 'pet_edit' %}active{% endif %}">
+                <span class="quick-icon">🐾</span>
+                <span>Pet List</span>
+            </a>
+
+            <a href="{% url 'item_list' %}"
+               class="top-quick-link {% if request.resolver_match.url_name == 'item_list' %}active{% endif %}">
+                <span class="quick-icon">📦</span>
+                <span>Inventory</span>
+            </a>
+        </nav>
+    </header>
+
+    <main class="content">
+        {% block content %}{% endblock %}
+
+        <div class="footer">
+            © 2026 BUBU Pet Store POS • Made with 💜
+        </div>
+    </main>
+</div>
+
+<script>
+const BUBU_OPEN_MENU_KEY = "bubu_open_sidebar_menu";
+const BUBU_SCROLL_KEY = "bubu_sidebar_scroll_top";
+
+function clearBubuMenuState(){
+    localStorage.removeItem(BUBU_OPEN_MENU_KEY);
+    localStorage.removeItem(BUBU_SCROLL_KEY);
+}
+
+function toggleSidebar(){
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebarOverlay");
+
+    if(!sidebar || !overlay){
+        return;
+    }
+
+    const willOpen = !sidebar.classList.contains("active");
+
+    sidebar.classList.toggle("active", willOpen);
+    overlay.classList.toggle("active", willOpen);
+    document.body.classList.toggle("sidebar-open", willOpen);
+}
+
+function closeSidebar(){
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebarOverlay");
+
+    sidebar?.classList.remove("active");
+    overlay?.classList.remove("active");
+    document.body.classList.remove("sidebar-open");
+}
+
+function saveMenuStateAndClose(){
+    const menu = document.getElementById("sideMenu");
+    const activeSub = document.querySelector(".menu-sub.show");
+
+    if(activeSub?.id){
+        localStorage.setItem(
+            BUBU_OPEN_MENU_KEY,
+            activeSub.id.replace("menu-", "")
+        );
+    }
+
+    if(menu){
+        localStorage.setItem(BUBU_SCROLL_KEY, String(menu.scrollTop));
+    }
+
+    closeSidebar();
+}
+
+function closeAllSubMenus(){
+    document.querySelectorAll(".menu-main").forEach(btn => {
+        btn.classList.remove("active");
+    });
+
+    document.querySelectorAll(".menu-sub").forEach(sub => {
+        sub.classList.remove("show");
+    });
+}
+
+function openSubMenu(menuName){
+    const btn = document.querySelector(
+        `.menu-main[data-menu="${menuName}"]`
+    );
+    const sub = document.getElementById(`menu-${menuName}`);
+
+    if(!btn || !sub){
+        return;
+    }
+
+    btn.classList.add("active");
+    sub.classList.add("show");
+    localStorage.setItem(BUBU_OPEN_MENU_KEY, menuName);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const sideMenu = document.getElementById("sideMenu");
+
+    document.querySelectorAll(".menu-main").forEach(btn => {
+        btn.addEventListener("click", function(){
+            const menuName = this.dataset.menu;
+            const sub = document.getElementById(`menu-${menuName}`);
+
+            if(!sub){
+                return;
+            }
+
+            const alreadyOpen = sub.classList.contains("show");
+            closeAllSubMenus();
+
+            if(!alreadyOpen){
+                openSubMenu(menuName);
+            }else{
+                localStorage.removeItem(BUBU_OPEN_MENU_KEY);
+            }
+
+            if(sideMenu){
+                localStorage.setItem(
+                    BUBU_SCROLL_KEY,
+                    String(sideMenu.scrollTop)
+                );
+            }
+        });
+    });
+
+    let activeMenuName = null;
+
+    document.querySelectorAll(".menu-sub a.active").forEach(activeLink => {
+        const parentSub = activeLink.closest(".menu-sub");
+
+        if(parentSub?.id){
+            activeMenuName = parentSub.id.replace("menu-", "");
+        }
+    });
+
+    closeAllSubMenus();
+
+    if(activeMenuName){
+        openSubMenu(activeMenuName);
+    }else{
+        const savedMenuName = localStorage.getItem(BUBU_OPEN_MENU_KEY);
+
+        if(savedMenuName){
+            openSubMenu(savedMenuName);
+        }
+    }
+
+    if(sideMenu){
+        const savedScroll = localStorage.getItem(BUBU_SCROLL_KEY);
+
+        if(savedScroll !== null){
+            requestAnimationFrame(() => {
+                sideMenu.scrollTop = parseInt(savedScroll,10) || 0;
+            });
+        }
+    }
+
+    window.addEventListener("resize", () => {
+        if(window.innerWidth >= 1195){
+            closeSidebar();
+        }
+    });
+});
+
+document.addEventListener("keydown", event => {
+    if(event.key === "Escape"){
+        closeSidebar();
+    }
+});
+</script>
+
+</body>
+</html>

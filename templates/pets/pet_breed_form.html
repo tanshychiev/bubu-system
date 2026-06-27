@@ -71,6 +71,7 @@
                     name="photo"
                     id="photoInput"
                     accept="image/*"
+                    capture="environment"
                     class="hidden-file"
                     onchange="previewPhotoFile(this)"
                 >
@@ -688,6 +689,58 @@ textarea:focus{
         min-height:70px;
         font-size:18px;
     }
+}
+
+
+/* =========================================================
+   FULL MOBILE COMPACT UPDATE — original form logic preserved
+   ========================================================= */
+@media(max-width:760px){
+    .breed-form-page{padding:10px 10px 88px}
+    .page-top{margin-bottom:10px}
+    .page-top h1{font-size:24px;line-height:1.15}
+    .page-top p{font-size:12px;line-height:1.35;margin-top:5px}
+    .top-actions{
+        display:flex!important;flex-wrap:nowrap;overflow-x:auto;gap:7px;margin-top:9px!important;
+        scrollbar-width:none;
+    }
+    .top-actions::-webkit-scrollbar{display:none}
+    .soft-btn,.plain-btn{width:auto!important;min-width:max-content;min-height:42px!important;padding:0 13px;border-radius:13px;font-size:13px!important}
+
+    .form-card{padding:10px;border-radius:18px;border-width:1.5px;box-shadow:0 8px 24px rgba(130,91,60,.06)}
+    .layout{display:block}
+    .photo-panel{
+        display:grid;grid-template-columns:100px minmax(0,1fr);gap:8px;padding:8px;
+        border-radius:15px;border-width:1.5px;margin-bottom:10px;
+    }
+    .preview{height:100px;border-radius:12px;font-size:42px}
+    .preview img{padding:3px}
+    .photo-x{top:5px;right:5px;width:30px;height:30px;font-size:17px}
+    .drop-zone{margin:0;padding:9px;border-radius:12px;display:flex;flex-direction:column;justify-content:center}
+    .drop-title{font-size:14px}.drop-sub{font-size:10px;line-height:1.3;margin-top:3px}
+    .photo-note{grid-column:1/-1;margin:0;padding:7px 9px;border-radius:10px;font-size:10px;line-height:1.3}
+
+    .grid,.option-area{display:grid!important;grid-template-columns:1fr!important;gap:9px}
+    .option-area{margin-top:9px}
+    label{font-size:12px}
+    input,select,.touch-select{height:49px!important;margin-top:5px;border-radius:13px;padding:0 12px;font-size:14px!important}
+    textarea{min-height:78px;margin-top:5px;border-radius:13px;padding:11px;font-size:14px}
+    .full{margin-top:9px}
+    .example-box{margin-top:9px;padding:10px;border-radius:13px}
+    .example-box h3{font-size:14px}.example-box p{font-size:11px;line-height:1.45}
+
+    .actions{
+        position:fixed;left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));z-index:8000;
+        display:grid!important;grid-template-columns:1.45fr .75fr!important;gap:7px;padding:7px;
+        background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border:1px solid #eaddec;
+        border-radius:17px;box-shadow:0 12px 35px rgba(20,15,45,.18);
+    }
+    .save-btn,.cancel-btn{width:100%!important;min-height:48px!important;border-radius:12px;font-size:14px!important}
+
+    .option-popup{left:8px!important;right:8px!important;bottom:8px!important;max-height:82vh!important;border-radius:22px!important}
+    .option-head{padding:12px}.option-head h3{font-size:18px}.option-head button{width:38px;height:38px}
+    .option-list{gap:7px}.option-btn{min-height:54px!important;border-radius:14px;font-size:15px!important;padding:0 14px}
+    .error-box{padding:10px 12px;border-radius:13px;font-size:12px;margin-bottom:9px}
 }
 </style>
 

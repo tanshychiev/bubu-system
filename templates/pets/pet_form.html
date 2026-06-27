@@ -673,6 +673,12 @@
             <button
                 type="button"
                 class="breed-select-card breed-option"
+                data-breed-id="{{ breed.id }}"
+                data-breed-label="{{ breed.get_pet_type_display|escape }} - {{ breed.name|escape }}"
+                data-pet-type="{{ breed.pet_type }}"
+                data-cost="{{ breed.default_cost_price }}"
+                data-sale="{{ breed.default_sale_price }}"
+                data-breed-name="{{ breed.name|escape }}"
                 data-search="{{ breed.get_pet_type_display }} {{ breed.name }} {{ breed.color_options }} {{ breed.special_type_options }}"
                 onclick="chooseBreed('{{ breed.id }}', '{{ breed.get_pet_type_display }} - {{ breed.name|escapejs }}', '{{ breed.pet_type }}', '{{ breed.default_cost_price }}', '{{ breed.default_sale_price }}', '{{ breed.name|escapejs }}')"
             >
@@ -712,6 +718,12 @@
             <button
                 type="button"
                 class="breed-select-card breed-option"
+                data-breed-id="{{ breed.id }}"
+                data-breed-label="{{ breed.get_pet_type_display|escape }} - {{ breed.name|escape }}"
+                data-pet-type="{{ breed.pet_type }}"
+                data-cost="{{ breed.default_cost_price }}"
+                data-sale="{{ breed.default_sale_price }}"
+                data-breed-name="{{ breed.name|escape }}"
                 data-search="{{ breed.get_pet_type_display }} {{ breed.name }} {{ breed.color_options }} {{ breed.special_type_options }}"
                 onclick="chooseBulkBreed('{{ breed.id }}', '{{ breed.get_pet_type_display }} - {{ breed.name|escapejs }}', '{{ breed.pet_type }}', '{{ breed.default_cost_price }}', '{{ breed.default_sale_price }}', '{{ breed.name|escapejs }}')"
             >
@@ -2026,6 +2038,95 @@ textarea:focus{
         font-size:18px;
     }
 }
+
+
+/* =========================================================
+   FULL MOBILE COMPACT UPDATE
+   All original single, bulk, vaccine, batch, history and popup
+   functionality remains in this complete template.
+   ========================================================= */
+@media(max-width:760px){
+    .form-page{padding:9px 9px 92px}
+    .page-top{margin-bottom:9px}
+    .page-top h1{font-size:23px;line-height:1.15}
+    .page-top p{font-size:11px;line-height:1.35;margin:4px 0 0}
+    .page-top .soft-btn{width:auto!important;min-height:40px!important;margin-top:8px!important;padding:0 12px;border-radius:12px;font-size:13px!important}
+
+    .form-card{padding:9px;border-radius:18px;border-width:1.5px;box-shadow:0 7px 22px rgba(130,91,60,.06)}
+    .error-box{padding:9px 11px;border-radius:12px;margin-bottom:8px;font-size:11px}
+
+    .mode-box{
+        position:sticky;top:6px;z-index:300;display:grid!important;grid-template-columns:1fr 1fr!important;
+        gap:6px;margin-bottom:9px;padding:5px;background:rgba(255,255,255,.94);
+        backdrop-filter:blur(10px);border:1px solid #eaddec;border-radius:15px;
+    }
+    .mode-card{min-height:62px!important;padding:8px!important;border-radius:12px!important;display:grid;grid-template-columns:28px 1fr;column-gap:5px;align-items:center}
+    .mode-icon{grid-row:1/3;font-size:23px!important}.mode-card strong{font-size:13px!important}.mode-card small{font-size:9px!important}
+
+    .layout{display:block}
+    .photo-panel{
+        display:grid;grid-template-columns:96px minmax(0,1fr);gap:7px;padding:7px;
+        border-radius:15px;margin-bottom:9px;
+    }
+    .preview{height:96px!important;border-radius:12px!important;font-size:40px!important}
+    .preview img{padding:3px!important}.photo-x{top:4px!important;right:4px!important;width:29px!important;height:29px!important;font-size:16px!important}
+    .drop-zone{margin:0!important;padding:8px!important;border-radius:12px!important;display:flex;flex-direction:column;justify-content:center}
+    .drop-title{font-size:14px!important}.drop-sub{font-size:9px!important;line-height:1.3!important;margin-top:3px!important}
+
+    .grid,.bulk-grid,.vaccine-grid,.bulk-pet-grid{display:grid!important;grid-template-columns:1fr!important;gap:8px!important}
+    label{font-size:11px!important}
+    .field-help,.inline-small{font-size:9px!important}
+    input,select,.touch-select,.touch-date-btn{height:48px!important;margin-top:4px!important;border-radius:12px!important;padding:0 11px!important;font-size:14px!important}
+    textarea{min-height:72px!important;margin-top:4px!important;padding:10px!important;border-radius:12px!important;font-size:14px!important}
+    .age-input-wrap span{min-width:64px;font-size:11px!important;border-radius:0 12px 12px 0!important}
+
+    .age-box{margin-top:8px!important;padding:8px 10px!important;border-radius:11px!important;font-size:11px!important}
+    .vaccine-section,.bulk-shared-card,.bulk-info-box,.history-card{
+        margin-top:9px!important;padding:9px!important;border-radius:15px!important;border-width:1.5px!important;
+    }
+    .vaccine-head,.history-head,.bulk-pet-top{gap:7px!important;margin-bottom:7px!important}
+    .vaccine-head h3,.history-head h3,.bulk-shared-card h3,.bulk-info-box h2{font-size:15px!important}
+    .vaccine-head p,.history-head p,.bulk-info-box p,.bulk-help{font-size:10px!important;line-height:1.35!important;margin-top:2px!important}
+    .add-vaccine-btn,.generate-btn{width:auto!important;min-height:42px!important;padding:0 11px!important;border-radius:11px!important;font-size:12px!important}
+    .vaccine-row,.bulk-pet-card{padding:8px!important;border-radius:13px!important;margin-top:7px!important}
+    .vaccine-note-row{display:grid!important;grid-template-columns:1fr 42px!important;gap:6px!important;align-items:end!important}
+    .remove-vaccine-btn{width:42px!important;min-height:42px!important;height:42px!important;border-radius:11px!important;font-size:15px!important}
+
+    .history-list{gap:6px!important;margin-top:8px!important}.history-item{padding:8px 9px!important;border-radius:11px!important}
+    .history-item strong{font-size:10px!important}.history-item span{font-size:9px!important}.history-item p{font-size:11px!important;margin-top:5px!important}
+
+    .multi-photo-box{padding:8px!important;border-radius:12px!important}.multi-photo-drop{min-height:52px!important;padding:7px!important;border-radius:10px!important}
+    .photo-preview-grid{grid-template-columns:repeat(3,1fr)!important;gap:5px!important}.pet-photo-preview{height:82px!important;border-radius:9px!important}
+    .pet-card-badge{width:27px!important;height:27px!important;font-size:12px!important}
+
+    .actions{
+        position:fixed;left:7px;right:7px;bottom:max(7px,env(safe-area-inset-bottom));z-index:8500;
+        display:grid!important;grid-template-columns:1.55fr .72fr!important;gap:6px;padding:6px;
+        background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border:1px solid #eaddec;
+        border-radius:16px;box-shadow:0 12px 34px rgba(20,15,45,.18);
+    }
+    .save-btn,.cancel-btn{width:100%!important;min-height:48px!important;border-radius:11px!important;font-size:14px!important}
+
+    .option-popup,.date-popup{
+        left:7px!important;right:7px!important;bottom:7px!important;top:auto!important;width:auto!important;
+        max-width:none!important;max-height:86vh!important;transform:none!important;border-radius:21px!important;
+    }
+    .breed-style-popup{max-height:90vh!important}.breed-popup-head,.option-head,.date-top{padding:11px!important}
+    .breed-popup-head h3,.option-head h3,.date-title{font-size:17px!important}
+    .popup-search{height:46px!important;margin:8px!important;width:calc(100% - 16px)!important;border-radius:12px!important}
+    .breed-option-list,.option-list{gap:6px!important;padding:8px!important}
+    .breed-select-card{grid-template-columns:52px minmax(0,1fr) auto!important;gap:7px!important;padding:7px!important;border-radius:12px!important;min-height:64px!important}
+    .breed-photo,.breed-icon{width:52px!important;height:52px!important;border-radius:10px!important}
+    .breed-info strong{font-size:13px!important}.breed-info span{font-size:10px!important}.breed-price{font-size:13px!important;min-width:72px!important;padding:6px!important;border-radius:9px!important}.breed-price small{font-size:9px!important}
+    .option-btn{min-height:52px!important;border-radius:13px!important;font-size:14px!important;padding:0 13px!important}
+    .calendar-grid{gap:4px!important}.date-cell{min-height:43px!important;border-radius:11px!important}.date-actions button,.date-shortcuts button{min-height:45px!important;border-radius:11px!important;font-size:12px!important}
+}
+
+@media(min-width:430px) and (max-width:760px){
+    .grid,.bulk-grid,.vaccine-grid,.bulk-pet-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+    .full,.pet-history-field{grid-column:1/-1}
+    .vaccine-note-row{grid-template-columns:1fr 42px!important}
+}
 </style>
 
 <script>
@@ -2993,6 +3094,31 @@ document.addEventListener("keydown", function(e){
         closeDatePicker();
     }
 });
+
+
+/* Select Breed Master automatically when URL is ?breed=ID.
+   It fills both Single and Bulk defaults, so switching mode keeps the breed. */
+function applyBreedFromQuery(){
+    const breedId = new URLSearchParams(window.location.search).get('breed');
+    if(!breedId){ return; }
+
+    const currentInput = document.getElementById('breedProfileInput');
+    if(currentInput && currentInput.value){ return; }
+
+    const button = document.querySelector('#breedOptionList [data-breed-id="' + breedId + '"]');
+    if(!button){ return; }
+
+    const d = button.dataset;
+    chooseBreed(d.breedId, d.breedLabel, d.petType, d.cost, d.sale, d.breedName);
+
+    const bulkButton = document.querySelector('#bulkBreedOptionList [data-breed-id="' + breedId + '"]');
+    if(bulkButton){
+        const b = bulkButton.dataset;
+        chooseBulkBreed(b.breedId, b.breedLabel, b.petType, b.cost, b.sale, b.breedName);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', applyBreedFromQuery);
 </script>
 
 {% endblock %}

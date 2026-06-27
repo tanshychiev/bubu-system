@@ -29,15 +29,19 @@
                 >
             </label>
 
-            <label>
-                Pet Type
-                <select name="pet_type">
-                    <option value="">All Type</option>
-                    <option value="dog" {% if pet_type == "dog" %}selected{% endif %}>Dog</option>
-                    <option value="cat" {% if pet_type == "cat" %}selected{% endif %}>Cat</option>
-                    <option value="other" {% if pet_type == "other" %}selected{% endif %}>Other</option>
-                </select>
-            </label>
+            <div class="touch-field">
+                <span>Pet Type</span>
+                <input type="hidden" name="pet_type" id="breedTypeInput" value="{{ pet_type|default:'' }}">
+                <button type="button" class="touch-select" onclick="openBreedTypePopup()">
+                    <strong id="breedTypeLabel">
+                        {% if pet_type == "dog" %}🐶 Dog
+                        {% elif pet_type == "cat" %}🐱 Cat
+                        {% elif pet_type == "other" %}🐾 Other
+                        {% else %}🐾 All Type{% endif %}
+                    </strong>
+                    <b>⌄</b>
+                </button>
+            </div>
 
             <button type="submit" class="dark-btn">Search</button>
             <a href="{% url 'pet_breed_list' %}" class="clear-btn">Clear</a>
@@ -112,7 +116,7 @@
 
                 <div class="card-actions">
                     <a href="{% url 'pet_breed_edit' breed.id %}" class="orange-btn">Edit</a>
-                    <a href="{% url 'pet_create' %}" class="green-btn">Stock In</a>
+                    <a href="{% url 'pet_create' %}?breed={{ breed.id }}" class="green-btn">Stock In</a>
                 </div>
             </div>
         {% empty %}
@@ -123,6 +127,24 @@
                 <a href="{% url 'pet_breed_create' %}" class="main-btn">＋ Add First Breed</a>
             </div>
         {% endfor %}
+    </div>
+</div>
+
+<!-- PHONE PET TYPE POPUP -->
+<div class="mobile-sheet-backdrop" id="breedTypeBackdrop" onclick="closeBreedTypePopup()"></div>
+<div class="mobile-sheet" id="breedTypePopup" role="dialog" aria-modal="true" aria-labelledby="breedTypeTitle">
+    <div class="mobile-sheet-head">
+        <div>
+            <small>Filter</small>
+            <h3 id="breedTypeTitle">Choose Pet Type</h3>
+        </div>
+        <button type="button" onclick="closeBreedTypePopup()">✕</button>
+    </div>
+    <div class="mobile-sheet-list">
+        <button type="button" onclick="chooseBreedType('', '🐾 All Type')">🐾 <span>All Type</span><b>✓</b></button>
+        <button type="button" onclick="chooseBreedType('dog', '🐶 Dog')">🐶 <span>Dog</span><b>✓</b></button>
+        <button type="button" onclick="chooseBreedType('cat', '🐱 Cat')">🐱 <span>Cat</span><b>✓</b></button>
+        <button type="button" onclick="chooseBreedType('other', '🐾 Other')">🐾 <span>Other</span><b>✓</b></button>
     </div>
 </div>
 
@@ -475,6 +497,129 @@ a{text-decoration:none}
         font-size:18px;
     }
 }
+
+
+/* =========================================================
+   FULL MOBILE COMPACT UPDATE — keeps every original feature
+   ========================================================= */
+.touch-field{font-weight:1000;color:#080634}
+.touch-field>span{display:block;margin-bottom:8px}
+.touch-select{
+    width:100%;height:62px;margin-top:0;padding:0 16px;
+    border:2px solid #eaddec;border-radius:18px;background:#fff;
+    color:#080634;font-size:16px;font-weight:1000;
+    display:flex;align-items:center;justify-content:space-between;cursor:pointer;
+}
+.touch-select b{color:#7b5cff;font-size:20px}
+.mobile-sheet-backdrop{
+    display:none;position:fixed;inset:0;background:rgba(20,15,45,.46);
+    backdrop-filter:blur(2px);z-index:9900;
+}
+.mobile-sheet-backdrop.active{display:block}
+.mobile-sheet{
+    display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    z-index:9901;width:390px;max-width:calc(100% - 28px);background:#fff;
+    border-radius:24px;overflow:hidden;box-shadow:0 30px 90px rgba(20,15,45,.28);
+}
+.mobile-sheet.active{display:block}
+.mobile-sheet-head{
+    display:flex;align-items:center;justify-content:space-between;padding:16px 18px;
+    color:#fff;background:linear-gradient(135deg,#7b5cff,#ff8c6b);
+}
+.mobile-sheet-head small{font-weight:900;opacity:.85}
+.mobile-sheet-head h3{margin:2px 0 0;font-size:20px}
+.mobile-sheet-head button{
+    width:40px;height:40px;border:0;border-radius:50%;background:rgba(255,255,255,.22);
+    color:#fff;font-size:18px;font-weight:1000;
+}
+.mobile-sheet-list{display:grid;gap:8px;padding:12px}
+.mobile-sheet-list button{
+    min-height:56px;padding:0 15px;border:1.5px solid #eaddec;border-radius:16px;
+    background:#fff9fc;color:#080634;font-size:16px;font-weight:1000;
+    display:grid;grid-template-columns:30px 1fr auto;align-items:center;text-align:left;
+}
+.mobile-sheet-list b{color:#7b5cff}
+
+@media(max-width:760px){
+    .breed-page{padding:10px 10px 86px}
+    .page-top{margin-bottom:10px}
+    .page-top h1{font-size:24px;line-height:1.15}
+    .page-top p{font-size:12px;line-height:1.35;margin-top:5px}
+
+    .top-actions{
+        display:flex!important;flex-wrap:nowrap;gap:7px;margin-top:10px!important;
+        overflow-x:auto;padding:0 0 4px;scrollbar-width:none;
+        scroll-snap-type:x proximity;
+    }
+    .top-actions::-webkit-scrollbar{display:none}
+    .top-actions .main-btn,.top-actions .soft-btn,.top-actions .green-btn{
+        width:auto!important;min-width:max-content;min-height:42px!important;
+        padding:0 13px;border-radius:13px;font-size:13px!important;scroll-snap-align:start;
+    }
+
+    .filter-card{padding:10px;border-radius:18px;margin-bottom:10px;box-shadow:0 8px 22px rgba(130,91,60,.06)}
+    .filter-grid{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(120px,.58fr);gap:8px}
+    .filter-grid label:first-child{grid-column:1/-1}
+    .filter-grid .touch-field{grid-column:1/-1}
+    .filter-grid input,.touch-select{height:48px!important;margin-top:5px;border-radius:13px;font-size:14px!important;padding:0 12px}
+    .touch-field>span,.filter-grid label{font-size:12px}
+    .filter-grid .dark-btn,.filter-grid .clear-btn{
+        min-height:46px!important;width:100%!important;border-radius:13px;font-size:14px!important;
+    }
+
+    .breed-grid{display:grid!important;grid-template-columns:1fr!important;gap:9px}
+    .breed-card{
+        display:grid;grid-template-columns:106px minmax(0,1fr);border-radius:18px;
+        border-width:1.5px;box-shadow:0 7px 20px rgba(130,91,60,.055);
+    }
+    .photo-box{height:126px;grid-row:1;grid-column:1;border-radius:0;background:#fff8f4}
+    .photo-box img{padding:5px}
+    .no-photo{font-size:42px}
+    .type-badge,.inactive-badge{top:7px;padding:5px 8px;font-size:10px}
+    .type-badge{left:7px}.inactive-badge{right:7px}
+
+    .breed-body{padding:10px 10px 7px;min-width:0}
+    .title-row{align-items:flex-start;gap:6px}
+    .title-row h3{font-size:17px;line-height:1.2;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .title-row strong{font-size:16px;white-space:nowrap}
+    .money-row{gap:6px;margin-top:8px}
+    .money-row div{padding:7px;border-radius:10px}
+    .money-row small{font-size:9px}.money-row b{font-size:12px;margin-top:2px}
+    .option-list{display:flex;gap:5px;margin-top:7px;overflow-x:auto;scrollbar-width:none}
+    .option-list::-webkit-scrollbar{display:none}
+    .option-list div{min-width:max-content;max-width:185px;padding:6px 8px;border-radius:9px}
+    .option-list span{font-size:9px;margin:0}.option-list p{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .note{margin-top:7px;padding:7px 8px;border-radius:9px;font-size:11px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+    .card-actions{grid-column:1/-1;display:grid!important;grid-template-columns:1fr 1fr!important;gap:7px;padding:8px}
+    .card-actions .orange-btn,.card-actions .green-btn{
+        min-height:42px!important;width:100%!important;border-radius:12px;font-size:13px!important;
+    }
+
+    .empty-box{padding:26px 14px;border-radius:18px}.empty-box div{font-size:52px}
+    .mobile-sheet{left:8px;right:8px;bottom:8px;top:auto;transform:none;width:auto;max-width:none;border-radius:22px}
+    .mobile-sheet-list button{min-height:58px}
+}
 </style>
+
+
+<script>
+function openBreedTypePopup(){
+    document.getElementById('breedTypeBackdrop').classList.add('active');
+    document.getElementById('breedTypePopup').classList.add('active');
+    document.body.style.overflow='hidden';
+}
+function closeBreedTypePopup(){
+    document.getElementById('breedTypeBackdrop').classList.remove('active');
+    document.getElementById('breedTypePopup').classList.remove('active');
+    document.body.style.overflow='';
+}
+function chooseBreedType(value,label){
+    document.getElementById('breedTypeInput').value=value;
+    document.getElementById('breedTypeLabel').innerText=label;
+    closeBreedTypePopup();
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeBreedTypePopup();}});
+</script>
 
 {% endblock %}
