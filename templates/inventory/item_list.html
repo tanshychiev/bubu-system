@@ -1035,6 +1035,129 @@ a { text-decoration:none !important; }
     }
 }
 
+
+/* =========================================================
+   ROBUST INVENTORY IMAGE FALLBACK
+========================================================= */
+.product-img,
+.item-img,
+.variant-img,
+.result-img,
+.row-img,
+.preview-box{
+    position:relative;
+}
+
+.inventory-image-error{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+}
+
+.inventory-image-fallback{
+    width:100%;
+    height:100%;
+    min-height:44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#8e63ff;
+    background:linear-gradient(135deg,#f4edff,#fff8f4);
+    font-size:clamp(24px,5vw,54px);
+    line-height:1;
+}
+
+@media(max-width:700px){
+    html{
+        -webkit-text-size-adjust:100%!important;
+        text-size-adjust:100%!important;
+    }
+
+    input,
+    select,
+    textarea,
+    [contenteditable="true"]{
+        font-size:16px!important;
+    }
+}
+
+body.inventory-popup-open{
+    overflow:hidden!important;
+    touch-action:none;
+}
+
+@media(max-width:700px){
+    .branch-popup-backdrop,
+    .mobile-action-backdrop{
+        z-index:19990!important;
+        background:rgba(23,21,47,.48)!important;
+        backdrop-filter:blur(3px)!important;
+    }
+
+    .branch-popup,
+    .mobile-action-panel{
+        left:50%!important;
+        right:auto!important;
+        top:50%!important;
+        bottom:auto!important;
+        width:calc(100% - 16px)!important;
+        max-width:430px!important;
+        max-height:80dvh!important;
+        margin:0!important;
+        padding:10px!important;
+        overflow-y:auto!important;
+        transform:translate(-50%,-50%)!important;
+        border-radius:18px!important;
+        z-index:20000!important;
+    }
+
+    .branch-popup-head{
+        position:sticky!important;
+        top:-10px!important;
+        z-index:2!important;
+        margin:0 -2px 7px!important;
+        padding:8px!important;
+        border-radius:13px!important;
+        background:linear-gradient(135deg,#8e63ff,#ff8c6b)!important;
+    }
+
+    .branch-popup-head h3{
+        color:white!important;
+        font-size:15px!important;
+    }
+
+    .branch-popup-head button{
+        width:36px!important;
+        height:36px!important;
+        color:white!important;
+        background:rgba(255,255,255,.22)!important;
+    }
+
+    .branch-popup-list{
+        gap:5px!important;
+    }
+
+    .branch-option{
+        min-height:48px!important;
+        padding:0 9px!important;
+        border-radius:11px!important;
+        font-size:11px!important;
+    }
+
+    .mobile-action-panel.active{
+        display:grid!important;
+        grid-template-columns:1fr!important;
+        gap:6px!important;
+    }
+
+    .mobile-action-panel .add-btn{
+        min-height:46px!important;
+        height:46px!important;
+        border-radius:11px!important;
+        font-size:11px!important;
+    }
+}
+
 </style>
 
 <div class="inventory-hero">
@@ -1216,7 +1339,7 @@ a { text-decoration:none !important; }
             <a href="{% url 'item_detail' item.id %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}">
                 <div class="product-img">
                     {% if item.image %}
-                        <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                        <img src="{{ item.image.url }}" alt="{{ item.name }}" loading="lazy" onerror="inventoryImageError(this)">
                     {% else %}
                         <div class="placeholder">📦</div>
                     {% endif %}
@@ -1330,6 +1453,8 @@ function openBranchPopup(){
     if(backdrop){
         backdrop.classList.add("active");
     }
+
+    document.body.classList.add("inventory-popup-open");
 }
 
 function closeBranchPopup(){
@@ -1343,6 +1468,8 @@ function closeBranchPopup(){
     if(backdrop){
         backdrop.classList.remove("active");
     }
+
+    document.body.classList.remove("inventory-popup-open");
 }
 
 function selectBranch(branchId){
@@ -1369,6 +1496,8 @@ function openMobileActions(){
     if(backdrop){
         backdrop.classList.add("active");
     }
+
+    document.body.classList.add("inventory-popup-open");
 }
 
 function closeMobileActions(){
@@ -1382,6 +1511,8 @@ function closeMobileActions(){
     if(backdrop){
         backdrop.classList.remove("active");
     }
+
+    document.body.classList.remove("inventory-popup-open");
 }
 
 document.addEventListener("keydown", function(e){
@@ -1390,6 +1521,69 @@ document.addEventListener("keydown", function(e){
         closeMobileActions();
     }
 });
+
+function inventoryImageError(img){
+    if(!img){
+        return;
+    }
+
+    img.onerror = null;
+
+    const holder = img.parentElement;
+    img.remove();
+
+    if(!holder){
+        return;
+    }
+
+    holder.classList.add("inventory-image-error");
+
+    if(!holder.querySelector(".inventory-image-fallback")){
+        const fallback = document.createElement("span");
+        fallback.className = "inventory-image-fallback";
+        fallback.textContent = "📦";
+        holder.appendChild(fallback);
+    }
+}
+
+function inventoryNormalizeImageUrl(rawUrl){
+    let value = String(rawUrl || "").trim().replace(/\\/g, "/");
+
+    if(!value){
+        return "";
+    }
+
+    if(/^(data:|blob:|https?:\/\/)/i.test(value)){
+        return value;
+    }
+
+    if(value.startsWith("//")){
+        return window.location.protocol + value;
+    }
+
+    if(value.startsWith("/")){
+        return value;
+    }
+
+    if(value.startsWith("media/") || value.startsWith("static/")){
+        return "/" + value;
+    }
+
+    return "/media/" + value.replace(/^\.?\//, "");
+}
+
+function inventoryImageMarkup(rawUrl){
+    const url = inventoryNormalizeImageUrl(rawUrl);
+
+    if(!url){
+        return '<span class="inventory-image-fallback">📦</span>';
+    }
+
+    const safeUrl = url.replace(/"/g, "&quot;");
+
+    return `<img src="${safeUrl}" alt="Inventory item" loading="lazy" onerror="inventoryImageError(this)">`;
+}
+
 </script>
 
 {% endblock %}

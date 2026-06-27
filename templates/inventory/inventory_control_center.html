@@ -737,6 +737,443 @@ a{text-decoration:none!important;}
         font-size:16px;
     }
 }
+
+/* =========================================================
+   COMPACT PHONE INVENTORY CONTROL CENTER
+========================================================= */
+html{
+    -webkit-text-size-adjust:100%!important;
+    text-size-adjust:100%!important;
+}
+
+body.inventory-control-popup-open{
+    overflow:hidden!important;
+    touch-action:none!important;
+}
+
+.search-input,
+.field-box input,
+.field-box select,
+.mobile-select-btn,
+textarea{
+    font-size:16px!important;
+}
+
+.inventory-control-fallback{
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#8e63ff;
+    background:linear-gradient(135deg,#f4edff,#fff8f4);
+    font-size:23px;
+}
+
+@media(max-width:700px){
+    .control-page{
+        width:100%!important;
+        max-width:none!important;
+        margin:0!important;
+        padding:7px 6px 20px!important;
+    }
+
+    .top-bar{
+        grid-template-columns:1fr 1fr!important;
+        gap:5px!important;
+        margin-bottom:7px!important;
+    }
+
+    .top-bar .touch-btn,
+    .top-bar .touch-btn-soft{
+        width:100%!important;
+        min-height:39px!important;
+        padding:0 7px!important;
+        border-radius:10px!important;
+        font-size:9px!important;
+        box-shadow:none!important;
+    }
+
+    .hero-card{
+        margin-bottom:7px!important;
+        padding:11px!important;
+        border-radius:14px!important;
+        box-shadow:none!important;
+    }
+
+    .hero-title{
+        margin:0!important;
+        font-size:20px!important;
+    }
+
+    .hero-sub{
+        margin-top:4px!important;
+        font-size:9px!important;
+        line-height:1.35!important;
+    }
+
+    .summary-grid{
+        display:flex!important;
+        gap:6px!important;
+        margin:0 -6px 7px!important;
+        padding:0 6px 3px!important;
+        overflow-x:auto!important;
+        scrollbar-width:none!important;
+    }
+
+    .summary-grid::-webkit-scrollbar{
+        display:none!important;
+    }
+
+    .summary-card{
+        flex:0 0 112px!important;
+        min-height:72px!important;
+        padding:8px!important;
+        border-radius:12px!important;
+        box-shadow:none!important;
+    }
+
+    .summary-icon{
+        width:34px!important;
+        height:34px!important;
+        margin-bottom:5px!important;
+        border-radius:10px!important;
+        font-size:16px!important;
+    }
+
+    .summary-label{
+        font-size:7px!important;
+    }
+
+    .summary-value{
+        margin-top:2px!important;
+        font-size:16px!important;
+    }
+
+    .tab-row{
+        display:flex!important;
+        grid-template-columns:none!important;
+        gap:5px!important;
+        margin-bottom:7px!important;
+        overflow-x:auto!important;
+        scrollbar-width:none!important;
+    }
+
+    .tab-row::-webkit-scrollbar{
+        display:none!important;
+    }
+
+    .tab-btn{
+        width:auto!important;
+        min-width:max-content!important;
+        min-height:38px!important;
+        padding:0 10px!important;
+        border-radius:10px!important;
+        font-size:9px!important;
+    }
+
+    .panel{
+        padding:7px!important;
+        margin-bottom:7px!important;
+        border-radius:13px!important;
+        box-shadow:none!important;
+    }
+
+    .section-head{
+        margin-bottom:7px!important;
+        align-items:center!important;
+    }
+
+    .section-title{
+        font-size:15px!important;
+    }
+
+    .section-sub{
+        display:none!important;
+    }
+
+    .section-head .touch-btn{
+        width:auto!important;
+        min-height:36px!important;
+        padding:0 9px!important;
+        border-radius:9px!important;
+        font-size:8px!important;
+        box-shadow:none!important;
+    }
+
+    .search-row{
+        grid-template-columns:minmax(0,1fr) auto!important;
+        gap:5px!important;
+        margin-bottom:7px!important;
+    }
+
+    .search-input{
+        min-height:43px!important;
+        padding:0 9px!important;
+        border-radius:10px!important;
+        font-size:16px!important;
+    }
+
+    .search-row .touch-btn-soft{
+        width:auto!important;
+        min-height:43px!important;
+        padding:0 9px!important;
+        border-radius:10px!important;
+        font-size:9px!important;
+    }
+
+    .create-box{
+        margin-top:6px!important;
+        padding:7px!important;
+        border-radius:11px!important;
+    }
+
+    .form-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:5px!important;
+    }
+
+    .form-grid .full{
+        grid-column:1 / -1!important;
+    }
+
+    .field-box{
+        min-width:0!important;
+        margin-bottom:5px!important;
+    }
+
+    .field-box label{
+        margin-bottom:3px!important;
+        font-size:8px!important;
+    }
+
+    .field-box input,
+    .field-box select,
+    .mobile-select-btn{
+        min-height:43px!important;
+        padding:0 8px!important;
+        border-radius:9px!important;
+        font-size:16px!important;
+    }
+
+    .check-row{
+        min-height:43px!important;
+        padding:5px 7px!important;
+        border-radius:9px!important;
+        font-size:9px!important;
+    }
+
+    .popup-actions{
+        gap:5px!important;
+        margin-top:6px!important;
+    }
+
+    .popup-actions .touch-btn,
+    .popup-actions .touch-btn-danger{
+        width:100%!important;
+        min-height:43px!important;
+        padding:0 8px!important;
+        border-radius:9px!important;
+        font-size:9px!important;
+        box-shadow:none!important;
+    }
+
+    .helper-box{
+        margin-top:6px!important;
+        padding:7px!important;
+        border-radius:10px!important;
+        font-size:8px!important;
+        line-height:1.35!important;
+    }
+
+    .list-wrap{
+        gap:6px!important;
+    }
+
+    .list-item{
+        min-height:64px!important;
+        padding:7px!important;
+        grid-template-columns:minmax(0,1fr) auto!important;
+        gap:6px!important;
+        border-radius:11px!important;
+    }
+
+    .item-main{
+        gap:7px!important;
+    }
+
+    .item-icon{
+        width:42px!important;
+        height:42px!important;
+        border-radius:11px!important;
+        font-size:19px!important;
+    }
+
+    .item-name{
+        max-width:180px!important;
+        font-size:11px!important;
+    }
+
+    .item-meta{
+        max-width:180px!important;
+        margin-top:2px!important;
+        overflow:hidden!important;
+        font-size:7px!important;
+        text-overflow:ellipsis!important;
+        white-space:nowrap!important;
+    }
+
+    .item-actions{
+        display:flex!important;
+        grid-template-columns:none!important;
+        gap:4px!important;
+        align-items:center!important;
+    }
+
+    .badge{
+        min-height:28px!important;
+        padding:0 6px!important;
+        font-size:7px!important;
+    }
+
+    .mini-btn,
+    .mini-btn-danger{
+        width:auto!important;
+        min-height:32px!important;
+        padding:0 7px!important;
+        border-radius:8px!important;
+        font-size:8px!important;
+    }
+
+    .popup-backdrop{
+        z-index:19990!important;
+        background:rgba(23,21,47,.48)!important;
+        backdrop-filter:blur(3px)!important;
+    }
+
+    .edit-popup{
+        left:50%!important;
+        right:auto!important;
+        top:50%!important;
+        bottom:auto!important;
+        width:calc(100% - 16px)!important;
+        max-width:560px!important;
+        max-height:82dvh!important;
+        margin:0!important;
+        padding:9px!important;
+        transform:translate(-50%,-50%)!important;
+        border-radius:18px!important;
+        overflow-y:auto!important;
+        z-index:20000!important;
+    }
+
+    .popup-head{
+        position:sticky!important;
+        top:-9px!important;
+        z-index:4!important;
+        margin:0 0 7px!important;
+        padding:8px!important;
+        border-radius:13px!important;
+        color:white!important;
+        background:linear-gradient(135deg,#8e63ff,#ff8c6b)!important;
+    }
+
+    .popup-head h3{
+        color:white!important;
+        font-size:15px!important;
+    }
+
+    .popup-close{
+        width:36px!important;
+        height:36px!important;
+        color:white!important;
+        background:rgba(255,255,255,.22)!important;
+    }
+
+    .option-popup{
+        left:50%!important;
+        right:auto!important;
+        top:50%!important;
+        bottom:auto!important;
+        width:calc(100% - 28px)!important;
+        max-width:420px!important;
+        max-height:74dvh!important;
+        margin:0!important;
+        padding:9px!important;
+        transform:translate(-50%,-50%)!important;
+        border-radius:18px!important;
+        z-index:21000!important;
+    }
+
+    .option-popup-head{
+        position:sticky!important;
+        top:-9px!important;
+        z-index:2!important;
+        margin:0 0 6px!important;
+        padding:8px!important;
+        border-radius:13px!important;
+        color:white!important;
+        background:linear-gradient(135deg,#8e63ff,#ff8c6b)!important;
+    }
+
+    .option-popup-head h3{
+        color:white!important;
+        font-size:15px!important;
+    }
+
+    .option-close{
+        width:36px!important;
+        height:36px!important;
+        color:white!important;
+        background:rgba(255,255,255,.22)!important;
+    }
+
+    .option-list{
+        gap:5px!important;
+    }
+
+    .option-btn{
+        min-height:48px!important;
+        padding:0 9px!important;
+        border-radius:11px!important;
+        font-size:10px!important;
+    }
+
+    .upload-box{
+        padding:8px!important;
+        border-radius:11px!important;
+    }
+
+    .upload-title{
+        font-size:9px!important;
+    }
+
+    .upload-sub{
+        font-size:8px!important;
+    }
+
+    .image-preview{
+        width:82px!important;
+        height:82px!important;
+        border-radius:11px!important;
+    }
+
+    .history-box{
+        margin-top:7px!important;
+        padding:7px!important;
+        border-radius:11px!important;
+    }
+
+    .history-title{
+        font-size:11px!important;
+    }
+
+    .history-row{
+        padding:6px 0!important;
+        font-size:8px!important;
+    }
+}
+
 </style>
 
 <div class="control-page">
@@ -1058,7 +1495,7 @@ a{text-decoration:none!important;}
                 <div class="item-main">
                     <div class="item-icon">
                         {% if item.image %}
-                            <img src="{{ item.image.url }}">
+                            <img src="{{ item.image.url }}" alt="{{ item.name }}" onerror="inventoryControlImageFallback(this)">
                         {% else %}
                             📦
                         {% endif %}
@@ -1137,7 +1574,7 @@ a{text-decoration:none!important;}
                                     <button
                                         type="button"
                                         class="option-btn {% if not item.item_type_id %}active{% endif %}"
-                                        onclick="chooseType('{{ item.id }}', '', 'No Type')"
+                                        onclick="chooseType('{{ item.id }}', '', 'No Type', this)"
                                     >
                                         <span class="option-left">
                                             <span class="option-emoji">📦</span>
@@ -1150,7 +1587,7 @@ a{text-decoration:none!important;}
                                         <button
                                             type="button"
                                             class="option-btn {% if item.item_type_id == type.id %}active{% endif %}"
-                                            onclick="chooseType('{{ item.id }}', '{{ type.id }}', '{{ type.emoji|escapejs }} {{ type.name|escapejs }}')"
+                                            onclick="chooseType('{{ item.id }}', '{{ type.id }}', '{{ type.emoji|escapejs }} {{ type.name|escapejs }}', this)"
                                         >
                                             <span class="option-left">
                                                 <span class="option-emoji">{{ type.emoji|default:"📦" }}</span>
@@ -1195,7 +1632,7 @@ a{text-decoration:none!important;}
                                         <button
                                             type="button"
                                             class="option-btn {% if item.unit == unit.code %}active{% endif %}"
-                                            onclick="chooseUnit('{{ item.id }}', '{{ unit.code|escapejs }}', '{{ unit.emoji|escapejs }} {{ unit.name|escapejs }}')"
+                                            onclick="chooseUnit('{{ item.id }}', '{{ unit.code|escapejs }}', '{{ unit.emoji|escapejs }} {{ unit.name|escapejs }}', this)"
                                         >
                                             <span class="option-left">
                                                 <span class="option-emoji">{{ unit.emoji|default:"📏" }}</span>
@@ -1213,7 +1650,7 @@ a{text-decoration:none!important;}
 
                             {% if item.image %}
                                 <div class="image-preview-wrap current-image-wrap" id="currentImageWrap{{ item.id }}">
-                                    <img src="{{ item.image.url }}" class="image-preview">
+                                    <img src="{{ item.image.url }}" class="image-preview" alt="{{ item.name }}" onerror="inventoryControlImageFallback(this)">
                                 </div>
 
                                 <label class="check-row">
@@ -1354,18 +1791,21 @@ function openTypePopup(id){
     closePopups();
     document.getElementById("typePopup" + id).classList.add("active");
     document.getElementById("popupBackdrop").classList.add("active");
+    document.body.classList.add("inventory-control-popup-open");
 }
 
 function openUnitPopup(id){
     closePopups();
     document.getElementById("unitPopup" + id).classList.add("active");
     document.getElementById("popupBackdrop").classList.add("active");
+    document.body.classList.add("inventory-control-popup-open");
 }
 
 function openItemPopup(id){
     closePopups();
     document.getElementById("itemPopup" + id).classList.add("active");
     document.getElementById("popupBackdrop").classList.add("active");
+    document.body.classList.add("inventory-control-popup-open");
     activeItemImageId = id;
 }
 
@@ -1380,6 +1820,8 @@ function closePopups(){
     if(backdrop){
         backdrop.classList.remove("active");
     }
+
+    document.body.classList.remove("inventory-control-popup-open");
 }
 
 function openOptionPopup(kind, itemId){
@@ -1402,7 +1844,7 @@ function closeOptionPopups(){
     });
 }
 
-function chooseType(itemId, value, label){
+function chooseType(itemId, value, label, clickedButton){
     document.getElementById("itemTypeInput" + itemId).value = value;
     document.getElementById("itemTypeLabel" + itemId).innerText = label;
 
@@ -1413,13 +1855,13 @@ function chooseType(itemId, value, label){
             btn.classList.remove("active");
         });
 
-        event.currentTarget.classList.add("active");
+        clickedButton?.classList.add("active");
     }
 
     closeOptionPopups();
 }
 
-function chooseUnit(itemId, value, label){
+function chooseUnit(itemId, value, label, clickedButton){
     document.getElementById("itemUnitInput" + itemId).value = value;
     document.getElementById("itemUnitLabel" + itemId).innerText = label;
 
@@ -1430,7 +1872,7 @@ function chooseUnit(itemId, value, label){
             btn.classList.remove("active");
         });
 
-        event.currentTarget.classList.add("active");
+        clickedButton?.classList.add("active");
     }
 
     closeOptionPopups();
@@ -1553,6 +1995,23 @@ document.addEventListener("keydown", function(e){
         closePopups();
     }
 });
+
+function inventoryControlImageFallback(img){
+    if(!img){
+        return;
+    }
+
+    const holder = img.parentElement;
+    img.remove();
+
+    if(holder && !holder.querySelector(".inventory-control-fallback")){
+        const fallback = document.createElement("span");
+        fallback.className = "inventory-control-fallback";
+        fallback.textContent = "📦";
+        holder.appendChild(fallback);
+    }
+}
+
 </script>
 
 {% endblock %}

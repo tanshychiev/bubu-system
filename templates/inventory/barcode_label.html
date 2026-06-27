@@ -2,269 +2,649 @@
 
 {% block content %}
 
+<div class="barcode-page">
+    <a href="{% url 'item_detail' item.id %}" class="barcode-back">← Back</a>
+
+    <section class="barcode-card">
+        <div class="barcode-head">
+            <div>
+                <span class="barcode-badge">🏷️ Barcode Center</span>
+                <h1>Barcode Label</h1>
+                <p>{{ item.name }} · {{ variant.display_name }}</p>
+            </div>
+
+            <div class="barcode-photo-wrap">
+                {% if variant.image %}
+                    <img
+                        class="barcode-product-photo"
+                        src="{{ variant.image.url }}"
+                        alt="{{ item.name }}"
+                        onerror="showBarcodePhotoFallback(this)"
+                    >
+                {% elif item.image %}
+                    <img
+                        class="barcode-product-photo"
+                        src="{{ item.image.url }}"
+                        alt="{{ item.name }}"
+                        onerror="showBarcodePhotoFallback(this)"
+                    >
+                {% else %}
+                    <div class="barcode-no-photo">📦</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="barcode-code-card">
+            <div class="barcode-code-copy">
+                <span>SKU / Barcode Code</span>
+                <strong id="barcodeCodeText">{{ variant.sku }}</strong>
+            </div>
+
+            <button
+                type="button"
+                class="barcode-copy-btn"
+                id="copyCodeButton"
+                onclick="copyBarcodeCode()"
+            >
+                📋 Copy Code
+            </button>
+        </div>
+
+        <div class="barcode-preview-title">
+            <div>
+                <h2>Label Preview</h2>
+                <p>Print size: 58 mm × 38 mm</p>
+            </div>
+
+            <span>Ready to print</span>
+        </div>
+
+        <div class="barcode-label-stage">
+            <div class="label-box" id="printLabel">
+                <div class="label-name">{{ item.name }}</div>
+                <div class="label-info">{{ variant.display_name }}</div>
+
+                <img
+                    class="barcode-img"
+                    src="data:image/png;base64,{{ barcode_base64 }}"
+                    alt="Barcode"
+                >
+
+                <div class="label-bottom">
+                    <div class="sku-text">{{ variant.sku }}</div>
+                    <div class="price">${{ variant.sale_price|floatformat:2 }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="barcode-actions">
+            <button type="button" onclick="window.print()" class="barcode-print-btn">
+                🖨️ Print Barcode
+            </button>
+
+            <a href="{% url 'item_detail' item.id %}" class="barcode-cancel-btn">
+                Cancel
+            </a>
+        </div>
+    </section>
+</div>
+
 <style>
-.page {
-    max-width: 720px;
-    margin: auto;
+*{
+    box-sizing:border-box;
 }
 
-.back-btn {
-    display: inline-flex;
-    padding: 13px 24px;
-    border-radius: 999px;
-    background: #fff;
-    border: 1px solid #eaddec;
-    color: #6b6178;
-    font-weight: 900;
-    text-decoration: none;
-    margin-bottom: 18px;
+a{
+    text-decoration:none;
 }
 
-.card {
-    background: #fff;
-    border: 1px solid #f5e8df;
-    border-radius: 30px;
-    padding: 26px;
-    box-shadow: 0 20px 50px rgba(130, 91, 60, .10);
-    text-align: center;
+html{
+    -webkit-text-size-adjust:100%;
+    text-size-adjust:100%;
 }
 
-h1 {
-    color: #17152f;
-    font-size: 34px;
-    margin: 0 0 8px;
-    font-weight: 900;
+.barcode-page{
+    width:min(760px,100%);
+    margin:0 auto;
+    padding:22px 18px;
 }
 
-p {
-    color: #7b7288;
-    font-weight: 800;
+.barcode-back{
+    min-height:42px;
+    margin-bottom:10px;
+    padding:0 14px;
+    border:1px solid #eaddec;
+    border-radius:13px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:#6b6178;
+    background:white;
+    font-size:12px;
+    font-weight:1000;
 }
 
-/* PRODUCT PHOTO PREVIEW */
-.product-photo-wrap {
-    margin: 14px auto 18px;
-    width: 120px;
-    height: 120px;
-    border-radius: 28px;
-    padding: 7px;
-    background: linear-gradient(135deg, #ffe4d6, #eee2ff);
-    box-shadow: 0 14px 32px rgba(155, 124, 246, .18);
-    box-sizing: border-box;
+.barcode-card{
+    padding:22px;
+    border:1px solid #f1ddd1;
+    border-radius:24px;
+    background:white;
+    box-shadow:0 18px 42px rgba(130,91,60,.08);
 }
 
-.product-photo {
-    width: 100%;
-    height: 100%;
-    border-radius: 22px;
-    object-fit: contain;
-    object-position: center;
-    background: #fff;
-    display: block;
+.barcode-head{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 110px;
+    gap:16px;
+    align-items:center;
 }
 
-.no-photo {
-    width: 100%;
-    height: 100%;
-    border-radius: 22px;
-    background: #fff7f2;
-    color: #9b7cf6;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 42px;
+.barcode-badge{
+    min-height:32px;
+    padding:0 10px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    color:#7b5cff;
+    background:#f1ebff;
+    font-size:10px;
+    font-weight:1000;
 }
 
-/* LABEL PREVIEW */
-.label-box {
-    width: 58mm;
-    height: 38mm;
-    margin: 25px auto;
-    border: 1px dashed #ccc;
-    padding: 3mm 4mm;
-    background: white;
-    color: black;
-    text-align: center;
-    box-sizing: border-box;
-    overflow: hidden;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1.5mm;
+.barcode-head h1{
+    margin:8px 0 0;
+    color:#17152f;
+    font-size:32px;
+    line-height:1.08;
+    font-weight:1000;
 }
 
-.label-name {
-    font-size: 10.5px;
-    font-weight: 900;
-    line-height: 1.1;
-    max-width: 50mm;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.barcode-head p{
+    margin:6px 0 0;
+    color:#7b7288;
+    font-size:12px;
+    font-weight:900;
 }
 
-.label-info {
-    font-size: 8px;
-    font-weight: 800;
-    line-height: 1.1;
-    max-width: 50mm;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.barcode-photo-wrap{
+    width:110px;
+    height:110px;
+    padding:6px;
+    border-radius:22px;
+    background:linear-gradient(135deg,#ffe4d6,#eee2ff);
+    box-shadow:0 10px 24px rgba(155,124,246,.14);
 }
 
-.barcode-img {
-    width: 45mm;
-    height: 11mm;
-    object-fit: fill;
-    display: block;
-    margin: 0;
+.barcode-product-photo,
+.barcode-no-photo{
+    width:100%;
+    height:100%;
+    border-radius:17px;
+    background:white;
 }
 
-.sku-text {
-    font-size: 8px;
-    font-weight: 800;
-    line-height: 1.1;
+.barcode-product-photo{
+    object-fit:contain;
+    display:block;
 }
 
-.price {
-    font-size: 10px;
-    font-weight: 900;
-    line-height: 1.1;
+.barcode-no-photo{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#8e63ff;
+    font-size:38px;
 }
 
-.btn-print {
-    border: none;
-    border-radius: 999px;
-    padding: 15px 34px;
-    color: white;
-    font-weight: 900;
-    background: linear-gradient(135deg, #9b7cf6, #ff8c6b);
-    box-shadow: 0 12px 26px rgba(155, 124, 246, .25);
-    cursor: pointer;
+.barcode-code-card{
+    margin-top:16px;
+    padding:12px;
+    border:1px solid #e6ddff;
+    border-radius:16px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:10px;
+    align-items:center;
+    background:linear-gradient(135deg,#faf7ff,#fff9f5);
 }
 
-/* PRINT ONLY BARCODE LABEL */
-@media print {
-    @page {
-        size: 58mm 38mm;
-        margin: 0;
+.barcode-code-copy{
+    min-width:0;
+}
+
+.barcode-code-copy span{
+    display:block;
+    margin-bottom:4px;
+    color:#7b7288;
+    font-size:9px;
+    font-weight:1000;
+}
+
+.barcode-code-copy strong{
+    display:block;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    color:#17152f;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:17px;
+    line-height:1.35;
+    letter-spacing:.7px;
+    font-weight:1000;
+}
+
+.barcode-copy-btn{
+    min-height:44px;
+    padding:0 14px;
+    border:0;
+    border-radius:12px;
+    color:white;
+    background:linear-gradient(135deg,#7b5cff,#9b7cf6);
+    font-size:11px;
+    font-weight:1000;
+    cursor:pointer;
+    white-space:nowrap;
+}
+
+.barcode-copy-btn.copied{
+    background:linear-gradient(135deg,#19a974,#7be0b2);
+}
+
+.barcode-preview-title{
+    margin-top:18px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+}
+
+.barcode-preview-title h2{
+    margin:0;
+    color:#17152f;
+    font-size:18px;
+    font-weight:1000;
+}
+
+.barcode-preview-title p{
+    margin:3px 0 0;
+    color:#7b7288;
+    font-size:10px;
+    font-weight:900;
+}
+
+.barcode-preview-title > span{
+    min-height:30px;
+    padding:0 9px;
+    border-radius:999px;
+    display:flex;
+    align-items:center;
+    color:#19a974;
+    background:#eafff4;
+    font-size:8px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+
+.barcode-label-stage{
+    margin-top:10px;
+    padding:20px 10px;
+    border:1px dashed #d9c6ec;
+    border-radius:18px;
+    display:flex;
+    justify-content:center;
+    overflow-x:auto;
+    background:linear-gradient(135deg,#fffafd,#faf7ff);
+}
+
+/* EXACT LABEL SIZE */
+.label-box{
+    width:58mm;
+    height:38mm;
+    min-width:58mm;
+    min-height:38mm;
+    padding:2.6mm 3.2mm;
+    border:1px dashed #bbb;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:1.1mm;
+    overflow:hidden;
+    color:black;
+    background:white;
+    text-align:center;
+}
+
+.label-name{
+    width:100%;
+    overflow:hidden;
+    color:#000;
+    font-size:10px;
+    line-height:1.05;
+    font-weight:900;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.label-info{
+    width:100%;
+    overflow:hidden;
+    color:#000;
+    font-size:7.5px;
+    line-height:1.05;
+    font-weight:800;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.barcode-img{
+    width:46mm;
+    height:11mm;
+    flex:0 0 11mm;
+    margin:0;
+    object-fit:fill;
+    display:block;
+}
+
+.label-bottom{
+    width:100%;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:2mm;
+    align-items:center;
+}
+
+.sku-text{
+    min-width:0;
+    overflow:hidden;
+    color:#000;
+    font-family:Arial,sans-serif;
+    font-size:7.5px;
+    line-height:1;
+    letter-spacing:.2px;
+    font-weight:900;
+    text-align:left;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.price{
+    color:#000;
+    font-size:9.5px;
+    line-height:1;
+    font-weight:1000;
+    text-align:right;
+    white-space:nowrap;
+}
+
+.barcode-actions{
+    margin-top:16px;
+    display:grid;
+    grid-template-columns:1.5fr .7fr;
+    gap:8px;
+}
+
+.barcode-print-btn,
+.barcode-cancel-btn{
+    min-height:50px;
+    border:0;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    font-weight:1000;
+}
+
+.barcode-print-btn{
+    color:white;
+    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+    cursor:pointer;
+}
+
+.barcode-cancel-btn{
+    color:#6b6178;
+    background:#f5f3f7;
+}
+
+/* PHONE */
+@media(max-width:700px){
+    .barcode-page{
+        padding:7px 6px 78px;
+    }
+
+    .barcode-back{
+        min-height:35px;
+        margin-bottom:6px;
+        padding:0 9px;
+        border-radius:9px;
+        font-size:10px;
+    }
+
+    .barcode-card{
+        padding:9px;
+        border-radius:15px;
+        box-shadow:none;
+    }
+
+    .barcode-head{
+        grid-template-columns:minmax(0,1fr) 72px;
+        gap:7px;
+    }
+
+    .barcode-badge{
+        min-height:27px;
+        padding:0 8px;
+        font-size:8px;
+    }
+
+    .barcode-head h1{
+        margin-top:5px;
+        font-size:22px;
+    }
+
+    .barcode-head p{
+        margin-top:3px;
+        max-width:230px;
+        overflow:hidden;
+        font-size:9px;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+
+    .barcode-photo-wrap{
+        width:72px;
+        height:72px;
+        padding:4px;
+        border-radius:14px;
+    }
+
+    .barcode-product-photo,
+    .barcode-no-photo{
+        border-radius:11px;
+    }
+
+    .barcode-no-photo{
+        font-size:28px;
+    }
+
+    .barcode-code-card{
+        margin-top:7px;
+        padding:7px;
+        border-radius:11px;
+        grid-template-columns:minmax(0,1fr) auto;
+        gap:5px;
+    }
+
+    .barcode-code-copy strong{
+        font-size:13px;
+        letter-spacing:.3px;
+    }
+
+    .barcode-copy-btn{
+        min-height:39px;
+        padding:0 9px;
+        border-radius:9px;
+        font-size:9px;
+    }
+
+    .barcode-preview-title{
+        margin-top:9px;
+    }
+
+    .barcode-preview-title h2{
+        font-size:14px;
+    }
+
+    .barcode-label-stage{
+        margin-top:6px;
+        padding:10px 4px;
+        border-radius:12px;
+    }
+
+    .label-box{
+        transform:scale(.93);
+        transform-origin:center;
+    }
+
+    .barcode-actions{
+        position:fixed;
+        left:6px;
+        right:6px;
+        bottom:calc(6px + env(safe-area-inset-bottom));
+        z-index:5000;
+        height:58px;
+        margin:0;
+        padding:5px;
+        border:1px solid rgba(228,213,236,.9);
+        border-radius:15px;
+        background:rgba(255,255,255,.97);
+        box-shadow:0 14px 34px rgba(39,27,61,.18);
+        backdrop-filter:blur(16px);
+    }
+
+    .barcode-print-btn,
+    .barcode-cancel-btn{
+        min-height:46px;
+        border-radius:10px;
+        font-size:10px;
+    }
+}
+
+/* PRINT ONLY THE 58 × 38 MM LABEL */
+@media print{
+    @page{
+        size:58mm 38mm;
+        margin:0;
     }
 
     html,
-    body {
-        width: 58mm !important;
-        height: 38mm !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        background: white !important;
-        overflow: hidden !important;
+    body{
+        width:58mm!important;
+        height:38mm!important;
+        margin:0!important;
+        padding:0!important;
+        overflow:hidden!important;
+        background:white!important;
     }
 
-    body * {
-        visibility: hidden !important;
+    body *{
+        visibility:hidden!important;
     }
 
     .label-box,
-    .label-box * {
-        visibility: visible !important;
+    .label-box *{
+        visibility:visible!important;
     }
 
-    .label-box {
-        position: fixed !important;
-        left: 0 !important;
-        top: 0 !important;
-
-        width: 58mm !important;
-        height: 38mm !important;
-        margin: 0 !important;
-        padding: 3mm 4mm !important;
-
-        border: none !important;
-        box-shadow: none !important;
-        background: white !important;
-        color: black !important;
-        box-sizing: border-box !important;
-        overflow: hidden !important;
-
-        page-break-before: avoid !important;
-        page-break-after: avoid !important;
-        page-break-inside: avoid !important;
-
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 1.5mm !important;
+    .label-box{
+        position:fixed!important;
+        left:0!important;
+        top:0!important;
+        width:58mm!important;
+        height:38mm!important;
+        min-width:58mm!important;
+        min-height:38mm!important;
+        margin:0!important;
+        padding:2.6mm 3.2mm!important;
+        border:0!important;
+        transform:none!important;
+        box-shadow:none!important;
+        page-break-before:avoid!important;
+        page-break-after:avoid!important;
+        page-break-inside:avoid!important;
     }
 
-    .label-name {
-        font-size: 10.5px !important;
-        font-weight: 900 !important;
-        line-height: 1.1 !important;
+    .label-name{
+        font-size:10px!important;
     }
 
-    .label-info {
-        font-size: 8px !important;
-        font-weight: 800 !important;
-        line-height: 1.1 !important;
+    .label-info{
+        font-size:7.5px!important;
     }
 
-    .barcode-img {
-        width: 45mm !important;
-        height: 11mm !important;
-        object-fit: fill !important;
-        display: block !important;
-        margin: 0 !important;
+    .barcode-img{
+        width:46mm!important;
+        height:11mm!important;
     }
 
-    .sku-text {
-        font-size: 8px !important;
-        font-weight: 800 !important;
-        line-height: 1.1 !important;
+    .sku-text{
+        font-size:7.5px!important;
     }
 
-    .price {
-        font-size: 10px !important;
-        font-weight: 900 !important;
-        line-height: 1.1 !important;
+    .price{
+        font-size:9.5px!important;
     }
 }
 </style>
 
-<div class="page">
+<script>
+function showBarcodePhotoFallback(img){
+    if(!img){
+        return;
+    }
 
-    <a href="{% url 'item_detail' item.id %}" class="back-btn">← Back</a>
+    const wrapper = img.parentElement;
+    img.remove();
 
-    <div class="card">
-        <h1>Barcode Label 🏷️</h1>
-        <p>{{ item.name }} — {{ variant.display_name }}</p>
+    if(wrapper && !wrapper.querySelector(".barcode-no-photo")){
+        const fallback = document.createElement("div");
+        fallback.className = "barcode-no-photo";
+        fallback.textContent = "📦";
+        wrapper.appendChild(fallback);
+    }
+}
 
-        <div class="product-photo-wrap">
-            {% if variant.image %}
-                <img class="product-photo" src="{{ variant.image.url }}" alt="{{ item.name }}">
-            {% elif item.image %}
-                <img class="product-photo" src="{{ item.image.url }}" alt="{{ item.name }}">
-            {% else %}
-                <div class="no-photo">🐶</div>
-            {% endif %}
-        </div>
+async function copyBarcodeCode(){
+    const codeElement = document.getElementById("barcodeCodeText");
+    const button = document.getElementById("copyCodeButton");
+    const code = codeElement ? codeElement.textContent.trim() : "";
 
-        <div class="label-box" id="printLabel">
-            <div class="label-name">{{ item.name }}</div>
-            <div class="label-info">{{ variant.display_name }}</div>
+    if(!code){
+        return;
+    }
 
-            <img class="barcode-img" src="data:image/png;base64,{{ barcode_base64 }}" alt="Barcode">
+    try{
+        await navigator.clipboard.writeText(code);
+    }catch(error){
+        const textarea = document.createElement("textarea");
+        textarea.value = code;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+    }
 
-            <div class="sku-text">{{ variant.sku }}</div>
-            <div class="price">${{ variant.sale_price|floatformat:2 }}</div>
-        </div>
+    button.classList.add("copied");
+    button.textContent = "✓ Copied";
 
-        <button onclick="window.print()" class="btn-print">Print Barcode</button>
-    </div>
-
-</div>
+    setTimeout(function(){
+        button.classList.remove("copied");
+        button.textContent = "📋 Copy Code";
+    }, 1600);
+}
+</script>
 
 {% endblock %}

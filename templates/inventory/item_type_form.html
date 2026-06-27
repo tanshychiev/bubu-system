@@ -1,252 +1,80 @@
 {% extends "base.html" %}
 {% block content %}
 
+<div class="itf-page">
+    <a href="{% url 'item_list' %}" class="itf-back">← Back</a>
+
+    <form method="post" class="itf-card">
+        {% csrf_token %}
+
+        <div class="itf-head">
+            <div>
+                <h1>{{ title }} 🏷️</h1>
+                <p>Create a category such as Food, Clothes, Shampoo or Medicine.</p>
+            </div>
+            <span>Inventory Type</span>
+        </div>
+
+        <div class="itf-grid">
+            <label>
+                Type Name
+                {{ form.name }}
+            </label>
+
+            <label>
+                Emoji
+                {{ form.emoji }}
+            </label>
+        </div>
+
+        <label class="itf-status">
+            <div>
+                <strong>Active</strong>
+                <small>Show this type in inventory and selectors.</small>
+            </div>
+            {{ form.is_active }}
+        </label>
+
+        <button type="submit" class="itf-save">💾 Save Type</button>
+    </form>
+</div>
+
 <style>
-.form-page{
-    max-width:650px;
-    margin:auto;
-}
+*{box-sizing:border-box}
+a{text-decoration:none}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 
-.back-btn{
-    display:inline-flex;
-    min-height:40px;
-    padding:0 18px;
-    border-radius:999px;
-    align-items:center;
-    background:white;
-    border:1px solid #eaddec;
-    color:#6b6178;
-    font-weight:900;
-    text-decoration:none;
-    margin-bottom:14px;
-}
-
-.form-card{
-    background:white;
-    border:1px solid #f5e8df;
-    border-radius:24px;
-    padding:22px;
-    box-shadow:0 16px 38px rgba(130,91,60,.08);
-}
-
-.form-card h1{
-    font-size:30px;
-    color:#17152f;
-    margin:0 0 6px;
-    font-weight:900;
-}
-
-.form-card p{
-    color:#7b7288;
-    font-weight:800;
-    margin:0 0 18px;
-}
-
-.type-grid{
-    display:grid;
-    grid-template-columns:1fr 180px;
-    gap:12px;
-}
-
-.form-box{
-    margin-bottom:13px;
-}
-
-.form-box.full{
-    grid-column:1/-1;
-}
-
-.form-box label{
-    display:block;
-    font-weight:900;
-    color:#17152f;
-    margin-bottom:5px;
-}
-
-.form-box input{
-    width:100%;
-    min-height:48px;
-    border-radius:14px;
-    border:1px solid #eaddec;
-    padding:0 12px;
-    font-weight:800;
-    background:white;
-}
-
-.form-box input:focus{
-    outline:none;
-    border-color:#b99cff;
-    box-shadow:0 0 0 3px rgba(155,124,246,.12);
-}
-
-.active-row{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    min-height:52px;
-    padding:8px 12px;
-    border-radius:14px;
-    background:#fff8fb;
-    border:1px solid #f0e5ee;
-}
-
-.active-copy strong{
-    display:block;
-    color:#17152f;
-    font-size:14px;
-}
-
-.active-copy span{
-    display:block;
-    margin-top:2px;
-    color:#7b7288;
-    font-size:12px;
-    font-weight:800;
-}
-
-.active-row input[type="checkbox"]{
-    width:22px;
-    min-height:22px;
-    accent-color:#9b7cf6;
-}
-
-.btn-save{
-    min-height:44px;
-    border:none;
-    border-radius:13px;
-    padding:0 24px;
-    color:white;
-    font-weight:900;
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
-    box-shadow:0 9px 20px rgba(155,124,246,.20);
-    cursor:pointer;
-}
+.itf-page{width:min(650px,100%);margin:auto;padding:18px}
+.itf-back{min-height:42px;margin-bottom:10px;padding:0 14px;border:1px solid #eaddec;border-radius:13px;display:inline-flex;align-items:center;color:#6b6178;background:white;font-weight:1000}
+.itf-card{padding:20px;border:1px solid #f5e8df;border-radius:22px;background:white;box-shadow:0 14px 34px rgba(130,91,60,.07)}
+.itf-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:16px}
+.itf-head h1{margin:0;color:#17152f;font-size:28px;font-weight:1000}
+.itf-head p{margin:5px 0 0;color:#7b7288;font-size:12px;font-weight:900}
+.itf-head>span{padding:7px 10px;border-radius:999px;color:#7b5cff;background:#f1ebff;font-size:9px;font-weight:1000}
+.itf-grid{display:grid;grid-template-columns:1fr 150px;gap:10px}
+.itf-card label{color:#17152f;font-size:12px;font-weight:1000}
+.itf-card input:not([type="checkbox"]){width:100%;height:48px;margin-top:5px;padding:0 12px;border:1.5px solid #eaddec;border-radius:13px;background:white;font-size:16px;font-weight:900;outline:none}
+.itf-card input:focus{border-color:#8e63ff;box-shadow:0 0 0 3px rgba(142,99,255,.12)}
+.itf-status{min-height:58px;margin-top:11px;padding:9px 12px;border:1px solid #f0e5ee;border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff8fb}
+.itf-status strong,.itf-status small{display:block}
+.itf-status small{margin-top:2px;color:#7b7288;font-size:10px}
+.itf-status input{width:22px;height:22px;accent-color:#8e63ff}
+.itf-save{width:100%;min-height:48px;margin-top:12px;border:0;border-radius:13px;color:white;background:linear-gradient(135deg,#8e63ff,#ff8c6b);font-weight:1000}
 
 @media(max-width:700px){
-    .form-page{
-        width:100%;
-        max-width:none;
-        margin:0;
-    }
-
-    .back-btn{
-        min-height:32px;
-        margin-bottom:6px;
-        padding:0 9px;
-        border-radius:9px;
-        font-size:9px;
-    }
-
-    .form-card{
-        padding:9px;
-        border-radius:12px;
-        box-shadow:none;
-    }
-
-    .form-card h1{
-        margin-bottom:2px;
-        font-size:18px;
-        line-height:1.1;
-    }
-
-    .form-card p{
-        margin-bottom:7px;
-        font-size:8px;
-        line-height:1.3;
-    }
-
-    .type-grid{
-        grid-template-columns:minmax(0,1fr) 82px;
-        gap:5px;
-    }
-
-    .form-box{
-        min-width:0;
-        margin-bottom:5px;
-    }
-
-    .form-box label{
-        margin-bottom:2px;
-        font-size:8px;
-    }
-
-    .form-box input{
-        min-width:0;
-        min-height:39px;
-        height:39px;
-        border-radius:8px;
-        padding:0 8px;
-        font-size:16px!important;
-    }
-
-    .active-row{
-        min-height:42px;
-        padding:5px 7px;
-        border-radius:8px;
-    }
-
-    .active-copy strong{
-        font-size:9px;
-    }
-
-    .active-copy span{
-        display:none;
-    }
-
-    .active-row input[type="checkbox"]{
-        width:20px;
-        min-height:20px;
-    }
-
-    .btn-save{
-        width:100%;
-        min-height:40px;
-        margin-top:1px;
-        border-radius:8px;
-        font-size:10px;
-        box-shadow:none;
-    }
+    .itf-page{padding:7px 6px}
+    .itf-back{min-height:35px;margin-bottom:6px;padding:0 9px;border-radius:9px;font-size:10px}
+    .itf-card{padding:8px;border-radius:14px;box-shadow:none}
+    .itf-head{margin-bottom:7px}
+    .itf-head h1{font-size:20px}
+    .itf-head p{display:none}
+    .itf-grid{grid-template-columns:minmax(0,1fr) 86px;gap:5px}
+    .itf-card label{font-size:9px}
+    .itf-card input:not([type="checkbox"]){height:43px;margin-top:3px;padding:0 8px;border-radius:9px;font-size:16px!important}
+    .itf-status{min-height:45px;margin-top:6px;padding:6px 8px;border-radius:9px}
+    .itf-status small{display:none}
+    .itf-save{min-height:43px;margin-top:6px;border-radius:9px;font-size:11px}
 }
 </style>
-
-<div class="form-page">
-    <a href="{% url 'item_list' %}" class="back-btn">← Back</a>
-
-    <div class="form-card">
-        <h1>{{ title }} 🏷️</h1>
-        <p>Create a category such as Food, Clothes, Shampoo, or Medicine.</p>
-
-        <form method="post">
-            {% csrf_token %}
-
-            <div class="type-grid">
-                <div class="form-box">
-                    <label>Type Name</label>
-                    {{ form.name }}
-                </div>
-
-                <div class="form-box">
-                    <label>Emoji</label>
-                    {{ form.emoji }}
-                </div>
-
-                <div class="form-box full">
-                    <label>Type Status</label>
-                    <div class="active-row">
-                        <div class="active-copy">
-                            <strong>Active</strong>
-                            <span>Show this type in inventory.</span>
-                        </div>
-                        {{ form.is_active }}
-                    </div>
-                </div>
-
-                <div class="full">
-                    <button class="btn-save" type="submit">Save Type</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
 
 {% endblock %}

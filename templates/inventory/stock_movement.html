@@ -1,177 +1,535 @@
 {% extends "base.html" %}
-
 {% block content %}
 
-<style>
-.stock-page {
-    max-width:900px;
-    margin:auto;
-}
+<div class="sm-page">
+    <a href="{% url 'item_list' %}" class="sm-back">← Back</a>
 
-.card {
-    background:white;
-    border:1px solid #f5e8df;
-    border-radius:28px;
-    padding:24px;
-    box-shadow:0 20px 50px rgba(130,91,60,.10);
-    margin-bottom:22px;
-}
+    <form method="post" class="sm-card" id="stockMovementForm">
+        {% csrf_token %}
 
-h1 {
-    color:#17152f;
-    font-size:38px;
-    margin:0 0 8px;
-}
+        <div class="sm-head">
+            <div>
+                <span>📦 Inventory</span>
+                <h1>Stock Movement</h1>
+                <p>{{ item.name }} · Current stock: <strong>{{ item.quantity }}</strong></p>
+            </div>
+        </div>
 
-p {
-    color:#7b7288;
-    font-weight:800;
-}
+        <div class="sm-grid">
+            <div class="sm-field sm-full-mobile">
+                <span>Movement Type</span>
 
-.form-grid {
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:16px;
-}
-
-.form-box label {
-    display:block;
-    font-weight:900;
-    color:#17152f;
-    margin-bottom:8px;
-}
-
-.form-box input,
-.form-box select,
-.form-box textarea {
-    width:100%;
-    height:52px;
-    border-radius:18px;
-    border:1px solid #eaddec;
-    padding:0 14px;
-    font-weight:800;
-}
-
-.form-box textarea {
-    height:90px;
-    padding-top:12px;
-}
-
-.full {
-    grid-column:1 / -1;
-}
-
-.btn-save {
-    border:none;
-    border-radius:999px;
-    padding:15px 32px;
-    color:white;
-    font-weight:900;
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
-    box-shadow:0 12px 26px rgba(155,124,246,.25);
-}
-
-.btn-back {
-    display:inline-flex;
-    border-radius:999px;
-    padding:13px 26px;
-    background:white;
-    border:1px solid #eaddec;
-    font-weight:900;
-    color:#6b6178;
-    text-decoration:none;
-}
-
-.table {
-    width:100%;
-    border-collapse:collapse;
-}
-
-.table th {
-    background:#fff8fb;
-    padding:14px;
-    text-align:left;
-    color:#17152f;
-}
-
-.table td {
-    padding:14px;
-    border-top:1px solid #f4e3d8;
-    font-weight:800;
-}
-
-@media(max-width:700px){
-    .form-grid{grid-template-columns:1fr;}
-}
-</style>
-
-<div class="stock-page">
-
-    <a href="{% url 'item_list' %}" class="btn-back">← Back</a>
-
-    <div class="card">
-        <h1>Stock Movement 📦</h1>
-        <p>{{ item.name }} — Current Stock: <strong>{{ item.quantity }}</strong></p>
-
-        <form method="post">
-            {% csrf_token %}
-
-            <div class="form-grid">
-                <div class="form-box">
-                    <label>Movement Type</label>
+                <div class="sm-hidden-select" id="movementSelectHolder">
                     {{ form.movement_type }}
                 </div>
 
-                <div class="form-box">
-                    <label>Quantity</label>
-                    {{ form.quantity }}
-                </div>
-
-                <div class="form-box">
-                    <label>Cost Price</label>
-                    {{ form.cost_price }}
-                </div>
-
-                <div class="form-box full">
-                    <label>Note</label>
-                    {{ form.note }}
-                </div>
-
-                <div class="full">
-                    <button class="btn-save" type="submit">Save Stock</button>
-                </div>
+                <button type="button" class="sm-touch-btn" onclick="openMovementPopup()">
+                    <strong id="movementTypeLabel">Choose movement</strong>
+                    <em>⌄</em>
+                </button>
             </div>
-        </form>
-    </div>
 
-    <div class="card">
-        <h2>Recent Stock History</h2>
+            <label class="sm-field">
+                Quantity
+                {{ form.quantity }}
+            </label>
 
-        <table class="table">
-            <tr>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Qty</th>
-                <th>Cost</th>
-                <th>Note</th>
-            </tr>
+            <label class="sm-field">
+                Cost Price
+                {{ form.cost_price }}
+            </label>
 
-            {% for m in movements %}
-            <tr>
-                <td>{{ m.created_at|date:"d M Y H:i" }}</td>
-                <td>{{ m.get_movement_type_display }}</td>
-                <td>{{ m.quantity }}</td>
-                <td>${{ m.cost_price|floatformat:2 }}</td>
-                <td>{{ m.note }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5">No stock history yet.</td>
-            </tr>
-            {% endfor %}
-        </table>
-    </div>
+            <label class="sm-field sm-full">
+                Note
+                {{ form.note }}
+            </label>
+        </div>
 
+        <button type="submit" class="sm-save">💾 Save Stock</button>
+    </form>
+
+    <section class="sm-history">
+        <div class="sm-history-head">
+            <div>
+                <h2>Recent Stock History</h2>
+                <p>{{ movements|length }} records</p>
+            </div>
+        </div>
+
+        <div class="sm-table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Qty</th>
+                        <th>Cost</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for m in movements %}
+                        <tr>
+                            <td>{{ m.created_at|date:"d M Y H:i" }}</td>
+                            <td>{{ m.get_movement_type_display }}</td>
+                            <td>{{ m.quantity }}</td>
+                            <td>${{ m.cost_price|floatformat:2 }}</td>
+                            <td>{{ m.note|default:"-" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5">No stock history yet.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
 </div>
+
+<div class="sm-backdrop" id="movementBackdrop" onclick="closeMovementPopup()"></div>
+
+<div class="sm-popup" id="movementPopup">
+    <div class="sm-popup-head">
+        <div>
+            <small>Stock update</small>
+            <h3>Choose Movement Type</h3>
+        </div>
+
+        <button type="button" onclick="closeMovementPopup()">×</button>
+    </div>
+
+    <div class="sm-popup-list" id="movementPopupList"></div>
+</div>
+
+<style>
+*{box-sizing:border-box}
+a{text-decoration:none}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body.sm-popup-open{overflow:hidden;touch-action:none}
+
+.sm-page{
+    width:min(900px,100%);
+    margin:auto;
+    padding:20px;
+}
+
+.sm-back{
+    min-height:42px;
+    margin-bottom:10px;
+    padding:0 14px;
+    border:1px solid #eaddec;
+    border-radius:13px;
+    display:inline-flex;
+    align-items:center;
+    color:#6b6178;
+    background:white;
+    font-size:12px;
+    font-weight:1000;
+}
+
+.sm-card,
+.sm-history{
+    margin-bottom:14px;
+    padding:20px;
+    border:1px solid #f5e8df;
+    border-radius:22px;
+    background:white;
+    box-shadow:0 14px 34px rgba(130,91,60,.07);
+}
+
+.sm-head span{
+    min-height:30px;
+    padding:0 9px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    color:#7b5cff;
+    background:#f1ebff;
+    font-size:9px;
+    font-weight:1000;
+}
+
+.sm-head h1{
+    margin:7px 0 0;
+    color:#17152f;
+    font-size:28px;
+    font-weight:1000;
+}
+
+.sm-head p,
+.sm-history-head p{
+    margin:4px 0 0;
+    color:#7b7288;
+    font-size:11px;
+    font-weight:900;
+}
+
+.sm-grid{
+    margin-top:14px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+.sm-field{
+    min-width:0;
+    color:#17152f;
+    font-size:12px;
+    font-weight:1000;
+}
+
+.sm-field input,
+.sm-field select,
+.sm-field textarea,
+.sm-touch-btn{
+    width:100%;
+    height:48px;
+    margin-top:5px;
+    padding:0 12px;
+    border:1.5px solid #eaddec;
+    border-radius:13px;
+    color:#17152f;
+    background:white;
+    font-size:16px!important;
+    font-weight:900;
+    outline:none;
+}
+
+.sm-field textarea{
+    height:75px;
+    padding:10px;
+    resize:vertical;
+}
+
+.sm-field input:focus,
+.sm-field textarea:focus{
+    border-color:#8e63ff;
+    box-shadow:0 0 0 3px rgba(142,99,255,.12);
+}
+
+.sm-full{
+    grid-column:1 / -1;
+}
+
+.sm-hidden-select{
+    position:absolute;
+    width:1px;
+    height:1px;
+    overflow:hidden;
+    clip:rect(0 0 0 0);
+}
+
+.sm-touch-btn{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    text-align:left;
+}
+
+.sm-touch-btn em{
+    color:#8e63ff;
+    font-style:normal;
+}
+
+.sm-save{
+    width:100%;
+    min-height:48px;
+    margin-top:11px;
+    border:0;
+    border-radius:13px;
+    color:white;
+    background:linear-gradient(135deg,#13a85f,#7b5cff);
+    font-weight:1000;
+}
+
+.sm-history h2{
+    margin:0;
+    color:#17152f;
+    font-size:20px;
+    font-weight:1000;
+}
+
+.sm-table-wrap{
+    margin-top:10px;
+    overflow-x:auto;
+}
+
+.sm-history table{
+    width:100%;
+    min-width:650px;
+    border-collapse:collapse;
+}
+
+.sm-history th{
+    padding:10px;
+    text-align:left;
+    color:#7b7288;
+    background:#fff8fb;
+    font-size:10px;
+}
+
+.sm-history td{
+    padding:10px;
+    border-top:1px solid #f4e3d8;
+    color:#514a5f;
+    font-size:11px;
+    font-weight:900;
+}
+
+.sm-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:19990;
+    background:rgba(23,21,47,.48);
+    backdrop-filter:blur(3px);
+}
+
+.sm-backdrop.active{
+    display:block;
+}
+
+.sm-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    z-index:20000;
+    width:min(420px,calc(100% - 16px));
+    max-height:80dvh;
+    padding:9px;
+    overflow:hidden;
+    transform:translate(-50%,-50%);
+    border-radius:18px;
+    background:white;
+    box-shadow:0 30px 80px rgba(23,21,47,.28);
+}
+
+.sm-popup.active{
+    display:block;
+}
+
+.sm-popup-head{
+    padding:9px;
+    border-radius:13px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    color:white;
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+}
+
+.sm-popup-head small{
+    display:block;
+    font-size:9px;
+    font-weight:900;
+}
+
+.sm-popup-head h3{
+    margin:2px 0 0;
+    font-size:16px;
+    font-weight:1000;
+}
+
+.sm-popup-head button{
+    width:36px;
+    height:36px;
+    border:0;
+    border-radius:50%;
+    color:white;
+    background:rgba(255,255,255,.22);
+    font-size:21px;
+}
+
+.sm-popup-list{
+    max-height:60dvh;
+    padding-top:6px;
+    display:grid;
+    gap:5px;
+    overflow-y:auto;
+}
+
+.sm-popup-option{
+    width:100%;
+    min-height:50px;
+    padding:0 9px;
+    border:1px solid #eaddec;
+    border-radius:11px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    color:#17152f;
+    background:#fffafd;
+    font-size:11px;
+    font-weight:1000;
+}
+
+.sm-popup-option.active{
+    color:white;
+    border-color:transparent;
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+}
+
+@media(max-width:700px){
+    .sm-page{
+        padding:7px 6px 80px;
+    }
+
+    .sm-back{
+        min-height:35px;
+        margin-bottom:6px;
+        padding:0 9px;
+        border-radius:9px;
+        font-size:10px;
+    }
+
+    .sm-card,
+    .sm-history{
+        padding:8px;
+        margin-bottom:7px;
+        border-radius:14px;
+        box-shadow:none;
+    }
+
+    .sm-head h1{
+        font-size:20px;
+    }
+
+    .sm-head p{
+        font-size:9px;
+    }
+
+    .sm-grid{
+        margin-top:7px;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:5px;
+    }
+
+    .sm-field{
+        font-size:9px;
+    }
+
+    .sm-field input,
+    .sm-field textarea,
+    .sm-touch-btn{
+        height:43px;
+        margin-top:3px;
+        padding:0 8px;
+        border-radius:9px;
+        font-size:16px!important;
+    }
+
+    .sm-field textarea{
+        height:56px;
+        padding:8px;
+    }
+
+    .sm-full,
+    .sm-full-mobile{
+        grid-column:1 / -1;
+    }
+
+    .sm-save{
+        position:fixed;
+        left:6px;
+        right:6px;
+        bottom:calc(6px + env(safe-area-inset-bottom));
+        z-index:5000;
+        width:calc(100% - 12px);
+        min-height:48px;
+        margin:0;
+        border-radius:12px;
+    }
+
+    body.sm-popup-open .sm-save{
+        opacity:0;
+        visibility:hidden;
+    }
+
+    .sm-history h2{
+        font-size:15px;
+    }
+
+    .sm-history th,
+    .sm-history td{
+        padding:8px;
+        font-size:9px;
+    }
+}
+</style>
+
+<script>
+function getMovementSelect(){
+    return document.querySelector("#movementSelectHolder select");
+}
+
+function refreshMovementLabel(){
+    const select = getMovementSelect();
+    const label = document.getElementById("movementTypeLabel");
+
+    if(!select || !label){
+        return;
+    }
+
+    label.textContent =
+        select.options[select.selectedIndex]?.text || "Choose movement";
+}
+
+function buildMovementOptions(){
+    const select = getMovementSelect();
+    const list = document.getElementById("movementPopupList");
+
+    if(!select || !list){
+        return;
+    }
+
+    list.innerHTML = "";
+
+    Array.from(select.options).forEach(function(option){
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "sm-popup-option";
+
+        if(option.selected){
+            button.classList.add("active");
+        }
+
+        button.innerHTML = `<span>${option.text}</span><strong>›</strong>`;
+
+        button.onclick = function(){
+            select.value = option.value;
+            select.dispatchEvent(new Event("change",{bubbles:true}));
+            refreshMovementLabel();
+            closeMovementPopup();
+        };
+
+        list.appendChild(button);
+    });
+}
+
+function openMovementPopup(){
+    buildMovementOptions();
+    document.getElementById("movementPopup").classList.add("active");
+    document.getElementById("movementBackdrop").classList.add("active");
+    document.body.classList.add("sm-popup-open");
+}
+
+function closeMovementPopup(){
+    document.getElementById("movementPopup").classList.remove("active");
+    document.getElementById("movementBackdrop").classList.remove("active");
+    document.body.classList.remove("sm-popup-open");
+}
+
+document.addEventListener("DOMContentLoaded",refreshMovementLabel);
+
+document.addEventListener("keydown",function(event){
+    if(event.key==="Escape"){
+        closeMovementPopup();
+    }
+});
+</script>
 
 {% endblock %}

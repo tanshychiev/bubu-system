@@ -1,12 +1,44 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Delete Item</h1>
 
-<p>Delete <strong>{{ item.name }}</strong>?</p>
+<div class="id-page">
+    <section class="id-card" role="dialog" aria-modal="true" aria-labelledby="deleteItemTitle">
+        <div class="id-icon">🗑️</div>
+        <h1 id="deleteItemTitle">Delete Item?</h1>
+        <p>Delete <strong>{{ item.name }}</strong>? This action cannot be undone.</p>
 
-<form method="post">
-    {% csrf_token %}
-    <button type="submit">Yes, Delete</button>
-    <a href="{% url 'item_detail' item.id %}">Cancel</a>
-</form>
+        <form method="post" class="id-actions">
+            {% csrf_token %}
+            <button type="submit">Yes, Delete</button>
+            <a href="{% url 'item_detail' item.id %}">Cancel</a>
+        </form>
+    </section>
+</div>
+
+<style>
+*{box-sizing:border-box}
+a{text-decoration:none}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+
+.id-page{min-height:calc(100dvh - 110px);padding:12px;display:flex;align-items:center;justify-content:center}
+.id-card{width:min(430px,100%);padding:26px;border:1px solid #f1ddd1;border-radius:24px;text-align:center;background:white;box-shadow:0 24px 60px rgba(39,27,61,.16)}
+.id-icon{width:68px;height:68px;margin:0 auto 12px;border-radius:22px;display:flex;align-items:center;justify-content:center;background:#fff0f0;font-size:31px}
+.id-card h1{margin:0;color:#17152f;font-size:27px;font-weight:1000}
+.id-card p{margin:10px 0 20px;color:#7b7288;line-height:1.5;font-weight:900}
+.id-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.id-actions button,.id-actions a{min-height:48px;border:0;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:1000}
+.id-actions button{color:white;background:linear-gradient(135deg,#ff6b6b,#ff4d5d)}
+.id-actions a{color:#334155;background:#f1f5f9}
+
+@media(max-width:700px){
+    .id-page{min-height:calc(100dvh - 70px);padding:8px}
+    .id-card{padding:19px 13px;border-radius:18px}
+    .id-icon{width:56px;height:56px;border-radius:17px;font-size:26px}
+    .id-card h1{font-size:21px}
+    .id-card p{margin:8px 0 15px;font-size:11px}
+    .id-actions{grid-template-columns:1fr;gap:5px}
+    .id-actions button,.id-actions a{min-height:44px;border-radius:10px;font-size:11px}
+}
+</style>
+
 {% endblock %}
