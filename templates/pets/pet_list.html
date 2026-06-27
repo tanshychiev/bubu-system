@@ -277,20 +277,18 @@
 
 
 <!-- MOBILE QUICK ACTIONS -->
-<nav class="mobile-pet-dock" aria-label="Pet quick actions">
-    <a href="{% url 'pet_breed_list' %}">
+<nav class="mobile-pet-dock" id="mobilePetDock" aria-label="Pet quick actions">
+    <a href="{% url 'pet_breed_list' %}" class="dock-link">
         <span>🐕</span>
-        <b>Breeds</b>
+        <b>Breed Master</b>
     </a>
-    <a href="{% url 'pet_create' %}" class="dock-primary">
+
+    <a href="{% url 'pet_create' %}" class="dock-link dock-primary">
         <span>＋</span>
         <b>Stock In</b>
     </a>
-    <a href="{% url 'pet_available_for_sale' %}">
-        <span>🐾</span>
-        <b>Sell</b>
-    </a>
-    <a href="{% url 'pet_sale_create' %}">
+
+    <a href="{% url 'pet_sale_create' %}" class="dock-link">
         <span>📝</span>
         <b>Pre-order</b>
     </a>
@@ -562,7 +560,7 @@ a{
 
 .summary-grid{
     display:grid;
-    grid-template-columns:repeat(4,1fr);
+    grid-template-columns:repeat(3,1fr);
     gap:14px;
     margin-bottom:20px;
 }
@@ -1827,6 +1825,86 @@ a{
     }
 }
 
+
+
+/* =========================================================
+   PET STOCK MOBILE DOCK FIX
+   Mounted directly under <body> by JavaScript so transformed
+   page wrappers cannot pull it into the middle while scrolling.
+========================================================= */
+@media(max-width:700px){
+    .pets-page{
+        padding-bottom:88px!important;
+    }
+
+    body > .mobile-pet-dock{
+        position:fixed!important;
+        left:8px!important;
+        right:8px!important;
+        top:auto!important;
+        bottom:max(8px,env(safe-area-inset-bottom))!important;
+        z-index:2147483000!important;
+        width:auto!important;
+        height:62px!important;
+        margin:0!important;
+        padding:5px!important;
+        display:grid!important;
+        grid-template-columns:repeat(3,minmax(0,1fr))!important;
+        gap:5px!important;
+        border:1px solid rgba(228,213,236,.96)!important;
+        border-radius:18px!important;
+        background:rgba(255,255,255,.97)!important;
+        box-shadow:0 14px 34px rgba(39,27,61,.20)!important;
+        backdrop-filter:blur(16px)!important;
+        -webkit-backdrop-filter:blur(16px)!important;
+        transform:none!important;
+        translate:none!important;
+        contain:layout style paint!important;
+        isolation:isolate!important;
+    }
+
+    body > .mobile-pet-dock a{
+        min-width:0!important;
+        min-height:50px!important;
+        padding:4px 5px!important;
+        display:flex!important;
+        flex-direction:column!important;
+        align-items:center!important;
+        justify-content:center!important;
+        gap:1px!important;
+        border-radius:13px!important;
+        color:#675d72!important;
+        background:transparent!important;
+        font-size:17px!important;
+        line-height:1!important;
+        -webkit-tap-highlight-color:transparent!important;
+        touch-action:manipulation!important;
+    }
+
+    body > .mobile-pet-dock a b{
+        width:100%!important;
+        overflow:hidden!important;
+        color:inherit!important;
+        font-size:8.5px!important;
+        line-height:1.15!important;
+        text-align:center!important;
+        text-overflow:ellipsis!important;
+        white-space:nowrap!important;
+    }
+
+    body > .mobile-pet-dock .dock-primary{
+        color:white!important;
+        background:linear-gradient(135deg,#8e63ff,#ff8464)!important;
+        box-shadow:0 6px 14px rgba(142,99,255,.22)!important;
+    }
+}
+
+@media(min-width:701px){
+    body > .mobile-pet-dock{
+        display:none!important;
+    }
+}
+
 </style>
 
 <script>
@@ -2081,6 +2159,33 @@ function applyDateRange(){
 document.addEventListener("DOMContentLoaded", function(){
     renderCalendar();
 });
+
+
+
+function mountMobilePetDockToViewport(){
+    const dock = document.getElementById("mobilePetDock");
+
+    if(!dock){
+        return;
+    }
+
+    /*
+     * Move the dock outside any transformed app/content wrapper.
+     * This keeps position:fixed attached to the actual phone viewport.
+     */
+    if(dock.parentElement !== document.body){
+        document.body.appendChild(dock);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", mountMobilePetDockToViewport);
+window.addEventListener("pageshow", mountMobilePetDockToViewport);
+window.addEventListener("resize", mountMobilePetDockToViewport);
+
+if(window.visualViewport){
+    window.visualViewport.addEventListener("resize", mountMobilePetDockToViewport);
+    window.visualViewport.addEventListener("scroll", mountMobilePetDockToViewport);
+}
 
 </script>
 

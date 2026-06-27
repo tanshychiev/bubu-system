@@ -11,8 +11,23 @@
         </div>
 
         <div class="top-actions">
-            <a href="{% url 'pet_breed_list' %}" class="soft-btn">← Breed List</a>
-            <a href="{% url 'pet_list' %}" class="plain-btn">Pet Stock</a>
+            <button
+                type="button"
+                class="soft-btn direct-page-btn"
+                data-url="{% url 'pet_breed_list' %}"
+                onclick="goToPetPage(this)"
+            >
+                ← Breed List
+            </button>
+
+            <button
+                type="button"
+                class="plain-btn direct-page-btn"
+                data-url="{% url 'pet_list' %}"
+                onclick="goToPetPage(this)"
+            >
+                Pet Stock
+            </button>
         </div>
     </div>
 
@@ -198,7 +213,14 @@
 
                 <div class="actions">
                     <button class="save-btn" type="submit">💾 Save Breed</button>
-                    <a href="{% url 'pet_breed_list' %}" class="cancel-btn">Cancel</a>
+                    <button
+                        type="button"
+                        class="cancel-btn direct-page-btn"
+                        data-url="{% url 'pet_breed_list' %}"
+                        onclick="goToPetPage(this)"
+                    >
+                        Cancel
+                    </button>
                 </div>
             </div>
         </div>
@@ -1035,6 +1057,33 @@ textarea:focus{
     }
 }
 
+
+
+/* =========================================================
+   BREED LIST DIRECT NAVIGATION FIX
+========================================================= */
+.direct-page-btn{
+    position:relative;
+    z-index:60;
+    pointer-events:auto!important;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+}
+
+@media(max-width:760px){
+    .page-top,
+    .top-actions{
+        position:relative!important;
+        z-index:60!important;
+    }
+
+    .direct-page-btn{
+        min-height:40px!important;
+        border:0!important;
+        font-family:inherit!important;
+    }
+}
+
 </style>
 
 <script>
@@ -1247,6 +1296,22 @@ document.addEventListener("keydown", function(e){
         closeOptionPopups();
     }
 });
+
+
+function goToPetPage(button){
+    const url = button?.dataset?.url;
+
+    if(!url){
+        return;
+    }
+
+    /*
+     * Use direct browser navigation instead of relying on an anchor
+     * handler from the base template or another mobile script.
+     */
+    window.location.assign(url);
+}
+
 </script>
 
 {% endblock %}
