@@ -210,8 +210,7 @@
                 <div
                     class="warranty-range-card"
                     id="warrantyRangeCard"
-                    data-start="{% if sale.paid_at %}{{ sale.paid_at|date:'Y-m-d' }}{% elif sale.payment_date %}{{ sale.payment_date|date:'Y-m-d' }}{% elif sale.completed_at %}{{ sale.completed_at|date:'Y-m-d' }}{% elif sale.warranty_start_date %}{{ sale.warranty_start_date|date:'Y-m-d' }}{% else %}{{ sale.created_at|date:'Y-m-d' }}{% endif %}"
-                    data-end="{{ sale.warranty_expire_date|date:'Y-m-d' }}"
+                    data-start="{{ sale.created_at|date:'Y-m-d' }}"
                     data-days="{{ sale.warranty_days|default:3 }}"
                 >
                     <div class="warranty-card-head">
@@ -1348,11 +1347,13 @@ function renderWarrantyRange(){
 
     const days = parseInt(card.dataset.days || "3", 10) || 3;
     const start = parseWarrantyDate(card.dataset.start);
-    let end = parseWarrantyDate(card.dataset.end);
+    let end = null;
 
-    if(start && !end){
+    // Inclusive warranty counting:
+    // 1 July is day 1, so a 3-day warranty ends on 3 July.
+    if(start){
         end = new Date(start);
-        end.setDate(end.getDate() + days);
+        end.setDate(end.getDate() + Math.max(days - 1, 0));
     }
 
     const startText = document.getElementById("warrantyStartText");
