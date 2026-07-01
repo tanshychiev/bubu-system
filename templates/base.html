@@ -1592,23 +1592,144 @@ tbody tr:hover{background:#fffaf6}
             </a>
         </div>
 
-        <!-- OPERATIONS -->
-        <button type="button" class="menu-main" data-menu="operations">
-            <span class="menu-main-left"><span class="bubu-nav-icon tone-blue"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8.5h8v6h-8zM15.5 11.5h1l2 2v1h-3z" fill="currentColor" opacity=".14" stroke="none"/><path d="M3 7h11v9H3z"/><path d="M14 10h3l3 3v3h-6z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><span>Operations</span></span>
+        <!-- DELIVERY -->
+        <button type="button" class="menu-main" data-menu="delivery">
+            <span class="menu-main-left">
+                <span class="bubu-nav-icon tone-blue">
+                    <svg viewBox="0 0 24 24"
+                         aria-hidden="true"
+                         focusable="false"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.9"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M4.5 8.5h8v6h-8zM15.5 11.5h1l2 2v1h-3z"
+                              fill="currentColor"
+                              opacity=".14"
+                              stroke="none"/>
+                        <path d="M3 7h11v9H3z"/>
+                        <path d="M14 10h3l3 3v3h-6z"/>
+                        <circle cx="7" cy="18" r="2"/>
+                        <circle cx="17" cy="18" r="2"/>
+                        <path d="M6 10h5"/>
+                    </svg>
+                </span>
+                <span>Delivery</span>
+            </span>
+
             <span class="menu-arrow">▼</span>
         </button>
 
-        <div class="menu-sub" id="menu-operations">
+        <div class="menu-sub" id="menu-delivery">
+
+            <!-- ALL DELIVERY ORDERS -->
             <a href="{% url 'delivery_list' %}"
                onclick="saveMenuStateAndClose()"
-               class="{% if request.resolver_match.url_name == 'delivery_list' %}active{% endif %}">
-                <span class="bubu-nav-icon tone-blue"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8.5h8v6h-8zM15.5 11.5h1l2 2v1h-3z" fill="currentColor" opacity=".14" stroke="none"/><path d="M3 7h11v9H3z"/><path d="M14 10h3l3 3v3h-6z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M6 10h5"/></svg></span><span>Delivery</span>
+               class="{% if request.resolver_match.url_name == 'delivery_list' or request.resolver_match.url_name == 'delivery_detail' or request.resolver_match.url_name == 'delivery_update' or request.resolver_match.url_name == 'delivery_delete' or request.resolver_match.url_name == 'delivery_sticker' or request.resolver_match.url_name == 'delivery_mark_out' or request.resolver_match.url_name == 'delivery_mark_done' or request.resolver_match.url_name == 'delivery_mark_failed' or request.resolver_match.url_name == 'delivery_return_stock' %}active{% endif %}">
+                <span class="bubu-nav-icon tone-blue">
+                    <svg viewBox="0 0 24 24"
+                         aria-hidden="true"
+                         focusable="false"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.9"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <rect x="4" y="4" width="16" height="16" rx="3"
+                              fill="currentColor"
+                              opacity=".09"
+                              stroke="none"/>
+                        <rect x="4" y="4" width="16" height="16" rx="3"/>
+                        <path d="M8 9h8"/>
+                        <path d="M8 13h8"/>
+                        <path d="M8 17h5"/>
+                        <circle cx="6.5" cy="9" r=".4" fill="currentColor" stroke="none"/>
+                        <circle cx="6.5" cy="13" r=".4" fill="currentColor" stroke="none"/>
+                        <circle cx="6.5" cy="17" r=".4" fill="currentColor" stroke="none"/>
+                    </svg>
+                </span>
+                <span>Delivery List</span>
             </a>
 
-            <a href="{% url 'service_list' %}"
+            <!-- CREATE DELIVERY -->
+            <a href="{% url 'delivery_create' %}"
                onclick="saveMenuStateAndClose()"
-               class="{% if request.resolver_match.url_name == 'service_list' %}active{% endif %}">
-                <span class="bubu-nav-icon tone-pink"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m9 10 3 2-3 2" fill="currentColor" opacity=".15" stroke="none"/><circle cx="6" cy="7" r="3"/><circle cx="6" cy="17" r="3"/><path d="m8.5 8.5 11 8.5M8.5 15.5 19.5 7"/></svg></span><span>Services</span>
+               class="{% if request.resolver_match.url_name == 'delivery_create' %}active{% endif %}">
+                <span class="bubu-nav-icon tone-green">
+                    <svg viewBox="0 0 24 24"
+                         aria-hidden="true"
+                         focusable="false"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.9"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="8"
+                                fill="currentColor"
+                                opacity=".10"
+                                stroke="none"/>
+                        <circle cx="12" cy="12" r="8"/>
+                        <path d="M12 8v8"/>
+                        <path d="M8 12h8"/>
+                    </svg>
+                </span>
+                <span>Create Delivery</span>
+            </a>
+
+            <!-- COD REPORT -->
+            <a href="{% url 'delivery_cod_report' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'delivery_cod_report' or request.resolver_match.url_name == 'delivery_confirm_cod' or request.resolver_match.url_name == 'delivery_settle_cod' %}active{% endif %}">
+                <span class="bubu-nav-icon tone-gold">
+                    <svg viewBox="0 0 24 24"
+                         aria-hidden="true"
+                         focusable="false"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.9"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M5 5h14v14H5z"
+                              fill="currentColor"
+                              opacity=".10"
+                              stroke="none"/>
+                        <rect x="4" y="4" width="16" height="16" rx="3"/>
+                        <path d="M8 9h8"/>
+                        <path d="M8 13h3"/>
+                        <path d="M8 17h3"/>
+                        <path d="M14 13c.5-.7 1.2-1 2-1 1.1 0 2 .6 2 1.5 0 2-4 1-4 3 0 .9.8 1.5 2 1.5.8 0 1.5-.3 2-.9"/>
+                        <path d="M16 10.5v9"/>
+                    </svg>
+                </span>
+                <span>COD Report</span>
+            </a>
+
+            <!-- DELIVERY COMPANIES -->
+            <a href="{% url 'delivery_company_list' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'delivery_company_list' or request.resolver_match.url_name == 'delivery_company_create' or request.resolver_match.url_name == 'delivery_company_update' or request.resolver_match.url_name == 'delivery_company_toggle' %}active{% endif %}">
+                <span class="bubu-nav-icon tone-coral">
+                    <svg viewBox="0 0 24 24"
+                         aria-hidden="true"
+                         focusable="false"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.9"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M6 10h12v9H6z"
+                              fill="currentColor"
+                              opacity=".10"
+                              stroke="none"/>
+                        <path d="M4 9h16l-1-4H5L4 9Z"/>
+                        <path d="M5 9v11h14V9"/>
+                        <path d="M8 20v-6h4v6"/>
+                        <path d="M15 13h2"/>
+                        <path d="M4 9c0 1.4 1 2.3 2.5 2.3S9 10.4 9 9c0 1.4 1 2.3 2.5 2.3S14 10.4 14 9c0 1.4 1 2.3 2.5 2.3S19 10.4 19 9"/>
+                    </svg>
+                </span>
+                <span>Delivery Companies</span>
             </a>
         </div>
 

@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+*{box-sizing:border-box}
+:root{
+    --ink:#17152f;
+    --muted:#7b7288;
+    --purple:#8e63ff;
+    --purple-dark:#7047db;
+    --purple-soft:#f3edff;
+    --pink:#ff7f91;
+    --green:#22a86b;
+    --orange:#e88918;
+    --red:#ef5574;
+    --blue:#3f70d8;
+    --line:#eadff3;
+    --warm:#f1e7df;
+}
+a{text-decoration:none}
+.delivery-shell{
+    width:100%;
+    max-width:1480px;
+    margin:0 auto;
+    padding:20px;
+    color:var(--ink);
+}
+.page-title-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    margin-bottom:15px;
+}
+.page-title-row h1{
+    margin:0;
+    font-size:30px;
+    font-weight:1000;
+}
+.page-title-row p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-weight:850;
+}
+.title-actions{
+    display:flex;
+    gap:9px;
+    flex-wrap:wrap;
+}
+.card{
+    background:#fff;
+    border:1px solid var(--warm);
+    border-radius:22px;
+    box-shadow:0 9px 24px rgba(63,47,85,.06);
+}
+.btn{
+    min-height:50px;
+    padding:0 17px;
+    border:0;
+    border-radius:16px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    font-size:14px;
+    font-weight:1000;
+    cursor:pointer;
+}
+.btn-primary{
+    color:#fff;
+    background:linear-gradient(135deg,var(--purple),var(--pink));
+    box-shadow:0 8px 18px rgba(142,99,255,.18);
+}
+.btn-soft{
+    color:var(--purple-dark);
+    background:#fff;
+    border:1px solid var(--line);
+}
+.btn-green{color:#fff;background:#24ad75}
+.btn-red{color:#fff;background:#ef5574}
+.filter-card{
+    padding:13px;
+    margin-bottom:15px;
+}
+.filter-grid{
+    display:grid;
+    grid-template-columns:minmax(220px,1.4fr) repeat(6,minmax(140px,.8fr)) auto auto;
+    gap:8px;
+}
+.text-input,.select-button,.form-control{
+    width:100%;
+    min-height:50px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:#fff;
+    color:var(--ink);
+    padding:0 14px;
+    font-size:14px;
+    font-weight:850;
+    outline:none;
+}
+textarea.form-control{
+    min-height:100px;
+    padding-top:13px;
+}
+.text-input:focus,.form-control:focus,.select-button:focus{
+    border-color:#b898ff;
+    box-shadow:0 0 0 4px rgba(142,99,255,.10);
+}
+.select-button{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    cursor:pointer;
+    text-align:left;
+}
+.select-button span:first-child{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+.badge{
+    min-height:28px;
+    padding:0 9px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+.badge-purple{color:#7654d7;background:#f0e8ff}
+.badge-green{color:#15975b;background:#e7fff1}
+.badge-blue{color:#356bd4;background:#eaf2ff}
+.badge-orange{color:#d87900;background:#fff2de}
+.badge-red{color:#db3f58;background:#ffe8eb}
+.badge-gray{color:#676271;background:#f0eef2}
+.table-card{overflow:hidden}
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:1450px}
+th{
+    padding:13px 10px;
+    background:#f4edff;
+    color:var(--ink);
+    font-size:11px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+td{
+    padding:14px 10px;
+    border-top:1px solid #f4edf7;
+    color:#383047;
+    font-size:12px;
+    font-weight:800;
+    text-align:center;
+    vertical-align:middle;
+}
+tbody tr:hover{background:#fffafd}
+.customer-cell{text-align:left;min-width:150px}
+.customer-cell strong{display:block}
+.customer-cell small{display:block;margin-top:3px;color:var(--muted)}
+.location-cell{max-width:220px;text-align:left;line-height:1.35}
+.action-row{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.icon-btn{
+    width:40px;
+    height:40px;
+    border-radius:13px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:17px;
+}
+.view{color:#356bd4;background:#eaf2ff}
+.edit{color:#d87900;background:#fff2de}
+.delete{color:#db3f58;background:#ffe8eb}
+.mobile-list{display:none}
+.mobile-card{
+    padding:14px;
+    border:1px solid var(--warm);
+    border-radius:19px;
+    background:#fff;
+    box-shadow:0 7px 18px rgba(63,47,85,.05);
+}
+.mobile-card-head{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:flex-start;
+}
+.mobile-card-title{font-size:15px;font-weight:1000}
+.mobile-card-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:11px;
+}
+.mobile-box{
+    padding:9px;
+    border-radius:13px;
+    background:#faf8ff;
+}
+.mobile-box span{display:block;color:var(--muted);font-size:10px;font-weight:900}
+.mobile-box strong{display:block;margin-top:3px;font-size:12px}
+.mobile-actions{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:7px;
+    margin-top:11px;
+}
+.mobile-actions a,.mobile-actions button{
+    min-height:43px;
+    border:0;
+    border-radius:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+}
+.popup-backdrop{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:14px;
+    background:rgba(23,21,47,.38);
+    backdrop-filter:blur(3px);
+}
+.popup-backdrop.show{display:flex}
+.popup-sheet{
+    width:100%;
+    max-width:480px;
+    max-height:86vh;
+    overflow:auto;
+    padding:16px;
+    border-radius:24px;
+    background:#fff;
+    box-shadow:0 25px 70px rgba(23,21,47,.25);
+    animation:sheetUp .18s ease-out;
+}
+@keyframes sheetUp{
+    from{transform:translateY(35px);opacity:0}
+    to{transform:translateY(0);opacity:1}
+}
+.popup-handle{
+    width:44px;
+    height:5px;
+    margin:0 auto 12px;
+    border-radius:999px;
+    background:#e4dcef;
+}
+.popup-title{
+    margin-bottom:11px;
+    font-size:18px;
+    font-weight:1000;
+}
+.popup-option{
+    width:100%;
+    min-height:55px;
+    margin-bottom:8px;
+    padding:0 14px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:#fff;
+    color:var(--ink);
+    font-size:14px;
+    font-weight:950;
+    cursor:pointer;
+}
+.popup-option.active{
+    color:var(--purple-dark);
+    border-color:#b898ff;
+    background:#f5f0ff;
+}
+.popup-close{
+    width:100%;
+    min-height:50px;
+    border:0;
+    border-radius:16px;
+    color:#675a79;
+    background:#f2eff5;
+    font-weight:1000;
+}
+.form-card{padding:18px}
+.form-section{
+    padding:16px;
+    margin-bottom:14px;
+    border:1px solid #f0e7df;
+    border-radius:18px;
+}
+.form-section h2{
+    margin:0 0 12px;
+    font-size:18px;
+    font-weight:1000;
+}
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:12px;
+}
+.form-grid.three{grid-template-columns:repeat(3,1fr)}
+.field label{
+    display:block;
+    margin-bottom:6px;
+    font-size:12px;
+    font-weight:1000;
+}
+.field.full{grid-column:1/-1}
+.help{
+    display:block;
+    margin-top:5px;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:800;
+}
+.check-row{
+    min-height:50px;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    background:#faf8ff;
+}
+.check-row input{width:21px;height:21px}
+.save-row{
+    display:flex;
+    justify-content:flex-end;
+    gap:9px;
+    padding-top:14px;
+}
+.summary-grid{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:10px;
+    margin-bottom:14px;
+}
+.summary-card{
+    padding:14px;
+    border:1px solid var(--warm);
+    border-radius:18px;
+    background:#fff;
+}
+.summary-card span{display:block;color:var(--muted);font-size:11px;font-weight:900}
+.summary-card strong{display:block;margin-top:4px;font-size:20px}
+@media(max-width:1150px){
+    .filter-grid{grid-template-columns:repeat(3,1fr)}
+    .filter-grid .text-input{grid-column:1/-1}
+    .summary-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:760px){
+    .delivery-shell{padding:8px 7px 88px}
+    .page-title-row{display:block;margin-bottom:11px}
+    .page-title-row h1{font-size:24px}
+    .page-title-row p{font-size:12px}
+    .title-actions{display:grid;grid-template-columns:1fr 1fr;margin-top:10px}
+    .title-actions .btn{width:100%;min-height:46px}
+    .filter-card{padding:10px;border-radius:18px}
+    .filter-grid{grid-template-columns:1fr 1fr}
+    .filter-grid .text-input{grid-column:1/-1}
+    .filter-grid .btn{width:100%;min-height:48px}
+    .select-button,.text-input,.form-control{min-height:48px;font-size:16px}
+    .table-card{display:none}
+    .mobile-list{display:grid;gap:9px}
+    .popup-backdrop{padding:8px}
+    .popup-sheet{padding:14px;border-radius:22px}
+    .popup-option{min-height:58px;font-size:16px}
+    .form-card{padding:10px;border-radius:18px}
+    .form-section{padding:12px;border-radius:16px}
+    .form-grid,.form-grid.three{grid-template-columns:1fr}
+    .field.full{grid-column:auto}
+    .save-row{display:grid;grid-template-columns:1fr}
+    .save-row .btn{width:100%}
+    .summary-grid{display:flex;overflow-x:auto;padding-bottom:3px}
+    .summary-card{min-width:145px}
+}
+</style>
+
+<div class="delivery-shell" style="max-width:1150px">
+    <div class="page-title-row">
+        <div><h1>Delivery Companies 🚚</h1><p>Create, edit, activate or deactivate delivery companies.</p></div>
+        <div class="title-actions">
+            <a href="{% url 'delivery_list' %}" class="btn btn-soft">← Delivery</a>
+            <a href="{% url 'delivery_company_create' %}" class="btn btn-primary">＋ New Company</a>
+        </div>
+    </div>
+
+    <form method="get" class="card filter-card">
+        <div class="filter-grid" style="grid-template-columns:1fr 1fr auto auto">
+            <input type="hidden" name="delivery_type" id="typeInput" value="{{ selected_type }}">
+            <input type="hidden" name="active" id="activeInput" value="{{ selected_active }}">
+            <button type="button" class="select-button" onclick="openPopup('typePopup')"><span id="typeLabel">All Types</span><span>⌄</span></button>
+            <button type="button" class="select-button" onclick="openPopup('activePopup')"><span id="activeLabel">All Companies</span><span>⌄</span></button>
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a href="{% url 'delivery_company_list' %}" class="btn btn-soft">Reset</a>
+        </div>
+    </form>
+
+    <div class="mobile-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:11px">
+        {% for company in companies %}
+        <div class="mobile-card">
+            <div class="mobile-card-head">
+                <div>
+                    <div class="mobile-card-title">{{ company.name }}</div>
+                    <small>{{ company.get_delivery_type_display }}</small>
+                </div>
+                {% if company.is_active %}<span class="badge badge-green">Active</span>{% else %}<span class="badge badge-red">Inactive</span>{% endif %}
+            </div>
+            <div class="mobile-card-grid">
+                <div class="mobile-box"><span>Default Fee</span><strong>${{ company.default_fee|floatformat:2 }}</strong></div>
+                <div class="mobile-box"><span>Phone</span><strong>{{ company.phone|default:"-" }}</strong></div>
+                <div class="mobile-box" style="grid-column:1/-1"><span>Note</span><strong>{{ company.note|default:"No note" }}</strong></div>
+            </div>
+            <div class="mobile-actions" style="grid-template-columns:1fr 1fr">
+                <a href="{% url 'delivery_company_update' company.id %}" class="edit">Edit</a>
+                <form method="post" action="{% url 'delivery_company_toggle' company.id %}">
+                    {% csrf_token %}
+                    <button type="submit" style="width:100%" class="{% if company.is_active %}delete{% else %}view{% endif %}">
+                        {% if company.is_active %}Deactivate{% else %}Activate{% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% empty %}
+        <div class="mobile-card">No delivery company found.</div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="popup-backdrop" id="typePopup">
+    <div class="popup-sheet"><div class="popup-handle"></div><div class="popup-title">Delivery Type</div>
+        <button class="popup-option" type="button" onclick="choose('type','','All Types')">All Types <span>✓</span></button>
+        <button class="popup-option" type="button" onclick="choose('type','pp','Phnom Penh')">🏙️ Phnom Penh <span>›</span></button>
+        <button class="popup-option" type="button" onclick="choose('type','province','Province')">🚌 Province <span>›</span></button>
+        <button class="popup-close" type="button" onclick="closePopup('typePopup')">Close</button>
+    </div>
+</div>
+<div class="popup-backdrop" id="activePopup">
+    <div class="popup-sheet"><div class="popup-handle"></div><div class="popup-title">Company Status</div>
+        <button class="popup-option" type="button" onclick="choose('active','','All Companies')">All Companies <span>✓</span></button>
+        <button class="popup-option" type="button" onclick="choose('active','yes','Active Only')">Active Only <span>›</span></button>
+        <button class="popup-option" type="button" onclick="choose('active','no','Inactive Only')">Inactive Only <span>›</span></button>
+        <button class="popup-close" type="button" onclick="closePopup('activePopup')">Close</button>
+    </div>
+</div>
+<script>
+function openPopup(id){
+    const popup=document.getElementById(id);
+    if(!popup)return;
+    popup.classList.add("show");
+    document.body.style.overflow="hidden";
+}
+function closePopup(id){
+    const popup=document.getElementById(id);
+    if(!popup)return;
+    popup.classList.remove("show");
+    if(!document.querySelector(".popup-backdrop.show"))document.body.style.overflow="";
+}
+function choose(name,value,label){
+    document.getElementById(name+"Input").value=value;
+    document.getElementById(name+"Label").innerText=label;
+    closePopup(name+"Popup");
+}
+document.querySelectorAll(".popup-backdrop").forEach(popup=>{
+    popup.addEventListener("click",event=>{
+        if(event.target===popup)closePopup(popup.id);
+    });
+});
+document.addEventListener("keydown",event=>{
+    if(event.key==="Escape"){
+        document.querySelectorAll(".popup-backdrop.show").forEach(popup=>closePopup(popup.id));
+    }
+});
+document.addEventListener("DOMContentLoaded",()=>{
+    const typeMap={"":"All Types","pp":"Phnom Penh","province":"Province"};
+    const activeMap={"":"All Companies","yes":"Active Only","no":"Inactive Only"};
+    document.getElementById("typeLabel").innerText=typeMap[document.getElementById("typeInput").value]||"All Types";
+    document.getElementById("activeLabel").innerText=activeMap[document.getElementById("activeInput").value]||"All Companies";
+});
+</script>
+<style>
+@media(max-width:900px){.mobile-list{grid-template-columns:repeat(2,1fr)!important}}
+@media(max-width:620px){.mobile-list{grid-template-columns:1fr!important}}
+</style>
+{% endblock %}

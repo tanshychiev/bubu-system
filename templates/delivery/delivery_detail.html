@@ -1,505 +1,645 @@
 {% extends "base.html" %}
 {% load static %}
-
 {% block content %}
-
-<style>
-.delivery-detail-page{
-    max-width:1150px;
-    margin:auto;
-}
-
-a{
-    text-decoration:none !important;
-}
-
-.top-actions{
-    display:flex;
-    gap:12px;
-    flex-wrap:wrap;
-    margin-bottom:18px;
-}
-
-.btn-back,
-.btn-main,
-.btn-soft,
-.btn-danger{
-    min-height:54px;
-    padding:0 22px;
-    border-radius:999px;
-    border:none;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:1000;
-}
-
-.btn-back,
-.btn-soft{
-    background:white;
-    color:#7b5cff;
-    border:1.5px solid #e2dbff;
-}
-
-.btn-main{
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
-    color:white;
-    box-shadow:0 14px 28px rgba(155,124,246,.25);
-}
-
-.btn-danger{
-    background:#fff0f0;
-    color:#ff4d5d;
-    border:1px solid #ffd0d0;
-}
-
-.hero-card{
-    display:grid;
-    grid-template-columns:1fr 300px;
-    gap:20px;
-    align-items:center;
-    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
-    border:1px solid #f0dcd0;
-    border-radius:30px;
-    padding:26px;
-    box-shadow:0 14px 34px rgba(111,75,50,.07);
-    margin-bottom:20px;
-}
-
-.hero-card h1{
-    margin:0;
-    font-size:38px;
-    color:#1c143a;
-    font-weight:1000;
-}
-
-.hero-card p{
-    margin:10px 0 0;
-    color:#7b6f92;
-    font-weight:900;
-}
-
-.hero-img{
-    width:100%;
-    height:190px;
-    object-fit:contain;
-}
-
-.branch-card,
-.card,
-.money-card,
-.item-card{
-    background:white;
-    border:1px solid #f0dcd0;
-    border-radius:26px;
-    padding:22px;
-    box-shadow:0 12px 30px rgba(111,75,50,.06);
-    margin-bottom:20px;
-}
-
-.branch-card{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:14px;
-    flex-wrap:wrap;
-    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
-}
-
-.branch-title{
-    color:#1c143a;
-    font-size:20px;
-    font-weight:1000;
-}
-
-.branch-sub{
-    color:#7b6f92;
-    font-weight:800;
-    margin-top:6px;
-}
-
-.branch-badge{
-    min-height:50px;
-    padding:0 18px;
-    border-radius:999px;
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
-    color:white;
-    font-weight:1000;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-}
-
-.info-grid,
-.money-grid{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:15px;
-}
-
-.info-box,
-.money-box{
-    background:#fff8fb;
-    border-radius:18px;
-    padding:16px;
-    border:1px solid #f4e3d8;
-}
-
-.info-box small,
-.money-box small{
-    display:block;
-    color:#7b6f92;
-    font-weight:900;
-    margin-bottom:8px;
-}
-
-.info-box h3,
-.money-box h3{
-    margin:0;
-    color:#1c143a;
-    font-size:22px;
-    font-weight:1000;
-}
-
-.money-box.cod{
-    background:#fff7df;
-}
-
-.money-box.received{
-    background:#f0fff6;
-}
-
-.money-box.lack{
-    background:#fff0f0;
-}
-
-.badge{
-    display:inline-flex;
-    padding:8px 13px;
-    border-radius:999px;
-    font-weight:1000;
-    font-size:13px;
-}
-
-.badge-green{
-    background:#e6fff3;
-    color:#00a86b;
-}
-
-.badge-orange{
-    background:#fff4e6;
-    color:#ff9900;
-}
-
-.badge-purple{
-    background:#f4f1ff;
-    color:#7b5cff;
-}
-
-.badge-red{
-    background:#ffe6e6;
-    color:#ff4d4f;
-}
-
-.badge-blue{
-    background:#e8f2ff;
-    color:#3a86ff;
-}
-
-.section-title{
-    color:#1c143a;
-    font-size:26px;
-    font-weight:1000;
-    margin:0 0 16px;
-}
-
-.table-wrap{
-    overflow-x:auto;
-}
-
-.table{
-    width:100%;
-    border-collapse:collapse;
-    min-width:760px;
-}
-
-.table th{
-    background:#fff8fb;
-    padding:14px;
-    text-align:left;
-    color:#1c143a;
-    white-space:nowrap;
-}
-
-.table td{
-    padding:14px;
-    border-top:1px solid #f4e3d8;
-    color:#30244f;
-    font-weight:800;
-    white-space:nowrap;
-}
-
-.item-name{
-    font-weight:1000;
-    color:#1c143a;
-}
-
-.item-meta{
-    color:#7b6f92;
-    font-size:13px;
-    font-weight:800;
-    margin-top:4px;
-}
-
-.empty-box{
-    background:#fff8fb;
-    border-radius:18px;
-    padding:26px;
-    color:#7b6f92;
-    font-weight:900;
-    text-align:center;
-}
-
-.link-sale{
-    display:inline-flex;
-    margin-top:8px;
-    padding:8px 12px;
-    border-radius:999px;
-    background:#f4f1ff;
-    color:#7b5cff;
-    font-weight:1000;
-}
-
-@media(max-width:850px){
-    .hero-card,
-    .info-grid,
-    .money-grid{
-        grid-template-columns:1fr;
+    <style>
+    * {
+        box-sizing:border-box
     }
-
-    .hero-img{
-        display:none;
+    .page {
+        max-width:1180px;
+        margin:auto;
+        padding:22px;
+        color:#17152f
     }
-
-    .top-actions{
+    .actions {
+        display:flex;
+        flex-wrap:wrap;
+        gap:8px;
+        margin-bottom:15px
+    }
+    .btn {
+        min-height:48px;
+        padding:0 16px;
+        border:0;
+        border-radius:16px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        text-decoration:none;
+        font-weight:1000;
+        cursor:pointer
+    }
+    .main {
+        background:linear-gradient(135deg,#9b7cf6,#ff7f91);
+        color:#fff
+    }
+    .soft {
+        background:#f2edf7;
+        color:#65557b
+    }
+    .green {
+        background:#e5fff0;
+        color:#108f52
+    }
+    .orange {
+        background:#fff1dc;
+        color:#c97200
+    }
+    .red {
+        background:#ffe7ea;
+        color:#cc354d
+    }
+    .hero {
+        background:linear-gradient(135deg,#fff8fb,#f8f4ff);
+        border:1px solid #f0ded5;
+        border-radius:26px;
+        padding:22px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:15px;
+        margin-bottom:15px
+    }
+    .hero h1 {
+        margin:0;
+        font-size:31px
+    }
+    .hero p {
+        margin:6px 0 0;
+        color:#7b7288;
+        font-weight:850
+    }
+    .hero img {
+        width:180px;
+        height:110px;
+        object-fit:contain
+    }
+    .card {
+        background:#fff;
+        border:1px solid #f0ded5;
+        border-radius:24px;
+        padding:19px;
+        box-shadow:0 10px 26px rgba(130,91,60,.06);
+        margin-bottom:14px
+    }
+    .card h2 {
+        margin:0 0 13px;
+        font-size:21px
+    }
+    .grid {
         display:grid;
-        grid-template-columns:1fr;
+        grid-template-columns:repeat(3,1fr);
+        gap:10px
     }
-
-    .btn-back,
-    .btn-main,
-    .btn-soft,
-    .btn-danger{
-        width:100%;
+    .box {
+        padding:12px;
+        background:#faf8ff;
+        border-radius:15px;
+        min-width:0
     }
-
-    .branch-card{
+    .box span {
         display:block;
+        color:#7b7288;
+        font-size:11px;
+        font-weight:900
     }
-
-    .branch-badge{
+    .box strong {
+        display:block;
+        margin-top:4px;
+        font-size:16px;
+        overflow-wrap:anywhere
+    }
+    .full {
+        grid-column:1/-1
+    }
+    .badge {
+        display:inline-flex;
+        padding:6px 9px;
+        border-radius:999px;
+        font-size:11px;
+        font-weight:1000
+    }
+    .b-green {
+        background:#e5fff0;
+        color:#108f52
+    }
+    .b-orange {
+        background:#fff1dc;
+        color:#c97200
+    }
+    .b-red {
+        background:#ffe7ea;
+        color:#cc354d
+    }
+    .b-blue {
+        background:#e7f1ff;
+        color:#356bd4
+    }
+    .b-purple {
+        background:#f0e8ff;
+        color:#7357d4
+    }
+    .money {
+        display:grid;
+        grid-template-columns:repeat(5,1fr);
+        gap:9px
+    }
+    .money .box strong {
+        font-size:20px
+    }
+    .workflow {
+        display:grid;
+        grid-template-columns:repeat(3,1fr);
+        gap:12px
+    }
+    .work {
+        padding:14px;
+        border:1px solid #eaddec;
+        border-radius:18px;
+        background:#fff
+    }
+    .work h3 {
+        margin:0 0 7px
+    }
+    .work p {
+        color:#7b7288;
+        font-size:12px;
+        font-weight:800;
+        min-height:34px
+    }
+    .work form {
+        display:grid;
+        gap:7px
+    }
+    .work input,.work textarea {
         width:100%;
-        margin-top:12px;
+        min-height:44px;
+        border:1px solid #eaddec;
+        border-radius:13px;
+        padding:9px 11px;
+        font-weight:800
     }
-
-    .hero-card h1{
-        font-size:30px;
+    .work textarea {
+        min-height:65px
     }
-}
-</style>
-
-<div class="delivery-detail-page">
-
-    <div class="top-actions">
-        <a href="{% url 'delivery_list' %}" class="btn-back">← Back to Delivery</a>
-        <a href="{% url 'delivery_update' delivery.id %}" class="btn-main">✏️ Edit Delivery</a>
-        <a href="{% url 'delivery_sticker' delivery.id %}" target="_blank" class="btn-soft">🏷️ Print Sticker</a>
-        <a href="{% url 'delivery_delete' delivery.id %}" class="btn-danger">🗑️ Delete</a>
-    </div>
-
-    <div class="hero-card">
-        <div>
-            <h1>Delivery #DLV-{{ delivery.id|stringformat:"04d" }} 🚚</h1>
-            <p>Delivery detail, COD money, lack amount, branch/shop and sale link.</p>
-
-            {% if delivery.sale %}
-                <a href="{% url 'sale_detail' delivery.sale.id %}" class="link-sale">
-                    View POS Sale #{{ delivery.sale.id }}
-                </a>
-            {% endif %}
+    .items {
+        overflow:auto
+    }
+    .items table {
+        width:100%;
+        min-width:700px;
+        border-collapse:collapse
+    }
+    .items th {
+        background:#f6f0fb;
+        text-align:left;
+        padding:11px
+    }
+    .items td {
+        border-top:1px solid #f2e8e1;
+        padding:11px;
+        font-weight:800
+    }
+    .warning {
+        padding:12px;
+        border-radius:14px;
+        background:#fff4df;
+        color:#a85d00;
+        font-weight:900;
+        margin-bottom:10px
+    }
+    .success {
+        padding:12px;
+        border-radius:14px;
+        background:#e6fff1;
+        color:#118c52;
+        font-weight:900;
+        margin-bottom:10px
+    }
+    @media(max-width:800px) {
+        .page {
+            padding:10px
+        }
+        .hero img {
+            display:none
+        }
+        .grid,.money,.workflow {
+            grid-template-columns:1fr
+        }
+        .full {
+            grid-column:auto
+        }
+        .actions {
+            display:grid;
+            grid-template-columns:1fr 1fr
+        }
+        .actions .btn:first-child {
+            grid-column:1/-1
+        }
+        .hero h1 {
+            font-size:25px
+        }
+    }
+    </style>
+    <style id="bubu-unified-delivery-theme">
+    :root {
+        --bubu-ink:#17152f;
+        --bubu-muted:#7b7288;
+        --bubu-purple:#8f6cf5;
+        --bubu-purple-dark:#7357d4;
+        --bubu-pink:#ff7f91;
+        --bubu-green:#19a974;
+        --bubu-orange:#e88918;
+        --bubu-red:#ef5574;
+        --bubu-blue:#3f70d8;
+        --bubu-border:#f0ded5;
+        --bubu-border-purple:#e5d9f5;
+        --bubu-surface:#ffffff;
+        --bubu-soft:#fbf8ff;
+        --bubu-soft-warm:#fff8fb;
+        --bubu-shadow:0 14px 34px rgba(111,75,50,.08);
+        --bubu-shadow-soft:0 9px 24px rgba(111,75,50,.06);
+    }
+    * {
+        box-sizing:border-box
+    }
+    .page {
+        max-width:1180px!important;
+        margin:0 auto!important;
+        padding:24px 28px!important;
+        color:var(--bubu-ink)!important;
+    }
+    .actions {
+        gap:9px!important;
+        margin-bottom:16px!important
+    }
+    .btn {
+        min-height:52px!important;
+        padding:0 18px!important;
+        border-radius:18px!important;
+        font-weight:1000!important;
+        transition:transform .14s ease!important;
+    }
+    .btn:hover {
+        transform:translateY(-1px)
+    }
+    .main {
+        background:linear-gradient(135deg,var(--bubu-purple),var(--bubu-pink))!important;
+        color:#fff!important
+    }
+    .soft {
+        background:#fff!important;
+        border:1px solid var(--bubu-border-purple)!important;
+        color:var(--bubu-purple-dark)!important
+    }
+    .green {
+        background:#e7fff1!important;
+        color:#15975b!important
+    }
+    .orange {
+        background:#fff2de!important;
+        color:#d87900!important
+    }
+    .red {
+        background:#ffe8eb!important;
+        color:#db3f58!important
+    }
+    .hero {
+        padding:24px!important;
+        border:1px solid var(--bubu-border)!important;
+        border-radius:28px!important;
+        background:linear-gradient(135deg,var(--bubu-soft-warm),var(--bubu-soft))!important;
+        box-shadow:var(--bubu-shadow-soft)!important;
+    }
+    .hero h1 {
+        font-size:34px!important;
+        color:var(--bubu-ink)!important
+    }
+    .hero p {
+        color:var(--bubu-muted)!important
+    }
+    .card {
+        padding:20px!important;
+        border:1px solid var(--bubu-border)!important;
+        border-radius:24px!important;
+        background:#fff!important;
+        box-shadow:var(--bubu-shadow-soft)!important;
+    }
+    .card h2 {
+        color:var(--bubu-ink)!important
+    }
+    .grid,.money {
+        gap:11px!important
+    }
+    .box {
+        padding:14px!important;
+        border:1px solid #eee5f6!important;
+        border-radius:16px!important;
+        background:linear-gradient(145deg,#fff,#faf8ff)!important;
+    }
+    .box span {
+        color:var(--bubu-muted)!important
+    }
+    .workflow {
+        gap:12px!important
+    }
+    .work {
+        padding:16px!important;
+        border:1px solid var(--bubu-border-purple)!important;
+        border-radius:20px!important;
+        background:#fff!important;
+        box-shadow:0 7px 18px rgba(88,66,116,.04)!important;
+    }
+    .work input,.work textarea {
+        border:1px solid var(--bubu-border-purple)!important;
+        border-radius:14px!important;
+        outline:none!important;
+    }
+    .work input:focus,.work textarea:focus {
+        border-color:var(--bubu-purple)!important;
+        box-shadow:0 0 0 4px rgba(143,108,245,.12)!important;
+    }
+    .items table {
+        border-radius:16px!important;
+        overflow:hidden!important
+    }
+    .items th {
+        background:#f3eafa!important;
+        color:var(--bubu-ink)!important
+    }
+    .warning {
+        background:#fff4df!important;
+        color:#a85d00!important;
+        border:1px solid #ffe0ad!important
+    }
+    .success {
+        background:#e6fff1!important;
+        color:#118c52!important;
+        border:1px solid #bfeecf!important
+    }
+    @media(max-width:760px) {
+        .page {
+            padding:10px 8px 88px!important
+        }
+        .actions {
+            display:grid!important;
+            grid-template-columns:1fr 1fr!important
+        }
+        .btn {
+            width:100%!important
+        }
+        .hero {
+            padding:17px!important;
+            border-radius:22px!important
+        }
+        .hero h1 {
+            font-size:26px!important
+        }
+        .hero img {
+            display:none!important
+        }
+        .grid,.money,.workflow {
+            grid-template-columns:1fr!important
+        }
+        .card {
+            padding:15px!important;
+            border-radius:20px!important
+        }
+    }
+    </style>
+    <div class="page">
+        <div class="actions">
+            <a class="btn soft" href="{% url 'delivery_list' %}">← Delivery</a>
+            <a class="btn main" href="{% url 'delivery_update' delivery.id %}">✏️ Edit</a>
+            <a class="btn soft" target="_blank" href="{% url 'delivery_sticker' delivery.id %}">🏷️ Print Label</a>
+            <a class="btn soft" href="{% url 'delivery_cod_report' %}">💵 COD Report</a>
         </div>
-
-        <img src="{% static 'img/delivery-hero.png' %}" class="hero-img" alt="Delivery">
-    </div>
-
-    <div class="branch-card">
-        <div>
-            <div class="branch-title">Delivery Branch / Shop</div>
-            <div class="branch-sub">This delivery belongs to this shop. Staff from other shops cannot access it.</div>
+        <div class="hero">
+            <div>
+                <h1>#DLV-{{ delivery.id|stringformat:'04d' }} · {{ delivery.customer_name }}</h1>
+                <p>{{ delivery.get_delivery_area_display }} · {{ delivery.delivery_company.name|default:'No Company' }} · {{ delivery.get_status_display }}</p>
+            </div>
+            <img src="{% static 'img/delivery-hero.png' %}" alt="Delivery">
         </div>
-
-        <div class="branch-badge">
-            🏪 {% if delivery.branch %}{{ delivery.branch.name }}{% else %}No Branch{% endif %}
-        </div>
-    </div>
-
-    <div class="card">
-        <h2 class="section-title">Customer Information</h2>
-
-        <div class="info-grid">
-            <div class="info-box">
-                <small>Customer</small>
-                <h3>{{ delivery.customer_name|default:"-" }}</h3>
+        <section class="card">
+            <h2>Delivery and Customer</h2>
+            <div class="grid">
+                <div class="box">
+                    <span>Area</span>
+                    <strong>{{ delivery.get_delivery_area_display }}</strong>
+                </div>
+                <div class="box">
+                    <span>Company</span>
+                    <strong>{{ delivery.delivery_company.name|default:'No Company' }}</strong>
+                </div>
+                <div class="box">
+                    <span>Shop</span>
+                    <strong>{{ delivery.branch.name|default:'No Branch' }}</strong>
+                </div>
+                <div class="box">
+                    <span>Phone</span>
+                    <strong>{{ delivery.phone|default:'-' }}</strong>
+                </div>
+                <div class="box">
+                    <span>Delivery Date</span>
+                    <strong>{{ delivery.delivery_date|date:'d M Y' }}</strong>
+                </div>
+                <div class="box">
+                    <span>POS Sale</span>
+                    <strong>
+                        {% if delivery.sale %}
+                            <a href="{% url 'sale_detail' delivery.sale.id %}">Sale #{{ delivery.sale.id }}</a>
+                        {% else %}
+                            Manual
+                        {% endif %}
+                    </strong>
+                </div>
+                <div class="box full">
+                    <span>Location</span>
+                    <strong>{{ delivery.location|default:'-' }}</strong>
+                </div>
+                <div class="box full">
+                    <span>Note</span>
+                    <strong>{{ delivery.delivery_note|default:'-' }}</strong>
+                </div>
             </div>
-
-            <div class="info-box">
-                <small>Phone</small>
-                <h3>{{ delivery.phone|default:"-" }}</h3>
+        </section>
+        <section class="card">
+            <h2>Money and COD</h2>
+            <div class="money">
+                <div class="box">
+                    <span>Order Total</span>
+                    <strong>${{ delivery.total_price|floatformat:2 }}</strong>
+                </div>
+                <div class="box">
+                    <span>Customer COD</span>
+                    <strong>${{ delivery.cod_total|floatformat:2 }}</strong>
+                </div>
+                <div class="box">
+                    <span>Delivery Fee</span>
+                    <strong>${{ delivery.delivery_fee|floatformat:2 }}</strong>
+                </div>
+                <div class="box">
+                    <span>Expected Pay To Shop</span>
+                    <strong>${{ delivery.expected_company_pay|floatformat:2 }}</strong>
+                </div>
+                <div class="box">
+                    <span>Received / Lack</span>
+                    <strong>${{ delivery.actual_received|floatformat:2 }} / ${{ delivery.lack_amount|floatformat:2 }}</strong>
+                </div>
             </div>
-
-            <div class="info-box">
-                <small>Delivery Date</small>
-                <h3>{{ delivery.delivery_date|date:"M d, Y" }}</h3>
-            </div>
-
-            <div class="info-box">
-                <small>Status</small>
-                <h3>
-                    {% if delivery.status == "done" %}
-                        <span class="badge badge-green">Delivered</span>
-                    {% elif delivery.status == "out" %}
-                        <span class="badge badge-blue">Out For Delivery</span>
-                    {% elif delivery.status == "cancelled" %}
-                        <span class="badge badge-red">Cancelled</span>
+            <div style="margin-top:11px;display:flex;gap:7px;flex-wrap:wrap">
+                <span class="badge
+                    {% if delivery.payment_type == 'paid' %}
+                        b-green
                     {% else %}
-                        <span class="badge badge-orange">Pending</span>
+                        b-orange
                     {% endif %}
-                </h3>
-            </div>
-
-            <div class="info-box" style="grid-column:1 / -1;">
-                <small>Location / Address</small>
-                <h3 style="font-size:18px;line-height:1.5;">{{ delivery.location|default:"-" }}</h3>
-            </div>
-
-            <div class="info-box" style="grid-column:1 / -1;">
-                <small>Delivery Note</small>
-                <h3 style="font-size:18px;line-height:1.5;">{{ delivery.delivery_note|default:"-" }}</h3>
-            </div>
-        </div>
-    </div>
-
-    <div class="money-card">
-        <h2 class="section-title">Money / COD</h2>
-
-        <div class="money-grid">
-            <div class="money-box">
-                <small>Total Price / COD Total</small>
-                <h3>${{ delivery.total_price|floatformat:2 }}</h3>
-            </div>
-
-            <div class="money-box cod">
-                <small>Expected Collect</small>
-                <h3>${{ delivery.expected_collect|floatformat:2 }}</h3>
-            </div>
-
-            <div class="money-box received">
-                <small>Actual Received</small>
-                <h3>${{ delivery.actual_received|floatformat:2 }}</h3>
-            </div>
-
-            <div class="money-box lack">
-                <small>Lack Amount</small>
-                <h3>${{ delivery.lack_amount|floatformat:2 }}</h3>
-            </div>
-
-            <div class="money-box">
-                <small>Delivery Fee</small>
-                <h3>${{ delivery.delivery_fee|floatformat:2 }}</h3>
-            </div>
-
-            <div class="money-box">
-                <small>Delivery Fee Paid</small>
-                <h3>
-                    {% if delivery.delivery_fee_paid %}
-                        <span class="badge badge-green">Paid</span>
-                    {% else %}
-                        <span class="badge badge-red">Unpaid</span>
-                    {% endif %}
-                </h3>
-            </div>
-
-            <div class="money-box">
-                <small>Payment Type</small>
-                <h3>
-                    {% if delivery.payment_type == "paid" %}
-                        <span class="badge badge-green">Already Paid</span>
-                    {% elif delivery.payment_type == "cod_collect" %}
-                        <span class="badge badge-orange">COD Collect</span>
-                    {% elif delivery.payment_type == "cod_shop" %}
-                        <span class="badge badge-purple">COD Pay To Shop</span>
-                    {% endif %}
-                </h3>
-            </div>
-
-            <div class="money-box" style="grid-column:1 / -1;">
-                <small>Exchange Rate Note</small>
-                <h3 style="font-size:18px;">{{ delivery.exchange_rate_note|default:"-" }}</h3>
-            </div>
-        </div>
-    </div>
-
-    <div class="item-card">
-        <h2 class="section-title">Delivery Items</h2>
-
-        {% if delivery.items.all %}
-            <div class="table-wrap">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Item / Variant</th>
-                            <th>SKU</th>
-                            <th>Qty</th>
-                            <th>Unit Price</th>
-                            <th>Line Total</th>
-                            <th>Note</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {% for item in delivery.items.all %}
-                        <tr>
-                            <td>
-                                <div class="item-name">
-                                    {% if item.variant and item.variant.item %}
-                                        {{ item.variant.item.name }}
-                                    {% else %}
-                                        {{ item.variant }}
-                                    {% endif %}
+                    ">{{ delivery.get_payment_type_display }}</span>
+                    <span class="badge
+                        {% if delivery.cod_status == 'received' or delivery.cod_status == 'settled' %}
+                            b-green
+                        {% elif delivery.cod_status == 'short' %}
+                            b-red
+                        {% else %}
+                            b-orange
+                        {% endif %}
+                        ">{{ delivery.get_cod_status_display }}</span>
+                        <span class="badge
+                            {% if delivery.delivery_fee_paid %}
+                                b-green
+                            {% else %}
+                                b-red
+                            {% endif %}
+                            ">Fee
+                            {% if delivery.delivery_fee_paid %}
+                                Paid
+                            {% else %}
+                                Unpaid
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if delivery.cod_note %}
+                        <p>
+                            <strong>COD Note:</strong> {{ delivery.cod_note }}</p>
+                            {% endif %}
+                        </section>
+                        <section class="card">
+                            <h2>Delivery Workflow</h2>
+                            {% if delivery.return_stock_restored %}
+                                <div class="success">✅ Returned goods were confirmed and stock has already been restored. This action cannot run twice.</div>
+                            {% endif %}
+                            {% if delivery.failure_reason %}
+                                <div class="warning">Failure reason: {{ delivery.failure_reason }}</div>
+                            {% endif %}
+                            <div class="workflow">
+                                <div class="work">
+                                    <h3>1. Delivery Status</h3>
+                                    <p>Delivery status is separate from COD money status.</p>
+                                    <form method="post" action="{% url 'delivery_mark_out' delivery.id %}">
+                                        {% csrf_token %}
+                                        <button class="btn soft" type="submit">🚚 Mark Out</button>
+                                    </form>
+                                    <form method="post" action="{% url 'delivery_mark_done' delivery.id %}">
+                                        {% csrf_token %}
+                                        <button class="btn green" type="submit">✅ Mark Delivered</button>
+                                    </form>
                                 </div>
-
-                                {% if item.variant %}
-                                    <div class="item-meta">{{ item.variant.display_name }}</div>
-                                {% endif %}
-                            </td>
-
-                            <td>{% if item.variant %}{{ item.variant.sku|default:"-" }}{% else %}-{% endif %}</td>
-                            <td>{{ item.qty }}</td>
-                            <td>${{ item.unit_price|floatformat:2 }}</td>
-                            <td>${{ item.line_total|floatformat:2 }}</td>
-                            <td>{{ item.note|default:"-" }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <div class="empty-box">
-                No delivery item rows. This delivery may come from POS sale total only.
-            </div>
-        {% endif %}
-    </div>
-
-</div>
-
-{% endblock %}
+                                <div class="work">
+                                    <h3>2. Failed Delivery</h3>
+                                    <p>Record why delivery failed. Stock is not restored until goods return.</p>
+                                    <form method="post" action="{% url 'delivery_mark_failed' delivery.id %}">
+                                        {% csrf_token %}
+                                        <textarea name="reason" placeholder="Reason: customer reject, cannot contact...">
+                                        </textarea>
+                                        <button class="btn orange" type="submit">⚠️ Mark Failed</button>
+                                    </form>
+                                </div>
+                                <div class="work">
+                                    <h3>3. Return + Stock</h3>
+                                    <p>Use only after the goods physically arrive back at the shop.</p>
+                                    <form method="post" action="{% url 'delivery_return_stock' delivery.id %}" onsubmit="return confirm('Confirm goods returned and restore stock? This cannot run twice.');">
+                                        {% csrf_token %}
+                                        <textarea name="return_reason" placeholder="Return reason"
+                                            {% if delivery.return_stock_restored %}
+                                                disabled
+                                            {% endif %}
+                                            >
+                                        </textarea>
+                                        <button class="btn red" type="submit"
+                                            {% if delivery.return_stock_restored %}
+                                                disabled
+                                            {% endif %}
+                                            >↩️ Return + Restore Stock</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </section>
+                            {% if delivery.payment_type == 'cod_collect' or delivery.payment_type == 'cod_shop' %}
+                                <section class="card">
+                                    <h2>COD Confirmation</h2>
+                                    {% if delivery.status != 'done' %}
+                                        <div class="warning">Mark delivery as Delivered before confirming money.</div>
+                                    {% endif %}
+                                    <div class="workflow">
+                                        <div class="work" style="grid-column:span 2">
+                                            <h3>Confirm Money Received</h3>
+                                            <p>Expected from company: ${{ delivery.expected_company_pay|floatformat:2 }} after delivery fee.</p>
+                                            <form method="post" action="{% url 'delivery_confirm_cod' delivery.id %}">
+                                                {% csrf_token %}
+                                                <input type="number" step="0.01" min="0" name="actual_received" value="{{ delivery.expected_company_pay }}">
+                                                <textarea name="cod_note" placeholder="Transfer reference, exchange-rate shortage, note...">{{ delivery.cod_note }}</textarea>
+                                                <button class="btn green" type="submit">💵 Confirm Received</button>
+                                            </form>
+                                        </div>
+                                        <div class="work">
+                                            <h3>Settle</h3>
+                                            <p>Use after accounting finishes checking the received or short amount.</p>
+                                            <form method="post" action="{% url 'delivery_settle_cod' delivery.id %}">
+                                                {% csrf_token %}
+                                                <button class="btn main" type="submit">✓ Mark Settled</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </section>
+                            {% endif %}
+                            <section class="card items">
+                                <h2>Delivery Items</h2>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Variant</th>
+                                            <th>Qty</th>
+                                            <th>Price</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in delivery.items.all %}
+                                            <tr>
+                                                <td>{{ item.variant.item.name }}</td>
+                                                <td>{{ item.variant.display_name }}</td>
+                                                <td>{{ item.qty }}</td>
+                                                <td>${{ item.unit_price|floatformat:2 }}</td>
+                                                <td>${{ item.line_total|floatformat:2 }}</td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="5">No delivery item rows. Linked POS Sale may still contain the stock items.</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </section>
+                            {% if delivery.returned_at %}
+                                <section class="card">
+                                    <h2>Return Record</h2>
+                                    <p>
+                                        <strong>Reason:</strong> {{ delivery.return_reason }}</p>
+                                            <p>
+                                                <strong>Confirmed:</strong> {{ delivery.returned_at|date:'d M Y H:i' }} by {{ delivery.returned_by.get_full_name|default:delivery.returned_by.username }}</p>
+                                                </section>
+                                            {% endif %}
+                                        </div>
+                                    {% endblock %}

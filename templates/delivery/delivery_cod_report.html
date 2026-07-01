@@ -1,0 +1,778 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+*{box-sizing:border-box}
+:root{
+    --ink:#17152f;
+    --muted:#7b7288;
+    --purple:#8e63ff;
+    --purple-dark:#7047db;
+    --purple-soft:#f3edff;
+    --pink:#ff7f91;
+    --green:#22a86b;
+    --orange:#e88918;
+    --red:#ef5574;
+    --blue:#3f70d8;
+    --line:#eadff3;
+    --warm:#f1e7df;
+}
+a{text-decoration:none}
+.delivery-shell{
+    width:100%;
+    max-width:1480px;
+    margin:0 auto;
+    padding:20px;
+    color:var(--ink);
+}
+.page-title-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    margin-bottom:15px;
+}
+.page-title-row h1{
+    margin:0;
+    font-size:30px;
+    font-weight:1000;
+}
+.page-title-row p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-weight:850;
+}
+.title-actions{
+    display:flex;
+    gap:9px;
+    flex-wrap:wrap;
+}
+.card{
+    background:#fff;
+    border:1px solid var(--warm);
+    border-radius:22px;
+    box-shadow:0 9px 24px rgba(63,47,85,.06);
+}
+.btn{
+    min-height:50px;
+    padding:0 17px;
+    border:0;
+    border-radius:16px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    font-size:14px;
+    font-weight:1000;
+    cursor:pointer;
+}
+.btn-primary{
+    color:#fff;
+    background:linear-gradient(135deg,var(--purple),var(--pink));
+    box-shadow:0 8px 18px rgba(142,99,255,.18);
+}
+.btn-soft{
+    color:var(--purple-dark);
+    background:#fff;
+    border:1px solid var(--line);
+}
+.btn-green{color:#fff;background:#24ad75}
+.btn-red{color:#fff;background:#ef5574}
+.filter-card{
+    padding:13px;
+    margin-bottom:15px;
+}
+.filter-grid{
+    display:grid;
+    grid-template-columns:minmax(220px,1.4fr) repeat(6,minmax(140px,.8fr)) auto auto;
+    gap:8px;
+}
+.text-input,.select-button,.form-control{
+    width:100%;
+    min-height:50px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:#fff;
+    color:var(--ink);
+    padding:0 14px;
+    font-size:14px;
+    font-weight:850;
+    outline:none;
+}
+textarea.form-control{
+    min-height:100px;
+    padding-top:13px;
+}
+.text-input:focus,.form-control:focus,.select-button:focus{
+    border-color:#b898ff;
+    box-shadow:0 0 0 4px rgba(142,99,255,.10);
+}
+.select-button{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    cursor:pointer;
+    text-align:left;
+}
+.select-button span:first-child{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+.badge{
+    min-height:28px;
+    padding:0 9px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+.badge-purple{color:#7654d7;background:#f0e8ff}
+.badge-green{color:#15975b;background:#e7fff1}
+.badge-blue{color:#356bd4;background:#eaf2ff}
+.badge-orange{color:#d87900;background:#fff2de}
+.badge-red{color:#db3f58;background:#ffe8eb}
+.badge-gray{color:#676271;background:#f0eef2}
+.table-card{overflow:hidden}
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:1450px}
+th{
+    padding:13px 10px;
+    background:#f4edff;
+    color:var(--ink);
+    font-size:11px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+td{
+    padding:14px 10px;
+    border-top:1px solid #f4edf7;
+    color:#383047;
+    font-size:12px;
+    font-weight:800;
+    text-align:center;
+    vertical-align:middle;
+}
+tbody tr:hover{background:#fffafd}
+.customer-cell{text-align:left;min-width:150px}
+.customer-cell strong{display:block}
+.customer-cell small{display:block;margin-top:3px;color:var(--muted)}
+.location-cell{max-width:220px;text-align:left;line-height:1.35}
+.action-row{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.icon-btn{
+    width:40px;
+    height:40px;
+    border-radius:13px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:17px;
+}
+.view{color:#356bd4;background:#eaf2ff}
+.edit{color:#d87900;background:#fff2de}
+.delete{color:#db3f58;background:#ffe8eb}
+.mobile-list{display:none}
+.mobile-card{
+    padding:14px;
+    border:1px solid var(--warm);
+    border-radius:19px;
+    background:#fff;
+    box-shadow:0 7px 18px rgba(63,47,85,.05);
+}
+.mobile-card-head{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:flex-start;
+}
+.mobile-card-title{font-size:15px;font-weight:1000}
+.mobile-card-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:11px;
+}
+.mobile-box{
+    padding:9px;
+    border-radius:13px;
+    background:#faf8ff;
+}
+.mobile-box span{display:block;color:var(--muted);font-size:10px;font-weight:900}
+.mobile-box strong{display:block;margin-top:3px;font-size:12px}
+.mobile-actions{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:7px;
+    margin-top:11px;
+}
+.mobile-actions a,.mobile-actions button{
+    min-height:43px;
+    border:0;
+    border-radius:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+}
+.popup-backdrop{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:14px;
+    background:rgba(23,21,47,.38);
+    backdrop-filter:blur(3px);
+}
+.popup-backdrop.show{display:flex}
+.popup-sheet{
+    width:100%;
+    max-width:480px;
+    max-height:86vh;
+    overflow:auto;
+    padding:16px;
+    border-radius:24px;
+    background:#fff;
+    box-shadow:0 25px 70px rgba(23,21,47,.25);
+    animation:sheetUp .18s ease-out;
+}
+@keyframes sheetUp{
+    from{transform:translateY(35px);opacity:0}
+    to{transform:translateY(0);opacity:1}
+}
+.popup-handle{
+    width:44px;
+    height:5px;
+    margin:0 auto 12px;
+    border-radius:999px;
+    background:#e4dcef;
+}
+.popup-title{
+    margin-bottom:11px;
+    font-size:18px;
+    font-weight:1000;
+}
+.popup-option{
+    width:100%;
+    min-height:55px;
+    margin-bottom:8px;
+    padding:0 14px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:#fff;
+    color:var(--ink);
+    font-size:14px;
+    font-weight:950;
+    cursor:pointer;
+}
+.popup-option.active{
+    color:var(--purple-dark);
+    border-color:#b898ff;
+    background:#f5f0ff;
+}
+.popup-close{
+    width:100%;
+    min-height:50px;
+    border:0;
+    border-radius:16px;
+    color:#675a79;
+    background:#f2eff5;
+    font-weight:1000;
+}
+.form-card{padding:18px}
+.form-section{
+    padding:16px;
+    margin-bottom:14px;
+    border:1px solid #f0e7df;
+    border-radius:18px;
+}
+.form-section h2{
+    margin:0 0 12px;
+    font-size:18px;
+    font-weight:1000;
+}
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:12px;
+}
+.form-grid.three{grid-template-columns:repeat(3,1fr)}
+.field label{
+    display:block;
+    margin-bottom:6px;
+    font-size:12px;
+    font-weight:1000;
+}
+.field.full{grid-column:1/-1}
+.help{
+    display:block;
+    margin-top:5px;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:800;
+}
+.check-row{
+    min-height:50px;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    background:#faf8ff;
+}
+.check-row input{width:21px;height:21px}
+.save-row{
+    display:flex;
+    justify-content:flex-end;
+    gap:9px;
+    padding-top:14px;
+}
+.summary-grid{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:10px;
+    margin-bottom:14px;
+}
+.summary-card{
+    padding:14px;
+    border:1px solid var(--warm);
+    border-radius:18px;
+    background:#fff;
+}
+.summary-card span{display:block;color:var(--muted);font-size:11px;font-weight:900}
+.summary-card strong{display:block;margin-top:4px;font-size:20px}
+
+.date-filter-button{
+    width:100%;
+    min-height:50px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:0 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    color:var(--ink);
+    background:#fff;
+    font-size:14px;
+    font-weight:850;
+    cursor:pointer;
+    text-align:left;
+}
+.date-filter-button:focus{
+    border-color:#b898ff;
+    box-shadow:0 0 0 4px rgba(142,99,255,.10);
+    outline:none;
+}
+.date-filter-button span:first-child{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+.native-date-hidden{
+    position:absolute!important;
+    width:1px!important;
+    height:1px!important;
+    padding:0!important;
+    margin:-1px!important;
+    overflow:hidden!important;
+    clip:rect(0,0,0,0)!important;
+    white-space:nowrap!important;
+    border:0!important;
+}
+.calendar-sheet{max-width:360px}
+.calendar-body{padding:14px}
+.calendar-toolbar{
+    display:grid;
+    grid-template-columns:40px 1fr 40px;
+    align-items:center;
+    gap:8px;
+    margin-bottom:12px;
+}
+.calendar-nav{
+    width:40px;
+    height:40px;
+    border:0;
+    border-radius:13px;
+    color:var(--purple-dark);
+    background:var(--purple-soft);
+    font-size:19px;
+    font-weight:1000;
+    cursor:pointer;
+}
+.calendar-month{
+    text-align:center;
+    font-size:16px;
+    font-weight:1000;
+}
+.calendar-week,.calendar-grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:5px;
+}
+.calendar-week{margin-bottom:5px}
+.calendar-week span{
+    padding:5px 0;
+    text-align:center;
+    color:var(--muted);
+    font-size:10px;
+    font-weight:1000;
+}
+.calendar-day{
+    aspect-ratio:1;
+    border:0;
+    border-radius:999px;
+    color:var(--ink);
+    background:transparent;
+    font-size:12px;
+    font-weight:950;
+    cursor:pointer;
+}
+.calendar-day:hover{background:var(--purple-soft)}
+.calendar-day.outside{color:#c7bfd3}
+.calendar-day.today{box-shadow:inset 0 0 0 2px #d6c7ff}
+.calendar-day.selected{
+    color:#fff;
+    background:linear-gradient(135deg,var(--purple),#7567f7);
+    box-shadow:0 7px 14px rgba(116,82,224,.25);
+}
+.calendar-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:13px;
+}
+.calendar-action{
+    min-height:43px;
+    border:0;
+    border-radius:14px;
+    font-weight:1000;
+    cursor:pointer;
+}
+.calendar-today{color:var(--purple-dark);background:var(--purple-soft)}
+.calendar-close{color:#625476;background:#f2eff5}
+
+@media(max-width:1150px){
+    .filter-grid{grid-template-columns:repeat(3,1fr)}
+    .filter-grid .text-input{grid-column:1/-1}
+    .summary-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:760px){
+    .delivery-shell{padding:8px 7px 88px}
+    .page-title-row{display:block;margin-bottom:11px}
+    .page-title-row h1{font-size:24px}
+    .page-title-row p{font-size:12px}
+    .title-actions{display:grid;grid-template-columns:1fr 1fr;margin-top:10px}
+    .title-actions .btn{width:100%;min-height:46px}
+    .filter-card{padding:10px;border-radius:18px}
+    .filter-grid{grid-template-columns:1fr 1fr}
+    .filter-grid .text-input{grid-column:1/-1}
+    .filter-grid .btn{width:100%;min-height:48px}
+    .select-button,.text-input,.form-control{min-height:48px;font-size:16px}
+    .table-card{display:none}
+    .mobile-list{display:grid;gap:9px}
+    .popup-backdrop{padding:8px}
+    .popup-sheet{padding:14px;border-radius:22px}
+    .popup-option{min-height:58px;font-size:16px}
+    .form-card{padding:10px;border-radius:18px}
+    .form-section{padding:12px;border-radius:16px}
+    .form-grid,.form-grid.three{grid-template-columns:1fr}
+    .field.full{grid-column:auto}
+    .save-row{display:grid;grid-template-columns:1fr}
+    .save-row .btn{width:100%}
+    .summary-grid{display:flex;overflow-x:auto;padding-bottom:3px}
+    .summary-card{min-width:145px}
+}
+</style>
+
+<div class="delivery-shell">
+    <div class="page-title-row">
+        <div><h1>COD Report 💵</h1><p>Track money expected from delivery companies, received money and lack amount.</p></div>
+        <div class="title-actions"><a href="{% url 'delivery_list' %}" class="btn btn-soft">← Delivery</a></div>
+    </div>
+
+    <form method="get" class="card filter-card">
+        <div class="filter-grid" style="grid-template-columns:repeat(5,1fr) auto auto">
+            <input type="hidden" name="branch" id="branchInput" value="{{ selected_branch }}">
+            <input type="hidden" name="delivery_area" id="areaInput" value="{{ selected_area }}">
+            <input type="hidden" name="company" id="companyInput" value="{{ selected_company }}">
+            <input type="hidden" name="cod_status" id="codInput" value="{{ selected_cod_status }}">
+
+            {% if request.user.is_superuser %}
+            <button type="button" class="select-button" onclick="openPopup('branchPopup')"><span id="branchLabel">All Shops</span><span>⌄</span></button>
+            {% endif %}
+            <button type="button" class="select-button" onclick="openPopup('areaPopup')"><span id="areaLabel">All Types</span><span>⌄</span></button>
+            <button type="button" class="select-button" onclick="openPopup('companyPopup')"><span id="companyLabel">All Companies</span><span>⌄</span></button>
+            <button type="button" class="select-button" onclick="openPopup('codPopup')"><span id="codLabel">All COD Status</span><span>⌄</span></button>
+            <div>
+                <input type="date" name="date_from" id="dateFromInput" value="{{ date_from }}" class="native-date-hidden">
+                <button type="button" class="date-filter-button" data-date-input="dateFromInput" data-date-title="Date From">
+                    <span id="dateFromLabel">Date From</span><span>📅</span>
+                </button>
+            </div>
+            <div>
+                <input type="date" name="date_to" id="dateToInput" value="{{ date_to }}" class="native-date-hidden">
+                <button type="button" class="date-filter-button" data-date-input="dateToInput" data-date-title="Date To">
+                    <span id="dateToLabel">Date To</span><span>📅</span>
+                </button>
+            </div>
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a href="{% url 'delivery_cod_report' %}" class="btn btn-soft">Reset</a>
+        </div>
+    </form>
+
+    <div class="summary-grid">
+        <div class="summary-card"><span>Customer COD</span><strong>${{ cod_total|floatformat:2 }}</strong></div>
+        <div class="summary-card"><span>Delivery Fee</span><strong>${{ fee_total|floatformat:2 }}</strong></div>
+        <div class="summary-card"><span>Expected From Company</span><strong>${{ expected_total|floatformat:2 }}</strong></div>
+        <div class="summary-card"><span>Received</span><strong>${{ received_total|floatformat:2 }}</strong></div>
+        <div class="summary-card"><span>Lack</span><strong style="color:#db3f58">${{ lack_total|floatformat:2 }}</strong></div>
+    </div>
+
+    <div class="card table-card">
+        <div class="table-scroll">
+            <table>
+                <thead><tr>
+                    <th>ID</th><th>Shop</th><th>Type</th><th>Company</th><th>Customer</th>
+                    <th>COD</th><th>Fee</th><th>Expected</th><th>Received</th><th>Lack</th>
+                    <th>Delivery</th><th>COD Status</th><th>Update Money</th>
+                </tr></thead>
+                <tbody>
+                {% for delivery in deliveries %}
+                    <tr>
+                        <td><a href="{% url 'delivery_detail' delivery.id %}" style="color:#7654d7;font-weight:1000">#DLV-{{ delivery.id|stringformat:"04d" }}</a></td>
+                        <td>{% if delivery.branch %}{{ delivery.branch.name }}{% else %}-{% endif %}</td>
+                        <td>{{ delivery.get_delivery_area_display }}</td>
+                        <td>{% if delivery.delivery_company %}<strong>{{ delivery.delivery_company.name }}</strong>{% else %}-{% endif %}</td>
+                        <td class="customer-cell"><strong>{{ delivery.customer_name }}</strong><small>{{ delivery.phone }}</small></td>
+                        <td>${{ delivery.cod_total|floatformat:2 }}</td>
+                        <td>${{ delivery.delivery_fee|floatformat:2 }}</td>
+                        <td><strong>${{ delivery.expected_company_pay|floatformat:2 }}</strong></td>
+                        <td>${{ delivery.actual_received|floatformat:2 }}</td>
+                        <td>{% if delivery.lack_amount > 0 %}<span class="badge badge-red">${{ delivery.lack_amount|floatformat:2 }}</span>{% else %}<span class="badge badge-green">$0.00</span>{% endif %}</td>
+                        <td>{{ delivery.get_status_display }}</td>
+                        <td><span class="badge badge-purple">{{ delivery.get_cod_status_display }}</span></td>
+                        <td>
+                            {% if delivery.status == "done" and delivery.cod_status != "settled" %}
+                            <form method="post" action="{% url 'delivery_confirm_cod' delivery.id %}" style="display:flex;gap:5px">
+                                {% csrf_token %}
+                                <input type="number" step="0.01" name="actual_received" value="{{ delivery.expected_company_pay }}" class="form-control" style="width:95px;min-height:40px">
+                                <button class="btn btn-green" style="min-height:40px;padding:0 10px">Receive</button>
+                            </form>
+                            {% elif delivery.cod_status == "received" or delivery.cod_status == "short" %}
+                            <form method="post" action="{% url 'delivery_settle_cod' delivery.id %}">
+                                {% csrf_token %}
+                                <button class="btn btn-primary" style="min-height:40px">Settle</button>
+                            </form>
+                            {% else %}-{% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="13"><div style="padding:45px;text-align:center">No COD delivery found.</div></td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mobile-list">
+        {% for delivery in deliveries %}
+        <div class="mobile-card">
+            <div class="mobile-card-head">
+                <div><div class="mobile-card-title">{{ delivery.customer_name }}</div><small>#DLV-{{ delivery.id|stringformat:"04d" }} · {% if delivery.delivery_company %}{{ delivery.delivery_company.name }}{% endif %}</small></div>
+                <span class="badge badge-purple">{{ delivery.get_cod_status_display }}</span>
+            </div>
+            <div class="mobile-card-grid">
+                <div class="mobile-box"><span>COD</span><strong>${{ delivery.cod_total|floatformat:2 }}</strong></div>
+                <div class="mobile-box"><span>Fee</span><strong>${{ delivery.delivery_fee|floatformat:2 }}</strong></div>
+                <div class="mobile-box"><span>Expected</span><strong>${{ delivery.expected_company_pay|floatformat:2 }}</strong></div>
+                <div class="mobile-box"><span>Received</span><strong>${{ delivery.actual_received|floatformat:2 }}</strong></div>
+                <div class="mobile-box"><span>Lack</span><strong>${{ delivery.lack_amount|floatformat:2 }}</strong></div>
+                <div class="mobile-box"><span>Status</span><strong>{{ delivery.get_status_display }}</strong></div>
+            </div>
+            {% if delivery.status == "done" and delivery.cod_status != "settled" %}
+            <form method="post" action="{% url 'delivery_confirm_cod' delivery.id %}" style="display:grid;grid-template-columns:1fr auto;gap:7px;margin-top:10px">
+                {% csrf_token %}
+                <input type="number" step="0.01" name="actual_received" value="{{ delivery.expected_company_pay }}" class="form-control">
+                <button class="btn btn-green">Receive</button>
+            </form>
+            {% endif %}
+        </div>
+        {% empty %}<div class="mobile-card">No COD delivery found.</div>{% endfor %}
+    </div>
+</div>
+
+{% if request.user.is_superuser %}
+<div class="popup-backdrop" id="branchPopup"><div class="popup-sheet"><div class="popup-handle"></div><div class="popup-title">Choose Shop</div>
+<button class="popup-option" type="button" onclick="pick('branch','','All Shops')">All Shops <span>✓</span></button>
+{% for branch in branches %}<button class="popup-option" type="button" onclick="pick('branch','{{ branch.id }}','{{ branch.name|escapejs }}')">{{ branch.name }} <span>›</span></button>{% endfor %}
+<button class="popup-close" type="button" onclick="closePopup('branchPopup')">Close</button></div></div>
+{% endif %}
+<div class="popup-backdrop" id="areaPopup"><div class="popup-sheet"><div class="popup-handle"></div><div class="popup-title">Delivery Type</div>
+<button class="popup-option" type="button" onclick="pick('area','','All Types')">All Types <span>✓</span></button>
+<button class="popup-option" type="button" onclick="pick('area','pp','Phnom Penh')">Phnom Penh <span>›</span></button>
+<button class="popup-option" type="button" onclick="pick('area','province','Province')">Province <span>›</span></button>
+<button class="popup-close" type="button" onclick="closePopup('areaPopup')">Close</button></div></div>
+<div class="popup-backdrop" id="companyPopup"><div class="popup-sheet"><div class="popup-handle"></div><div class="popup-title">Delivery Company</div>
+<button class="popup-option" type="button" onclick="pick('company','','All Companies')">All Companies <span>✓</span></button>
+{% for company in delivery_companies %}<button class="popup-option" type="button" onclick="pick('company','{{ company.id }}','{{ company.name|escapejs }}')">{{ company.name }} <small>{{ company.get_delivery_type_display }}</small></button>{% endfor %}
+<button class="popup-close" type="button" onclick="closePopup('companyPopup')">Close</button></div></div>
+<div class="popup-backdrop" id="codPopup"><div class="popup-sheet"><div class="popup-handle"></div><div class="popup-title">COD Status</div>
+<button class="popup-option" type="button" onclick="pick('cod','','All COD Status')">All COD Status <span>✓</span></button>
+<button class="popup-option" type="button" onclick="pick('cod','waiting','Waiting Money')">Waiting Money <span>›</span></button>
+<button class="popup-option" type="button" onclick="pick('cod','received','Received')">Received <span>›</span></button>
+<button class="popup-option" type="button" onclick="pick('cod','short','Short Money')">Short Money <span>›</span></button>
+<button class="popup-option" type="button" onclick="pick('cod','settled','Settled')">Settled <span>›</span></button>
+<button class="popup-close" type="button" onclick="closePopup('codPopup')">Close</button></div></div>
+
+<div class="popup-backdrop" id="datePopup">
+    <div class="popup-sheet calendar-sheet">
+        <div class="popup-title" id="datePopupTitle">Choose Date</div>
+        <div class="calendar-body">
+            <div class="calendar-toolbar">
+                <button type="button" class="calendar-nav" id="calendarPrev">‹</button>
+                <div class="calendar-month" id="calendarMonth"></div>
+                <button type="button" class="calendar-nav" id="calendarNext">›</button>
+            </div>
+            <div class="calendar-week">
+                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+            <div class="calendar-actions">
+                <button type="button" class="calendar-action calendar-today" id="calendarToday">Today</button>
+                <button type="button" class="calendar-action calendar-close" onclick="closePopup('datePopup')">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const refs={
+ branch:{input:"branchInput",label:"branchLabel",popup:"branchPopup"},
+ area:{input:"areaInput",label:"areaLabel",popup:"areaPopup"},
+ company:{input:"companyInput",label:"companyLabel",popup:"companyPopup"},
+ cod:{input:"codInput",label:"codLabel",popup:"codPopup"}
+};
+function openPopup(id){
+ const popup=document.getElementById(id);
+ if(!popup)return;
+ popup.classList.add("show");
+ document.body.style.overflow="hidden";
+}
+function closePopup(id){
+ const popup=document.getElementById(id);
+ if(!popup)return;
+ popup.classList.remove("show");
+ if(!document.querySelector(".popup-backdrop.show"))document.body.style.overflow="";
+}
+function pick(name,value,label){const r=refs[name];document.getElementById(r.input).value=value;document.getElementById(r.label).innerText=label;closePopup(r.popup)}
+document.querySelectorAll(".popup-backdrop").forEach(p=>p.addEventListener("click",e=>{if(e.target===p)p.classList.remove("show")}));
+
+let activeDateInput=null;
+let calendarCursor=new Date();
+let selectedCalendarDate=null;
+const pad=n=>String(n).padStart(2,"0");
+const toISO=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+function parseISO(value){
+    if(!value)return null;
+    const p=value.split("-").map(Number);
+    if(p.length!==3||p.some(Number.isNaN))return null;
+    return new Date(p[0],p[1]-1,p[2]);
+}
+function formatDate(value,fallback){
+    const d=parseISO(value);
+    if(!d)return fallback;
+    return new Intl.DateTimeFormat("en-GB",{day:"2-digit",month:"short",year:"numeric"}).format(d);
+}
+function updateDateButton(input){
+    const button=document.querySelector(`[data-date-input="${input.id}"]`);
+    if(!button)return;
+    button.querySelector("span").innerText=formatDate(input.value,button.dataset.dateTitle);
+}
+function renderCalendar(){
+    const year=calendarCursor.getFullYear();
+    const month=calendarCursor.getMonth();
+    document.getElementById("calendarMonth").innerText=
+        new Intl.DateTimeFormat("en-US",{month:"long",year:"numeric"}).format(calendarCursor);
+
+    const grid=document.getElementById("calendarGrid");
+    grid.innerHTML="";
+    const first=new Date(year,month,1);
+    const start=new Date(year,month,1-first.getDay());
+    const todayISO=toISO(new Date());
+    const selectedISO=selectedCalendarDate?toISO(selectedCalendarDate):"";
+
+    for(let i=0;i<42;i++){
+        const date=new Date(start);
+        date.setDate(start.getDate()+i);
+        const iso=toISO(date);
+        const button=document.createElement("button");
+        button.type="button";
+        button.className="calendar-day";
+        button.innerText=date.getDate();
+        if(date.getMonth()!==month)button.classList.add("outside");
+        if(iso===todayISO)button.classList.add("today");
+        if(iso===selectedISO)button.classList.add("selected");
+        button.addEventListener("click",()=>{
+            if(!activeDateInput)return;
+            activeDateInput.value=iso;
+            activeDateInput.dispatchEvent(new Event("change",{bubbles:true}));
+            updateDateButton(activeDateInput);
+            closePopup("datePopup");
+        });
+        grid.appendChild(button);
+    }
+}
+document.querySelectorAll("[data-date-input]").forEach(button=>{
+    const input=document.getElementById(button.dataset.dateInput);
+    if(!input)return;
+    updateDateButton(input);
+    button.addEventListener("click",()=>{
+        activeDateInput=input;
+        selectedCalendarDate=parseISO(input.value);
+        const base=selectedCalendarDate||new Date();
+        calendarCursor=new Date(base.getFullYear(),base.getMonth(),1);
+        document.getElementById("datePopupTitle").innerText=button.dataset.dateTitle||"Choose Date";
+        renderCalendar();
+        openPopup("datePopup");
+    });
+});
+document.getElementById("calendarPrev").addEventListener("click",()=>{
+    calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()-1,1);
+    renderCalendar();
+});
+document.getElementById("calendarNext").addEventListener("click",()=>{
+    calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+1,1);
+    renderCalendar();
+});
+document.getElementById("calendarToday").addEventListener("click",()=>{
+    if(!activeDateInput)return;
+    activeDateInput.value=toISO(new Date());
+    activeDateInput.dispatchEvent(new Event("change",{bubbles:true}));
+    updateDateButton(activeDateInput);
+    closePopup("datePopup");
+});
+
+document.addEventListener("DOMContentLoaded",()=>{
+ const areaMap={"":"All Types","pp":"Phnom Penh","province":"Province"};
+ const codMap={"":"All COD Status","waiting":"Waiting Money","received":"Received","short":"Short Money","settled":"Settled"};
+ document.getElementById("areaLabel").innerText=areaMap[document.getElementById("areaInput").value]||"All Types";
+ document.getElementById("codLabel").innerText=codMap[document.getElementById("codInput").value]||"All COD Status";
+ {% if request.user.is_superuser %}
+ const branchMap={"{% for branch in branches %}{{ branch.id }}":"{{ branch.name|escapejs }}",{% endfor %}"":"All Shops"};
+ document.getElementById("branchLabel").innerText=branchMap["{{ selected_branch|escapejs }}"]||"All Shops";
+ {% endif %}
+ const companyMap={"{% for company in delivery_companies %}{{ company.id }}":"{{ company.name|escapejs }}",{% endfor %}"":"All Companies"};
+ document.getElementById("companyLabel").innerText=companyMap["{{ selected_company|escapejs }}"]||"All Companies";
+});
+</script>
+{% endblock %}

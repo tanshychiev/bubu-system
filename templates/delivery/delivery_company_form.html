@@ -1,294 +1,470 @@
 {% extends "base.html" %}
-
 {% block content %}
 
 <style>
-    .company-page {
-        max-width: 760px;
-        margin: 0 auto;
-        padding: 24px;
-    }
+*{box-sizing:border-box}
+:root{
+    --ink:#17152f;
+    --muted:#7b7288;
+    --purple:#8e63ff;
+    --purple-dark:#7047db;
+    --purple-soft:#f3edff;
+    --pink:#ff7f91;
+    --green:#22a86b;
+    --red:#ef5574;
+    --line:#eadff3;
+    --warm:#f1e7df;
+}
+a{text-decoration:none}
+body.popup-open{overflow:hidden}
 
-    .company-card {
-        background: #fff;
-        border-radius: 28px;
-        padding: 26px;
-        box-shadow: 0 10px 28px rgba(63, 47, 85, 0.08);
-        border: 1px solid #f1e7f5;
-    }
+.delivery-shell{
+    width:100%;
+    max-width:800px;
+    margin:0 auto;
+    padding:20px;
+    color:var(--ink);
+}
+.page-title-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    margin-bottom:15px;
+}
+.page-title-row h1{
+    margin:0;
+    font-size:30px;
+    font-weight:1000;
+}
+.page-title-row p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-weight:850;
+}
+.card{
+    background:#fff;
+    border:1px solid var(--warm);
+    border-radius:22px;
+    box-shadow:0 9px 24px rgba(63,47,85,.06);
+}
+.btn{
+    min-height:50px;
+    padding:0 17px;
+    border:0;
+    border-radius:16px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    font-size:14px;
+    font-weight:1000;
+    cursor:pointer;
+}
+.btn-primary{
+    color:#fff;
+    background:linear-gradient(135deg,var(--purple),var(--pink));
+    box-shadow:0 8px 18px rgba(142,99,255,.18);
+}
+.btn-soft{
+    color:var(--purple-dark);
+    background:#fff;
+    border:1px solid var(--line);
+}
+.form-card{padding:18px}
+.form-section{
+    padding:16px;
+    margin-bottom:14px;
+    border:1px solid #f0e7df;
+    border-radius:18px;
+}
+.form-section h2{
+    margin:0 0 12px;
+    font-size:18px;
+    font-weight:1000;
+}
+.quick-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+}
+.quick-btn{
+    min-height:48px;
+    border:1px solid var(--line);
+    border-radius:15px;
+    color:var(--purple-dark);
+    background:#faf7ff;
+    font-weight:1000;
+    cursor:pointer;
+}
+.quick-btn:hover{
+    border-color:#b898ff;
+    background:#f3edff;
+}
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+}
+.field.full{grid-column:1/-1}
+.field label{
+    display:block;
+    margin-bottom:6px;
+    font-size:12px;
+    font-weight:1000;
+}
+.field input,
+.field textarea,
+.field select,
+.select-trigger{
+    width:100%;
+    min-height:52px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:#fff;
+    color:var(--ink);
+    padding:0 14px;
+    font-size:14px;
+    font-weight:850;
+    outline:none;
+}
+.field textarea{
+    min-height:100px;
+    padding-top:13px;
+    resize:vertical;
+}
+.field input:focus,
+.field textarea:focus,
+.select-trigger:focus{
+    border-color:#b898ff;
+    box-shadow:0 0 0 4px rgba(142,99,255,.10);
+}
+.select-trigger{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    cursor:pointer;
+    text-align:left;
+}
+.control-label{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+.native-popup-control{
+    position:absolute!important;
+    width:1px!important;
+    height:1px!important;
+    padding:0!important;
+    margin:-1px!important;
+    overflow:hidden!important;
+    clip:rect(0,0,0,0)!important;
+    white-space:nowrap!important;
+    border:0!important;
+}
+.check-row{
+    min-height:52px;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    background:#faf8ff;
+    font-weight:900;
+}
+.check-row input{
+    width:22px;
+    height:22px;
+    accent-color:var(--purple);
+}
+.errorlist{
+    margin:6px 0 0;
+    padding:0;
+    list-style:none;
+    color:#d83f59;
+    font-size:12px;
+    font-weight:900;
+}
+.save-row{
+    display:flex;
+    justify-content:flex-end;
+    gap:9px;
+}
 
-    .company-card h1 {
-        margin: 0 0 8px;
-        font-size: 28px;
-        color: #17142c;
-    }
+/* Center popup */
+.popup-backdrop{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:14px;
+    background:rgba(23,21,47,.42);
+    backdrop-filter:blur(3px);
+}
+.popup-backdrop.show{display:flex}
+.popup-panel{
+    width:100%;
+    max-width:420px;
+    max-height:82vh;
+    overflow:hidden;
+    border-radius:24px;
+    background:#fff;
+    box-shadow:0 28px 80px rgba(23,21,47,.28);
+    animation:popupIn .18s ease-out;
+}
+@keyframes popupIn{
+    from{transform:translateY(14px) scale(.97);opacity:0}
+    to{transform:translateY(0) scale(1);opacity:1}
+}
+.popup-head{
+    min-height:62px;
+    padding:14px 14px 14px 17px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    color:#fff;
+    background:linear-gradient(135deg,var(--purple),#9c66ff 56%,var(--pink));
+}
+.popup-title{
+    font-size:18px;
+    font-weight:1000;
+}
+.popup-x{
+    width:36px;
+    height:36px;
+    border:0;
+    border-radius:999px;
+    color:#fff;
+    background:rgba(255,255,255,.22);
+    font-size:24px;
+    cursor:pointer;
+}
+.popup-body{
+    max-height:calc(82vh - 62px);
+    overflow:auto;
+    padding:12px;
+}
+.popup-option{
+    width:100%;
+    min-height:56px;
+    margin-bottom:8px;
+    padding:9px 13px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    color:var(--ink);
+    background:#fff;
+    font-size:15px;
+    font-weight:950;
+    cursor:pointer;
+}
+.popup-option.active{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,#9b70f4,#ff8791);
+}
+.popup-option:last-child{margin-bottom:0}
 
-    .subtitle {
-        color: #746b86;
-        font-size: 14px;
-        margin-bottom: 22px;
-        line-height: 1.5;
-    }
-
-    .form-group {
-        margin-bottom: 18px;
-    }
-
-    label {
-        display: block;
-        font-weight: 900;
-        color: #302842;
-        margin-bottom: 8px;
-        font-size: 14px;
-    }
-
-    input,
-    select,
-    textarea {
-        width: 100%;
-        min-height: 60px;
-        border: 1px solid #eadff3;
-        border-radius: 22px;
-        padding: 0 18px;
-        font-size: 16px;
-        font-weight: 800;
-        outline: none;
-        background: #fff;
-        color: #302842;
-        touch-action: manipulation;
-    }
-
-    textarea {
-        padding-top: 16px;
-        min-height: 130px;
-        resize: vertical;
-        line-height: 1.4;
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-        border-color: #b886ff;
-        box-shadow: 0 0 0 4px rgba(184, 134, 255, 0.16);
-    }
-
-    .quick-row {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
-        margin-bottom: 20px;
-    }
-
-    .quick-btn {
-        min-height: 56px;
-        border: 1px solid #eadff3;
-        border-radius: 20px;
-        background: #fff;
-        color: #8d63dd;
-        font-size: 14px;
-        font-weight: 900;
-        cursor: pointer;
-        touch-action: manipulation;
-    }
-
-    .quick-btn:active {
-        transform: scale(0.98);
-    }
-
-    .check-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin: 16px 0;
-        font-weight: 900;
-        color: #302842;
-    }
-
-    .check-row input {
-        width: 26px;
-        height: 26px;
-        min-height: 26px;
-        accent-color: #b985ff;
-    }
-
-    .button-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        margin-top: 24px;
-    }
-
-    .btn {
-        min-height: 64px;
-        border: none;
-        border-radius: 24px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        font-size: 16px;
-        font-weight: 900;
-        cursor: pointer;
-        touch-action: manipulation;
-    }
-
-    .btn-save {
-        background: linear-gradient(135deg, #b985ff, #ff7f9c);
-        color: #fff;
-        box-shadow: 0 8px 18px rgba(176, 111, 255, 0.24);
-    }
-
-    .btn-back {
-        background: #fff;
-        color: #6d5c7d;
-        border: 1px solid #eadff3;
-    }
-
-    .help-box {
-        margin-top: 18px;
-        padding: 14px;
-        border-radius: 20px;
-        background: #fff8ec;
-        color: #7a5b22;
-        font-size: 13px;
-        font-weight: 800;
-        line-height: 1.5;
-    }
-
-    @media (max-width: 700px) {
-        .company-page {
-            padding: 12px;
-        }
-
-        .company-card {
-            padding: 18px;
-            border-radius: 24px;
-        }
-
-        .company-card h1 {
-            font-size: 24px;
-        }
-
-        .quick-row {
-            grid-template-columns: 1fr 1fr;
-        }
-
-        .button-row {
-            grid-template-columns: 1fr;
-        }
-
-        .btn,
-        input,
-        select {
-            min-height: 66px;
-            font-size: 16px;
-        }
-
-        textarea {
-            min-height: 140px;
-        }
-    }
-
-    @media (max-width: 430px) {
-        .quick-row {
-            grid-template-columns: 1fr;
-        }
-    }
+@media(max-width:620px){
+    .delivery-shell{padding:8px 7px 88px}
+    .page-title-row{display:block}
+    .page-title-row h1{font-size:24px}
+    .page-title-row p{font-size:12px}
+    .form-card{padding:9px;border-radius:18px}
+    .form-section{padding:12px;border-radius:16px}
+    .form-grid{grid-template-columns:1fr}
+    .field.full{grid-column:auto}
+    .quick-grid{grid-template-columns:1fr 1fr}
+    .field input,
+    .field textarea,
+    .select-trigger{font-size:16px}
+    .save-row{display:grid;grid-template-columns:1fr}
+    .save-row .btn{width:100%}
+    .popup-panel{max-width:390px;border-radius:22px}
+    .popup-option{font-size:16px}
+}
 </style>
 
-<div class="company-page">
-    <div class="company-card">
-        <h1>🚚 Create Delivery Company</h1>
+<div class="delivery-shell">
+    <div class="page-title-row">
+        <div>
+            <h1>{{ title }} 🚚</h1>
+            <p>Create or update a delivery company.</p>
+        </div>
+        <a href="{% url 'delivery_company_list' %}" class="btn btn-soft">← Back</a>
+    </div>
 
-        <div class="subtitle">
-            Add delivery service like DS EXPRESS, Grab, J&T, VET. This page is touch-friendly for phone and tablet.
+    <form method="post" class="card form-card" id="companyForm" novalidate>
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <div class="form-section">
+            <h2>Quick Setup</h2>
+            <div class="quick-grid">
+                <button type="button" class="quick-btn" onclick="quickCompany('DS EXPRESS','pp','1.25')">DS EXPRESS</button>
+                <button type="button" class="quick-btn" onclick="quickCompany('Grab','pp','1.50')">Grab</button>
+                <button type="button" class="quick-btn" onclick="quickCompany('J&T','province','1.50')">J&T</button>
+                <button type="button" class="quick-btn" onclick="quickCompany('VET','province','1.25')">VET</button>
+                <button type="button" class="quick-btn" onclick="quickCompany('TAXI','province','0')">TAXI</button>
+                <button type="button" class="quick-btn" onclick="quickCompany('Capitol','province','0')">Capitol</button>
+            </div>
         </div>
 
-        <div class="quick-row">
-            <button type="button" class="quick-btn" onclick="quickCompany('DS EXPRESS', 'pp')">
-                DS EXPRESS
-            </button>
+        <div class="form-section">
+            <h2>Company Information</h2>
+            <div class="form-grid">
+                <div class="field">
+                    <label for="id_name">Company Name</label>
+                    {{ form.name }}
+                    {{ form.name.errors }}
+                </div>
 
-            <button type="button" class="quick-btn" onclick="quickCompany('Grab', 'pp')">
-                Grab
-            </button>
+                <div class="field popup-select-field">
+                    <label for="id_delivery_type">Delivery Type</label>
+                    {{ form.delivery_type }}
+                    <button type="button" class="select-trigger" data-select-id="id_delivery_type">
+                        <span class="control-label">Choose delivery type</span>
+                        <span>⌄</span>
+                    </button>
+                    {{ form.delivery_type.errors }}
+                </div>
 
-            <button type="button" class="quick-btn" onclick="quickCompany('J&T', 'province')">
-                J&T
-            </button>
+                <div class="field">
+                    <label for="id_default_fee">Default Delivery Fee</label>
+                    {{ form.default_fee }}
+                    {{ form.default_fee.errors }}
+                </div>
 
-            <button type="button" class="quick-btn" onclick="quickCompany('VET', 'province')">
-                VET
-            </button>
+                <div class="field">
+                    <label for="id_phone">Phone</label>
+                    {{ form.phone }}
+                    {{ form.phone.errors }}
+                </div>
+
+                <div class="field full">
+                    <label for="id_note">Note</label>
+                    {{ form.note }}
+                    {{ form.note.errors }}
+                </div>
+
+                <div class="field full">
+                    <label for="id_is_active">Company Status</label>
+                    <div class="check-row">
+                        {{ form.is_active }}
+                        <span>Active and available for new deliveries</span>
+                    </div>
+                    {{ form.is_active.errors }}
+                </div>
+            </div>
         </div>
 
-        <form method="post">
-            {% csrf_token %}
-
-            <div class="form-group">
-                <label>Company Name</label>
-                <input
-                    type="text"
-                    name="name"
-                    id="companyName"
-                    placeholder="Example: DS EXPRESS"
-                    required
-                >
-            </div>
-
-            <div class="form-group">
-                <label>Delivery Type</label>
-                <select name="delivery_type" id="deliveryType" required>
-                    <option value="">Choose delivery type</option>
-                    <option value="pp">Phnom Penh</option>
-                    <option value="province">Province</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Phone</label>
-                <input
-                    type="text"
-                    name="phone"
-                    placeholder="Optional phone number"
-                >
-            </div>
-
-            <div class="form-group">
-                <label>Note</label>
-                <textarea
-                    name="note"
-                    placeholder="Optional note, example: COD report every month / province delivery / PP delivery..."
-                ></textarea>
-            </div>
-
-            <label class="check-row">
-                <input type="checkbox" name="is_active" checked>
-                Active
-            </label>
-
-            <div class="button-row">
-                <button type="submit" class="btn btn-save">
-                    💾 Save Company
-                </button>
-
-                <a href="{% url 'delivery_list' %}" class="btn btn-back">
-                    ← Back To Delivery
-                </a>
-            </div>
-        </form>
-
-        <div class="help-box">
-            Example: DS EXPRESS and Grab choose Phnom Penh. J&T and VET choose Province.
+        <div class="save-row">
+            <a href="{% url 'delivery_company_list' %}" class="btn btn-soft">Cancel</a>
+            <button type="submit" class="btn btn-primary">💾 Save Company</button>
         </div>
+    </form>
+</div>
+
+<div class="popup-backdrop" id="selectPopup">
+    <div class="popup-panel">
+        <div class="popup-head">
+            <div class="popup-title" id="selectPopupTitle">Choose Option</div>
+            <button type="button" class="popup-x" onclick="closeSelectPopup()">×</button>
+        </div>
+        <div class="popup-body" id="selectPopupOptions"></div>
     </div>
 </div>
 
 <script>
-    function quickCompany(name, type) {
-        document.getElementById("companyName").value = name;
-        document.getElementById("deliveryType").value = type;
-    }
-</script>
+let activeSelect=null;
 
+function openSelectPopup(select){
+    activeSelect=select;
+    document.getElementById("selectPopupTitle").innerText=
+        select.closest(".field").querySelector("label").innerText;
+
+    const optionsBox=document.getElementById("selectPopupOptions");
+    optionsBox.innerHTML="";
+
+    Array.from(select.options).forEach(option=>{
+        if(option.hidden)return;
+
+        const button=document.createElement("button");
+        button.type="button";
+        button.className="popup-option";
+        if(option.value===select.value)button.classList.add("active");
+
+        const text=document.createElement("span");
+        text.innerText=option.textContent.trim();
+
+        const icon=document.createElement("span");
+        icon.innerText=option.value===select.value?"✓":"›";
+
+        button.append(text,icon);
+        button.addEventListener("click",()=>{
+            select.value=option.value;
+            select.dispatchEvent(new Event("change",{bubbles:true}));
+            updateSelectTrigger(select);
+            closeSelectPopup();
+        });
+        optionsBox.appendChild(button);
+    });
+
+    document.getElementById("selectPopup").classList.add("show");
+    document.body.classList.add("popup-open");
+}
+
+function closeSelectPopup(){
+    document.getElementById("selectPopup").classList.remove("show");
+    document.body.classList.remove("popup-open");
+}
+
+function updateSelectTrigger(select){
+    const trigger=document.querySelector(`[data-select-id="${select.id}"]`);
+    if(!trigger)return;
+    const option=select.options[select.selectedIndex];
+    trigger.querySelector(".control-label").innerText=
+        option?option.textContent.trim():"Choose option";
+}
+
+function quickCompany(name,type,fee){
+    const nameInput=document.getElementById("id_name");
+    const typeSelect=document.getElementById("id_delivery_type");
+    const feeInput=document.getElementById("id_default_fee");
+
+    if(nameInput)nameInput.value=name;
+    if(typeSelect){
+        typeSelect.value=type;
+        typeSelect.dispatchEvent(new Event("change",{bubbles:true}));
+        updateSelectTrigger(typeSelect);
+    }
+    if(feeInput)feeInput.value=fee;
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+    document.querySelectorAll(".popup-select-field select").forEach(select=>{
+        select.classList.add("native-popup-control");
+        updateSelectTrigger(select);
+
+        const trigger=document.querySelector(`[data-select-id="${select.id}"]`);
+        trigger?.addEventListener("click",()=>openSelectPopup(select));
+        select.addEventListener("change",()=>updateSelectTrigger(select));
+    });
+});
+
+document.getElementById("selectPopup").addEventListener("click",event=>{
+    if(event.target===event.currentTarget)closeSelectPopup();
+});
+
+document.addEventListener("keydown",event=>{
+    if(event.key==="Escape")closeSelectPopup();
+});
+</script>
 {% endblock %}

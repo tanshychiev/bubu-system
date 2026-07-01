@@ -1,414 +1,1008 @@
 {% extends "base.html" %}
-{% load static %}
-
 {% block content %}
 
 <style>
-.delivery-form-page{
-    max-width:1100px;
-    margin:auto;
+*{box-sizing:border-box}
+:root{
+    --ink:#17152f;
+    --muted:#7b7288;
+    --purple:#8e63ff;
+    --purple-dark:#7047db;
+    --purple-soft:#f3edff;
+    --pink:#ff7f91;
+    --green:#22a86b;
+    --red:#ef5574;
+    --line:#eadff3;
+    --warm:#f1e7df;
+    --surface:#ffffff;
 }
+a{text-decoration:none}
+body.popup-open{overflow:hidden}
 
-a{
-    text-decoration:none !important;
+.delivery-shell{
+    width:100%;
+    max-width:1050px;
+    margin:0 auto;
+    padding:20px;
+    color:var(--ink);
 }
-
-.top-actions{
+.page-title-row{
     display:flex;
-    gap:12px;
-    flex-wrap:wrap;
-    margin-bottom:18px;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    margin-bottom:15px;
 }
-
-.btn-back,
-.btn-save{
-    min-height:56px;
-    padding:0 26px;
-    border-radius:999px;
-    border:none;
+.page-title-row h1{
+    margin:0;
+    font-size:30px;
+    font-weight:1000;
+}
+.page-title-row p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-weight:850;
+}
+.title-actions{
+    display:flex;
+    gap:9px;
+    flex-wrap:wrap;
+}
+.card{
+    background:var(--surface);
+    border:1px solid var(--warm);
+    border-radius:22px;
+    box-shadow:0 9px 24px rgba(63,47,85,.06);
+}
+.btn{
+    min-height:50px;
+    padding:0 17px;
+    border:0;
+    border-radius:16px;
     display:inline-flex;
     align-items:center;
     justify-content:center;
+    gap:7px;
+    font-size:14px;
     font-weight:1000;
     cursor:pointer;
 }
-
-.btn-back{
-    background:white;
-    color:#7b5cff;
-    border:1.5px solid #e2dbff;
+.btn-primary{
+    color:#fff;
+    background:linear-gradient(135deg,var(--purple),var(--pink));
+    box-shadow:0 8px 18px rgba(142,99,255,.18);
 }
-
-.btn-save{
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
-    color:white;
-    box-shadow:0 14px 28px rgba(155,124,246,.25);
+.btn-soft{
+    color:var(--purple-dark);
+    background:#fff;
+    border:1px solid var(--line);
 }
-
-.hero-card{
-    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
-    border:1px solid #f0dcd0;
-    border-radius:30px;
-    padding:26px;
-    box-shadow:0 14px 34px rgba(111,75,50,.07);
-    display:grid;
-    grid-template-columns:1fr 280px;
-    gap:18px;
-    align-items:center;
-    margin-bottom:22px;
-}
-
-.hero-card h1{
-    margin:0;
-    color:#1c143a;
-    font-size:38px;
-    font-weight:1000;
-}
-
-.hero-card p{
-    color:#7b6f92;
-    font-weight:900;
-    margin:10px 0 0;
-}
-
-.hero-img{
-    width:100%;
-    height:180px;
-    object-fit:contain;
-}
-
-.branch-card{
-    background:white;
-    border:1px solid #f0dcd0;
-    border-radius:24px;
-    padding:18px 20px;
-    box-shadow:0 12px 30px rgba(111,75,50,.06);
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:14px;
-    flex-wrap:wrap;
-    margin-bottom:20px;
-}
-
-.branch-title{
-    color:#1c143a;
-    font-weight:1000;
-    font-size:20px;
-}
-
-.branch-sub{
-    color:#7b6f92;
-    font-weight:800;
-    margin-top:5px;
-}
-
-.branch-badge{
-    min-height:48px;
-    padding:0 18px;
-    border-radius:999px;
-    background:linear-gradient(135deg,#19a974,#7be0b2);
-    color:white;
-    font-weight:1000;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-}
-
-.branch-badge.admin{
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
-}
-
-.form-card{
-    background:white;
-    border:1px solid #f0dcd0;
-    border-radius:30px;
-    padding:26px;
-    box-shadow:0 14px 34px rgba(111,75,50,.07);
-}
-
-.section-title{
-    color:#1c143a;
-    font-size:24px;
-    font-weight:1000;
-    margin:0 0 16px;
-}
-
+.form-card{padding:18px}
 .form-section{
-    margin-bottom:26px;
+    padding:16px;
+    margin-bottom:14px;
+    border:1px solid #f0e7df;
+    border-radius:18px;
+    background:#fff;
 }
-
+.form-section h2{
+    margin:0 0 12px;
+    font-size:18px;
+    font-weight:1000;
+}
 .form-grid{
     display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:16px;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
 }
-
 .form-grid.three{
-    grid-template-columns:repeat(3,1fr);
+    grid-template-columns:repeat(3,minmax(0,1fr));
 }
-
-.form-box label{
+.field{min-width:0}
+.field.full{grid-column:1/-1}
+.field label{
     display:block;
-    color:#1c143a;
+    margin-bottom:6px;
+    font-size:12px;
     font-weight:1000;
-    margin-bottom:8px;
 }
-
-.form-box input,
-.form-box select,
-.form-box textarea{
+.field input,
+.field textarea,
+.field select,
+.form-control,
+.select-trigger,
+.date-trigger{
     width:100%;
-    min-height:56px;
-    border-radius:18px;
-    border:1.5px solid #eadbd4;
-    padding:12px 14px;
-    background:white;
-    color:#1c143a;
-    font-weight:900;
-    box-sizing:border-box;
+    min-height:52px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:#fff;
+    color:var(--ink);
+    padding:0 14px;
+    font-size:14px;
+    font-weight:850;
+    outline:none;
 }
-
-.form-box textarea{
-    min-height:105px;
+.field textarea{
+    min-height:100px;
+    padding-top:13px;
     resize:vertical;
 }
-
-.form-box input:focus,
-.form-box select:focus,
-.form-box textarea:focus{
-    outline:none;
-    border-color:#9b7cf6;
-    box-shadow:0 0 0 5px rgba(155,124,246,.12);
+.field input:focus,
+.field textarea:focus,
+.field select:focus,
+.select-trigger:focus,
+.date-trigger:focus{
+    border-color:#b898ff;
+    box-shadow:0 0 0 4px rgba(142,99,255,.10);
 }
-
-.help-text{
-    display:block;
-    margin-top:7px;
-    color:#7b6f92;
-    font-weight:800;
-    font-size:13px;
-}
-
-.check-card{
-    min-height:56px;
-    padding:12px 16px;
-    border-radius:18px;
-    border:1.5px solid #eadbd4;
+.select-trigger,
+.date-trigger{
     display:flex;
     align-items:center;
+    justify-content:space-between;
     gap:10px;
-    background:#fff8fb;
-    font-weight:1000;
-    color:#1c143a;
+    cursor:pointer;
+    text-align:left;
 }
-
-.check-card input{
-    width:22px;
-    height:22px;
+.control-label{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
 }
-
-.error-box{
-    margin-top:16px;
-    padding:14px 18px;
-    border-radius:18px;
-    background:#ffe7ec;
-    color:#ff4d6d;
+.control-icon{
+    flex:0 0 auto;
+    color:var(--purple-dark);
+    font-size:16px;
+}
+.native-popup-control{
+    position:absolute!important;
+    width:1px!important;
+    height:1px!important;
+    padding:0!important;
+    margin:-1px!important;
+    overflow:hidden!important;
+    clip:rect(0,0,0,0)!important;
+    white-space:nowrap!important;
+    border:0!important;
+}
+.help{
+    display:block;
+    margin-top:5px;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:800;
+    line-height:1.35;
+}
+.errorlist{
+    margin:6px 0 0;
+    padding:0;
+    list-style:none;
+    color:#d83f59;
+    font-size:12px;
     font-weight:900;
 }
-
+.form-errors{
+    margin-bottom:12px;
+    padding:13px 14px;
+    border-radius:16px;
+    color:#d83f59;
+    background:#ffecef;
+    font-weight:900;
+}
+.check-row{
+    min-height:52px;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    background:#faf8ff;
+}
+.check-row input{
+    width:22px;
+    height:22px;
+    accent-color:var(--purple);
+}
+.old-customer{
+    display:none;
+    width:max-content;
+    max-width:100%;
+    margin-top:10px;
+    min-height:30px;
+    padding:0 11px;
+    border-radius:999px;
+    align-items:center;
+    color:#15975b;
+    background:#e7fff1;
+    font-size:11px;
+    font-weight:1000;
+}
 .save-row{
     display:flex;
     justify-content:flex-end;
-    gap:12px;
-    flex-wrap:wrap;
-    border-top:1px dashed #eadbd4;
-    padding-top:22px;
+    gap:9px;
+    padding-top:2px;
 }
 
-@media(max-width:850px){
-    .hero-card,
-    .form-grid,
-    .form-grid.three{
+/* Center mobile-style popup */
+.popup-backdrop{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:14px;
+    background:rgba(23,21,47,.42);
+    backdrop-filter:blur(3px);
+}
+.popup-backdrop.show{display:flex}
+.popup-panel{
+    width:100%;
+    max-width:440px;
+    max-height:min(82vh,680px);
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.7);
+    border-radius:24px;
+    background:#fff;
+    box-shadow:0 28px 80px rgba(23,21,47,.28);
+    animation:popupIn .18s ease-out;
+}
+.popup-panel.calendar-panel{max-width:360px}
+@keyframes popupIn{
+    from{transform:translateY(14px) scale(.97);opacity:0}
+    to{transform:translateY(0) scale(1);opacity:1}
+}
+.popup-head{
+    min-height:62px;
+    padding:14px 14px 14px 17px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    color:#fff;
+    background:linear-gradient(135deg,var(--purple),#9c66ff 56%,var(--pink));
+}
+.popup-title{
+    font-size:18px;
+    font-weight:1000;
+}
+.popup-x{
+    width:36px;
+    height:36px;
+    border:0;
+    border-radius:999px;
+    color:#fff;
+    background:rgba(255,255,255,.22);
+    font-size:24px;
+    line-height:1;
+    cursor:pointer;
+}
+.popup-body{
+    max-height:calc(min(82vh,680px) - 62px);
+    overflow:auto;
+    padding:12px;
+}
+.popup-option{
+    width:100%;
+    min-height:54px;
+    margin-bottom:8px;
+    padding:9px 13px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    background:#fff;
+    color:var(--ink);
+    font-size:14px;
+    font-weight:950;
+    cursor:pointer;
+    text-align:left;
+}
+.popup-option:last-child{margin-bottom:0}
+.popup-option:hover{background:#faf7ff}
+.popup-option.active{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,#9b70f4,#ff8791);
+}
+.popup-option:disabled{
+    opacity:.45;
+    cursor:not-allowed;
+}
+.option-check{
+    flex:0 0 auto;
+    font-size:16px;
+}
+.popup-empty{
+    padding:26px 12px;
+    text-align:center;
+    color:var(--muted);
+    font-weight:850;
+}
+
+/* Calendar */
+.calendar-body{padding:14px}
+.calendar-toolbar{
+    display:grid;
+    grid-template-columns:40px 1fr 40px;
+    align-items:center;
+    gap:8px;
+    margin-bottom:12px;
+}
+.calendar-nav{
+    width:40px;
+    height:40px;
+    border:0;
+    border-radius:13px;
+    color:var(--purple-dark);
+    background:var(--purple-soft);
+    font-size:19px;
+    font-weight:1000;
+    cursor:pointer;
+}
+.calendar-month{
+    text-align:center;
+    font-size:16px;
+    font-weight:1000;
+}
+.calendar-week,
+.calendar-grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:5px;
+}
+.calendar-week{
+    margin-bottom:5px;
+}
+.calendar-week span{
+    padding:5px 0;
+    text-align:center;
+    color:var(--muted);
+    font-size:10px;
+    font-weight:1000;
+}
+.calendar-day{
+    aspect-ratio:1;
+    min-width:0;
+    border:0;
+    border-radius:999px;
+    color:var(--ink);
+    background:transparent;
+    font-size:12px;
+    font-weight:950;
+    cursor:pointer;
+}
+.calendar-day:hover{background:var(--purple-soft)}
+.calendar-day.outside{color:#c7bfd3}
+.calendar-day.today{
+    box-shadow:inset 0 0 0 2px #d6c7ff;
+}
+.calendar-day.selected{
+    color:#fff;
+    background:linear-gradient(135deg,var(--purple),#7567f7);
+    box-shadow:0 7px 14px rgba(116,82,224,.25);
+}
+.calendar-day:disabled{
+    opacity:.3;
+    cursor:not-allowed;
+}
+.calendar-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:13px;
+}
+.calendar-action{
+    min-height:43px;
+    border:0;
+    border-radius:14px;
+    font-weight:1000;
+    cursor:pointer;
+}
+.calendar-action.today-btn{
+    color:var(--purple-dark);
+    background:var(--purple-soft);
+}
+.calendar-action.close-btn{
+    color:#625476;
+    background:#f2eff5;
+}
+
+@media(max-width:760px){
+    .delivery-shell{padding:8px 7px 88px}
+    .page-title-row{display:block;margin-bottom:11px}
+    .page-title-row h1{font-size:24px}
+    .page-title-row p{font-size:12px}
+    .title-actions{
+        display:grid;
         grid-template-columns:1fr;
+        margin-top:10px;
     }
-
-    .hero-img{
-        display:none;
+    .title-actions .btn{width:100%;min-height:46px}
+    .form-card{padding:9px;border-radius:18px}
+    .form-section{padding:12px;border-radius:16px}
+    .form-section h2{font-size:16px}
+    .form-grid,
+    .form-grid.three{grid-template-columns:1fr}
+    .field.full{grid-column:auto}
+    .field input,
+    .field textarea,
+    .field select,
+    .select-trigger,
+    .date-trigger{
+        min-height:50px;
+        font-size:16px;
     }
-
-    .branch-card{
-        display:block;
-    }
-
-    .branch-badge{
-        width:100%;
-        margin-top:12px;
-    }
-
     .save-row{
         display:grid;
         grid-template-columns:1fr;
     }
-
-    .btn-back,
-    .btn-save{
-        width:100%;
-    }
-
-    .hero-card h1{
-        font-size:30px;
-    }
+    .save-row .btn{width:100%}
+    .popup-backdrop{padding:10px}
+    .popup-panel{max-width:390px;border-radius:22px}
+    .popup-panel.calendar-panel{max-width:340px}
+    .popup-option{min-height:56px;font-size:16px}
 }
 </style>
 
-<div class="delivery-form-page">
-
-    <div class="top-actions">
-        <a href="{% url 'delivery_list' %}" class="btn-back">← Back to Delivery</a>
-    </div>
-
-    <div class="hero-card">
+<div class="delivery-shell">
+    <div class="page-title-row">
         <div>
             <h1>{{ title }} 🚚</h1>
-            <p>Create or update delivery order, COD collect, delivery fee, lack money and shop branch.</p>
+            <p>Simple delivery form for phone, tablet and computer.</p>
         </div>
-
-        <img src="{% static 'img/delivery-hero.png' %}" class="hero-img" alt="Delivery">
-    </div>
-
-    <div class="branch-card">
-        <div>
-            <div class="branch-title">Delivery Shop / Branch</div>
-            <div class="branch-sub">
-                {% if request.user.is_superuser %}
-                    Admin can choose the shop for this delivery.
-                {% else %}
-                    Staff delivery is locked to your assigned shop.
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="branch-badge {% if request.user.is_superuser %}admin{% endif %}">
-            {% if request.user.is_superuser %}
-                Admin Shop View
-            {% else %}
-                🔒 Branch Locked
-            {% endif %}
+        <div class="title-actions">
+            <a href="{% url 'delivery_list' %}" class="btn btn-soft">← Back to Delivery</a>
         </div>
     </div>
 
-    <form method="post" class="form-card">
+    <form method="post" class="card form-card" id="deliveryForm" novalidate>
         {% csrf_token %}
+        {{ form.non_field_errors }}
 
         <div class="form-section">
-            <h2 class="section-title">Customer Information</h2>
-
+            <h2>1. Delivery Setup</h2>
             <div class="form-grid">
                 {% if form.branch %}
-                <div class="form-box">
-                    <label>Shop / Branch</label>
+                <div class="field popup-select-field">
+                    <label for="id_branch">Shop / Branch</label>
                     {{ form.branch }}
-                    <span class="help-text">Delivery belongs to this shop.</span>
+                    <button type="button" class="select-trigger" data-select-id="id_branch">
+                        <span class="control-label">Choose shop</span>
+                        <span class="control-icon">⌄</span>
+                    </button>
+                    {{ form.branch.errors }}
                 </div>
                 {% endif %}
 
-                <div class="form-box">
-                    <label>Customer Name</label>
-                    {{ form.customer_name }}
+                <div class="field popup-select-field">
+                    <label for="id_delivery_area">Delivery Type</label>
+                    {{ form.delivery_area }}
+                    <button type="button" class="select-trigger" data-select-id="id_delivery_area">
+                        <span class="control-label">Choose delivery type</span>
+                        <span class="control-icon">⌄</span>
+                    </button>
+                    {{ form.delivery_area.errors }}
                 </div>
 
-                <div class="form-box">
-                    <label>Phone</label>
-                    {{ form.phone }}
+                <div class="field popup-select-field">
+                    <label for="id_delivery_company">Delivery Company</label>
+                    {{ form.delivery_company }}
+                    <button type="button" class="select-trigger" data-select-id="id_delivery_company">
+                        <span class="control-label">Choose delivery company</span>
+                        <span class="control-icon">⌄</span>
+                    </button>
+                    <small class="help">Only active companies for the selected delivery type are shown.</small>
+                    {{ form.delivery_company.errors }}
                 </div>
 
-                <div class="form-box">
-                    <label>Delivery Date</label>
+                <div class="field popup-date-field">
+                    <label for="id_delivery_date">Delivery Date</label>
                     {{ form.delivery_date }}
-                </div>
-
-                <div class="form-box" style="grid-column:1 / -1;">
-                    <label>Location / Address</label>
-                    {{ form.location }}
+                    <button type="button" class="date-trigger" data-date-id="id_delivery_date">
+                        <span class="control-label">Choose delivery date</span>
+                        <span class="control-icon">📅</span>
+                    </button>
+                    {{ form.delivery_date.errors }}
                 </div>
             </div>
         </div>
 
         <div class="form-section">
-            <h2 class="section-title">Money / COD</h2>
+            <h2>2. Customer</h2>
+            <div class="form-grid">
+                <div class="field">
+                    <label for="id_phone">Phone Number</label>
+                    {{ form.phone }}
+                    <small class="help">Old customer information fills automatically.</small>
+                    {{ form.phone.errors }}
+                </div>
+                <div class="field">
+                    <label for="id_customer_name">Customer Name / Social Media Name</label>
+                    {{ form.customer_name }}
+                    {{ form.customer_name.errors }}
+                </div>
+                <div class="field full">
+                    <label for="id_location">Location / Address</label>
+                    {{ form.location }}
+                    {{ form.location.errors }}
+                </div>
+            </div>
+            <div id="oldCustomerNotice" class="old-customer">✓ Old customer found. You can still edit the information.</div>
+        </div>
 
+        <div class="form-section">
+            <h2>3. Payment and COD</h2>
             <div class="form-grid three">
-                <div class="form-box">
-                    <label>Total Price / COD Total</label>
+                <div class="field">
+                    <label for="id_total_price">Total Customer Amount</label>
                     {{ form.total_price }}
-                    <span class="help-text">Total customer needs to pay.</span>
+                    {{ form.total_price.errors }}
                 </div>
 
-                <div class="form-box">
-                    <label>Payment Type</label>
+                <div class="field popup-select-field">
+                    <label for="id_payment_type">Payment Type</label>
                     {{ form.payment_type }}
+                    <button type="button" class="select-trigger" data-select-id="id_payment_type">
+                        <span class="control-label">Choose payment type</span>
+                        <span class="control-icon">⌄</span>
+                    </button>
+                    <small class="help" id="provinceRule">Province delivery must be already paid.</small>
+                    {{ form.payment_type.errors }}
                 </div>
 
-                <div class="form-box">
-                    <label>Expected Collect</label>
-                    {{ form.expected_collect }}
-                </div>
-
-                <div class="form-box">
-                    <label>Actual Received</label>
-                    {{ form.actual_received }}
-                    <span class="help-text">Fill after delivery returns money.</span>
-                </div>
-
-                <div class="form-box">
-                    <label>Delivery Fee</label>
+                <div class="field">
+                    <label for="id_delivery_fee">Delivery Fee</label>
                     {{ form.delivery_fee }}
+                    {{ form.delivery_fee.errors }}
                 </div>
-
-                <div class="form-box">
-                    <label>Delivery Fee Paid?</label>
-                    <label class="check-card">
+                <div class="field">
+                    <label for="id_expected_collect">Expected Collect</label>
+                    {{ form.expected_collect }}
+                    {{ form.expected_collect.errors }}
+                </div>
+                <div class="field">
+                    <label for="id_actual_received">Actual Received</label>
+                    {{ form.actual_received }}
+                    {{ form.actual_received.errors }}
+                </div>
+                <div class="field">
+                    <label for="id_delivery_fee_paid">Delivery Fee Paid?</label>
+                    <div class="check-row">
                         {{ form.delivery_fee_paid }}
                         <span>Fee paid to delivery company</span>
-                    </label>
+                    </div>
+                    {{ form.delivery_fee_paid.errors }}
                 </div>
-
-                <div class="form-box" style="grid-column:1 / -1;">
-                    <label>Exchange Rate Note</label>
+                <div class="field full">
+                    <label for="id_exchange_rate_note">Exchange Rate Note</label>
                     {{ form.exchange_rate_note }}
+                    {{ form.exchange_rate_note.errors }}
                 </div>
             </div>
         </div>
 
         <div class="form-section">
-            <h2 class="section-title">Status / Note</h2>
-
+            <h2>4. Status and Note</h2>
             <div class="form-grid">
-                <div class="form-box">
-                    <label>Status</label>
+                <div class="field popup-select-field">
+                    <label for="id_status">Status</label>
                     {{ form.status }}
+                    <button type="button" class="select-trigger" data-select-id="id_status">
+                        <span class="control-label">Choose status</span>
+                        <span class="control-icon">⌄</span>
+                    </button>
+                    {{ form.status.errors }}
                 </div>
-
-                <div class="form-box" style="grid-column:1 / -1;">
-                    <label>Delivery Note</label>
+                <div class="field full">
+                    <label for="id_delivery_note">Delivery Note</label>
                     {{ form.delivery_note }}
+                    {{ form.delivery_note.errors }}
                 </div>
             </div>
         </div>
 
         {% if form.errors %}
-            <div class="error-box">
-                {{ form.errors }}
-            </div>
+        <div class="form-errors">Please check the highlighted fields and try again.</div>
         {% endif %}
 
         <div class="save-row">
-            <a href="{% url 'delivery_list' %}" class="btn-back">Cancel</a>
-            <button type="submit" class="btn-save">💜 Save Delivery</button>
+            <a href="{% url 'delivery_list' %}" class="btn btn-soft">Cancel</a>
+            <button type="submit" class="btn btn-primary">💾 Save Delivery</button>
         </div>
     </form>
-
 </div>
 
+<!-- Reusable select popup -->
+<div class="popup-backdrop" id="selectPopup" aria-hidden="true">
+    <div class="popup-panel" role="dialog" aria-modal="true" aria-labelledby="selectPopupTitle">
+        <div class="popup-head">
+            <div class="popup-title" id="selectPopupTitle">Choose Option</div>
+            <button type="button" class="popup-x" data-close-popup="selectPopup" aria-label="Close">×</button>
+        </div>
+        <div class="popup-body" id="selectPopupOptions"></div>
+    </div>
+</div>
+
+<!-- Reusable date popup -->
+<div class="popup-backdrop" id="datePopup" aria-hidden="true">
+    <div class="popup-panel calendar-panel" role="dialog" aria-modal="true" aria-labelledby="datePopupTitle">
+        <div class="popup-head">
+            <div class="popup-title" id="datePopupTitle">Choose Date</div>
+            <button type="button" class="popup-x" data-close-popup="datePopup" aria-label="Close">×</button>
+        </div>
+        <div class="calendar-body">
+            <div class="calendar-toolbar">
+                <button type="button" class="calendar-nav" id="calendarPrev" aria-label="Previous month">‹</button>
+                <div class="calendar-month" id="calendarMonth"></div>
+                <button type="button" class="calendar-nav" id="calendarNext" aria-label="Next month">›</button>
+            </div>
+            <div class="calendar-week">
+                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+            <div class="calendar-actions">
+                <button type="button" class="calendar-action today-btn" id="calendarToday">Today</button>
+                <button type="button" class="calendar-action close-btn" data-close-popup="datePopup">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+    const form = document.getElementById("deliveryForm");
+    const selectPopup = document.getElementById("selectPopup");
+    const selectPopupTitle = document.getElementById("selectPopupTitle");
+    const selectPopupOptions = document.getElementById("selectPopupOptions");
+    const datePopup = document.getElementById("datePopup");
+
+    let activeSelect = null;
+    let activeDateInput = null;
+    let calendarCursor = new Date();
+    let selectedDate = null;
+
+    const pad = number => String(number).padStart(2, "0");
+    const toISO = date => `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
+    const parseISO = value => {
+        if(!value) return null;
+        const parts = value.split("-").map(Number);
+        if(parts.length !== 3 || parts.some(Number.isNaN)) return null;
+        return new Date(parts[0], parts[1]-1, parts[2]);
+    };
+    const formatDate = value => {
+        const date = parseISO(value);
+        if(!date) return "Choose date";
+        return new Intl.DateTimeFormat("en-GB", {
+            day:"2-digit",
+            month:"short",
+            year:"numeric"
+        }).format(date);
+    };
+
+    function openPopup(popup){
+        popup.classList.add("show");
+        popup.setAttribute("aria-hidden", "false");
+        document.body.classList.add("popup-open");
+    }
+
+    function closePopup(popup){
+        popup.classList.remove("show");
+        popup.setAttribute("aria-hidden", "true");
+        if(!document.querySelector(".popup-backdrop.show")){
+            document.body.classList.remove("popup-open");
+        }
+    }
+
+    document.querySelectorAll("[data-close-popup]").forEach(button => {
+        button.addEventListener("click", () => {
+            const popup = document.getElementById(button.dataset.closePopup);
+            if(popup) closePopup(popup);
+        });
+    });
+
+    document.querySelectorAll(".popup-backdrop").forEach(backdrop => {
+        backdrop.addEventListener("click", event => {
+            if(event.target === backdrop) closePopup(backdrop);
+        });
+    });
+
+    document.addEventListener("keydown", event => {
+        if(event.key === "Escape"){
+            document.querySelectorAll(".popup-backdrop.show").forEach(closePopup);
+        }
+    });
+
+    function getFieldTitle(control){
+        const field = control.closest(".field");
+        const label = field?.querySelector("label");
+        return label?.textContent.trim() || "Choose Option";
+    }
+
+    function updateSelectTrigger(select){
+        const trigger = form.querySelector(`[data-select-id="${select.id}"]`);
+        if(!trigger) return;
+        const label = trigger.querySelector(".control-label");
+        const option = select.options[select.selectedIndex];
+        label.textContent = option?.textContent.trim() || "Choose option";
+        trigger.classList.toggle("has-value", Boolean(select.value));
+    }
+
+    function visibleOptions(select){
+        return Array.from(select.options).filter(option => {
+            if(option.hidden) return false;
+            if(option.style.display === "none") return false;
+            return true;
+        });
+    }
+
+    function renderSelectPopup(){
+        if(!activeSelect) return;
+        selectPopupTitle.textContent = getFieldTitle(activeSelect);
+        selectPopupOptions.innerHTML = "";
+
+        const options = visibleOptions(activeSelect);
+        if(!options.length){
+            selectPopupOptions.innerHTML = '<div class="popup-empty">No option available.</div>';
+            return;
+        }
+
+        options.forEach(option => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "popup-option";
+            button.disabled = option.disabled;
+            button.dataset.value = option.value;
+
+            if(option.value === activeSelect.value){
+                button.classList.add("active");
+            }
+
+            const text = document.createElement("span");
+            text.textContent = option.textContent.trim();
+
+            const check = document.createElement("span");
+            check.className = "option-check";
+            check.textContent = option.value === activeSelect.value ? "✓" : "›";
+
+            button.append(text, check);
+            button.addEventListener("click", () => {
+                if(button.disabled) return;
+                activeSelect.value = option.value;
+                activeSelect.dispatchEvent(new Event("change", {bubbles:true}));
+                updateSelectTrigger(activeSelect);
+                closePopup(selectPopup);
+            });
+            selectPopupOptions.appendChild(button);
+        });
+    }
+
+    form.querySelectorAll(".popup-select-field select").forEach(select => {
+        select.classList.add("native-popup-control");
+        updateSelectTrigger(select);
+
+        const trigger = form.querySelector(`[data-select-id="${select.id}"]`);
+        trigger?.addEventListener("click", () => {
+            if(select.disabled) return;
+            activeSelect = select;
+            renderSelectPopup();
+            openPopup(selectPopup);
+        });
+
+        select.addEventListener("change", () => updateSelectTrigger(select));
+    });
+
+    function updateDateTrigger(input){
+        const trigger = form.querySelector(`[data-date-id="${input.id}"]`);
+        if(!trigger) return;
+        trigger.querySelector(".control-label").textContent = formatDate(input.value);
+    }
+
+    function isDateAllowed(date){
+        if(!activeDateInput) return true;
+        const min = parseISO(activeDateInput.min);
+        const max = parseISO(activeDateInput.max);
+        const test = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        if(min && test < min) return false;
+        if(max && test > max) return false;
+        return true;
+    }
+
+    function renderCalendar(){
+        const monthLabel = document.getElementById("calendarMonth");
+        const grid = document.getElementById("calendarGrid");
+        monthLabel.textContent = new Intl.DateTimeFormat("en-US", {
+            month:"long",
+            year:"numeric"
+        }).format(calendarCursor);
+
+        grid.innerHTML = "";
+
+        const year = calendarCursor.getFullYear();
+        const month = calendarCursor.getMonth();
+        const first = new Date(year, month, 1);
+        const start = new Date(year, month, 1 - first.getDay());
+        const todayISO = toISO(new Date());
+        const selectedISO = selectedDate ? toISO(selectedDate) : "";
+
+        for(let index=0; index<42; index++){
+            const date = new Date(start);
+            date.setDate(start.getDate() + index);
+
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "calendar-day";
+            button.textContent = date.getDate();
+
+            const iso = toISO(date);
+            if(date.getMonth() !== month) button.classList.add("outside");
+            if(iso === todayISO) button.classList.add("today");
+            if(iso === selectedISO) button.classList.add("selected");
+            if(!isDateAllowed(date)) button.disabled = true;
+
+            button.addEventListener("click", () => {
+                if(button.disabled || !activeDateInput) return;
+                activeDateInput.value = iso;
+                activeDateInput.dispatchEvent(new Event("input", {bubbles:true}));
+                activeDateInput.dispatchEvent(new Event("change", {bubbles:true}));
+                selectedDate = date;
+                updateDateTrigger(activeDateInput);
+                closePopup(datePopup);
+            });
+
+            grid.appendChild(button);
+        }
+    }
+
+    form.querySelectorAll(".popup-date-field input").forEach(input => {
+        input.classList.add("native-popup-control");
+        updateDateTrigger(input);
+
+        const trigger = form.querySelector(`[data-date-id="${input.id}"]`);
+        trigger?.addEventListener("click", () => {
+            if(input.disabled) return;
+            activeDateInput = input;
+            selectedDate = parseISO(input.value);
+            calendarCursor = selectedDate
+                ? new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
+                : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+            document.getElementById("datePopupTitle").textContent = getFieldTitle(input);
+            renderCalendar();
+            openPopup(datePopup);
+        });
+
+        input.addEventListener("change", () => updateDateTrigger(input));
+    });
+
+    document.getElementById("calendarPrev").addEventListener("click", () => {
+        calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth()-1, 1);
+        renderCalendar();
+    });
+
+    document.getElementById("calendarNext").addEventListener("click", () => {
+        calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth()+1, 1);
+        renderCalendar();
+    });
+
+    document.getElementById("calendarToday").addEventListener("click", () => {
+        const today = new Date();
+        if(!activeDateInput || !isDateAllowed(today)) return;
+        activeDateInput.value = toISO(today);
+        activeDateInput.dispatchEvent(new Event("input", {bubbles:true}));
+        activeDateInput.dispatchEvent(new Event("change", {bubbles:true}));
+        updateDateTrigger(activeDateInput);
+        closePopup(datePopup);
+    });
+
+    /* Existing delivery behavior */
+    const areaEl = document.getElementById("id_delivery_area");
+    const companyEl = document.getElementById("id_delivery_company");
+    const paymentEl = document.getElementById("id_payment_type");
+    const feeEl = document.getElementById("id_delivery_fee");
+    const phoneEl = document.getElementById("id_phone");
+    const nameEl = document.getElementById("id_customer_name");
+    const locationEl = document.getElementById("id_location");
+    const notice = document.getElementById("oldCustomerNotice");
+
+    function syncCompanies(){
+        if(!areaEl || !companyEl) return;
+
+        const area = areaEl.value;
+        Array.from(companyEl.options).forEach(option => {
+            if(!option.value){
+                option.hidden = false;
+                return;
+            }
+            const type = option.dataset.deliveryType || option.getAttribute("data-delivery-type");
+            option.hidden = Boolean(type && type !== area);
+        });
+
+        const selectedCompany = companyEl.options[companyEl.selectedIndex];
+        if(selectedCompany && selectedCompany.hidden){
+            companyEl.value = "";
+            companyEl.dispatchEvent(new Event("change", {bubbles:true}));
+        }
+
+        if(paymentEl){
+            Array.from(paymentEl.options).forEach(option => {
+                if(area === "province"){
+                    option.hidden = Boolean(option.value && option.value !== "paid");
+                }else{
+                    option.hidden = option.value === "cod_shop";
+                }
+            });
+
+            if(area === "province"){
+                paymentEl.value = "paid";
+                paymentEl.dispatchEvent(new Event("change", {bubbles:true}));
+            }else{
+                const selectedPayment = paymentEl.options[paymentEl.selectedIndex];
+                if(selectedPayment && selectedPayment.hidden){
+                    paymentEl.value = "";
+                    paymentEl.dispatchEvent(new Event("change", {bubbles:true}));
+                }
+            }
+        }
+
+        updateSelectTrigger(companyEl);
+        if(paymentEl) updateSelectTrigger(paymentEl);
+    }
+
+    function useCompanyFee(){
+        if(!companyEl || !feeEl) return;
+        const option = companyEl.options[companyEl.selectedIndex];
+        const fee = option ? option.dataset.defaultFee : "";
+        if(fee !== undefined && fee !== ""){
+            feeEl.value = fee;
+        }
+    }
+
+    let phoneTimer = null;
+    async function lookupCustomer(){
+        const phone = (phoneEl?.value || "").trim();
+        if(phone.length < 5){
+            if(notice) notice.style.display = "none";
+            return;
+        }
+
+        try{
+            const response = await fetch(
+                "{% url 'delivery_customer_lookup' %}?phone=" + encodeURIComponent(phone),
+                {headers:{"X-Requested-With":"XMLHttpRequest"}}
+            );
+            const data = await response.json();
+
+            if(data.found){
+                if(nameEl && !nameEl.value.trim()){
+                    nameEl.value = data.social_name || data.name || "";
+                }
+                if(locationEl && !locationEl.value.trim()){
+                    locationEl.value = data.address || "";
+                }
+                if(notice) notice.style.display = "inline-flex";
+            }else if(notice){
+                notice.style.display = "none";
+            }
+        }catch(error){
+            if(notice) notice.style.display = "none";
+        }
+    }
+
+    areaEl?.addEventListener("change", syncCompanies);
+    companyEl?.addEventListener("change", useCompanyFee);
+    phoneEl?.addEventListener("input", () => {
+        clearTimeout(phoneTimer);
+        phoneTimer = setTimeout(lookupCustomer, 400);
+    });
+
+    syncCompanies();
+});
+</script>
 {% endblock %}

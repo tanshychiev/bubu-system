@@ -1,985 +1,1413 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="km">
-<head>
-    <meta charset="UTF-8">
-    <title>BUBU Pet Sale Invoice #{{ sale.id }}</title>
-
-    <style>
-        @page {
-            size: A4 portrait;
-            margin: 0;
-        }
-
-        @font-face {
-            font-family: "TapromLocal";
-            src: url("{% static 'fonts/Taprom-Regular.ttf' %}") format("truetype");
-        }
-
-        @font-face {
-            font-family: "PlaypenLocal";
-            src: url("{% static 'fonts/PlaypenSans-Bold.ttf' %}") format("truetype");
-            font-weight: 700;
-        }
-
-        @font-face {
-            font-family: "MoulLocal";
-            src: url("{% static 'fonts/Moul-Regular.ttf' %}") format("truetype");
-        }
-
-        @font-face {
-            font-family: "DangrekLocal";
-            src: url("{% static 'fonts/Dangrek-Regular.ttf' %}") format("truetype");
-        }
-
-        @font-face {
-            font-family: "InterLocal";
-            src: url("{% static 'fonts/Inter_18pt-Bold.ttf' %}") format("truetype");
-            font-weight: 700;
-        }
-
-        @font-face {
-            font-family: "InterLocal";
-            src: url("{% static 'fonts/Inter_18pt-ExtraBold.ttf' %}") format("truetype");
-            font-weight: 900;
-        }
-
-        @font-face {
-            font-family: "PlayfairLocal";
-            src: url("{% static 'fonts/PlayfairDisplay-ExtraBold.ttf' %}") format("truetype");
-            font-weight: 900;
-        }
-
-        :root {
-            --brown: #3b2317;
-            --soft-brown: #8b5636;
-            --main: #d6a884;
-            --light: #fce5d5;
-            --red: #d91f2a;
-            --black: #17110e;
-        }
-
-        * {
-            box-sizing: border-box;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            color-adjust: exact !important;
-        }
-
-        html,
-        body {
-            width: 210mm;
-            height: 297mm;
-            margin: 0;
-            padding: 0;
-            background: #ffffff;
-            overflow: hidden;
-        }
-
-        body {
-            font-family: "DangrekLocal", "Khmer OS Battambang", Arial, sans-serif;
-            color: var(--black);
-        }
-
-        .print-btn {
-            position: fixed;
-            top: 12px;
-            right: 12px;
-            z-index: 9999;
-        }
-
-        .print-btn button {
-            border: 0;
-            border-radius: 999px;
-            background: var(--brown);
-            color: #ffffff;
-            padding: 10px 20px;
-            font-family: Arial, sans-serif;
-            font-weight: 900;
-            cursor: pointer;
-        }
-
-        .invoice-page {
-            width: 210mm;
-            height: 297mm;
-            position: relative;
-            margin: 0 auto;
-            background: #ffffff;
-            padding: 8mm 14mm 10mm;
-            overflow: hidden;
-        }
-
-        /* ================= HEADER ================= */
-
-        .header {
-            height: 42mm;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8mm;
-            margin: 0 auto;
-            padding-left: 0;
-        }
-
-        .logo {
-            width: 50mm;
-            height: 50mm;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex: 0 0 42mm;
-        }
-
-        .logo img {
-            width: 110%;
-            height: 110%;
-            object-fit: contain;
-            display: block;
-        }
-
-        .brand {
-            text-align: left;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .brand-kh {
-            font-family: "TapromLocal", "Khmer OS Muol Light", serif;
-            font-size: 40pt;
-            line-height: 1;
-            color: var(--soft-brown);
-            font-weight: 400;
-            letter-spacing: .5px;
-            text-shadow:
-                -1.5px -1.5px 0 #26201d,
-                 1.5px -1.5px 0 #26201d,
-                -1.5px  1.5px 0 #26201d,
-                 1.5px  1.5px 0 #26201d,
-                 0 2.5px 0 #26201d;
-        }
-
-        .brand-en {
-            margin-top: 3mm;
-            font-family: "PlaypenLocal", Arial, sans-serif;
-            font-size: 26pt;
-            line-height: 1;
-            color: var(--soft-brown);
-            font-weight: 700;
-            padding-left: 8mm;
-            text-shadow:
-                -1.2px -1.2px 0 #26201d,
-                 1.2px -1.2px 0 #26201d,
-                -1.2px  1.2px 0 #26201d,
-                 1.2px  1.2px 0 #26201d,
-                 0 2px 0 #26201d;
-        }
-
-        /* ================= TOP INFO ================= */
-
-        .top-area {
-            display: grid;
-            grid-template-columns: 36mm 1fr;
-            column-gap: 10mm;
-            margin-top: 3mm;
-        }
-
-        .invoice-title {
-            text-align: center;
-            padding-top: 0;
-        }
-
-        .invoice-title-kh {
-            font-family: "MoulLocal", "Khmer OS Muol Light", serif;
-            font-size: 15pt;
-            line-height: 1.1;
-            color: #000;
-        }
-
-        .invoice-title-en {
-            font-family: "PlayfairLocal", Georgia, serif;
-            font-size: 16pt;
-            line-height: 1.1;
-            color: #000;
-            margin-top: 1.5mm;
-            font-weight: 900;
-            letter-spacing: .4px;
-        }
-
-        .invoice-number {
-            margin: 3mm auto 0;
-            width: 31mm;
-            padding-bottom: 1.8mm;
-            border-bottom: 1.2px solid #000;
-            font-family: "InterLocal", Arial, sans-serif;
-            font-size: 14pt;
-            line-height: 1;
-            color: var(--red);
-            font-weight: 900;
-            letter-spacing: .8px;
-        }
-
-        .customer-area {
-            padding-top: 1mm;
-        }
-
-        .date-row {
-            display: grid;
-            grid-template-columns: 85mm 1fr;
-            align-items: center;
-            column-gap: 5mm;
-            margin-bottom: 3mm;
-        }
-
-        .info-pill {
-            height: 10mm;
-            background: var(--light);
-            border-radius: 2.5mm;
-            display: flex;
-            align-items: center;
-            padding: 0 5mm;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-
-        .info-label {
-            font-family: "DangrekLocal", "Khmer OS Battambang", sans-serif;
-            font-size: 11pt;
-            font-weight: 400;
-            color: #000;
-            flex: 0 0 auto;
-        }
-
-        .info-value {
-            margin-left: 3mm;
-            min-width: 0;
-            flex: 1 1 auto;
-            font-family: "DangrekLocal", "Khmer OS Battambang", sans-serif;
-            font-size: 11pt;
-            color: #000;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .date-text {
-            font-family: "DangrekLocal", "Khmer OS Battambang", sans-serif;
-            font-size: 14pt;
-            color: #000;
-            white-space: nowrap;
-            text-align: left;
-        }
-
-        .phone-location-row {
-            display: grid;
-            grid-template-columns: 55mm 1fr;
-            column-gap: 3mm;
-        }
-
-        /* ================= TABLE ================= */
-
-        .table-wrap {
-            margin-top: 9mm;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            table-layout: fixed;
-        }
-
-        .main-table th {
-            height: 16mm;
-            background: var(--main);
-            color: #000;
-            text-align: center;
-            vertical-align: middle;
-            border-right: 1.5px solid #fff;
-            font-family: "DangrekLocal", "Khmer OS Battambang", Arial, sans-serif;
-            font-size: 11pt;
-            line-height: 1.15;
-            font-weight: 400;
-            padding: 1mm;
-        }
-
-        .main-table th:first-child {
-            border-top-left-radius: 3mm;
-            border-bottom-left-radius: 3mm;
-        }
-
-        .main-table th:last-child {
-            border-right: 0;
-            border-top-right-radius: 3mm;
-            border-bottom-right-radius: 3mm;
-        }
-
-        .main-table .en {
-            display: block;
-            font-family: "InterLocal", Arial, sans-serif;
-            font-size: 10pt;
-            font-weight: 900;
-            line-height: 1.1;
-        }
-
-        .main-table td {
-            height: 35mm;
-            background: #fff;
-            border-right: 1px solid #fff;
-            text-align: center;
-            vertical-align: middle;
-            padding: 2mm 3mm;
-            font-family: "InterLocal", Arial, sans-serif;
-            font-size: 11pt;
-            font-weight: 700;
-            color: #000;
-        }
-
-        .c-picture { width: 42mm; }
-        .c-kind { width: 32mm; }
-        .c-desc { width: 58mm; }
-        .c-sex { width: 24mm; }
-        .c-price { width: 28mm; }
-
-        .pet-photo {
-            width: 32mm;
-            height: 32mm;
-            margin: 0 auto;
-            border-radius: 3mm;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #fff8f4;
-            border: 1px solid #f0d3c2;
-        }
-
-        .pet-photo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .no-photo {
-            font-family: "InterLocal", Arial, sans-serif;
-            font-size: 10pt;
-            font-weight: 900;
-            color: #b8845f;
-            line-height: 1.2;
-        }
-
-        .desc-text {
-            text-align: left;
-            font-family: "DangrekLocal", "Khmer OS Battambang", Arial, sans-serif;
-            font-size: 10pt;
-            line-height: 1.45;
-            color: #000;
-            font-weight: 400;
-        }
-
-        .price-text,
-        .pet-kind,
-        .pet-sex {
-            font-family: "InterLocal", Arial, sans-serif;
-            font-size: 11pt;
-            font-weight: 900;
-        }
-
-        /* ================= WARRANTY ================= */
-
-        .warranty-bar {
-            margin-top: 8mm;
-            height: 14mm;
-            border-radius: 2.5mm;
-            background: var(--light);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: "DangrekLocal", "Khmer OS Battambang", Arial, sans-serif;
-            font-size: 11pt;
-            color: #000;
-        }
-
-        .warranty-bar strong {
-            font-family: "InterLocal", Arial, sans-serif;
-            font-size: 11pt;
-            font-weight: 900;
-        }
-
-        .warranty-line {
-            display: inline-block;
-            min-width: 60mm;
-            border-bottom: 1.2px solid #777;
-            margin-left: 3mm;
-            text-align: center;
-            line-height: 1.2;
-            padding-bottom: .8mm;
-        }
-
-        /* ================= LOWER ================= */
-
-        .lower {
-            margin-top: 7mm;
-            display: grid;
-            grid-template-columns: 1fr 73mm;
-            column-gap: 10mm;
-            align-items: start;
-        }
-
-        .terms {
-            padding-left: 1mm;
-        }
-
-        .term-item {
-            position: relative;
-            padding-left: 10mm;
-            margin-bottom: 4mm;
-            font-family: "DangrekLocal", "Khmer OS Battambang", Arial, sans-serif;
-            font-size: 13pt;
-            line-height: 1.42;
-            color: #6b422b;
-        }
-
-        .term-item::before {
-            content: "";
-            position: absolute;
-            left: 0;
-            top: 1mm;
-            width: 8mm;
-            height: 8mm;
-            background-image: url("{% static 'img/bubu_paw.png' %}");
-            background-repeat: no-repeat;
-            background-size: contain;
-            background-position: center;
-        }
-
-        .summary-side {
-            padding-top: 0;
-        }
-
-        .summary-box {
-            position: relative;
-            height: 23mm;
-            border-radius: 4mm;
-            background: var(--light);
-            margin-bottom: 1.5mm;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            text-align: center;
-            font-family: "DangrekLocal", "Khmer OS Battambang", Arial, sans-serif;
-            font-size: 11pt;
-            color: #000;
-            line-height: 1.1;
-            overflow: hidden;
-        }
-
-        .summary-box.final {
-            height: 23mm;
-            margin-bottom: 2mm;
-        }
-
-        .summary-box strong {
-            display: block;
-            font-family: "InterLocal", Arial, sans-serif;
-            font-size: 10pt;
-            font-weight: 900;
-            margin-top: 1mm;
-        }
-
-        .summary-amount {
-            display: block;
-            margin-top: 1.5mm;
-            font-family: "InterLocal", Arial, sans-serif;
-            font-size: 12pt;
-            font-weight: 900;
-            color: #000;
-        }
-
-        .paid-stamp {
-            position: absolute;
-            right: 7mm;
-            bottom: 4mm;
-            transform: rotate(-14deg);
-            border: 2px solid #e23b3b;
-            color: #e23b3b;
-            background: rgba(255,255,255,.75);
-            border-radius: 2.5mm;
-            padding: 1.2mm 5mm;
-            font-family: "InterLocal", Arial, sans-serif;
-            font-size: 15pt;
-            font-weight: 900;
-            letter-spacing: 1px;
-            z-index: 2;
-        }
-
-        .thanks {
-            position: relative;
-            min-height: 26mm;      /* was 18mm */
-            padding: 5mm 2mm 0 2mm; /* add more top space */
-            font-family: 'DangrekLocal', "Khmer OS Battambang", Arial, sans-serif;
-            font-size: 10pt;       /* was 9pt */
-            line-height: 1.7;     /* was 1.35 */
-            color: #000;
-            text-align: center;
-        }
-
-        .thanks .brand-red {
-            color: #ef7777;
-            font-family: "InterLocal", Arial, sans-serif;
-            font-weight: 900;
-            font-size: 9pt;
-        }
-
-        .thanks img {
-            position: absolute;
-            right: 1mm;       /* was 0 */
-            bottom: 3mm;     /* was -1mm */
-            width: 18mm;      /* was 20mm */
-            height: 18mm;     /* was 20mm */
-            object-fit: contain;
-        }
-
-        /* ================= SIGNATURE ================= */
-
-        .signatures {
-            position: absolute;
-            left: 24mm;
-            right: 24mm;
-            bottom: 3mm;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            column-gap: 22mm;
-        }
-
-        .signature-box {
-            text-align: center;
-            font-family: "InterLocal", Arial, sans-serif;
-            font-size: 11pt;
-            font-weight: 900;
-            color: #000;
-        }
-
-        .signature-title {
-            margin-bottom: 22mm;
-        }
-
-        .signature-line {
-            width: 100%;
-            border-top: 1.2px solid #777;
-            height: 1mm;
-        }
-
-        /* ================= PRINT ================= */
-
-        @media print {
-            @page {
-                size: A4 portrait;
-                margin: 0;
-            }
-
-            html,
-            body {
-                width: 210mm !important;
-                height: 297mm !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                overflow: hidden !important;
-                background: #ffffff !important;
-            }
-
-            .print-btn {
-                display: none !important;
-            }
-
-            .invoice-page {
-                width: 210mm !important;
-                height: 297mm !important;
-                margin: 0 !important;
-                padding: 8mm 14mm 10mm !important;
-                page-break-before: avoid !important;
-                page-break-after: avoid !important;
-                page-break-inside: avoid !important;
-                overflow: hidden !important;
-            }
-        }
-    </style>
-</head>
-
-<body>
-
-<div class="print-btn">
-    <button onclick="window.print()">🖨 Print</button>
+
+{% block content %}
+
+<div class="sale-detail-page">
+
+    <header class="page-head">
+        <div class="title-wrap">
+            <span class="page-kicker">PET SALE</span>
+            <h1>Sale #{{ sale.id }}</h1>
+            <p>
+                {{ sale.customer_name|default:"No customer" }}
+                · {{ sale.phone|default:"No phone" }}
+                {% if sale.seller_display %} · {{ sale.seller_display }}{% endif %}
+            </p>
+        </div>
+
+        <div class="top-actions">
+            <a href="{% url 'pet_sale_list' %}" class="action-btn neutral">← Sale List</a>
+
+            {% if sale.status != "completed" and sale.status != "cancelled" and sale.status != "refunded" %}
+                <a href="{% url 'pet_sale_add_to_pos' sale.id %}" class="action-btn pos-top">
+                    <span class="pos-icon">🛒</span>
+                    <span>
+                        <strong>Add to POS</strong>
+                        <small>Pet + products</small>
+                    </span>
+                </a>
+            {% endif %}
+
+            <a href="{% url 'pet_sale_edit' sale.id %}" class="action-btn edit">✏️ Edit</a>
+            <a href="{% url 'pet_sale_receipt_print' sale.id %}" target="_blank" class="action-btn receipt">🖨️ Receipt</a>
+            <a href="{% url 'pet_warranty_print' sale.id %}" target="_blank" class="action-btn warranty">🛡️ Warranty</a>
+        </div>
+    </header>
+
+    <section class="status-strip">
+        <div class="status-box">
+            <span>Status</span>
+            <strong class="status-pill status-{{ sale.status }}">{{ sale.get_status_display }}</strong>
+        </div>
+
+        <div class="status-box">
+            <span>Sale Type</span>
+            <strong>{{ sale.get_sale_kind_display }}</strong>
+        </div>
+
+        <div class="status-box">
+            <span>Seller</span>
+            <strong>{{ sale.seller_display|default:"-" }}</strong>
+        </div>
+
+        <div class="status-box">
+            <span>Created</span>
+            <strong>{{ sale.created_at|date:"d M Y" }}</strong>
+        </div>
+    </section>
+
+    <div class="detail-grid">
+
+        <main class="main-column">
+
+            <section class="card pet-summary-card">
+                <div class="pet-photo">
+                    {% if sale_display_photo %}
+                        <img
+                            src="{{ sale_display_photo.url }}?sale={{ sale.id }}&photos={{ sale.photos.count }}"
+                            alt="{{ sale.breed_display|default:'Pet' }}"
+                        >
+                    {% else %}
+                        <div class="photo-empty">🐾</div>
+                    {% endif %}
+                </div>
+
+                <div class="pet-summary-info">
+                    <div class="pet-title-line">
+                        <div>
+                            <small>Pet</small>
+                            <h2>{{ sale.pet_type_display|default:"Pet" }} · {{ sale.breed_display|default:"-" }}</h2>
+                        </div>
+
+                        <strong class="pet-price">${{ sale.sale_price|floatformat:2 }}</strong>
+                    </div>
+
+                    <div class="pet-tags">
+                        {% if sale.pet_name_display %}<span>🏷️ {{ sale.pet_name_display }}</span>{% endif %}
+                        {% if sale.gender_display %}<span>⚧ {{ sale.gender_display }}</span>{% endif %}
+                        {% if sale.color_display %}<span>🎨 {{ sale.color_display }}</span>{% endif %}
+                        {% if sale.special_type_display %}<span>✨ {{ sale.special_type_display }}</span>{% endif %}
+                        {% if sale.age_display %}<span>🎂 {{ sale.age_display }}</span>{% endif %}
+                    </div>
+                </div>
+            </section>
+
+            {% if sale.photos.all %}
+                <section class="card compact-card">
+                    <div class="card-head">
+                        <h2>Sale Photos</h2>
+                        <span>{{ sale.photos.count }}</span>
+                    </div>
+
+                    <div class="photo-grid">
+                        {% for item in sale.photos.all %}
+                            {% if item.photo %}
+                                <a href="{{ item.photo.url }}" target="_blank" class="photo-thumb">
+                                    <img src="{{ item.photo.url }}" alt="Sale photo">
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+
+            {% if sale.sale_kind == "preorder" %}
+                <section class="card compact-card">
+                    <div class="card-head">
+                        <h2>Pre-order Information</h2>
+                        <button type="button" class="copy-btn" onclick="copyInfo()">Copy</button>
+                    </div>
+
+                    <textarea id="copyText" readonly>{{ copy_text }}</textarea>
+                </section>
+            {% endif %}
+
+            <div class="two-card-grid">
+                <section class="card compact-card">
+                    <h2>Customer</h2>
+
+                    <div class="info-row">
+                        <span>Name</span>
+                        <strong>{{ sale.customer_name|default:"-" }}</strong>
+                    </div>
+
+                    <div class="info-row">
+                        <span>Phone</span>
+                        <strong>{{ sale.phone|default:"-" }}</strong>
+                    </div>
+
+                    <div class="info-row">
+                        <span>Location</span>
+                        <strong>{{ sale.address|default:"-" }}</strong>
+                    </div>
+                </section>
+
+                <section class="card compact-card">
+                    <h2>Date Information</h2>
+
+                    <div class="info-row">
+                        <span>Deadline</span>
+                        <strong>{{ sale.deadline|date:"d M Y"|default:"-" }}</strong>
+                    </div>
+
+                    <div class="info-row">
+                        <span>Created</span>
+                        <strong>{{ sale.created_at|date:"d M Y H:i" }}</strong>
+                    </div>
+
+                    <div class="info-row">
+                        <span>Completed</span>
+                        <strong>{{ sale.completed_at|date:"d M Y H:i"|default:"-" }}</strong>
+                    </div>
+                </section>
+            </div>
+
+            <section class="card compact-card">
+                <h2>Remark</h2>
+                <p class="note">{{ sale.note|default:"No remark"|linebreaksbr }}</p>
+            </section>
+
+            {% if sale.cancel_reason %}
+                <section class="card compact-card record-card cancel-record">
+                    <h2>Cancel Reason</h2>
+                    <p class="note">{{ sale.cancel_reason|linebreaksbr }}</p>
+                </section>
+            {% endif %}
+
+            {% if sale.refund_reason %}
+                <section class="card compact-card record-card refund-record">
+                    <h2>Refund Reason</h2>
+                    <p class="note">{{ sale.refund_reason|linebreaksbr }}</p>
+                </section>
+            {% endif %}
+        </main>
+
+        <aside class="side-column">
+            <section class="card payment-card sticky-card">
+                <div class="card-head">
+                    <h2>Payment</h2>
+                    <span class="payment-status status-{{ sale.status }}">{{ sale.get_status_display }}</span>
+                </div>
+
+                <div class="money-grid">
+                    <div class="money-box">
+                        <span>Full Price</span>
+                        <strong>${{ sale.sale_price|floatformat:2 }}</strong>
+                    </div>
+
+                    <div class="money-box">
+                        <span>Paid / Deposit</span>
+                        <strong>${{ sale.paid_amount|floatformat:2 }}</strong>
+                    </div>
+
+                    <div class="money-box remaining">
+                        <span>Remaining</span>
+                        <strong>${{ sale.remaining_amount|floatformat:2 }}</strong>
+                    </div>
+                </div>
+
+                <div
+                    class="warranty-range-card"
+                    id="warrantyRangeCard"
+                    data-start="{% if sale.paid_at %}{{ sale.paid_at|date:'Y-m-d' }}{% elif sale.payment_date %}{{ sale.payment_date|date:'Y-m-d' }}{% elif sale.completed_at %}{{ sale.completed_at|date:'Y-m-d' }}{% elif sale.warranty_start_date %}{{ sale.warranty_start_date|date:'Y-m-d' }}{% else %}{{ sale.created_at|date:'Y-m-d' }}{% endif %}"
+                    data-end="{{ sale.warranty_expire_date|date:'Y-m-d' }}"
+                    data-days="{{ sale.warranty_days|default:3 }}"
+                >
+                    <div class="warranty-card-head">
+                        <span class="shield">🛡️</span>
+                        <div>
+                            <small>Warranty Period</small>
+                            <strong id="warrantyRangeText">Loading…</strong>
+                        </div>
+                    </div>
+
+                    <div class="warranty-mini-grid">
+                        <div>
+                            <span>Start</span>
+                            <strong id="warrantyStartText">-</strong>
+                        </div>
+                        <div>
+                            <span>End</span>
+                            <strong id="warrantyEndText">-</strong>
+                        </div>
+                        <div>
+                            <span>Total</span>
+                            <strong id="warrantyDaysText">3 days</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-section">
+                    <h2>Actions</h2>
+
+                    {% if sale.status != "completed" and sale.status != "cancelled" and sale.status != "refunded" %}
+                        <a href="{% url 'pet_sale_add_to_pos' sale.id %}" class="add-pos-btn">
+                            <span class="big-pos-icon">🛒</span>
+                            <span>
+                                <strong>Add Sale to POS</strong>
+                                <small>Combine pet, food, accessories or service</small>
+                            </span>
+                            <b>→</b>
+                        </a>
+                    {% endif %}
+
+                    <div class="normal-actions">
+                        <a href="{% url 'pet_sale_edit' sale.id %}" class="edit-btn">✏️ Edit Sale</a>
+                        <a href="{% url 'pet_sale_receipt_print' sale.id %}" target="_blank" class="receipt-btn">🖨️ Receipt</a>
+                        <a href="{% url 'pet_warranty_print' sale.id %}" target="_blank" class="warranty-btn-side">🛡️ Warranty</a>
+                    </div>
+
+                    {% if sale.sale_kind == "preorder" and sale.status == "deposit" %}
+                        <form method="post" action="{% url 'pet_sale_mark_arrived' sale.id %}" class="compact-form">
+                            {% csrf_token %}
+                            <button class="arrived-btn" type="submit">📦 Mark Arrived</button>
+                        </form>
+                    {% endif %}
+
+                    {% if sale.status != "completed" and sale.status != "cancelled" and sale.status != "refunded" %}
+                        <form method="post" action="{% url 'pet_sale_complete' sale.id %}" class="complete-form" onsubmit="return confirmCompleteSale()">
+                            {% csrf_token %}
+
+                            <div class="complete-grid">
+                                <label>
+                                    Extra Paid
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        name="extra_paid"
+                                        value="{{ sale.remaining_amount }}"
+                                        inputmode="decimal"
+                                    >
+                                </label>
+
+                                <label>
+                                    Warranty Days
+                                    <input
+                                        type="text"
+                                        name="warranty_days"
+                                        value="{{ sale.warranty_days|default:'3' }}"
+                                        inputmode="numeric"
+                                        pattern="[0-9]*"
+                                    >
+                                </label>
+                            </div>
+
+                            <button class="complete-btn" type="submit">✅ Complete Sale</button>
+                        </form>
+                    {% endif %}
+
+                    <a href="{% url 'pet_warranty_claim_create' sale.id %}" class="claim-btn">⚕️ Warranty Claim</a>
+
+                    {% if sale.status != "completed" and sale.status != "cancelled" and sale.status != "refunded" %}
+                        <details class="rare-actions">
+                            <summary>More actions</summary>
+
+                            <div class="rare-content">
+                                {% if sale.status != "cancelled" and sale.status != "completed" and sale.status != "refunded" %}
+                                    <form method="post" action="{% url 'pet_sale_cancel' sale.id %}" class="rare-form" onsubmit="return confirmCancelSale()">
+                                        {% csrf_token %}
+                                        <label>
+                                            Cancel Reason
+                                            <textarea name="cancel_reason" id="cancelReason" placeholder="Write cancel reason..." required></textarea>
+                                        </label>
+                                        <button class="cancel-btn" type="submit">❌ Cancel Sale</button>
+                                    </form>
+                                {% endif %}
+
+                                {% if sale.status != "refunded" and sale.status != "cancelled" %}
+                                    <form method="post" action="{% url 'pet_sale_refund' sale.id %}" class="rare-form" onsubmit="return confirmRefundSale()">
+                                        {% csrf_token %}
+                                        <label>
+                                            Refund Reason
+                                            <textarea name="refund_reason" id="refundReason" placeholder="Write refund reason..." required></textarea>
+                                        </label>
+                                        <button class="refund-btn" type="submit">↩️ Refund</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </details>
+                    {% endif %}
+                </div>
+            </section>
+        </aside>
+    </div>
 </div>
 
-<div class="invoice-page">
+<style>
+*{box-sizing:border-box}
+a{text-decoration:none}
 
-    <div class="header">
-        <div class="logo">
-            <img src="{% static 'img/bubu_logo.png' %}" alt="BUBU Logo"
-                 onerror="this.onerror=null; this.src='/static/img/bubu_logo.png';">
-        </div>
+input[type="number"]{
+    -moz-appearance:textfield;
+    appearance:textfield;
+}
 
-        <div class="brand">
-            <div class="brand-kh">ប៊ូប៊ូ ផេត ស្ទ័រ</div>
-            <div class="brand-en">BUBU Pet Store</div>
-        </div>
-    </div>
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+}
 
-    <div class="top-area">
-        <div class="invoice-title">
-            <div class="invoice-title-kh">វិក្កយបត្រ</div>
-            <div class="invoice-title-en">INVOICE</div>
-            <div class="invoice-number">{{ sale.id|stringformat:"06d" }}</div>
-        </div>
+.sale-detail-page{
+    width:min(1180px,100%);
+    margin:0 auto;
+    padding:18px 20px 28px;
+}
 
-        <div class="customer-area">
-            <div class="date-row">
-                <div class="info-pill">
-                    <span class="info-label">ឈ្មោះអតិថិជន:</span>
-                    <span class="info-value">
-                        {% if sale.customer_name %}
-                            {{ sale.customer_name }}
-                        {% elif sale.customer and sale.customer.name %}
-                            {{ sale.customer.name }}
-                        {% else %}
-                            -
-                        {% endif %}
-                    </span>
-                </div>
+.page-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom:13px;
+}
 
-                <div class="date-text">
-                    {% if sale.created_at %}
-                        ថ្ងៃទី {{ sale.created_at|date:"d" }} ខែ {{ sale.created_at|date:"m" }} ឆ្នាំ {{ sale.created_at|date:"Y" }}
-                    {% else %}
-                        ថ្ងៃទី .............. ខែ .............. ឆ្នាំ 202 .....
-                    {% endif %}
-                </div>
-            </div>
+.page-kicker{
+    display:inline-flex;
+    min-height:24px;
+    padding:0 8px;
+    align-items:center;
+    border-radius:999px;
+    color:#6f50d8;
+    background:#f0eaff;
+    font-size:9px;
+    font-weight:1000;
+}
 
-            <div class="phone-location-row">
-                <div class="info-pill">
-                    <span class="info-label">លេខទូរស័ព្ទ:</span>
-                    <span class="info-value">
-                        {% if sale.phone %}
-                            {{ sale.phone }}
-                        {% elif sale.customer and sale.customer.phone %}
-                            {{ sale.customer.phone }}
-                        {% else %}
-                            -
-                        {% endif %}
-                    </span>
-                </div>
+.title-wrap h1{
+    margin:5px 0 0;
+    color:#080634;
+    font-size:29px;
+    line-height:1.1;
+    font-weight:1000;
+}
 
-                <div class="info-pill">
-                    <span class="info-label">ទីតាំង:</span>
-                    <span class="info-value">
-                        {% if sale.address %}
-                            {{ sale.address }}
-                        {% elif sale.location %}
-                            {{ sale.location }}
-                        {% elif sale.customer and sale.customer.location %}
-                            {{ sale.customer.location }}
-                        {% elif sale.customer and sale.customer.address %}
-                            {{ sale.customer.address }}
-                        {% else %}
-                            -
-                        {% endif %}
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
+.title-wrap p{
+    margin:5px 0 0;
+    color:#7b7288;
+    font-size:12px;
+    font-weight:900;
+}
 
-    <div class="table-wrap">
-        <table class="main-table">
-            <thead>
-                <tr>
-                    <th class="c-picture">រូបសត្វ <span class="en">(Picture)</span></th>
-                    <th class="c-kind">ប្រភេទសត្វ <span class="en">(Breed)</span></th>
-                    <th class="c-desc">ពិពណ៌នា <span class="en">(Description)</span></th>
-                    <th class="c-sex">ភេទ <span class="en">(Sex)</span></th>
-                    <th class="c-price">តម្លៃសរុប <span class="en">(Total Price)</span></th>
-                </tr>
-            </thead>
+.top-actions{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:6px;
+}
 
-            <tbody>
-                <tr>
-                    <td>
-                        <div class="pet-photo">
-                            {% if sale.pet and sale.pet.display_photo %}
-                                <img
-                                    src="{{ sale.pet.display_photo.url }}?pet={{ sale.pet.updated_at|date:'U' }}&breed={{ sale.pet.breed_profile.updated_at|date:'U' }}"
-                                    alt="Pet Photo"
-                                >
-                            {% elif sale.pet and sale.pet.photo %}
-                                <img
-                                    src="{{ sale.pet.photo.url }}?pet={{ sale.pet.updated_at|date:'U' }}"
-                                    alt="Pet Photo"
-                                >
-                            {% elif sale.pet and sale.pet.breed_profile and sale.pet.breed_profile.photo %}
-                                <img
-                                    src="{{ sale.pet.breed_profile.photo.url }}?breed={{ sale.pet.breed_profile.updated_at|date:'U' }}"
-                                    alt="Pet Photo"
-                                >
-                            {% elif sale.sale_photo %}
-                                <img src="{{ sale.sale_photo.url }}" alt="Pet Photo">
-                            {% else %}
-                                <div class="no-photo">PET<br>PHOTO</div>
-                            {% endif %}
-                        </div>
-                    </td>
+.action-btn{
+    min-height:42px;
+    padding:0 13px;
+    border-radius:12px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:#334155;
+    background:#f1f5f9;
+    font-size:11px;
+    font-weight:1000;
+}
 
-                    <td>
-                        <div class="pet-kind">
-                            {% if sale.pet_type_display %}
-                                {{ sale.pet_type_display }}
-                            {% elif sale.pet and sale.pet.pet_type %}
-                                {{ sale.pet.pet_type|title }}
-                            {% elif sale.pet_type %}
-                                {{ sale.pet_type|title }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </div>
-                    </td>
+.action-btn.edit{
+    color:#d65e20;
+    background:#fff1e8;
+}
 
-                    <td>
-                        <div class="desc-text">
-                            {% if sale.pet_name_display %}
-                                Name: {{ sale.pet_name_display }}<br>
-                            {% elif sale.pet and sale.pet.name %}
-                                Name: {{ sale.pet.name }}<br>
-                            {% endif %}
+.action-btn.receipt{
+    color:white;
+    background:linear-gradient(135deg,#ff8c6b,#ff5d73);
+}
 
-                            {% if sale.breed_display %}
-                                Breed: {{ sale.breed_display }}<br>
-                            {% elif sale.pet and sale.pet.breed %}
-                                Breed: {{ sale.pet.breed }}<br>
-                            {% elif sale.pet and sale.pet.breed_profile %}
-                                Breed: {{ sale.pet.breed_profile }}<br>
-                            {% endif %}
+.action-btn.warranty{
+    color:white;
+    background:linear-gradient(135deg,#37bdf2,#7359ef);
+}
 
-                            {% if sale.color_display %}
-                                Color: {{ sale.color_display }}<br>
-                            {% elif sale.pet and sale.pet.color %}
-                                Color: {{ sale.pet.color }}<br>
-                            {% endif %}
+.action-btn.pos-top{
+    padding:6px 12px;
+    gap:7px;
+    color:white;
+    background:linear-gradient(135deg,#19af66,#6c59ef);
+    box-shadow:0 8px 18px rgba(74,74,205,.17);
+}
 
-                            {% if sale.note %}
-                                Note: {{ sale.note }}
-                            {% endif %}
-                        </div>
-                    </td>
+.action-btn.pos-top .pos-icon{
+    font-size:18px;
+}
 
-                    <td>
-                        <div class="pet-sex">
-                            {% if sale.gender_display %}
-                                {{ sale.gender_display }}
-                            {% elif sale.pet and sale.pet.gender %}
-                                {{ sale.pet.gender|title }}
-                            {% elif sale.gender %}
-                                {{ sale.gender|title }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </div>
-                    </td>
+.action-btn.pos-top strong,
+.action-btn.pos-top small{
+    display:block;
+}
 
-                    <td>
-                        <div class="price-text">
-                            $
-                            {% if sale.total_price %}
-                                {{ sale.total_price }}
-                            {% elif sale.sale_price %}
-                                {{ sale.sale_price }}
-                            {% elif sale.final_total %}
-                                {{ sale.final_total }}
-                            {% else %}
-                                0.00
-                            {% endif %}
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+.action-btn.pos-top strong{
+    font-size:11px;
+}
 
-    <div
-        class="warranty-bar"
-        id="receiptWarrantyRow"
-        data-start="{% if sale.paid_at %}{{ sale.paid_at|date:'Y-m-d' }}{% elif sale.payment_date %}{{ sale.payment_date|date:'Y-m-d' }}{% elif sale.completed_at %}{{ sale.completed_at|date:'Y-m-d' }}{% elif sale.created_at %}{{ sale.created_at|date:'Y-m-d' }}{% endif %}"
-        data-end="{% if sale.warranty_end_date %}{{ sale.warranty_end_date|date:'Y-m-d' }}{% elif sale.warranty_until %}{{ sale.warranty_until|date:'Y-m-d' }}{% elif sale.warranty_expire_date %}{{ sale.warranty_expire_date|date:'Y-m-d' }}{% elif sale.deadline %}{{ sale.deadline|date:'Y-m-d' }}{% endif %}"
-        data-days="3"
-    >
-        <span>ថ្ងៃធានា <strong>(Warranty Date):</strong></span>
-        <span class="warranty-line" id="receiptWarrantyText">
-            &nbsp;
-        </span>
-    </div>
+.action-btn.pos-top small{
+    margin-top:1px;
+    font-size:8px;
+    opacity:.9;
+}
 
-    <div class="lower">
-        <div class="terms">
-            <div class="term-item">
-                សូមអោយអតិថិជនបានជាវសត្វពីហាងយើងខ្ញុំ ត្រូវធ្វើតាមការណែនាំពីហាង
-                ពីការផ្តល់អាហារបំប៉ន និងរបបអាហារ។
-            </div>
+.status-strip{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:7px;
+    margin-bottom:11px;
+}
 
-            <div class="term-item">
-                យើងខ្ញុំមានការធានាជូនសុខភាព រយៈពេល៣ថ្ងៃលើជំងឺ
-                Parvo &amp; Distemper គិតចាប់ពីថ្ងៃដែលភ្ញៀវបានយកចេញពីហាង។
-                ប្រសិនបើសត្វមានបញ្ហាក្នុងអំឡុងពេលធានារបស់ហាង ខាងហាងនឹងជួយព្យាបាល។
-            </div>
+.status-box{
+    min-width:0;
+    padding:9px 10px;
+    border:1px solid #ecdeea;
+    border-radius:12px;
+    background:white;
+    box-shadow:0 5px 14px rgba(89,61,105,.04);
+}
 
-            <div class="term-item">
-                សម្រាប់កូនៗមានបញ្ហាត្រូវទំនាក់ទំនងមកកាន់ហាងភ្លាមៗ។
-                ប្រសិនបើភ្ញៀវផ្តល់ដំណឹងហួសការធានា ខាងហាងមិនទទួលខុសត្រូវឡើយ។
-            </div>
+.status-box span,
+.status-box strong{
+    display:block;
+}
 
-            <div class="term-item">
-                យើងមិនមានការទទួលខុសត្រូវទៅលើអតិថិជនដែលធ្វើខុសពីគោលការណ៍ហាង
-                ឬផ្តល់ដំណឹងយឺត ហួសអំឡុងពេលធានានោះទេ។
-            </div>
-        </div>
+.status-box span{
+    color:#81778c;
+    font-size:8px;
+    font-weight:1000;
+}
 
-        <div class="summary-side">
-            <div class="summary-box">
-                តម្លៃសរុប
-                <strong>Total</strong>
-                <span class="summary-amount">
-                    $
-                    {% if sale.total_price %}
-                        {{ sale.total_price }}
-                    {% elif sale.sale_price %}
-                        {{ sale.sale_price }}
-                    {% elif sale.final_total %}
-                        {{ sale.final_total }}
-                    {% else %}
-                        0.00
-                    {% endif %}
-                </span>
-            </div>
+.status-box strong{
+    margin-top:4px;
+    overflow:hidden;
+    color:#080634;
+    font-size:12px;
+    font-weight:1000;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
 
-            <div class="summary-box">
-                បង់រួច
-                <strong>Deposit</strong>
-                <span class="summary-amount">
-                    $
-                    {% if sale.deposit_amount %}
-                        {{ sale.deposit_amount }}
-                    {% elif sale.deposit %}
-                        {{ sale.deposit }}
-                    {% elif sale.paid_amount %}
-                        {{ sale.paid_amount }}
-                    {% else %}
-                        0.00
-                    {% endif %}
-                </span>
-            </div>
+.status-pill{
+    width:max-content;
+    max-width:100%;
+    padding:4px 7px;
+    border-radius:999px;
+}
 
-            <div class="summary-box final">
-                ប្រាក់នៅខ្វះ
-                <strong>Final</strong>
-                <span class="summary-amount">
-                    $
-                    {% if sale.remaining_amount %}
-                        {{ sale.remaining_amount }}
-                    {% elif sale.balance_amount %}
-                        {{ sale.balance_amount }}
-                    {% elif sale.final_amount %}
-                        {{ sale.final_amount }}
-                    {% elif sale.final_total %}
-                        {{ sale.final_total }}
-                    {% else %}
-                        0.00
-                    {% endif %}
-                </span>
+.status-deposit{background:#fff7ed!important;color:#ea580c!important}
+.status-arrived{background:#e0f2fe!important;color:#0284c7!important}
+.status-completed{background:#dcfce7!important;color:#16a34a!important}
+.status-cancelled{background:#fee2e2!important;color:#dc2626!important}
+.status-refunded{background:#e2e8f0!important;color:#334155!important}
 
-                {% if sale.is_paid or sale.payment_status == 'paid' or sale.status == 'paid' or sale.payment_type == 'paid' or sale.remaining_amount == 0 or sale.balance_amount == 0 %}
-                    <span class="paid-stamp">PAID</span>
-                {% endif %}
-            </div>
+.detail-grid{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 350px;
+    gap:12px;
+}
 
-            <div class="thanks">
-                សូមអរគុណសម្រាប់ការគាំទ្រ និងជ្រើសរើសកូនៗពីហាង
-                <span class="brand-red">BUBU PET STORE</span> យើងខ្ញុំ!
-                <img src="{% static 'img/bubu_icon.png' %}" alt="BUBU Dog"
-                     onerror="this.style.display='none';">
-            </div>
-        </div>
-    </div>
+.main-column,
+.side-column{
+    min-width:0;
+}
 
-    <div class="signatures">
-        <div class="signature-box">
-            <div class="signature-title">Seller Signature</div>
-            <div class="signature-line"></div>
-        </div>
+.main-column{
+    display:grid;
+    gap:9px;
+}
 
-        <div class="signature-box">
-            <div class="signature-title">Customer Signature</div>
-            <div class="signature-line"></div>
-        </div>
-    </div>
+.card{
+    border:1px solid #efdfd7;
+    border-radius:16px;
+    background:white;
+    box-shadow:0 7px 20px rgba(130,91,60,.05);
+}
 
-</div>
+.pet-summary-card{
+    padding:10px;
+    display:grid;
+    grid-template-columns:145px minmax(0,1fr);
+    gap:11px;
+    align-items:center;
+}
+
+.pet-photo{
+    height:135px;
+    overflow:hidden;
+    border-radius:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(145deg,#fff5ee,#f5f0ff);
+}
+
+.pet-photo img{
+    width:100%;
+    height:100%;
+    padding:5px;
+    object-fit:contain;
+}
+
+.photo-empty{
+    font-size:52px;
+}
+
+.pet-summary-info{
+    min-width:0;
+}
+
+.pet-title-line{
+    display:flex;
+    justify-content:space-between;
+    gap:9px;
+}
+
+.pet-title-line small{
+    display:block;
+    color:#8a8096;
+    font-size:8px;
+    font-weight:900;
+}
+
+.pet-title-line h2{
+    margin:3px 0 0;
+    color:#080634;
+    font-size:19px;
+    line-height:1.2;
+}
+
+.pet-price{
+    color:#ff5d73;
+    font-size:19px;
+    white-space:nowrap;
+}
+
+.pet-tags{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    margin-top:9px;
+}
+
+.pet-tags span{
+    padding:5px 7px;
+    border-radius:8px;
+    color:#6f57d9;
+    background:#f4f0ff;
+    font-size:9px;
+    font-weight:1000;
+}
+
+.compact-card{
+    padding:12px;
+}
+
+.card h2{
+    margin:0 0 9px;
+    color:#080634;
+    font-size:16px;
+    font-weight:1000;
+}
+
+.card-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:9px;
+    margin-bottom:8px;
+}
+
+.card-head h2{
+    margin:0;
+}
+
+.card-head > span{
+    min-width:27px;
+    height:27px;
+    padding:0 7px;
+    border-radius:999px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#7155d7;
+    background:#efe9ff;
+    font-size:9px;
+    font-weight:1000;
+}
+
+.photo-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:6px;
+}
+
+.photo-thumb{
+    height:90px;
+    overflow:hidden;
+    border:1px solid #f0dfd7;
+    border-radius:10px;
+    background:#fff8f4;
+}
+
+.photo-thumb img{
+    width:100%;
+    height:100%;
+    padding:3px;
+    object-fit:contain;
+}
+
+.copy-btn{
+    min-height:32px;
+    padding:0 11px;
+    border:0;
+    border-radius:999px;
+    color:white;
+    background:#080634;
+    font-size:10px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+#copyText{
+    width:100%;
+    min-height:120px;
+    padding:9px;
+    border:1px dashed #e8c786;
+    border-radius:11px;
+    outline:0;
+    color:#3b3242;
+    background:#fffdf7;
+    font-size:12px;
+    font-weight:800;
+    line-height:1.45;
+    resize:vertical;
+}
+
+.two-card-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:9px;
+}
+
+.info-row{
+    min-height:34px;
+    padding:6px 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    border-bottom:1px dashed #eaddec;
+    font-size:10px;
+    font-weight:900;
+}
+
+.info-row:last-child{
+    border-bottom:0;
+}
+
+.info-row span{
+    color:#7b7288;
+}
+
+.info-row strong{
+    color:#080634;
+    text-align:right;
+}
+
+.note{
+    margin:0;
+    padding:9px;
+    border-radius:10px;
+    color:#554d61;
+    background:#fffaf0;
+    font-size:11px;
+    font-weight:800;
+    line-height:1.45;
+}
+
+.record-card{
+    display:none;
+}
+
+.cancel-record{
+    border-color:#fecaca;
+    background:#fff7f7;
+}
+
+.refund-record{
+    border-color:#cbd5e1;
+    background:#f8fafc;
+}
+
+.sticky-card{
+    position:sticky;
+    top:10px;
+    padding:12px;
+}
+
+.payment-status{
+    padding:4px 7px;
+    border-radius:999px;
+    font-size:8px;
+    font-weight:1000;
+}
+
+.money-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:6px;
+}
+
+.money-box{
+    min-width:0;
+    padding:9px;
+    border-radius:10px;
+    background:#f8f6ff;
+}
+
+.money-box.remaining{
+    grid-column:1/-1;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#fff1f3;
+}
+
+.money-box span,
+.money-box strong{
+    display:block;
+}
+
+.money-box span{
+    color:#7a7187;
+    font-size:8px;
+    font-weight:1000;
+}
+
+.money-box strong{
+    margin-top:3px;
+    color:#080634;
+    font-size:15px;
+}
+
+.money-box.remaining strong{
+    margin:0;
+    color:#d94e64;
+    font-size:18px;
+}
+
+.warranty-range-card{
+    margin-top:9px;
+    padding:9px;
+    border:1px solid #cfeadc;
+    border-radius:12px;
+    background:#eefbf4;
+}
+
+.warranty-card-head{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.shield{
+    width:34px;
+    height:34px;
+    flex:0 0 34px;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:white;
+    font-size:17px;
+}
+
+.warranty-card-head small,
+.warranty-card-head strong{
+    display:block;
+}
+
+.warranty-card-head small{
+    color:#61746a;
+    font-size:8px;
+    font-weight:1000;
+}
+
+.warranty-card-head strong{
+    margin-top:2px;
+    color:#166d43;
+    font-size:10px;
+    line-height:1.3;
+}
+
+.warranty-mini-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:4px;
+    margin-top:7px;
+}
+
+.warranty-mini-grid div{
+    padding:6px 3px;
+    border-radius:8px;
+    background:white;
+    text-align:center;
+}
+
+.warranty-mini-grid span,
+.warranty-mini-grid strong{
+    display:block;
+}
+
+.warranty-mini-grid span{
+    color:#76867e;
+    font-size:7px;
+    font-weight:1000;
+}
+
+.warranty-mini-grid strong{
+    margin-top:2px;
+    color:#264d3c;
+    font-size:8px;
+}
+
+.action-section{
+    margin-top:11px;
+    padding-top:10px;
+    border-top:1px dashed #e5d8e8;
+}
+
+.add-pos-btn{
+    width:100%;
+    min-height:59px;
+    padding:8px 10px;
+    border-radius:13px;
+    display:grid;
+    grid-template-columns:38px minmax(0,1fr) auto;
+    align-items:center;
+    gap:8px;
+    color:white;
+    background:linear-gradient(135deg,#18aa62,#6d5bef);
+    box-shadow:0 9px 20px rgba(63,79,206,.17);
+}
+
+.big-pos-icon{
+    width:38px;
+    height:38px;
+    border-radius:11px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.18);
+    font-size:19px;
+}
+
+.add-pos-btn strong,
+.add-pos-btn small{
+    display:block;
+}
+
+.add-pos-btn strong{
+    font-size:12px;
+}
+
+.add-pos-btn small{
+    margin-top:2px;
+    color:white;
+    font-size:8px;
+    font-weight:900;
+    opacity:.9;
+}
+
+.add-pos-btn > b{
+    font-size:18px;
+}
+
+.normal-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:5px;
+    margin-top:7px;
+}
+
+.edit-btn,
+.receipt-btn,
+.warranty-btn-side,
+.arrived-btn,
+.complete-btn,
+.claim-btn,
+.cancel-btn,
+.refund-btn{
+    min-height:39px;
+    border:0;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-size:9px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.edit-btn{background:linear-gradient(135deg,#f59e0b,#fb7185)}
+.receipt-btn{background:linear-gradient(135deg,#ff8c6b,#ff5d73)}
+.warranty-btn-side{background:linear-gradient(135deg,#35baf0,#7359ef)}
+.arrived-btn{width:100%;background:linear-gradient(135deg,#34c6ff,#7b5cff)}
+.complete-btn{width:100%;background:linear-gradient(135deg,#13a85f,#6d5bef)}
+.claim-btn{width:100%;margin-top:6px;background:linear-gradient(135deg,#f59e0b,#ef4444)}
+.cancel-btn{width:100%;background:linear-gradient(135deg,#ff8c6b,#ff5d73)}
+.refund-btn{width:100%;background:linear-gradient(135deg,#64748b,#0f172a)}
+
+.compact-form{
+    margin-top:6px;
+}
+
+.complete-form{
+    margin-top:7px;
+    padding:8px;
+    border:1px solid #e8dcea;
+    border-radius:11px;
+    background:#fcfaff;
+}
+
+.complete-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:6px;
+    margin-bottom:6px;
+}
+
+.complete-form label,
+.rare-form label{
+    color:#080634;
+    font-size:8px;
+    font-weight:1000;
+}
+
+.complete-form input,
+.rare-form textarea{
+    width:100%;
+    margin-top:3px;
+    border:1px solid #e4d6e6;
+    border-radius:8px;
+    outline:0;
+    color:#080634;
+    background:white;
+    font-size:13px;
+    font-weight:900;
+}
+
+.complete-form input{
+    height:38px;
+    padding:0 8px;
+}
+
+.rare-actions{
+    margin-top:7px;
+    border:1px solid #e4d8e6;
+    border-radius:10px;
+    overflow:hidden;
+    background:#faf8fb;
+}
+
+.rare-actions summary{
+    min-height:38px;
+    padding:0 10px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    color:#776b7e;
+    font-size:9px;
+    font-weight:1000;
+    cursor:pointer;
+    list-style:none;
+}
+
+.rare-actions summary::-webkit-details-marker{
+    display:none;
+}
+
+.rare-actions summary::after{
+    content:"⌄";
+    color:#7b5cff;
+    font-size:14px;
+}
+
+.rare-actions[open] summary::after{
+    transform:rotate(180deg);
+}
+
+.rare-content{
+    padding:7px;
+    border-top:1px dashed #e3d6e5;
+}
+
+.rare-form + .rare-form{
+    margin-top:7px;
+}
+
+.rare-form textarea{
+    min-height:55px;
+    padding:7px;
+    resize:vertical;
+}
+
+.rare-form button{
+    margin-top:5px;
+}
+
+@media(max-width:900px){
+    .page-head{
+        display:block;
+    }
+
+    .top-actions{
+        justify-content:flex-start;
+        margin-top:8px;
+    }
+
+    .status-strip{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .detail-grid{
+        grid-template-columns:1fr;
+    }
+
+    .sticky-card{
+        position:relative;
+        top:auto;
+    }
+}
+
+@media(max-width:700px){
+    .sale-detail-page{
+        padding:7px 7px 76px;
+    }
+
+    .title-wrap h1{
+        font-size:21px;
+    }
+
+    .title-wrap p{
+        font-size:10px;
+    }
+
+    .top-actions{
+        flex-wrap:nowrap;
+        gap:5px;
+        overflow-x:auto;
+        scrollbar-width:none;
+    }
+
+    .top-actions::-webkit-scrollbar{
+        display:none;
+    }
+
+    .action-btn{
+        min-width:max-content;
+        min-height:36px;
+        padding:0 9px;
+        border-radius:9px;
+        font-size:9px;
+    }
+
+    .action-btn.pos-top{
+        padding:5px 9px;
+    }
+
+    .action-btn.pos-top small{
+        display:none;
+    }
+
+    .status-strip{
+        gap:5px;
+        margin-bottom:7px;
+    }
+
+    .status-box{
+        padding:7px;
+        border-radius:9px;
+    }
+
+    .status-box span{
+        font-size:7px;
+    }
+
+    .status-box strong{
+        font-size:10px;
+    }
+
+    .main-column{
+        gap:6px;
+    }
+
+    .pet-summary-card{
+        grid-template-columns:108px minmax(0,1fr);
+        gap:7px;
+        padding:7px;
+        border-radius:12px;
+    }
+
+    .pet-photo{
+        height:112px;
+        border-radius:10px;
+    }
+
+    .photo-empty{
+        font-size:39px;
+    }
+
+    .pet-title-line{
+        display:block;
+    }
+
+    .pet-title-line h2{
+        overflow:hidden;
+        font-size:15px;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+
+    .pet-price{
+        display:block;
+        margin-top:3px;
+        font-size:14px;
+    }
+
+    .pet-tags{
+        gap:3px;
+        margin-top:5px;
+    }
+
+    .pet-tags span{
+        padding:3px 4px;
+        border-radius:6px;
+        font-size:7px;
+    }
+
+    .compact-card{
+        padding:8px;
+        border-radius:11px;
+    }
+
+    .card h2{
+        margin-bottom:6px;
+        font-size:13px;
+    }
+
+    .photo-grid{
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        gap:4px;
+    }
+
+    .photo-thumb{
+        height:70px;
+        border-radius:8px;
+    }
+
+    #copyText{
+        min-height:90px;
+        font-size:11px;
+    }
+
+    .two-card-grid{
+        grid-template-columns:1fr;
+        gap:6px;
+    }
+
+    .info-row{
+        min-height:30px;
+        padding:5px 0;
+        font-size:9px;
+    }
+
+    .note{
+        padding:7px;
+        font-size:9px;
+    }
+
+    .payment-card{
+        padding:8px;
+        border-radius:12px;
+    }
+
+    .money-box{
+        padding:7px;
+        border-radius:8px;
+    }
+
+    .money-box strong{
+        font-size:13px;
+    }
+
+    .money-box.remaining strong{
+        font-size:15px;
+    }
+
+    .warranty-range-card{
+        margin-top:6px;
+        padding:7px;
+        border-radius:9px;
+    }
+
+    .shield{
+        width:30px;
+        height:30px;
+        flex-basis:30px;
+    }
+
+    .warranty-mini-grid{
+        gap:3px;
+    }
+
+    .warranty-mini-grid div{
+        padding:5px 2px;
+    }
+
+    .add-pos-btn{
+        min-height:54px;
+        padding:7px;
+        grid-template-columns:34px minmax(0,1fr) auto;
+        border-radius:11px;
+    }
+
+    .big-pos-icon{
+        width:34px;
+        height:34px;
+        border-radius:9px;
+        font-size:17px;
+    }
+
+    .add-pos-btn strong{
+        font-size:11px;
+    }
+
+    .normal-actions{
+        gap:4px;
+    }
+
+    .normal-actions a{
+        min-height:37px;
+        font-size:8px;
+    }
+
+    .complete-grid{
+        gap:4px;
+    }
+
+    .complete-form{
+        padding:6px;
+    }
+
+    .complete-form input{
+        height:36px;
+        font-size:12px;
+    }
+}
+</style>
 
 <script>
-    function parseReceiptDate(value) {
-        if (!value) return null;
+function copyInfo(){
+    const box = document.getElementById("copyText");
+    if(!box) return;
 
-        var parts = value.split("-").map(Number);
-        if (parts.length !== 3) return null;
+    box.select();
+    box.setSelectionRange(0, 99999);
 
-        return new Date(parts[0], parts[1] - 1, parts[2]);
-    }
-
-    function formatReceiptDate(date) {
-        if (!date) return "-";
-
-        var year = date.getFullYear();
-        var month = String(date.getMonth() + 1).padStart(2, "0");
-        var day = String(date.getDate()).padStart(2, "0");
-
-        return year + "-" + month + "-" + day;
-    }
-
-    function updateReceiptWarrantyRow() {
-        var row = document.getElementById("receiptWarrantyRow");
-        var text = document.getElementById("receiptWarrantyText");
-
-        if (!row || !text) return;
-
-        var warrantyDays = parseInt(row.dataset.days || "3", 10) || 3;
-        var startDate = parseReceiptDate(row.dataset.start);
-        var endDate = parseReceiptDate(row.dataset.end);
-
-        if (startDate && !endDate) {
-            endDate = new Date(startDate);
-            endDate.setDate(endDate.getDate() + warrantyDays);
-        }
-
-        if (startDate && endDate) {
-            text.textContent =
-                formatReceiptDate(startDate) +
-                "  →  " +
-                formatReceiptDate(endDate) +
-                "  (" +
-                warrantyDays +
-                " days)";
-        } else {
-            text.textContent = "-";
-        }
-    }
-
-    window.addEventListener("load", function () {
-        updateReceiptWarrantyRow();
-
-        setTimeout(function () {
-            window.print();
-        }, 300);
+    navigator.clipboard.writeText(box.value).then(function(){
+        alert("Copied ✅");
     });
+}
+
+function parseWarrantyDate(value){
+    if(!value) return null;
+
+    const parts = value.split("-").map(Number);
+    if(parts.length !== 3 || parts.some(Number.isNaN)) return null;
+
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+}
+
+function formatWarrantyDate(date){
+    if(!date) return "-";
+
+    return date.toLocaleDateString("en-GB", {
+        day:"2-digit",
+        month:"short",
+        year:"numeric"
+    });
+}
+
+function renderWarrantyRange(){
+    const card = document.getElementById("warrantyRangeCard");
+    if(!card) return;
+
+    const days = parseInt(card.dataset.days || "3", 10) || 3;
+    const start = parseWarrantyDate(card.dataset.start);
+    let end = parseWarrantyDate(card.dataset.end);
+
+    if(start && !end){
+        end = new Date(start);
+        end.setDate(end.getDate() + days);
+    }
+
+    const startText = document.getElementById("warrantyStartText");
+    const endText = document.getElementById("warrantyEndText");
+    const daysText = document.getElementById("warrantyDaysText");
+    const rangeText = document.getElementById("warrantyRangeText");
+
+    if(startText) startText.textContent = formatWarrantyDate(start);
+    if(endText) endText.textContent = formatWarrantyDate(end);
+    if(daysText) daysText.textContent = days + (days === 1 ? " day" : " days");
+
+    if(rangeText){
+        if(start && end){
+            rangeText.textContent =
+                formatWarrantyDate(start) +
+                " → " +
+                formatWarrantyDate(end) +
+                " (" +
+                days +
+                (days === 1 ? " day)" : " days)");
+        }else{
+            rangeText.textContent = "No warranty date";
+        }
+    }
+}
+
+function confirmCompleteSale(){
+    return confirm("Complete this sale? This will mark the pet as sold.");
+}
+
+function confirmCancelSale(){
+    const reason = document.getElementById("cancelReason");
+
+    if(reason && !reason.value.trim()){
+        alert("Please write cancel reason.");
+        reason.focus();
+        return false;
+    }
+
+    return confirm("Cancel this sale? The linked pet may return to stock.");
+}
+
+function confirmRefundSale(){
+    const reason = document.getElementById("refundReason");
+
+    if(reason && !reason.value.trim()){
+        alert("Please write refund reason.");
+        reason.focus();
+        return false;
+    }
+
+    return confirm("Refund this sale? The linked pet may return to stock.");
+}
+
+document.addEventListener("DOMContentLoaded", renderWarrantyRange);
 </script>
 
-</body>
-</html>
+{% endblock %}

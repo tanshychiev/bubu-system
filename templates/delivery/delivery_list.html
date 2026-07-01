@@ -78,7 +78,7 @@
     .tool-row {
         margin-top: 16px;
         display: grid;
-        grid-template-columns: 1.4fr 0.8fr 0.8fr 0.9fr auto auto;
+        grid-template-columns: minmax(240px,1.5fr) repeat(6,minmax(135px,1fr)) auto auto;
         gap: 10px;
         align-items: center;
         width: 100%;
@@ -794,12 +794,91 @@
                     class="search-input"
                 >
 
-                <input type="hidden" name="status" id="statusInput" value="{{ request.GET.status }}">
-                <input type="hidden" name="payment_type" id="paymentInput" value="{{ request.GET.payment_type }}">
-                <input type="hidden" name="date_from" id="dateFromInput" value="{{ date_from }}">
-                <input type="hidden" name="date_to" id="dateToInput" value="{{ date_to }}">
+                {% if request.user.is_superuser %}
+                    <input
+                        type="hidden"
+                        name="branch"
+                        id="branchInput"
+                        value="{{ selected_branch }}"
+                    >
+                {% endif %}
 
-                <button type="button" class="touch-select-btn" onclick="openPopup('statusPopup')">
+                <input
+                    type="hidden"
+                    name="delivery_area"
+                    id="deliveryAreaInput"
+                    value="{{ selected_area }}"
+                >
+
+                <input
+                    type="hidden"
+                    name="company"
+                    id="companyInput"
+                    value="{{ selected_company }}"
+                >
+
+                <input
+                    type="hidden"
+                    name="status"
+                    id="statusInput"
+                    value="{{ selected_status }}"
+                >
+
+                <input
+                    type="hidden"
+                    name="payment_type"
+                    id="paymentInput"
+                    value="{{ selected_payment }}"
+                >
+
+                <input
+                    type="hidden"
+                    name="date_from"
+                    id="dateFromInput"
+                    value="{{ date_from }}"
+                >
+
+                <input
+                    type="hidden"
+                    name="date_to"
+                    id="dateToInput"
+                    value="{{ date_to }}"
+                >
+
+                {% if request.user.is_superuser %}
+                    <button
+                        type="button"
+                        class="touch-select-btn"
+                        onclick="openPopup('branchPopup')"
+                    >
+                        <span id="branchLabel">All Shops</span>
+                        <span>⌄</span>
+                    </button>
+                {% endif %}
+
+                <button
+                    type="button"
+                    class="touch-select-btn"
+                    onclick="openPopup('deliveryAreaPopup')"
+                >
+                    <span id="deliveryAreaLabel">All Delivery Types</span>
+                    <span>⌄</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="touch-select-btn"
+                    onclick="openPopup('companyPopup')"
+                >
+                    <span id="companyLabel">All Companies</span>
+                    <span>⌄</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="touch-select-btn"
+                    onclick="openPopup('statusPopup')"
+                >
                     <span id="statusLabel">All Status</span>
                     <span>⌄</span>
                 </button>
@@ -839,6 +918,7 @@
                     <tr>
                         <th>ID</th>
                         <th>Shop</th>
+                        <th>Delivery Type / Company</th>
                         <th>POS Sale</th>
                         <th>Customer</th>
                         <th>Phone</th>
@@ -871,6 +951,30 @@
                                 {% else %}
                                     <span class="badge badge-red">No Branch</span>
                                 {% endif %}
+                            </td>
+
+                            <td>
+                                <div style="display:grid;gap:5px;justify-items:start;min-width:150px;">
+                                    <span class="badge {% if delivery.delivery_area == 'province' %}badge-orange{% else %}badge-blue{% endif %}">
+                                        {% if delivery.delivery_area == "province" %}
+                                            🚌 Province
+                                        {% else %}
+                                            🏙️ Phnom Penh
+                                        {% endif %}
+                                    </span>
+
+                                    {% if delivery.delivery_company %}
+                                        <strong style="color:#302842;">
+                                            🚚 {{ delivery.delivery_company.name }}
+                                        </strong>
+
+                                        {% if not delivery.delivery_company.is_active %}
+                                            <span class="badge badge-red">Inactive</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge badge-red">No Company</span>
+                                    {% endif %}
+                                </div>
                             </td>
 
                             <td>
@@ -977,7 +1081,7 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="16">
+                            <td colspan="17">
                                 <div class="empty-box">
                                     <div class="empty-icon">🚚✨</div>
                                     <h3>No delivery found</h3>
@@ -1001,29 +1105,334 @@
         </div>
     </div>
 
+    <div class="delivery-mobile-list">
+        {% for delivery in deliveries %}
+            <article class="delivery-mobile-card">
+                <div class="mobile-card-head">
+                    <div>
+                        <strong class="mobile-delivery-id">
+                            #DLV-{{ delivery.id|stringformat:"04d" }}
+                        </strong>
+
+                        <div class="mobile-customer-name">
+                            {{ delivery.customer_name|default:"-" }}
+                        </div>
+
+                        <div class="mobile-phone">
+                            📞 {{ delivery.phone|default:"-" }}
+                        </div>
+                    </div>
+
+                    <span class="badge
+                        {% if delivery.status == 'done' %}
+                            badge-green
+                        {% elif delivery.status == 'out' %}
+                            badge-blue
+                        {% elif delivery.status == 'cancelled' or delivery.status == 'returned' or delivery.status == 'failed' %}
+                            badge-red
+                        {% else %}
+                            badge-orange
+                        {% endif %}
+                    ">
+                        {{ delivery.get_status_display }}
+                    </span>
+                </div>
+
+                <div class="mobile-tags">
+                    <span class="badge badge-purple">
+                        🏪
+                        {% if delivery.branch %}
+                            {{ delivery.branch.name }}
+                        {% else %}
+                            No Shop
+                        {% endif %}
+                    </span>
+
+                    <span class="badge
+                        {% if delivery.delivery_area == 'province' %}
+                            badge-orange
+                        {% else %}
+                            badge-blue
+                        {% endif %}
+                    ">
+                        {% if delivery.delivery_area == "province" %}
+                            🚌 Province
+                        {% else %}
+                            🏙️ Phnom Penh
+                        {% endif %}
+                    </span>
+
+                    <span class="badge badge-purple">
+                        🚚
+                        {% if delivery.delivery_company %}
+                            {{ delivery.delivery_company.name }}
+                        {% else %}
+                            No Company
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="mobile-info-grid">
+                    <div class="mobile-info-box">
+                        <span>Total</span>
+                        <strong>${{ delivery.total_price|floatformat:2 }}</strong>
+                    </div>
+
+                    <div class="mobile-info-box">
+                        <span>Payment</span>
+                        <strong>
+                            {% if delivery.payment_type == "paid" %}
+                                Already Paid
+                            {% elif delivery.payment_type == "cod_collect" %}
+                                COD
+                            {% else %}
+                                {{ delivery.get_payment_type_display }}
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <div class="mobile-info-box">
+                        <span>Expected</span>
+                        <strong>${{ delivery.expected_collect|floatformat:2 }}</strong>
+                    </div>
+
+                    <div class="mobile-info-box">
+                        <span>Received</span>
+                        <strong>${{ delivery.actual_received|floatformat:2 }}</strong>
+                    </div>
+
+                    <div class="mobile-info-box">
+                        <span>Lack</span>
+                        <strong>${{ delivery.lack_amount|floatformat:2 }}</strong>
+                    </div>
+
+                    <div class="mobile-info-box">
+                        <span>Delivery Fee</span>
+                        <strong>${{ delivery.delivery_fee|floatformat:2 }}</strong>
+                    </div>
+
+                    <div class="mobile-info-box mobile-info-full">
+                        <span>Delivery Date</span>
+                        <strong>{{ delivery.delivery_date|date:"M d, Y" }}</strong>
+                    </div>
+
+                    <div class="mobile-info-box mobile-info-full">
+                        <span>Location</span>
+                        <strong>{{ delivery.location|default:"Need add address" }}</strong>
+                    </div>
+                </div>
+
+                <div class="mobile-action-grid">
+                    <a
+                        href="{% url 'delivery_detail' delivery.id %}"
+                        class="mobile-action-btn view"
+                    >
+                        👁 View
+                    </a>
+
+                    <a
+                        href="{% url 'delivery_update' delivery.id %}"
+                        class="mobile-action-btn edit"
+                    >
+                        ✏️ Edit
+                    </a>
+
+                    <a
+                        href="{% url 'delivery_sticker' delivery.id %}"
+                        target="_blank"
+                        class="mobile-action-btn label"
+                    >
+                        🏷️ Label
+                    </a>
+                </div>
+            </article>
+        {% empty %}
+            <div class="delivery-mobile-card mobile-empty-card">
+                <div style="font-size:38px;">🚚✨</div>
+                <strong>No delivery found</strong>
+                <span>Try another shop, delivery type, company, status, or date.</span>
+            </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+{% if request.user.is_superuser %}
+<div class="popup-backdrop" id="branchPopup">
+    <div class="touch-popup">
+        <div class="popup-handle"></div>
+        <div class="popup-title">Choose Shop</div>
+
+        <input
+            type="text"
+            class="popup-search"
+            placeholder="Search shop..."
+            oninput="filterPopupOptions(this, 'branchPopupOptions')"
+        >
+
+        <div id="branchPopupOptions">
+            <button
+                class="popup-option"
+                type="button"
+                data-value=""
+                onclick="setBranch('', 'All Shops')"
+            >
+                <span>All Shops</span>
+                <span>✓</span>
+            </button>
+
+            {% for branch in branches %}
+                <button
+                    class="popup-option"
+                    type="button"
+                    data-value="{{ branch.id }}"
+                    onclick="setBranch('{{ branch.id }}', '{{ branch.name|escapejs }}')"
+                >
+                    <span>🏪 {{ branch.name }}</span>
+                    <span>✓</span>
+                </button>
+            {% endfor %}
+        </div>
+
+        <button
+            class="popup-close"
+            type="button"
+            onclick="closePopup('branchPopup')"
+        >
+            Close
+        </button>
+    </div>
+</div>
+{% endif %}
+
+<div class="popup-backdrop" id="deliveryAreaPopup">
+    <div class="touch-popup">
+        <div class="popup-handle"></div>
+        <div class="popup-title">Choose Delivery Type</div>
+
+        <button
+            class="popup-option"
+            type="button"
+            data-value=""
+            onclick="setDeliveryArea('', 'All Delivery Types')"
+        >
+            <span>All Delivery Types</span>
+            <span>✓</span>
+        </button>
+
+        <button
+            class="popup-option"
+            type="button"
+            data-value="pp"
+            onclick="setDeliveryArea('pp', 'Phnom Penh')"
+        >
+            <span>
+                🏙️ Phnom Penh
+                <small>Paid or COD</small>
+            </span>
+            <span>✓</span>
+        </button>
+
+        <button
+            class="popup-option"
+            type="button"
+            data-value="province"
+            onclick="setDeliveryArea('province', 'Province')"
+        >
+            <span>
+                🚌 Province
+                <small>Paid first</small>
+            </span>
+            <span>✓</span>
+        </button>
+
+        <button
+            class="popup-close"
+            type="button"
+            onclick="closePopup('deliveryAreaPopup')"
+        >
+            Close
+        </button>
+    </div>
+</div>
+
+<div class="popup-backdrop" id="companyPopup">
+    <div class="touch-popup">
+        <div class="popup-handle"></div>
+        <div class="popup-title">Choose Delivery Company</div>
+
+        <input
+            type="text"
+            class="popup-search"
+            placeholder="Search delivery company..."
+            oninput="filterPopupOptions(this, 'companyPopupOptions')"
+        >
+
+        <div id="companyPopupOptions">
+            <button
+                class="popup-option"
+                type="button"
+                data-value=""
+                data-area=""
+                onclick="setCompany('', 'All Companies')"
+            >
+                <span>All Companies</span>
+                <span>✓</span>
+            </button>
+
+            {% for company in delivery_companies %}
+                <button
+                    class="popup-option"
+                    type="button"
+                    data-value="{{ company.id }}"
+                    data-area="{{ company.delivery_type }}"
+                    onclick="setCompany('{{ company.id }}', '{{ company.name|escapejs }}')"
+                >
+                    <span>
+                        🚚 {{ company.name }}
+                        <small>
+                            {{ company.get_delivery_type_display }}
+                            {% if not company.is_active %}
+                                · Inactive
+                            {% endif %}
+                        </small>
+                    </span>
+                    <span>✓</span>
+                </button>
+            {% endfor %}
+        </div>
+
+        <button
+            class="popup-close"
+            type="button"
+            onclick="closePopup('companyPopup')"
+        >
+            Close
+        </button>
+    </div>
 </div>
 
 <div class="popup-backdrop" id="statusPopup">
     <div class="touch-popup">
         <div class="popup-title">Choose Status</div>
 
-        <button class="popup-option" type="button" onclick="setStatus('', 'All Status')">
+        <button class="popup-option" type="button" data-value="" onclick="setStatus('', 'All Status')">
             All Status <span>✓</span>
         </button>
 
-        <button class="popup-option" type="button" onclick="setStatus('pending', 'Pending / Next Delivery')">
+        <button class="popup-option" type="button" data-value="pending" onclick="setStatus('pending', 'Pending / Next Delivery')">
             Pending / Next Delivery <span>✓</span>
         </button>
 
-        <button class="popup-option" type="button" onclick="setStatus('out', 'Out For Delivery')">
+        <button class="popup-option" type="button" data-value="out" onclick="setStatus('out', 'Out For Delivery')">
             Out For Delivery <span>✓</span>
         </button>
 
-        <button class="popup-option" type="button" onclick="setStatus('done', 'Delivered')">
+        <button class="popup-option" type="button" data-value="done" onclick="setStatus('done', 'Delivered')">
             Delivered <span>✓</span>
         </button>
 
-        <button class="popup-option" type="button" onclick="setStatus('cancelled', 'Cancelled')">
+        <button class="popup-option" type="button" data-value="cancelled" onclick="setStatus('cancelled', 'Cancelled')">
             Cancelled <span>✓</span>
         </button>
 
@@ -1035,19 +1444,19 @@
     <div class="touch-popup">
         <div class="popup-title">Choose Payment</div>
 
-        <button class="popup-option" type="button" onclick="setPayment('', 'All Payment')">
+        <button class="popup-option" type="button" data-value="" onclick="setPayment('', 'All Payment')">
             All Payment <span>✓</span>
         </button>
 
-        <button class="popup-option" type="button" onclick="setPayment('paid', 'Already Paid')">
+        <button class="popup-option" type="button" data-value="paid" onclick="setPayment('paid', 'Already Paid')">
             Already Paid <span>✓</span>
         </button>
 
-        <button class="popup-option" type="button" onclick="setPayment('cod_collect', 'COD Collect')">
+        <button class="popup-option" type="button" data-value="cod_collect" onclick="setPayment('cod_collect', 'COD Collect')">
             COD Collect <span>✓</span>
         </button>
 
-        <button class="popup-option" type="button" onclick="setPayment('cod_shop', 'COD Pay To Shop')">
+        <button class="popup-option" type="button" data-value="cod_shop" onclick="setPayment('cod_shop', 'COD Pay To Shop')">
             COD Pay To Shop <span>✓</span>
         </button>
 
@@ -1111,6 +1520,512 @@
     </div>
 </div>
 
+
+<!-- =========================================================
+     BUBU DELIVERY — UNIFIED STYLE OVERRIDE
+     The original template, filters, popups, table and JavaScript
+     above are kept unchanged.
+========================================================= -->
+<style id="bubu-delivery-unified-style">
+:root{
+    --delivery-ink:#17152f;
+    --delivery-muted:#7b7288;
+    --delivery-purple:#8f6cf5;
+    --delivery-purple-dark:#7357d4;
+    --delivery-pink:#ff7f91;
+    --delivery-green:#19a974;
+    --delivery-orange:#e88918;
+    --delivery-red:#ef5574;
+    --delivery-blue:#3f70d8;
+    --delivery-border:#f0ded5;
+    --delivery-purple-border:#e5d9f5;
+    --delivery-soft:#fbf8ff;
+    --delivery-warm:#fff8fb;
+    --delivery-shadow:0 14px 34px rgba(111,75,50,.08);
+    --delivery-soft-shadow:0 9px 24px rgba(111,75,50,.06);
+}
+
+.delivery-page{
+    max-width:1500px;
+    margin:0 auto;
+    padding:24px 28px;
+    color:var(--delivery-ink);
+}
+
+.page-head{
+    padding:22px 24px;
+    border:1px solid var(--delivery-border);
+    border-radius:28px;
+    background:linear-gradient(135deg,var(--delivery-warm),var(--delivery-soft));
+    box-shadow:var(--delivery-soft-shadow);
+}
+
+.page-head h1{
+    color:var(--delivery-ink);
+    font-size:32px;
+    font-weight:1000;
+}
+
+.page-subtitle{
+    color:var(--delivery-muted);
+    font-weight:850;
+}
+
+.pet-hero-img{
+    width:180px;
+    max-height:130px;
+}
+
+.tool-row{
+    padding:15px;
+    border:1px solid var(--delivery-border);
+    border-radius:23px;
+    background:#fff;
+    box-shadow:var(--delivery-soft-shadow);
+}
+
+.search-input,
+.touch-select-btn{
+    height:54px;
+    border:1px solid var(--delivery-purple-border);
+    border-radius:17px;
+    background:#fff;
+    color:var(--delivery-ink);
+}
+
+.search-input:focus,
+.touch-select-btn:focus{
+    border-color:var(--delivery-purple);
+    box-shadow:0 0 0 4px rgba(143,108,245,.12);
+    outline:none;
+}
+
+.btn{
+    min-height:54px;
+    border-radius:18px;
+    font-weight:1000;
+    transition:transform .14s ease,box-shadow .14s ease;
+}
+
+.btn:hover{
+    transform:translateY(-1px);
+}
+
+.btn-primary,
+.btn-add,
+.btn-search{
+    background:linear-gradient(135deg,var(--delivery-purple),var(--delivery-pink));
+    color:#fff;
+    box-shadow:0 10px 22px rgba(143,108,245,.20);
+}
+
+.btn-reset,
+.btn-company{
+    background:#fff;
+    color:var(--delivery-purple-dark);
+    border:1px solid var(--delivery-purple-border);
+}
+
+.top-action-row{
+    gap:10px;
+}
+
+.table-card{
+    border:1px solid var(--delivery-border);
+    border-radius:24px;
+    box-shadow:var(--delivery-shadow);
+}
+
+thead th{
+    background:#f3eafa;
+    color:var(--delivery-ink);
+    padding:14px 10px;
+}
+
+tbody td{
+    padding:15px 10px;
+    border-top:1px solid #f3e8e1;
+}
+
+tbody tr:hover{
+    background:#fffafd;
+}
+
+.badge{
+    border-radius:999px;
+    font-weight:900;
+}
+
+.badge-purple{
+    background:#f0e8ff;
+    color:#7654d7;
+}
+
+.badge-green{
+    background:#e7fff1;
+    color:#15975b;
+}
+
+.badge-blue{
+    background:#eaf2ff;
+    color:#356bd4;
+}
+
+.badge-orange{
+    background:#fff2de;
+    color:#d87900;
+}
+
+.badge-red{
+    background:#ffe8eb;
+    color:#db3f58;
+}
+
+.mini-btn{
+    min-width:44px;
+    min-height:44px;
+    border-radius:14px;
+}
+
+.customer-icon{
+    background:linear-gradient(135deg,#fff1e7,#f4eeff);
+}
+
+.touch-popup,
+.date-picker-popup{
+    border:1px solid var(--delivery-purple-border);
+    box-shadow:0 24px 70px rgba(28,20,58,.26);
+}
+
+.popup-option{
+    border-color:var(--delivery-purple-border);
+}
+
+.popup-option.active{
+    background:linear-gradient(135deg,#f0e8ff,#ffe8ef);
+    border-color:var(--delivery-purple);
+}
+
+.date-top{
+    background:linear-gradient(135deg,var(--delivery-purple),var(--delivery-pink));
+}
+
+.day-btn.selected{
+    background:linear-gradient(135deg,var(--delivery-purple),var(--delivery-pink));
+}
+
+.day-btn.in-range{
+    background:#f0e8ff;
+    color:var(--delivery-purple-dark);
+}
+
+@media(max-width:900px){
+    .delivery-page{
+        padding:14px;
+    }
+
+    .page-head{
+        padding:18px;
+        border-radius:23px;
+    }
+
+    .tool-row{
+        padding:12px;
+        border-radius:19px;
+    }
+}
+
+@media(max-width:560px){
+    .delivery-page{
+        padding:9px 7px 88px;
+    }
+
+    .page-head{
+        padding:15px;
+        border-radius:20px;
+    }
+
+    .page-head h1{
+        font-size:26px;
+    }
+
+    .tool-row{
+        padding:10px;
+        border-radius:18px;
+    }
+
+    .search-input,
+    .touch-select-btn,
+    .btn{
+        min-height:54px;
+        height:54px;
+        border-radius:16px;
+        font-size:14px;
+    }
+
+    .top-action-row{
+        grid-template-columns:1fr;
+    }
+
+    .table-card{
+        border-radius:18px;
+    }
+
+    .touch-popup,
+    .date-picker-popup{
+        width:calc(100% - 20px);
+        max-width:460px;
+        border-radius:24px;
+    }
+}
+
+/* =========================================================
+   DELIVERY FILTERS + PHONE CARDS
+   Preserves the original desktop table and adds a true
+   phone layout instead of forcing a 1200px table on mobile.
+========================================================= */
+
+.popup-handle {
+    width: 46px;
+    height: 5px;
+    margin: 0 auto 13px;
+    border-radius: 999px;
+    background: #ded4e8;
+}
+
+.popup-search {
+    width: 100%;
+    min-height: 52px;
+    margin-bottom: 10px;
+    border: 1px solid #eadff3;
+    border-radius: 17px;
+    padding: 0 15px;
+    color: #302842;
+    background: #fff;
+    font-size: 16px;
+    font-weight: 800;
+    outline: none;
+}
+
+.popup-search:focus {
+    border-color: #b886ff;
+    box-shadow: 0 0 0 4px rgba(184, 134, 255, .14);
+}
+
+.popup-option small {
+    display: block;
+    margin-top: 3px;
+    color: #8b819a;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.delivery-mobile-list {
+    display: none;
+}
+
+.delivery-mobile-card {
+    padding: 14px;
+    border: 1px solid #f0ded5;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 8px 20px rgba(63, 47, 85, .06);
+}
+
+.mobile-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.mobile-delivery-id {
+    display: block;
+    color: #8d63dd;
+    font-size: 15px;
+    font-weight: 1000;
+}
+
+.mobile-customer-name {
+    margin-top: 4px;
+    color: #17152f;
+    font-size: 18px;
+    font-weight: 1000;
+}
+
+.mobile-phone {
+    margin-top: 3px;
+    color: #7b7288;
+    font-size: 12px;
+    font-weight: 850;
+}
+
+.mobile-tags {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.mobile-info-grid {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+}
+
+.mobile-info-box {
+    min-width: 0;
+    padding: 10px;
+    border-radius: 14px;
+    background: #faf8ff;
+    border: 1px solid #f0e8f5;
+}
+
+.mobile-info-box span {
+    display: block;
+    color: #8b819a;
+    font-size: 10px;
+    font-weight: 900;
+}
+
+.mobile-info-box strong {
+    display: block;
+    margin-top: 3px;
+    color: #211b35;
+    font-size: 13px;
+    line-height: 1.35;
+    font-weight: 1000;
+    overflow-wrap: anywhere;
+}
+
+.mobile-info-full {
+    grid-column: 1 / -1;
+}
+
+.mobile-action-grid {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 7px;
+}
+
+.mobile-action-btn {
+    min-height: 46px;
+    border-radius: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 1000;
+    text-decoration: none;
+    touch-action: manipulation;
+}
+
+.mobile-action-btn.view {
+    color: #3b66d5;
+    background: #eef3ff;
+}
+
+.mobile-action-btn.edit {
+    color: #dc8716;
+    background: #fff3d9;
+}
+
+.mobile-action-btn.label {
+    color: #8d63dd;
+    background: #f0e8ff;
+}
+
+.mobile-empty-card {
+    min-height: 190px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    color: #7b7288;
+    text-align: center;
+}
+
+@media (max-width: 1300px) {
+    .tool-row {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .tool-row .search-input {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 900px) {
+    .tool-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .tool-row .search-input {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 560px) {
+    .table-card {
+        display: none;
+    }
+
+    .delivery-mobile-list {
+        display: grid;
+        gap: 10px;
+    }
+
+    .tool-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .tool-row .search-input {
+        grid-column: 1 / -1;
+    }
+
+    .tool-row .btn-search,
+    .tool-row .btn-reset {
+        min-height: 52px;
+        height: 52px;
+    }
+
+    .touch-popup {
+        width: calc(100% - 16px);
+        max-width: none;
+        margin: 0 8px 8px;
+        border-radius: 26px;
+    }
+
+    .popup-option {
+        min-height: 56px;
+        border-radius: 17px;
+    }
+}
+
+@media (max-width: 390px) {
+    .tool-row {
+        grid-template-columns: 1fr;
+    }
+
+    .tool-row .search-input {
+        grid-column: auto;
+    }
+
+    .mobile-info-grid,
+    .mobile-action-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mobile-info-full {
+        grid-column: auto;
+    }
+}
+
+</style>
+
 <script>
     function openPopup(id) {
         document.getElementById(id).classList.add("show");
@@ -1124,15 +2039,101 @@
         document.getElementById(id).classList.remove("show");
     }
 
+
+    function setBranch(value, label) {
+        const input = document.getElementById("branchInput");
+
+        if (input) {
+            input.value = value;
+        }
+
+        const labelNode = document.getElementById("branchLabel");
+
+        if (labelNode) {
+            labelNode.innerText = label;
+        }
+
+        markPopupSelection("branchPopup", value);
+        closePopup("branchPopup");
+    }
+
+    function setDeliveryArea(value, label) {
+        document.getElementById("deliveryAreaInput").value = value;
+        document.getElementById("deliveryAreaLabel").innerText = label;
+
+        markPopupSelection("deliveryAreaPopup", value);
+        filterCompaniesByArea(value);
+
+        const selectedCompanyButton = document.querySelector(
+            '#companyPopup .popup-option.active[data-value]:not([data-value=""])'
+        );
+
+        if (
+            selectedCompanyButton &&
+            value &&
+            selectedCompanyButton.dataset.area !== value
+        ) {
+            setCompany("", "All Companies");
+        }
+
+        closePopup("deliveryAreaPopup");
+    }
+
+    function setCompany(value, label) {
+        document.getElementById("companyInput").value = value;
+        document.getElementById("companyLabel").innerText = label;
+
+        markPopupSelection("companyPopup", value);
+        closePopup("companyPopup");
+    }
+
+    function markPopupSelection(popupId, value) {
+        document
+            .querySelectorAll("#" + popupId + " .popup-option[data-value]")
+            .forEach(function (button) {
+                button.classList.toggle(
+                    "active",
+                    String(button.dataset.value) === String(value)
+                );
+            });
+    }
+
+    function filterCompaniesByArea(area) {
+        document
+            .querySelectorAll("#companyPopupOptions .popup-option")
+            .forEach(function (button) {
+                const buttonArea = button.dataset.area || "";
+
+                button.style.display =
+                    !area || !buttonArea || buttonArea === area
+                        ? ""
+                        : "none";
+            });
+    }
+
+    function filterPopupOptions(input, containerId) {
+        const query = (input.value || "").toLowerCase().trim();
+
+        document
+            .querySelectorAll("#" + containerId + " .popup-option")
+            .forEach(function (button) {
+                const text = (button.textContent || "").toLowerCase();
+
+                button.style.display = text.includes(query) ? "" : "none";
+            });
+    }
+
     function setStatus(value, label) {
         document.getElementById("statusInput").value = value;
         document.getElementById("statusLabel").innerText = label;
+        markPopupSelection("statusPopup", value);
         closePopup("statusPopup");
     }
 
     function setPayment(value, label) {
         document.getElementById("paymentInput").value = value;
         document.getElementById("paymentLabel").innerText = label;
+        markPopupSelection("paymentPopup", value);
         closePopup("paymentPopup");
     }
 
@@ -1345,6 +2346,10 @@
     }
 
     document.addEventListener("DOMContentLoaded", function () {
+        const branchInput = document.getElementById("branchInput");
+        const branchValue = branchInput ? branchInput.value : "";
+        const deliveryAreaValue = document.getElementById("deliveryAreaInput").value;
+        const companyValue = document.getElementById("companyInput").value;
         const statusValue = document.getElementById("statusInput").value;
         const paymentValue = document.getElementById("paymentInput").value;
 
@@ -1363,8 +2368,51 @@
             "cod_shop": "COD Pay To Shop"
         };
 
-        document.getElementById("statusLabel").innerText = statusMap[statusValue] || "All Status";
-        document.getElementById("paymentLabel").innerText = paymentMap[paymentValue] || "All Payment";
+        const branchMap = {
+            "": "All Shops",
+            {% for branch in branches %}
+                "{{ branch.id }}": "{{ branch.name|escapejs }}",
+            {% endfor %}
+        };
+
+        const companyMap = {
+            "": "All Companies",
+            {% for company in delivery_companies %}
+                "{{ company.id }}": "{{ company.name|escapejs }}",
+            {% endfor %}
+        };
+
+        const deliveryAreaMap = {
+            "": "All Delivery Types",
+            "pp": "Phnom Penh",
+            "province": "Province"
+        };
+
+        const branchLabel = document.getElementById("branchLabel");
+
+        if (branchLabel) {
+            branchLabel.innerText = branchMap[branchValue] || "All Shops";
+        }
+
+        document.getElementById("deliveryAreaLabel").innerText =
+            deliveryAreaMap[deliveryAreaValue] || "All Delivery Types";
+
+        document.getElementById("companyLabel").innerText =
+            companyMap[companyValue] || "All Companies";
+
+        document.getElementById("statusLabel").innerText =
+            statusMap[statusValue] || "All Status";
+
+        document.getElementById("paymentLabel").innerText =
+            paymentMap[paymentValue] || "All Payment";
+
+        markPopupSelection("branchPopup", branchValue);
+        markPopupSelection("deliveryAreaPopup", deliveryAreaValue);
+        markPopupSelection("companyPopup", companyValue);
+        markPopupSelection("statusPopup", statusValue);
+        markPopupSelection("paymentPopup", paymentValue);
+
+        filterCompaniesByArea(deliveryAreaValue);
 
         selectedFrom = document.getElementById("dateFromInput").value;
         selectedTo = document.getElementById("dateToInput").value;

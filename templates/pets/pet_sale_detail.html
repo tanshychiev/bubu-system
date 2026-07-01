@@ -63,21 +63,13 @@
 
             <section class="card pet-summary-card">
                 <div class="pet-photo">
-                    {% if sale.pet and sale.pet.display_photo %}
+                    {% if sale_display_photo %}
                         <img
-                            src="{{ sale.pet.display_photo.url }}?pet={{ sale.pet.updated_at|date:'U' }}&breed={{ sale.pet.breed_profile.updated_at|date:'U' }}"
+                            src="{{ sale_display_photo.url }}?sale={{ sale.id }}&photos={{ sale.photos.count }}"
                             alt="{{ sale.breed_display|default:'Pet' }}"
                         >
-                    {% elif sale.sale_photo %}
-                        <img src="{{ sale.sale_photo.url }}" alt="{{ sale.breed_display|default:'Pet' }}">
                     {% else %}
-                        {% with first_photo=sale.photos.first %}
-                            {% if first_photo and first_photo.photo %}
-                                <img src="{{ first_photo.photo.url }}" alt="{{ sale.breed_display|default:'Pet' }}">
-                            {% else %}
-                                <div class="photo-empty">🐾</div>
-                            {% endif %}
-                        {% endwith %}
+                        <div class="photo-empty">🐾</div>
                     {% endif %}
                 </div>
 
