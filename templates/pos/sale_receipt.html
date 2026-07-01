@@ -145,6 +145,31 @@
             font-weight: 700;
         }
 
+        .item-qty {
+            margin-left: 3px;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .pet-breakdown {
+            margin: 7px 0;
+            padding: 6px 0;
+            border-top: 1px dashed #000;
+            border-bottom: 1px dashed #000;
+        }
+
+        .pet-breakdown-title {
+            margin-bottom: 5px;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .pet-balance-row .label,
+        .pet-balance-row .value {
+            font-weight: 900;
+        }
+
         .final-box {
             border-top: 2px solid #000;
             border-bottom: 2px solid #000;
@@ -319,7 +344,16 @@
         {% for line in sale.items.all %}
             <div class="item">
                 <div class="item-head">
-                    <div class="item-name">{{ line.item.name }}</div>
+                    <div class="item-name">
+                        {{ line.item.name }}
+                        {% if line.variant %}
+                            - {{ line.variant.display_name }}
+                        {% elif line.item.item_type %}
+                            - {{ line.item.item_type.name }}
+                        {% endif %}
+                        <span class="item-qty">× {{ line.quantity }}</span>
+                    </div>
+
                     <div class="item-price">
                         {% if line.total %}
                             ${{ line.total|floatformat:2 }}
@@ -329,14 +363,6 @@
                             $0.00
                         {% endif %}
                     </div>
-                </div>
-
-                {% if line.item.item_type %}
-                    <div class="item-meta">{{ line.item.item_type.name }}</div>
-                {% endif %}
-
-                <div class="item-meta">
-                    {{ line.quantity }} x ${{ line.price|floatformat:2 }}
                 </div>
             </div>
         {% empty %}
@@ -373,6 +399,34 @@
             <div class="row">
                 <div class="label">Pet / Dog / Cat</div>
                 <div class="value">${{ pet_total|floatformat:2 }}</div>
+            </div>
+        {% endif %}
+
+        {% if has_attached_pet %}
+            <div class="pet-breakdown">
+                <div class="pet-breakdown-title">
+                    🐶 Pet Sale
+                    {% if attached_pet_sale %}
+                        #{{ attached_pet_sale.id }}
+                    {% endif %}
+                </div>
+
+                {% if pet_full_price and pet_full_price > 0 %}
+                    <div class="row">
+                        <div class="label">Pet Full Price</div>
+                        <div class="value">${{ pet_full_price|floatformat:2 }}</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="label">Deposit Already Paid</div>
+                        <div class="value">-${{ pet_deposit_paid|floatformat:2 }}</div>
+                    </div>
+                {% endif %}
+
+                <div class="row pet-balance-row">
+                    <div class="label">Pet Balance in This POS</div>
+                    <div class="value">${{ pet_balance_in_pos|floatformat:2 }}</div>
+                </div>
             </div>
         {% endif %}
 

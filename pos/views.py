@@ -1154,6 +1154,38 @@ def pos_checkout(request):
         tax_amount=tax_amount,
     )
 
+    # Keep a permanent link between this POS receipt and the attached pet sale.
+    # This preserves:
+    # - normal POS goods total
+    # - pet full price
+    # - deposit paid before POS
+    # - pet balance included in this POS payment
+    #
+    # CombinedPaymentSession already has all required fields, so no migration
+    # or model change is needed.
+    if selected_pet_sale:
+        pet_snapshot_status = CombinedPaymentSession.STATUS_PAID
+
+        if paid_amount < final_total:
+            # Do not leave this receipt snapshot as "waiting", because the
+            # customer-display page only searches waiting payment sessions.
+            pet_snapshot_status = CombinedPaymentSession.STATUS_CANCELLED
+
+        CombinedPaymentSession.objects.update_or_create(
+            session_key=f"pos-pet-receipt-{sale.id}",
+            defaults={
+                "branch": branch,
+                "cashier": request.user,
+                "pos_sale": sale,
+                "pet_sale_id": selected_pet_sale.id,
+                "total_amount": final_total,
+                "pos_amount": cart_subtotal,
+                "pet_amount": selected_pet_remaining,
+                "status": pet_snapshot_status,
+                "paid_at": timezone.now() if paid_amount >= final_total else None,
+            },
+        )
+
     if customer:
         earned_points = int(cart_subtotal)
         customer.points = int(customer.points or 0) + earned_points
@@ -1934,6 +1966,7 @@ def sale_receipt(request, pk):
     grooming_total = Decimal("0.00")
     service_total = Decimal("0.00")
     pet_total = Decimal("0.00")
+    normal_items_total = Decimal("0.00")
 
     for line in sale.items.all():
         type_name = ""
@@ -1942,6 +1975,7 @@ def sale_receipt(request, pk):
             type_name = line.item.item_type.name.lower().strip()
 
         line_total = line.total
+        normal_items_total += line_total
 
         if "groom" in type_name:
             grooming_total += line_total
@@ -1957,6 +1991,85 @@ def sale_receipt(request, pk):
         else:
             product_total += line_total
 
+    # ==================================================
+    # ATTACHED PET SALE RECEIPT BREAKDOWN
+    # ==================================================
+    pet_receipt_record = (
+        CombinedPaymentSession.objects
+        .filter(
+            pos_sale=sale,
+            pet_sale_id__isnull=False,
+        )
+        .order_by("-created_at")
+        .first()
+    )
+
+    attached_pet_sale = None
+    pet_full_price = Decimal("0.00")
+    pet_deposit_paid = Decimal("0.00")
+    pet_balance_in_pos = Decimal("0.00")
+
+    if pet_receipt_record:
+        pet_balance_in_pos = pet_receipt_record.pet_amount or Decimal("0.00")
+
+        attached_pet_sale = (
+            PetSale.objects
+            .select_related("pet", "pet__breed_profile")
+            .filter(id=pet_receipt_record.pet_sale_id)
+            .first()
+        )
+
+    else:
+        # Compatibility for receipts made before the permanent receipt link
+        # was added. Reverse discount/tax to recover the original checkout
+        # subtotal, then subtract normal POS items to find the pet balance.
+        checkout_subtotal = (
+            (sale.total_amount or Decimal("0.00"))
+            + (sale.discount_amount or Decimal("0.00"))
+            - (sale.tax_amount or Decimal("0.00"))
+        )
+
+        inferred_pet_balance = checkout_subtotal - normal_items_total
+
+        if inferred_pet_balance > 0:
+            pet_balance_in_pos = inferred_pet_balance
+
+            # Find the pet sale completed closest to this POS receipt.
+            # This fallback is used only for old receipts without a saved link.
+            if sale.created_at:
+                time_from = sale.created_at - timezone.timedelta(minutes=30)
+                time_to = sale.created_at + timezone.timedelta(minutes=30)
+
+                candidates = list(
+                    PetSale.objects
+                    .select_related("pet", "pet__breed_profile")
+                    .filter(
+                        completed_at__isnull=False,
+                        completed_at__gte=time_from,
+                        completed_at__lte=time_to,
+                    )
+                    .order_by("completed_at")[:30]
+                )
+
+                if candidates:
+                    candidates.sort(
+                        key=lambda pet_sale: abs(
+                            (pet_sale.completed_at - sale.created_at).total_seconds()
+                        )
+                    )
+                    attached_pet_sale = candidates[0]
+
+    if attached_pet_sale:
+        pet_full_price = (
+            attached_pet_sale.sale_price
+            or Decimal("0.00")
+        )
+
+        pet_deposit_paid = pet_full_price - pet_balance_in_pos
+
+        if pet_deposit_paid < 0:
+            pet_deposit_paid = Decimal("0.00")
+
     balance = sale.total_amount - sale.paid_amount
 
     return render(request, "pos/sale_receipt.html", {
@@ -1966,7 +2079,19 @@ def sale_receipt(request, pk):
         "grooming_total": grooming_total,
         "service_total": service_total,
         "pet_total": pet_total,
+        "normal_items_total": normal_items_total,
         "khr_rate": get_khr_rate(),
+
+        # Attached pet sale
+        "attached_pet_sale": attached_pet_sale,
+        "pet_full_price": pet_full_price,
+        "pet_deposit_paid": pet_deposit_paid,
+        "pet_balance_in_pos": pet_balance_in_pos,
+        "has_attached_pet": bool(
+            pet_receipt_record
+            or attached_pet_sale
+            or pet_balance_in_pos > 0
+        ),
     })
 
 @login_required
