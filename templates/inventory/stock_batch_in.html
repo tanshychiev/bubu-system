@@ -4,1452 +4,1429 @@
 {% block content %}
 
 <style>
+*{box-sizing:border-box}
+a{text-decoration:none}
+button,input,textarea{font-family:inherit}
+
 .batch-page{
-    max-width:1200px;
-    margin:auto;
+    width:min(1280px,100%);
+    margin:0 auto;
+    padding:18px 20px 34px;
+}
+
+.page-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom:12px;
+}
+
+.page-top h1{
+    margin:0;
+    color:#100d35;
+    font-size:34px;
+    line-height:1.1;
+    font-weight:1000;
+}
+
+.page-top p{
+    margin:5px 0 0;
+    color:#81778c;
+    font-size:12px;
+    font-weight:850;
 }
 
 .back-btn{
-    display:inline-flex;
-    padding:13px 24px;
-    border-radius:999px;
-    background:white;
+    min-height:43px;
+    padding:0 14px;
     border:1px solid #eaddec;
-    color:#6b6178;
-    font-weight:900;
-    text-decoration:none;
-    margin-bottom:18px;
-}
-
-.batch-card{
-    background:white;
-    border:1px solid #f5e8df;
-    border-radius:30px;
-    padding:24px;
-    box-shadow:0 20px 50px rgba(130,91,60,.10);
-    margin-bottom:22px;
-}
-
-h1{
-    font-size:40px;
-    color:#17152f;
-    margin:0 0 8px;
-    font-weight:900;
-}
-
-p{
-    color:#7b7288;
-    font-weight:800;
-    margin-bottom:22px;
-}
-
-/* ========================= */
-/* BRANCH LOCK / ADMIN SHOP */
-/* ========================= */
-.branch-box{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:18px;
-    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
-    border:1px solid #f0e5ee;
-    border-radius:24px;
-    padding:16px 18px;
-    margin-bottom:18px;
-    flex-wrap:wrap;
-}
-
-.branch-left{
-    display:flex;
-    align-items:center;
-    gap:12px;
-}
-
-.branch-icon{
-    width:48px;
-    height:48px;
-    border-radius:50%;
-    background:white;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:24px;
-    box-shadow:0 8px 18px rgba(130,91,60,.08);
-}
-
-.branch-title{
-    font-weight:900;
-    color:#17152f;
-    font-size:18px;
-}
-
-.branch-sub{
-    color:#7b7288;
-    font-weight:800;
-    margin-top:4px;
-}
-
-.branch-actions{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    flex-wrap:wrap;
-}
-
-.branch-badge{
-    min-height:46px;
-    padding:0 18px;
-    border-radius:999px;
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
-    color:white;
-    font-weight:900;
+    border-radius:13px;
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    white-space:nowrap;
-}
-
-.branch-badge.locked{
-    background:linear-gradient(135deg,#19a974,#7be0b2);
-}
-
-.branch-popup-btn{
-    min-height:46px;
-    padding:0 18px;
-    border:none;
-    border-radius:999px;
-    background:linear-gradient(135deg,#34c6ff,#7b5cff);
-    color:white;
-    font-weight:900;
-    cursor:pointer;
-    box-shadow:0 10px 22px rgba(52,198,255,.22);
-}
-
-.branch-popup-btn:active{
-    transform:scale(.97);
-}
-
-.branch-warning{
-    background:#fff3dd;
-    color:#b76b00;
-    border:1px solid #ffe0a6;
-    padding:12px 16px;
-    border-radius:18px;
-    font-weight:900;
-    margin-bottom:16px;
-}
-
-/* ========================= */
-/* SHOP POPUP */
-/* ========================= */
-.shop-popup-backdrop{
-    display:none;
-    position:fixed;
-    inset:0;
-    background:rgba(23,21,47,.38);
-    z-index:9000;
-}
-
-.shop-popup-backdrop.active{
-    display:block;
-}
-
-.shop-popup{
-    display:none;
-    position:fixed;
-    left:50%;
-    top:50%;
-    transform:translate(-50%,-50%);
-    width:430px;
-    max-width:calc(100% - 28px);
+    color:#514a5f;
     background:white;
-    border-radius:30px;
-    border:1px solid #f1ddd1;
-    box-shadow:0 30px 90px rgba(23,21,47,.28);
-    z-index:9001;
-    padding:18px;
+    font-size:10px;
+    font-weight:1000;
 }
 
-.shop-popup.active{
-    display:block;
-}
-
-.shop-popup-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:14px;
-}
-
-.shop-popup-head h3{
-    margin:0;
-    font-size:24px;
-    font-weight:900;
-    color:#17152f;
-}
-
-.shop-popup-head button{
-    width:44px;
-    height:44px;
-    border-radius:50%;
-    border:0;
-    background:#fff3f1;
-    color:#ff4d4d;
-    font-weight:900;
-    cursor:pointer;
-}
-
-.shop-list{
-    display:grid;
-    gap:10px;
-    max-height:60vh;
-    overflow:auto;
-}
-
-.shop-option{
-    width:100%;
-    min-height:68px;
+.card{
+    border:1px solid #efdfd7;
     border-radius:22px;
-    border:1px solid #eaddec;
-    background:#fffaf7;
-    padding:0 16px;
-    display:flex;
-    align-items:center;
-    gap:12px;
-    cursor:pointer;
-    font-weight:900;
-    color:#17152f;
-    text-align:left;
+    background:white;
+    box-shadow:0 10px 30px rgba(130,91,60,.07);
 }
 
-.shop-option:hover,
-.shop-option.active{
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+.shop-card{
+    padding:12px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:10px;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+}
+
+.shop-info{
+    min-width:0;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.shop-icon{
+    width:43px;
+    height:43px;
+    flex:0 0 43px;
+    border-radius:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:white;
+    font-size:20px;
+}
+
+.shop-info span,
+.shop-info strong{
+    display:block;
+}
+
+.shop-info span{
+    color:#81778c;
+    font-size:8px;
+    font-weight:950;
+}
+
+.shop-info strong{
+    margin-top:2px;
+    color:#100d35;
+    font-size:13px;
+    font-weight:1000;
+}
+
+.shop-change-btn{
+    min-height:40px;
+    padding:0 13px;
+    border:0;
+    border-radius:12px;
+    color:white;
+    background:linear-gradient(135deg,#34c6ff,#7b5cff);
+    font-size:10px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.shop-lock{
+    min-height:35px;
+    padding:0 10px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    color:#15915f;
+    background:#eafff4;
+    font-size:9px;
+    font-weight:1000;
+}
+
+.browser-card{
+    padding:14px;
+    margin-bottom:10px;
+}
+
+.search-row{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:8px;
+}
+
+.search-input{
+    width:100%;
+    height:48px;
+    padding:0 15px;
+    border:1px solid #d9c6ec;
+    border-radius:15px;
+    color:#100d35;
+    background:white;
+    font-size:15px;
+    font-weight:850;
+}
+
+.search-input:focus{
+    outline:none;
+    border-color:#8e63ff;
+    box-shadow:0 0 0 4px rgba(142,99,255,.11);
+}
+
+.search-btn{
+    height:48px;
+    padding:0 20px;
+    border:0;
+    border-radius:15px;
+    color:white;
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+    font-size:11px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.type-tabs{
+    display:flex;
+    gap:6px;
+    margin-top:10px;
+    padding-bottom:2px;
+    overflow-x:auto;
+    scrollbar-width:none;
+}
+
+.type-tabs::-webkit-scrollbar{display:none}
+
+.type-chip{
+    min-height:37px;
+    padding:0 12px;
+    border:1px solid #eaddec;
+    border-radius:999px;
+    color:#62586e;
+    background:white;
+    font-size:9px;
+    font-weight:1000;
+    white-space:nowrap;
+    cursor:pointer;
+}
+
+.type-chip.active{
     color:white;
     border-color:transparent;
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+    box-shadow:0 7px 15px rgba(142,99,255,.15);
 }
 
-.shop-option span{
-    font-size:22px;
+.browser-heading{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:10px;
+    margin:13px 0 9px;
 }
 
-.shop-option strong{
-    flex:1;
-}
-
-.shop-option em{
-    font-style:normal;
-    font-size:12px;
-    padding:5px 10px;
-    border-radius:999px;
-    background:rgba(255,255,255,.25);
-}
-
-/* ========================= */
-/* SEARCH */
-/* ========================= */
-.scan-row{
-    display:grid;
-    grid-template-columns:1fr auto;
-    gap:12px;
-}
-
-.scan-input{
-    height:58px;
-    border-radius:999px;
-    border:1px solid #eaddec;
-    padding:0 20px;
+.browser-heading h2{
+    margin:0;
+    color:#100d35;
     font-size:18px;
-    font-weight:900;
-    background:#fff;
+    font-weight:1000;
 }
 
-.scan-input:focus{
-    outline:none;
-    border-color:#9b7cf6;
-    box-shadow:0 0 0 4px rgba(155,124,246,.12);
+.browser-heading p{
+    margin:3px 0 0;
+    color:#81778c;
+    font-size:9px;
+    font-weight:850;
 }
 
-.btn-main{
-    border:none;
+.browser-count{
+    min-height:31px;
+    padding:0 9px;
     border-radius:999px;
-    padding:0 30px;
-    height:58px;
-    color:white;
-    font-weight:900;
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
-    box-shadow:0 12px 26px rgba(155,124,246,.25);
-    cursor:pointer;
-}
-
-.help{
-    background:#fff8fb;
-    border-radius:18px;
-    padding:14px;
-    color:#7b7288;
-    font-weight:800;
-    margin-top:14px;
-}
-
-.results{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:14px;
-    margin-top:18px;
-}
-
-.result-card{
-    border:1px solid #f1ddd1;
-    border-radius:22px;
-    padding:14px;
-    background:linear-gradient(180deg,#fff,#fffaf7);
-    display:grid;
-    grid-template-columns:90px 1fr;
-    gap:12px;
+    display:inline-flex;
     align-items:center;
+    color:#6f57d9;
+    background:#f4f0ff;
+    font-size:8px;
+    font-weight:1000;
+}
+
+.product-grid{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:9px;
+}
+
+.product-card{
+    min-width:0;
+    padding:9px;
+    border:1px solid #efdfd7;
+    border-radius:16px;
+    display:flex;
+    flex-direction:column;
+    color:inherit;
+    background:linear-gradient(180deg,#fff,#fffaf7);
+    text-align:left;
     cursor:pointer;
-    transition:.2s;
+    transition:.16s;
 }
 
-.result-card:hover{
-    transform:translateY(-3px);
-    box-shadow:0 14px 28px rgba(130,91,60,.10);
+.product-card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 22px rgba(130,91,60,.09);
 }
 
-.result-img{
-    width:90px;
-    height:90px;
-    border-radius:18px;
-    background:#fff6ef;
+.product-card.hidden{display:none}
+
+.product-photo{
+    height:125px;
+    overflow:hidden;
+    border-radius:12px;
     display:flex;
     align-items:center;
     justify-content:center;
-    overflow:hidden;
+    background:linear-gradient(145deg,#fff5ee,#f5f0ff);
 }
 
-.result-img img{
+.product-photo img{
     width:100%;
     height:100%;
+    padding:5px;
     object-fit:contain;
 }
 
-.result-name{
-    font-weight:900;
-    color:#17152f;
+.product-photo span{
+    font-size:52px;
 }
 
-.result-meta{
-    color:#7b7288;
-    font-weight:800;
-    font-size:13px;
-    margin-top:4px;
+.product-info{
+    min-width:0;
+    padding:8px 2px 1px;
 }
 
-.sku{
+.product-type{
     display:inline-flex;
-    background:#eee4ff;
-    color:#7b5cff;
+    min-height:21px;
+    padding:0 6px;
     border-radius:999px;
-    padding:5px 9px;
-    font-size:12px;
-    font-weight:900;
-    margin-top:6px;
+    align-items:center;
+    color:#6f57d9;
+    background:#f4f0ff;
+    font-size:7px;
+    font-weight:1000;
 }
 
-/* ========================= */
-/* TABLE */
-/* ========================= */
+.product-info h3{
+    margin:6px 0 1px;
+    overflow:hidden;
+    color:#100d35;
+    font-size:12px;
+    font-weight:1000;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.product-brand{
+    overflow:hidden;
+    color:#81778c;
+    font-size:8px;
+    font-weight:850;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.product-bottom{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:5px;
+    margin-top:7px;
+}
+
+.variant-count,
+.product-stock{
+    min-height:24px;
+    padding:0 6px;
+    border-radius:7px;
+    display:inline-flex;
+    align-items:center;
+    font-size:7px;
+    font-weight:1000;
+}
+
+.variant-count{
+    color:#a65a21;
+    background:#fff1e8;
+}
+
+.product-stock{
+    color:#15915f;
+    background:#eafff4;
+}
+
+.product-stock.zero{
+    color:#747474;
+    background:#efefef;
+}
+
+.no-products{
+    display:none;
+    grid-column:1/-1;
+    min-height:180px;
+    border:1px dashed #d9c6ec;
+    border-radius:17px;
+    align-items:center;
+    justify-content:center;
+    color:#81778c;
+    text-align:center;
+    font-weight:900;
+}
+
+.no-products.active{display:flex}
+
+.stock-form-card{
+    padding:14px;
+}
+
+.stock-head{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:9px;
+}
+
+.stock-head h2{
+    margin:0;
+    color:#100d35;
+    font-size:19px;
+    font-weight:1000;
+}
+
+.stock-head p{
+    margin:3px 0 0;
+    color:#81778c;
+    font-size:9px;
+    font-weight:850;
+}
+
+.stock-row-count{
+    min-height:31px;
+    padding:0 9px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    color:#15915f;
+    background:#eafff4;
+    font-size:8px;
+    font-weight:1000;
+}
+
 .table-wrap{
     overflow-x:auto;
+    border:1px solid #f0e5ee;
+    border-radius:15px;
 }
 
 .stock-table{
     width:100%;
+    min-width:900px;
     border-collapse:collapse;
-    min-width:950px;
 }
 
 .stock-table th{
+    padding:10px;
+    color:#62586e;
     background:#fff8fb;
-    padding:14px;
+    font-size:8px;
+    font-weight:1000;
     text-align:left;
-    color:#17152f;
 }
 
 .stock-table td{
-    padding:12px;
-    border-top:1px solid #f4e3d8;
-    font-weight:800;
+    padding:9px 10px;
+    border-top:1px solid #f2e8ed;
+    color:#100d35;
+    font-size:9px;
+    font-weight:850;
     vertical-align:middle;
 }
 
-.row-img{
-    width:58px;
-    height:58px;
-    border-radius:14px;
-    background:#fff6ef;
+.row-photo{
+    width:52px;
+    height:48px;
+    overflow:hidden;
+    border-radius:9px;
     display:flex;
     align-items:center;
     justify-content:center;
-    overflow:hidden;
+    background:#fff5ee;
 }
 
-.row-img img{
+.row-photo img{
     width:100%;
     height:100%;
+    padding:2px;
     object-fit:contain;
 }
 
-.qty-input,
-.cost-input,
-.note-input{
-    height:44px;
-    border-radius:14px;
+.row-photo span{font-size:23px}
+
+.row-info strong,
+.row-info small{
+    display:block;
+}
+
+.row-info strong{
+    color:#100d35;
+    font-size:10px;
+    font-weight:1000;
+}
+
+.row-info small{
+    margin-top:2px;
+    color:#81778c;
+    font-size:7px;
+    font-weight:850;
+}
+
+.row-input{
+    width:100%;
+    height:39px;
+    padding:0 9px;
     border:1px solid #eaddec;
-    padding:0 12px;
-    font-weight:900;
-    width:100%;
-}
-
-.cost-hidden{
-    color:#8a7b99;
+    border-radius:10px;
+    color:#100d35;
+    background:white;
+    font-size:12px;
     font-weight:900;
 }
 
-.remove-btn{
-    border:none;
-    border-radius:14px;
-    background:#fff3f1;
-    color:#ff4d4d;
-    font-weight:900;
-    height:42px;
-    padding:0 14px;
-    cursor:pointer;
+.row-input:focus{
+    outline:none;
+    border-color:#8e63ff;
+    box-shadow:0 0 0 3px rgba(142,99,255,.1);
 }
 
-.save-row{
-    display:flex;
-    justify-content:flex-end;
-    margin-top:18px;
-}
-
-.empty{
-    padding:45px;
-    text-align:center;
-    color:#7b7288;
-    font-weight:900;
-}
-
-@media(max-width:900px){
-    .scan-row{
-        grid-template-columns:1fr;
-    }
-
-    .btn-main{
-        width:100%;
-    }
-
-    .results{
-        grid-template-columns:1fr;
-    }
-
-    .branch-box{
-        display:block;
-    }
-
-    .branch-actions{
-        display:grid;
-        grid-template-columns:1fr;
-        margin-top:14px;
-    }
-
-    .branch-badge,
-    .branch-popup-btn{
-        width:100%;
-        min-height:54px;
-    }
-
-    .shop-popup{
-        left:14px;
-        right:14px;
-        top:auto;
-        bottom:18px;
-        width:auto;
-        max-width:none;
-        transform:none;
-        border-radius:28px;
-    }
-
-    .save-row{
-        display:block;
-    }
-}
-
-/* =========================================================
-   ROBUST INVENTORY IMAGE FALLBACK
-========================================================= */
-.product-img,
-.item-img,
-.variant-img,
-.result-img,
-.row-img,
-.preview-box{
-    position:relative;
-}
-
-.inventory-image-error{
-    display:flex!important;
-    align-items:center!important;
-    justify-content:center!important;
-}
-
-.inventory-image-fallback{
-    width:100%;
-    height:100%;
-    min-height:44px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:#8e63ff;
-    background:linear-gradient(135deg,#f4edff,#fff8f4);
-    font-size:clamp(24px,5vw,54px);
-    line-height:1;
-}
-
-@media(max-width:700px){
-    html{
-        -webkit-text-size-adjust:100%!important;
-        text-size-adjust:100%!important;
-    }
-
-    input,
-    select,
-    textarea,
-    [contenteditable="true"]{
-        font-size:16px!important;
-    }
-}
-
-body.stock-popup-open{
-    overflow:hidden!important;
-    touch-action:none;
-}
-
-@media(max-width:700px){
-    .shop-popup-backdrop{
-        z-index:19990!important;
-        background:rgba(23,21,47,.48)!important;
-        backdrop-filter:blur(3px)!important;
-    }
-
-    .shop-popup{
-        left:50%!important;
-        right:auto!important;
-        top:50%!important;
-        bottom:auto!important;
-        width:calc(100% - 16px)!important;
-        max-width:430px!important;
-        max-height:80dvh!important;
-        margin:0!important;
-        padding:9px!important;
-        overflow-y:auto!important;
-        transform:translate(-50%,-50%)!important;
-        border-radius:18px!important;
-        z-index:20000!important;
-    }
-
-    .shop-popup-head{
-        position:sticky!important;
-        top:-9px!important;
-        z-index:2!important;
-        margin:0 0 7px!important;
-        padding:8px!important;
-        border-radius:13px!important;
-        color:white!important;
-        background:linear-gradient(135deg,#8e63ff,#ff8c6b)!important;
-    }
-
-    .shop-popup-head h3{
-        color:white!important;
-        font-size:15px!important;
-    }
-
-    .shop-popup-head button{
-        width:36px!important;
-        height:36px!important;
-        color:white!important;
-        background:rgba(255,255,255,.22)!important;
-    }
-
-    .shop-list{
-        gap:5px!important;
-        max-height:62dvh!important;
-    }
-
-    .shop-option{
-        min-height:48px!important;
-        padding:0 9px!important;
-        border-radius:11px!important;
-        font-size:11px!important;
-    }
-
-    .result-img,
-    .row-img{
-        background:linear-gradient(135deg,#f4edff,#fff8f4)!important;
-    }
-}
-
-
-/* =========================================================
-   INVENTORY MEDIA FIX — iPhone Safari / PWA
-========================================================= */
-.inventory-media-image{
-    display:block!important;
-    width:100%!important;
-    height:100%!important;
-    max-width:100%!important;
-    opacity:1!important;
-    visibility:visible!important;
-    object-fit:contain!important;
-    filter:none!important;
-    transform:none!important;
-    background:white!important;
-}
-
-.inventory-media-fallback{
-    width:100%;
-    height:100%;
-    min-height:44px;
-    display:flex!important;
-    align-items:center!important;
-    justify-content:center!important;
-    color:#8e63ff;
-    background:linear-gradient(135deg,#f4edff,#fff8f4);
-    font-size:clamp(24px,5vw,54px);
-    line-height:1;
-}
-
-
-
-/* =========================================================
-   CLEAN BATCH SHOP SELECTOR
-========================================================= */
-.batch-shop-selector-wrap{
-    margin-bottom:14px;
-}
-
-.batch-shop-selector{
-    width:100%;
-    min-height:68px;
-    border:1px solid #eaddec;
-    border-radius:20px;
-    padding:10px 14px;
+.qty-control{
     display:grid;
-    grid-template-columns:44px minmax(0,1fr) auto;
+    grid-template-columns:31px 55px 31px;
+    gap:3px;
     align-items:center;
-    gap:10px;
-    background:linear-gradient(135deg,#fff,#fff7fb);
-    color:#17152f;
-    cursor:pointer;
-    text-align:left;
 }
 
-.batch-shop-selector.locked{
-    cursor:default;
-    background:linear-gradient(135deg,#f2fff8,#fff);
-}
-
-.batch-shop-icon{
-    width:44px;
-    height:44px;
-    border-radius:14px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:linear-gradient(135deg,#eee8ff,#fff0ea);
-    font-size:21px;
-}
-
-.batch-shop-selector small,
-.batch-shop-selector strong{
-    display:block;
-}
-
-.batch-shop-selector small{
-    color:#8a8096;
-    font-size:11px;
-    font-weight:900;
-    margin-bottom:3px;
-}
-
-.batch-shop-selector strong{
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-    font-size:16px;
-}
-
-.batch-shop-selector b{
-    color:#7b5cff;
-    font-size:12px;
-    white-space:nowrap;
-}
-
-@media(max-width:700px){
-    .batch-page{
-        padding:8px;
-    }
-
-    .back-btn{
-        min-height:38px;
-        margin-bottom:8px;
-        padding:0 13px;
-        border-radius:12px;
-        font-size:11px;
-        align-items:center;
-    }
-
-    .batch-card{
-        padding:10px;
-        margin-bottom:10px;
-        border-radius:18px;
-        box-shadow:none;
-    }
-
-    .batch-card h1{
-        font-size:23px;
-        margin-bottom:4px;
-    }
-
-    .batch-card > p{
-        margin:0 0 10px;
-        font-size:11px;
-        line-height:1.35;
-    }
-
-    .batch-shop-selector-wrap{
-        margin-bottom:9px;
-    }
-
-    .batch-shop-selector{
-        min-height:58px;
-        grid-template-columns:38px minmax(0,1fr) auto;
-        padding:7px 9px;
-        border-radius:15px;
-    }
-
-    .batch-shop-icon{
-        width:38px;
-        height:38px;
-        border-radius:12px;
-        font-size:18px;
-    }
-
-    .batch-shop-selector small{
-        font-size:9px;
-    }
-
-    .batch-shop-selector strong{
-        font-size:14px;
-    }
-
-    .batch-shop-selector b{
-        font-size:9px;
-    }
-
-    .scan-row{
-        display:grid;
-        grid-template-columns:minmax(0,1fr) 76px;
-        gap:6px;
-    }
-
-    .scan-input{
-        min-width:0;
-        height:44px;
-        padding:0 11px;
-        border-radius:12px;
-        font-size:16px!important;
-    }
-
-    .scan-row .btn-main{
-        width:76px;
-        height:44px;
-        padding:0 8px;
-        border-radius:12px;
-        font-size:11px;
-    }
-
-    .help{
-        margin-top:7px;
-        padding:8px;
-        border-radius:11px;
-        font-size:9px;
-        line-height:1.3;
-    }
-
-    .shop-popup{
-        width:calc(100% - 22px)!important;
-        max-height:82dvh!important;
-        border-radius:22px!important;
-    }
-
-    .shop-option{
-        min-height:55px!important;
-    }
-}
-
-
-
-/* =========================================================
-   TAP-TO-SELECT PRODUCT BROWSER
-========================================================= */
-.product-browser-head{
-    margin-top:16px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-}
-
-.product-browser-head strong,
-.product-browser-head span{
-    display:block;
-}
-
-.product-browser-head strong{
-    color:#17152f;
-    font-size:18px;
-    font-weight:900;
-}
-
-.product-browser-head span{
-    margin-top:3px;
-    color:#7b7288;
-    font-size:12px;
-    font-weight:800;
-}
-
-.product-browser-actions{
-    display:flex;
-    align-items:center;
-    gap:8px;
-}
-
-.product-browser-actions > span{
-    min-height:34px;
-    margin:0;
-    padding:0 11px;
-    border-radius:999px;
-    display:flex;
-    align-items:center;
+.qty-control button{
+    width:31px;
+    height:35px;
+    border:0;
+    border-radius:9px;
     color:#6f57d9;
     background:#f1ebff;
-    font-size:11px;
-    font-weight:900;
-}
-
-.product-browser-actions button{
-    min-height:38px;
-    padding:0 14px;
-    border:0;
-    border-radius:12px;
-    color:white;
-    background:linear-gradient(135deg,#8e63ff,#ff8464);
-    font-weight:900;
+    font-weight:1000;
     cursor:pointer;
 }
 
-.compact-help{
+.remove-row-btn{
+    width:36px;
+    height:36px;
+    border:0;
+    border-radius:10px;
+    color:#dc4c4c;
+    background:#fff0ef;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.empty-row td{
+    padding:35px;
+    color:#81778c;
+    text-align:center;
+}
+
+.mobile-stock-list{display:none}
+
+.save-bar{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:8px;
     margin-top:10px;
 }
 
-.product-loading,
-.product-browser-empty{
-    grid-column:1/-1;
-    min-height:120px;
-    padding:24px;
-    border:1px dashed #eaddec;
-    border-radius:18px;
-    display:flex;
+.clear-btn,
+.save-btn{
+    min-height:45px;
+    padding:0 17px;
+    border:0;
+    border-radius:13px;
+    font-size:10px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.clear-btn{
+    color:#dc4c4c;
+    background:#fff0ef;
+}
+
+.save-btn{
+    color:white;
+    background:linear-gradient(135deg,#19a974,#7be0b2);
+    box-shadow:0 9px 20px rgba(25,169,116,.17);
+}
+
+.modal-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    padding:18px;
     align-items:center;
     justify-content:center;
-    color:#7b7288;
-    background:#fffafd;
-    text-align:center;
-    font-weight:900;
+    background:rgba(23,21,47,.47);
+    backdrop-filter:blur(3px);
+    z-index:10000;
 }
 
-.result-card{
-    position:relative;
-    min-width:0;
-    cursor:pointer;
-    user-select:none;
-    -webkit-tap-highlight-color:transparent;
+.modal-backdrop.active{display:flex}
+
+.variant-modal{
+    width:min(670px,100%);
+    max-height:88vh;
+    overflow:auto;
+    border:1px solid #efdfd7;
+    border-radius:25px;
+    background:white;
+    box-shadow:0 30px 100px rgba(23,21,47,.3);
 }
 
-.result-card:active{
-    transform:scale(.985);
-}
-
-.result-card.selected{
-    border-color:#8e63ff;
-    background:linear-gradient(180deg,#fbf8ff,#fff7f2);
-    box-shadow:0 0 0 3px rgba(142,99,255,.11);
-}
-
-.result-card.selected::after{
-    content:"✓ Added";
-    position:absolute;
-    top:8px;
-    right:8px;
-    min-height:25px;
-    padding:0 8px;
-    border-radius:999px;
-    display:flex;
-    align-items:center;
-    color:white;
-    background:linear-gradient(135deg,#19a974,#72dca8);
-    font-size:9px;
-    font-weight:900;
-}
-
-.result-card-main{
-    min-width:0;
-}
-
-.result-card-footer{
-    margin-top:9px;
+.modal-head{
+    position:sticky;
+    top:0;
+    z-index:3;
+    padding:13px 14px;
     display:flex;
     align-items:center;
     justify-content:space-between;
-    gap:8px;
+    gap:10px;
+    background:white;
+    border-bottom:1px solid #f0e5ee;
 }
 
-.product-add-btn{
-    min-height:34px;
-    padding:0 11px;
+.modal-head h2{
+    margin:0;
+    color:#100d35;
+    font-size:20px;
+    font-weight:1000;
+}
+
+.modal-head p{
+    margin:3px 0 0;
+    color:#81778c;
+    font-size:9px;
+    font-weight:850;
+}
+
+.modal-close{
+    width:40px;
+    height:40px;
     border:0;
-    border-radius:10px;
-    color:#6d51d7;
-    background:#eee8ff;
-    font-size:10px;
-    font-weight:900;
+    border-radius:12px;
+    color:#dc4c4c;
+    background:#fff0ef;
+    font-size:17px;
+    font-weight:1000;
     cursor:pointer;
 }
 
-.result-card.selected .product-add-btn{
-    color:#118353;
-    background:#e3f9ee;
+.modal-product{
+    padding:12px 14px;
+    display:grid;
+    grid-template-columns:75px minmax(0,1fr);
+    gap:10px;
+    align-items:center;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+}
+
+.modal-product-photo{
+    width:75px;
+    height:70px;
+    overflow:hidden;
+    border-radius:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:white;
+}
+
+.modal-product-photo img{
+    width:100%;
+    height:100%;
+    padding:3px;
+    object-fit:contain;
+}
+
+.modal-product-photo span{font-size:34px}
+
+.modal-product strong,
+.modal-product span{
+    display:block;
+}
+
+.modal-product strong{
+    color:#100d35;
+    font-size:15px;
+    font-weight:1000;
+}
+
+.modal-product span{
+    margin-top:3px;
+    color:#81778c;
+    font-size:9px;
+    font-weight:850;
+}
+
+.modal-variant-list{
+    display:grid;
+    gap:7px;
+    padding:12px 14px 15px;
+}
+
+.stock-variant-option{
+    width:100%;
+    min-height:69px;
+    padding:8px;
+    border:1px solid #eaddec;
+    border-radius:14px;
+    display:grid;
+    grid-template-columns:54px minmax(0,1fr) auto;
+    gap:9px;
+    align-items:center;
+    color:inherit;
+    background:linear-gradient(180deg,#fff,#fffaf7);
+    text-align:left;
+    cursor:pointer;
+}
+
+.stock-variant-option:hover{
+    border-color:#8e63ff;
+    box-shadow:0 8px 18px rgba(142,99,255,.1);
+}
+
+.modal-variant-photo{
+    width:54px;
+    height:52px;
+    overflow:hidden;
+    border-radius:9px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fff5ee;
+}
+
+.modal-variant-photo img{
+    width:100%;
+    height:100%;
+    padding:2px;
+    object-fit:contain;
+}
+
+.modal-variant-photo span{font-size:25px}
+
+.modal-variant-info{
+    min-width:0;
+}
+
+.modal-variant-info strong,
+.modal-variant-info small{
+    display:block;
+}
+
+.modal-variant-info strong{
+    overflow:hidden;
+    color:#100d35;
+    font-size:11px;
+    font-weight:1000;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.modal-variant-info small{
+    margin-top:3px;
+    color:#81778c;
+    font-size:7px;
+    font-weight:850;
+}
+
+.modal-variant-side{
+    text-align:right;
+}
+
+.modal-variant-side strong,
+.modal-variant-side span{
+    display:block;
+}
+
+.modal-variant-side strong{
+    color:#6f57d9;
+    font-size:11px;
+    font-weight:1000;
+}
+
+.modal-variant-side span{
+    margin-top:3px;
+    color:#15915f;
+    font-size:8px;
+    font-weight:1000;
+}
+
+.modal-empty{
+    min-height:120px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#81778c;
+    font-weight:900;
+    text-align:center;
+}
+
+.shop-popup{
+    width:min(420px,100%);
+    max-height:82vh;
+    padding:12px;
+    overflow:auto;
+    border-radius:22px;
+    background:white;
+}
+
+.shop-popup-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:9px;
+}
+
+.shop-popup-head h3{
+    margin:0;
+    color:#100d35;
+    font-size:18px;
+    font-weight:1000;
+}
+
+.shop-list{
+    display:grid;
+    gap:6px;
+}
+
+.shop-option{
+    width:100%;
+    min-height:53px;
+    padding:0 11px;
+    border:1px solid #eaddec;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    color:#100d35;
+    background:#fffaf7;
+    font-size:10px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.shop-option.active{
+    color:white;
+    border-color:transparent;
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+}
+
+@media(max-width:1100px){
+    .product-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+
+@media(max-width:850px){
+    .product-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 
 @media(max-width:700px){
-    .product-browser-head{
-        margin-top:10px;
-        align-items:flex-end;
+    html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+
+    .batch-page{
+        padding:8px 7px calc(18px + env(safe-area-inset-bottom));
     }
 
-    .product-browser-head strong{
-        font-size:15px;
+    .page-top{
+        align-items:flex-start;
+        gap:7px;
+        margin-bottom:7px;
     }
 
-    .product-browser-head span{
-        font-size:9px;
+    .page-top h1{
+        font-size:21px;
     }
 
-    .product-browser-actions{
-        gap:4px;
-    }
-
-    .product-browser-actions > span{
-        min-height:30px;
-        padding:0 8px;
+    .page-top p{
+        margin-top:3px;
         font-size:8px;
     }
 
-    .product-browser-actions button{
-        min-height:34px;
+    .back-btn{
+        min-height:35px;
         padding:0 9px;
+        border-radius:9px;
+        font-size:8px;
+    }
+
+    .card{
+        border-radius:13px;
+        box-shadow:none;
+    }
+
+    .shop-card{
+        padding:7px;
+        margin-bottom:7px;
+    }
+
+    .shop-icon{
+        width:33px;
+        height:33px;
+        flex-basis:33px;
+        border-radius:8px;
+        font-size:15px;
+    }
+
+    .shop-info span{font-size:6px}
+    .shop-info strong{font-size:9px}
+
+    .shop-change-btn,
+    .shop-lock{
+        min-height:31px;
+        padding:0 8px;
+        border-radius:8px;
+        font-size:7px;
+    }
+
+    .browser-card,
+    .stock-form-card{
+        padding:8px;
+        margin-bottom:7px;
+    }
+
+    .search-row{
+        grid-template-columns:minmax(0,1fr) 72px;
+        gap:5px;
+    }
+
+    .search-input,
+    .search-btn{
+        height:41px;
+        border-radius:9px;
+        font-size:16px;
+    }
+
+    .search-input{
+        padding:0 9px;
+    }
+
+    .search-btn{
+        padding:0 5px;
+        font-size:8px;
+    }
+
+    .type-tabs{
+        gap:4px;
+        margin-top:6px;
+    }
+
+    .type-chip{
+        min-height:31px;
+        padding:0 8px;
+        font-size:7px;
+    }
+
+    .browser-heading{
+        margin:8px 0 6px;
+    }
+
+    .browser-heading h2{
+        font-size:13px;
+    }
+
+    .browser-heading p{
+        font-size:7px;
+    }
+
+    .browser-count{
+        min-height:26px;
+        padding:0 7px;
+        font-size:6px;
+    }
+
+    .product-grid{
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        gap:5px;
+    }
+
+    .product-card{
+        padding:5px;
+        border-radius:10px;
+    }
+
+    .product-card:hover{
+        transform:none;
+        box-shadow:none;
+    }
+
+    .product-photo{
+        height:85px;
+        border-radius:8px;
+    }
+
+    .product-photo img{
+        padding:2px;
+    }
+
+    .product-photo span{
+        font-size:35px;
+    }
+
+    .product-info{
+        padding:5px 1px 0;
+    }
+
+    .product-type{
+        min-height:17px;
+        padding:0 4px;
+        font-size:5px;
+    }
+
+    .product-info h3{
+        margin:4px 0 1px;
+        font-size:8px;
+    }
+
+    .product-brand{
+        font-size:6px;
+    }
+
+    .product-bottom{
+        display:grid;
+        grid-template-columns:1fr;
+        gap:2px;
+        margin-top:4px;
+    }
+
+    .variant-count,
+    .product-stock{
+        min-height:18px;
+        padding:0 4px;
+        justify-content:center;
+        border-radius:5px;
+        font-size:5px;
+    }
+
+    .no-products{
+        min-height:130px;
         border-radius:10px;
         font-size:9px;
     }
 
-    .compact-help{
-        margin-top:7px!important;
+    .stock-head{
+        margin-bottom:6px;
     }
 
-    .product-browser-grid{
-        display:grid!important;
-        grid-template-columns:repeat(2,minmax(0,1fr))!important;
-        gap:7px!important;
+    .stock-head h2{
+        font-size:13px;
     }
 
-    .product-browser-grid .result-card{
-        display:block!important;
-        padding:7px!important;
-        border-radius:14px!important;
+    .stock-head p{
+        font-size:7px;
     }
 
-    .product-browser-grid .result-img{
-        width:100%!important;
-        height:105px!important;
-        border-radius:11px!important;
+    .stock-row-count{
+        min-height:26px;
+        font-size:6px;
     }
 
-    .product-browser-grid .result-card-main{
-        padding-top:6px;
-    }
+    .table-wrap{display:none}
+    .mobile-stock-list{display:grid;gap:6px}
 
-    .product-browser-grid .result-name{
-        min-height:28px;
-        overflow:hidden;
-        display:-webkit-box;
-        -webkit-box-orient:vertical;
-        -webkit-line-clamp:2;
-        font-size:10px!important;
-        line-height:1.3;
-    }
-
-    .product-browser-grid .result-meta{
-        margin-top:3px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-        font-size:8px!important;
-    }
-
-    .product-browser-grid .sku{
-        max-width:100%;
-        margin-top:4px;
-        padding:4px 7px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-        font-size:7px!important;
-    }
-
-    .result-card-footer{
-        margin-top:6px;
-    }
-
-    .product-add-btn{
-        width:100%;
-        min-height:34px;
-        font-size:9px;
-    }
-
-    .result-card.selected::after{
-        top:6px;
-        right:6px;
-        min-height:23px;
-        font-size:8px;
-    }
-
-    .product-loading,
-    .product-browser-empty{
-        min-height:100px;
-        padding:16px;
-        font-size:10px;
-    }
-}
-
-
-
-/* =========================================================
-   PHONE-FRIENDLY STOCK ROW CARDS
-========================================================= */
-.stock-rows-heading{
-    display:flex;
-    align-items:flex-end;
-    justify-content:space-between;
-    gap:14px;
-    margin-bottom:14px;
-}
-
-.stock-rows-heading h1{
-    margin:0;
-    font-size:30px;
-}
-
-.stock-rows-heading p{
-    margin:4px 0 0;
-    font-size:12px;
-}
-
-.stock-rows-heading > span{
-    min-height:36px;
-    padding:0 13px;
-    border-radius:999px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:#6f57d9;
-    background:#f0eaff;
-    font-size:11px;
-    font-weight:900;
-    white-space:nowrap;
-}
-
-.stock-mobile-list{
-    display:none;
-}
-
-@media(max-width:700px){
-    .stock-rows-heading{
-        align-items:center;
-        margin-bottom:8px;
-    }
-
-    .stock-rows-heading h1{
-        font-size:22px!important;
-        line-height:1.1;
-    }
-
-    .stock-rows-heading p{
-        margin-top:3px!important;
-        font-size:9px!important;
-        line-height:1.25;
-    }
-
-    .stock-rows-heading > span{
-        min-height:30px;
-        padding:0 9px;
-        font-size:9px;
-    }
-
-    /* Hide the wide desktop table completely on phones. */
-    .table-wrap{
-        display:none!important;
-    }
-
-    .stock-mobile-list{
-        display:grid;
-        gap:8px;
-    }
-
-    .mobile-stock-empty{
-        min-height:92px;
-        padding:18px;
-        border:1px dashed #e6d9e5;
-        border-radius:15px;
+    .mobile-empty{
+        min-height:115px;
+        border:1px dashed #d9c6ec;
+        border-radius:10px;
         display:flex;
         align-items:center;
         justify-content:center;
-        color:#84798e;
-        background:#fffafd;
-        text-align:center;
-        font-size:11px;
+        color:#81778c;
+        font-size:8px;
         font-weight:900;
+        text-align:center;
     }
 
     .mobile-stock-card{
-        min-width:0;
-        padding:9px;
-        border:1px solid #eadde5;
-        border-radius:17px;
-        background:linear-gradient(145deg,#fff,#fff9f6);
-        box-shadow:0 7px 18px rgba(61,42,80,.06);
-    }
-
-    .mobile-stock-top{
         display:grid;
-        grid-template-columns:64px minmax(0,1fr) 34px;
-        align-items:center;
-        gap:8px;
+        grid-template-columns:52px minmax(0,1fr) 29px;
+        gap:6px;
+        padding:6px;
+        border:1px solid #eaddec;
+        border-radius:10px;
+        background:linear-gradient(180deg,#fff,#fffaf7);
     }
 
     .mobile-stock-photo{
-        width:64px;
-        height:64px;
-        border-radius:12px;
+        width:52px;
+        height:50px;
         overflow:hidden;
+        border-radius:8px;
         display:flex;
         align-items:center;
         justify-content:center;
-        background:linear-gradient(135deg,#f4edff,#fff5ee);
-        font-size:30px;
+        background:#fff5ee;
     }
 
     .mobile-stock-photo img{
-        width:100%!important;
-        height:100%!important;
-        object-fit:contain!important;
+        width:100%;
+        height:100%;
+        padding:2px;
+        object-fit:contain;
     }
+
+    .mobile-stock-photo span{font-size:24px}
 
     .mobile-stock-info{
         min-width:0;
     }
 
-    .mobile-stock-info strong{
+    .mobile-stock-info strong,
+    .mobile-stock-info small{
         display:block;
+    }
+
+    .mobile-stock-info strong{
         overflow:hidden;
-        color:#17152f;
-        font-size:13px;
-        font-weight:900;
-        line-height:1.25;
+        color:#100d35;
+        font-size:9px;
+        font-weight:1000;
         text-overflow:ellipsis;
         white-space:nowrap;
     }
 
     .mobile-stock-info small{
-        display:block;
-        margin-top:3px;
-        overflow:hidden;
-        color:#7b7288;
-        font-size:9px;
-        font-weight:800;
-        line-height:1.25;
-        text-overflow:ellipsis;
-        white-space:nowrap;
+        margin-top:2px;
+        color:#81778c;
+        font-size:6px;
+        font-weight:850;
     }
 
-    .mobile-remove-btn{
+    .mobile-stock-fields{
+        display:grid;
+        grid-template-columns:95px minmax(0,1fr);
+        gap:4px;
+        margin-top:5px;
+    }
+
+    .mobile-stock-fields .row-input{
+        height:35px;
+        border-radius:7px;
+        font-size:16px;
+    }
+
+    .mobile-qty{
+        display:grid;
+        grid-template-columns:27px 41px 27px;
+        gap:2px;
+    }
+
+    .mobile-qty button{
+        width:27px;
+        height:35px;
+        border:0;
+        border-radius:7px;
+        color:#6f57d9;
+        background:#f1ebff;
+        font-weight:1000;
+    }
+
+    .mobile-remove{
+        width:29px;
+        height:29px;
+        border:0;
+        border-radius:7px;
+        color:#dc4c4c;
+        background:#fff0ef;
+        font-weight:1000;
+    }
+
+    .save-bar{
+        position:sticky;
+        bottom:max(6px,env(safe-area-inset-bottom));
+        z-index:20;
+        display:grid;
+        grid-template-columns:80px minmax(0,1fr);
+        gap:5px;
+        padding:5px;
+        border:1px solid #eaddec;
+        border-radius:12px;
+        background:rgba(255,255,255,.95);
+        backdrop-filter:blur(10px);
+    }
+
+    .clear-btn,
+    .save-btn{
+        min-height:42px;
+        padding:0 7px;
+        border-radius:9px;
+        font-size:8px;
+    }
+
+    .modal-backdrop{
+        padding:7px;
+        align-items:flex-end;
+    }
+
+    .variant-modal,
+    .shop-popup{
+        width:100%;
+        max-height:90dvh;
+        border-radius:17px;
+    }
+
+    .modal-head{
+        padding:8px;
+    }
+
+    .modal-head h2{
+        font-size:14px;
+    }
+
+    .modal-head p{
+        font-size:7px;
+    }
+
+    .modal-close{
         width:34px;
         height:34px;
-        padding:0;
-        border:0;
-        border-radius:10px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        color:#e54858;
-        background:#ffecef;
-        font-size:15px;
-        cursor:pointer;
+        border-radius:9px;
     }
 
-    .mobile-stock-meta{
-        display:grid;
-        grid-template-columns:1fr 1fr;
-        gap:6px;
-        margin-top:8px;
-    }
-
-    .mobile-stock-meta div{
-        min-width:0;
+    .modal-product{
         padding:7px 8px;
-        border-radius:10px;
-        background:#f9f6fc;
-    }
-
-    .mobile-stock-meta small,
-    .mobile-stock-meta strong{
-        display:block;
-    }
-
-    .mobile-stock-meta small{
-        margin-bottom:2px;
-        color:#8b8096;
-        font-size:8px;
-        font-weight:900;
-    }
-
-    .mobile-stock-meta strong{
-        overflow:hidden;
-        color:#17152f;
-        font-size:10px;
-        font-weight:900;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-    }
-
-    .mobile-stock-controls{
-        display:grid;
-        grid-template-columns:1fr;
+        grid-template-columns:58px minmax(0,1fr);
         gap:7px;
-        margin-top:8px;
     }
 
-    .mobile-control-label{
-        display:block;
-        color:#6f6578;
-        font-size:9px;
-        font-weight:900;
+    .modal-product-photo{
+        width:58px;
+        height:55px;
+        border-radius:9px;
     }
 
-    .mobile-qty-stepper{
-        margin-top:4px;
-        display:grid;
-        grid-template-columns:42px minmax(0,1fr) 42px;
+    .modal-product strong{
+        font-size:11px;
+    }
+
+    .modal-product span{
+        font-size:7px;
+    }
+
+    .modal-variant-list{
         gap:5px;
+        padding:7px 8px 10px;
     }
 
-    .mobile-qty-stepper button{
-        width:42px;
-        height:42px;
-        padding:0;
-        border:0;
-        border-radius:11px;
-        color:#6e53d8;
-        background:#eee8ff;
-        font-size:22px;
-        font-weight:900;
-        cursor:pointer;
+    .stock-variant-option{
+        min-height:60px;
+        padding:5px;
+        grid-template-columns:48px minmax(0,1fr) auto;
+        gap:6px;
+        border-radius:10px;
     }
 
-    .mobile-qty-stepper input,
-    .mobile-cost-input,
-    .mobile-note-input{
-        width:100%;
-        min-width:0;
-        height:42px;
-        border:1px solid #e3d7e4;
-        border-radius:11px;
-        padding:0 10px;
-        color:#17152f;
-        background:white;
-        font-size:16px!important;
-        font-weight:900;
-        outline:none;
+    .modal-variant-photo{
+        width:48px;
+        height:47px;
+        border-radius:7px;
     }
 
-    .mobile-qty-stepper input{
-        padding:0 5px;
-        text-align:center;
+    .modal-variant-info strong{
+        font-size:9px;
     }
 
-    .mobile-note-input{
-        margin-top:4px;
+    .modal-variant-info small{
+        font-size:6px;
     }
 
-    .mobile-cost-input{
-        margin-top:4px;
+    .modal-variant-side strong{
+        font-size:9px;
     }
 
-    .mobile-two-controls{
-        display:grid;
-        grid-template-columns:.75fr 1.25fr;
-        gap:7px;
+    .modal-variant-side span{
+        font-size:6px;
     }
 
-    .mobile-save-row{
-        position:sticky;
-        bottom:max(7px,env(safe-area-inset-bottom));
-        z-index:40;
-        margin-top:10px!important;
-        padding:6px;
-        border:1px solid rgba(226,213,227,.9);
-        border-radius:16px;
-        background:rgba(255,255,255,.95);
-        box-shadow:0 12px 30px rgba(42,28,58,.16);
-        backdrop-filter:blur(12px);
+    .shop-popup{
+        padding:8px;
     }
 
-    .mobile-save-row .btn-main{
-        width:100%!important;
-        height:48px!important;
-        min-height:48px!important;
-        border-radius:13px!important;
-        font-size:13px!important;
+    .shop-popup-head h3{
+        font-size:14px;
     }
+
+    .shop-option{
+        min-height:44px;
+        padding:0 8px;
+        border-radius:9px;
+        font-size:8px;
+    }
+
+    input,textarea{font-size:16px!important}
 }
 
+@media(max-width:380px){
+    .product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .product-photo{height:98px}
+}
 </style>
 
 <div class="batch-page">
-
-    <a
-        href="{% url 'item_list' %}{% if request.user.is_superuser and selected_branch %}?branch={{ selected_branch.id }}{% endif %}"
-        class="back-btn"
-    >
-        ← Back to Inventory
-    </a>
-
-    <div class="batch-card">
-        <h1>Batch Stock In 📦</h1>
-        <p>Choose a shop, then tap any product below to add it. You can also scan or search.</p>
-
-        {% if not selected_branch %}
-            <div class="branch-warning">
-                No shop selected or assigned. Please ask admin to assign your user to a shop.
-            </div>
-        {% endif %}
-
-        <div class="batch-shop-selector-wrap">
-            {% if request.user.is_superuser %}
-                <button type="button" class="batch-shop-selector" onclick="openShopPopup()">
-                    <span class="batch-shop-icon">🏪</span>
-                    <span>
-                        <small>Stock will add to</small>
-                        <strong>
-                            {% if selected_branch %}
-                                {{ selected_branch.name }}
-                            {% else %}
-                                Choose Shop
-                            {% endif %}
-                        </strong>
-                    </span>
-                    <b>Change ›</b>
-                </button>
-            {% else %}
-                <div class="batch-shop-selector locked">
-                    <span class="batch-shop-icon">🔒</span>
-                    <span>
-                        <small>Assigned shop</small>
-                        <strong>
-                            {% if selected_branch %}
-                                {{ selected_branch.name }}
-                            {% else %}
-                                No Shop
-                            {% endif %}
-                        </strong>
-                    </span>
-                    <b>Locked</b>
-                </div>
-            {% endif %}
+    <header class="page-top">
+        <div>
+            <h1>Batch Stock In 📦</h1>
+            <p>Select a type, tap an item, then choose the exact variant.</p>
         </div>
 
-        <div class="scan-row">
+        <a href="{% url 'item_list' %}{% if request.user.is_superuser and selected_branch %}?branch={{ selected_branch.id }}{% endif %}" class="back-btn">← Inventory</a>
+    </header>
+
+    <section class="card shop-card">
+        <div class="shop-info">
+            <div class="shop-icon">🏪</div>
+            <div>
+                <span>Stock will be added to</span>
+                <strong>{% if selected_branch %}{{ selected_branch.name }}{% else %}No shop selected{% endif %}</strong>
+            </div>
+        </div>
+
+        {% if request.user.is_superuser %}
+            <button type="button" class="shop-change-btn" onclick="openShopPopup()">Change Shop</button>
+        {% else %}
+            <span class="shop-lock">🔒 Assigned Shop</span>
+        {% endif %}
+    </section>
+
+    <section class="card browser-card">
+        <div class="search-row">
             <input
-                id="searchInput"
-                class="scan-input"
                 type="text"
-                placeholder="Search name / SKU / color / size..."
+                id="productSearch"
+                class="search-input"
+                placeholder="Scan SKU or search item / color / size..."
+                autocomplete="off"
                 autofocus
             >
-
-            <button type="button" class="btn-main" onclick="searchVariant()">
-                Search
-            </button>
+            <button type="button" class="search-btn" onclick="handleSearchButton()">Search</button>
         </div>
 
-        <div class="product-browser-head">
+        <div class="type-tabs" id="typeTabs">
+            <button type="button" class="type-chip active" data-type="all" onclick="selectType(this,'all')">🛍 All</button>
+            {% for type in item_types %}
+                <button type="button" class="type-chip" data-type="{{ type.id }}" onclick="selectType(this,'{{ type.id }}')">
+                    {{ type.emoji|default:"📦" }} {{ type.name }}
+                </button>
+            {% endfor %}
+        </div>
+
+        <div class="browser-heading">
             <div>
-                <strong>All Products</strong>
-                <span>Tap a product to add it to Stock Rows.</span>
+                <h2>Items</h2>
+                <p>Like POS: tap the main item to open all of its variants.</p>
             </div>
-
-            <div class="product-browser-actions">
-                <span id="selectedProductCount">0 selected</span>
-                <button type="button" onclick="loadAllProducts()">Show All</button>
-            </div>
+            <span class="browser-count" id="visibleItemCount">0 items</span>
         </div>
 
-        <div class="help compact-help">
-            Scanner still works: scan SKU and press Enter. Product stock is shown for the selected shop only.
-        </div>
+        <div class="product-grid" id="productGrid">
+            {% for item in items %}
+                <button
+                    type="button"
+                    class="product-card"
+                    data-item-id="{{ item.id }}"
+                    data-type="{% if item.item_type %}{{ item.item_type.id }}{% else %}none{% endif %}"
+                    data-search="{{ item.name|lower }} {{ item.brand|lower }} {% if item.item_type %}{{ item.item_type.name|lower }}{% endif %} {% for variant in item.variants.all %}{{ variant.sku|lower }} {{ variant.label|lower }} {{ variant.size|lower }} {{ variant.color|lower }} {% endfor %}"
+                    onclick="openVariantModal('{{ item.id }}','{{ item.name|escapejs }}','{{ item.brand|default:"No brand"|escapejs }}','{% if item.image %}{{ item.image.url|escapejs }}{% endif %}')"
+                >
+                    <div class="product-photo">
+                        {% if item.image %}
+                            <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                        {% else %}
+                            <span>📦</span>
+                        {% endif %}
+                    </div>
 
-        <div id="results" class="results product-browser-grid">
-            <div class="product-loading">Loading products...</div>
-        </div>
-    </div>
+                    <div class="product-info">
+                        <span class="product-type">
+                            {% if item.item_type %}
+                                {{ item.item_type.emoji|default:"📦" }} {{ item.item_type.name }}
+                            {% else %}
+                                📦 No Type
+                            {% endif %}
+                        </span>
 
-    <form id="stockForm" method="post" class="batch-card" onsubmit="return prepareSubmit();">
+                        <h3>{{ item.name }}</h3>
+                        <div class="product-brand">{{ item.brand|default:"No brand" }}</div>
+
+                        <div class="product-bottom">
+                            <span class="variant-count">{{ item.variants.count }} variant{{ item.variants.count|pluralize }}</span>
+                            <span class="product-stock {% if item.branch_stock_total <= 0 %}zero{% endif %}">Stock {{ item.branch_stock_total }}</span>
+                        </div>
+                    </div>
+                </button>
+
+                <template id="stockVariants{{ item.id }}">
+                    {% for variant in item.variants.all %}
+                        <button
+                            type="button"
+                            class="stock-variant-option"
+                            data-variant-id="{{ variant.id }}"
+                            data-item-name="{{ item.name }}"
+                            data-brand="{{ item.brand|default:"No brand" }}"
+                            data-display="{{ variant.display_name }}"
+                            data-sku="{{ variant.sku }}"
+                            data-stock="{{ variant.branch_stock_qty }}"
+                            data-unit="{{ item.get_unit_display }}"
+                            data-cost="{{ variant.display_cost }}"
+                            data-image="{% if variant.display_image %}{{ variant.display_image.url }}{% endif %}"
+                            onclick="selectStockVariant(this)"
+                        >
+                            <span class="modal-variant-photo">
+                                {% if variant.display_image %}
+                                    <img src="{{ variant.display_image.url }}" alt="{{ variant.display_name }}">
+                                {% else %}
+                                    <span>📦</span>
+                                {% endif %}
+                            </span>
+
+                            <span class="modal-variant-info">
+                                <strong>{{ variant.display_name }}</strong>
+                                <small>
+                                    {% if variant.sku %}SKU {{ variant.sku }}{% else %}Automatic SKU{% endif %}
+                                    {% if variant.size %} · Size {{ variant.size }}{% endif %}
+                                    {% if variant.color %} · {{ variant.color }}{% endif %}
+                                </small>
+                            </span>
+
+                            <span class="modal-variant-side">
+                                <strong>${{ variant.display_price|floatformat:2 }}</strong>
+                                <span>Stock {{ variant.branch_stock_qty }}</span>
+                            </span>
+                        </button>
+                    {% empty %}
+                        <div class="modal-empty">This item has no variant. Create a variant first.</div>
+                    {% endfor %}
+                </template>
+            {% empty %}
+                <div class="no-products active">No active items found.</div>
+            {% endfor %}
+
+            <div class="no-products" id="noProducts">No items match this type or search.</div>
+        </div>
+    </section>
+
+    <form method="post" id="stockForm" class="card stock-form-card" onsubmit="return prepareStockSubmit();">
         {% csrf_token %}
+        <input type="hidden" name="branch" id="branchInput" value="{% if selected_branch %}{{ selected_branch.id }}{% endif %}">
+        <input type="hidden" name="rows_json" id="rowsJson" value="[]">
 
-        {% if selected_branch %}
-            <input type="hidden" name="branch" id="branchInput" value="{{ selected_branch.id }}">
-        {% else %}
-            <input type="hidden" name="branch" id="branchInput" value="">
-        {% endif %}
-
-        <input type="hidden" name="rows_json" id="rowsJson">
-
-        <div class="stock-rows-heading">
+        <div class="stock-head">
             <div>
-                <h1>Stock Rows</h1>
-                <p>Adjust quantity, cost and note before saving.</p>
+                <h2>Selected Stock</h2>
+                <p>Set quantity, cost and note, then save all rows together.</p>
             </div>
-            <span id="stockRowsCount">0 items</span>
+            <span class="stock-row-count" id="stockRowCount">0 rows</span>
         </div>
 
         <div class="table-wrap">
@@ -1457,724 +1434,388 @@ body.stock-popup-open{
                 <thead>
                     <tr>
                         <th>Photo</th>
-                        <th>Item Info</th>
+                        <th>Item / Variant</th>
                         <th>SKU</th>
-                        <th>Current Stock</th>
-                        <th>Qty In</th>
-                        {% if can_edit_cost_price %}
-                            <th>Cost</th>
-                        {% endif %}
+                        <th>Current</th>
+                        <th>Quantity In</th>
+                        {% if can_edit_cost_price %}<th>Cost</th>{% endif %}
                         <th>Note</th>
                         <th></th>
                     </tr>
                 </thead>
-
-                <tbody id="rowsBody">
-                    <tr id="emptyRow">
-                        <td colspan="{% if can_edit_cost_price %}8{% else %}7{% endif %}">
-                            <div class="empty">No stock rows yet. Tap a product above.</div>
-                        </td>
-                    </tr>
+                <tbody id="stockRowsBody">
+                    <tr class="empty-row"><td colspan="{% if can_edit_cost_price %}8{% else %}7{% endif %}">Tap an item and choose a variant.</td></tr>
                 </tbody>
             </table>
         </div>
 
-        <div class="stock-mobile-list" id="mobileRowsList">
-            <div class="mobile-stock-empty">
-                Tap a product above to add it here.
+        <div class="mobile-stock-list" id="mobileStockList">
+            <div class="mobile-empty">Tap an item and choose a variant.</div>
+        </div>
+
+        <div class="save-bar">
+            <button type="button" class="clear-btn" onclick="clearAllRows()">Clear</button>
+            <button type="submit" class="save-btn">Save Batch Stock In</button>
+        </div>
+    </form>
+</div>
+
+<div class="modal-backdrop" id="variantModalBackdrop" onclick="closeVariantModal()">
+    <div class="variant-modal" onclick="event.stopPropagation()">
+        <div class="modal-head">
+            <div>
+                <h2>Select Variant</h2>
+                <p>Choose the exact size, color or label to stock in.</p>
+            </div>
+            <button type="button" class="modal-close" onclick="closeVariantModal()">✕</button>
+        </div>
+
+        <div class="modal-product">
+            <div class="modal-product-photo" id="modalProductPhoto"><span>📦</span></div>
+            <div>
+                <strong id="modalProductName">Item</strong>
+                <span id="modalProductBrand">No brand</span>
             </div>
         </div>
 
-        <div class="save-row mobile-save-row">
-            <button class="btn-main" type="submit">
-                Save Batch Stock In
-            </button>
-        </div>
-    </form>
-
+        <div class="modal-variant-list" id="modalVariantList"></div>
+    </div>
 </div>
 
 {% if request.user.is_superuser %}
-<div class="shop-popup-backdrop" id="shopPopupBackdrop" onclick="closeShopPopup()"></div>
+<div class="modal-backdrop" id="shopModalBackdrop" onclick="closeShopPopup()">
+    <div class="shop-popup" onclick="event.stopPropagation()">
+        <div class="shop-popup-head">
+            <h3>Choose Shop</h3>
+            <button type="button" class="modal-close" onclick="closeShopPopup()">✕</button>
+        </div>
 
-<div class="shop-popup" id="shopPopup">
-    <div class="shop-popup-head">
-        <h3>Choose Shop</h3>
-        <button type="button" onclick="closeShopPopup()">✕</button>
-    </div>
-
-    <div class="shop-list">
-        {% for branch in branches %}
-            <button
-                type="button"
-                class="shop-option {% if selected_branch and selected_branch.id == branch.id %}active{% endif %}"
-                onclick="changeBranch('{{ branch.id }}')"
-            >
-                <span>🏪</span>
-                <strong>{{ branch.name }}</strong>
-
-                {% if selected_branch and selected_branch.id == branch.id %}
-                    <em>Selected</em>
-                {% else %}
-                    <em>Use this shop</em>
-                {% endif %}
-            </button>
-        {% endfor %}
+        <div class="shop-list">
+            {% for branch in branches %}
+                <button
+                    type="button"
+                    class="shop-option {% if selected_branch and selected_branch.id == branch.id %}active{% endif %}"
+                    onclick="changeShop('{{ branch.id }}')"
+                >
+                    <span>🏪</span>
+                    <strong>{{ branch.name }}</strong>
+                </button>
+            {% empty %}
+                <div class="modal-empty">No active shop found.</div>
+            {% endfor %}
+        </div>
     </div>
 </div>
 {% endif %}
 
 <script>
-let selectedRows = [];
-let loadedProducts = [];
-let productRequestToken = 0;
-const canEditCostPrice = {% if can_edit_cost_price %}true{% else %}false{% endif %};
+const canEditCost = {% if can_edit_cost_price %}true{% else %}false{% endif %};
+const selectedRows = [];
+let activeType = "all";
 
-const searchInput = document.getElementById("searchInput");
-const resultsBox = document.getElementById("results");
-const rowsBody = document.getElementById("rowsBody");
-const mobileRowsList = document.getElementById("mobileRowsList");
-const stockRowsCount = document.getElementById("stockRowsCount");
+const variantCatalog = [
+    {% for item in items %}
+        {% for variant in item.variants.all %}
+        {
+            id:{{ variant.id }},
+            item_name:"{{ item.name|escapejs }}",
+            brand:"{{ item.brand|default:'No brand'|escapejs }}",
+            display:"{{ variant.display_name|escapejs }}",
+            sku:"{{ variant.sku|escapejs }}",
+            stock:{{ variant.branch_stock_qty|default:0 }},
+            unit:"{{ item.get_unit_display|escapejs }}",
+            cost_price:"{{ variant.display_cost }}",
+            image:"{% if variant.display_image %}{{ variant.display_image.url|escapejs }}{% endif %}"
+        },
+        {% endfor %}
+    {% endfor %}
+];
+
+const productSearch = document.getElementById("productSearch");
+const productGrid = document.getElementById("productGrid");
+const noProducts = document.getElementById("noProducts");
+const visibleItemCount = document.getElementById("visibleItemCount");
+const stockRowsBody = document.getElementById("stockRowsBody");
+const mobileStockList = document.getElementById("mobileStockList");
+const stockRowCount = document.getElementById("stockRowCount");
 const rowsJson = document.getElementById("rowsJson");
-const branchInput = document.getElementById("branchInput");
-
-if(searchInput){
-    searchInput.addEventListener("keydown", function(e){
-        if(e.key === "Enter"){
-            e.preventDefault();
-            searchVariant();
-        }
-    });
-}
-
-function getBranchId(){
-    if(!branchInput){
-        return "";
-    }
-
-    return branchInput.value || "";
-}
-
-function openShopPopup(){
-    const popup = document.getElementById("shopPopup");
-    const backdrop = document.getElementById("shopPopupBackdrop");
-
-    if(popup){
-        popup.classList.add("active");
-    }
-
-    if(backdrop){
-        backdrop.classList.add("active");
-    }
-
-    document.body.classList.add("stock-popup-open");
-}
-
-function closeShopPopup(){
-    const popup = document.getElementById("shopPopup");
-    const backdrop = document.getElementById("shopPopupBackdrop");
-
-    if(popup){
-        popup.classList.remove("active");
-    }
-
-    if(backdrop){
-        backdrop.classList.remove("active");
-    }
-
-    document.body.classList.remove("stock-popup-open");
-}
-
-function changeBranch(branchId){
-    selectedRows = [];
-    renderRows();
-    resultsBox.innerHTML = "";
-
-    const url = new URL(window.location.href);
-    url.searchParams.set("branch", branchId);
-    window.location.href = url.toString();
-}
-
-async function searchVariant(showAll = false){
-    const q = showAll ? "" : searchInput.value.trim();
-    const branchId = getBranchId();
-
-    if(!branchId){
-        alert("Please select shop/branch first.");
-        return;
-    }
-
-    const requestToken = ++productRequestToken;
-
-    resultsBox.innerHTML = `
-        <div class="product-loading">
-            ${q ? "Searching products..." : "Loading all products..."}
-        </div>
-    `;
-
-    try{
-        const res = await fetch(
-            "{% url 'variant_search_api' %}?q=" +
-            encodeURIComponent(q) +
-            "&branch=" +
-            encodeURIComponent(branchId) +
-            "&all=1"
-        );
-
-        if(!res.ok){
-            throw new Error("Unable to load products.");
-        }
-
-        const data = await res.json();
-
-        if(requestToken !== productRequestToken){
-            return;
-        }
-
-        loadedProducts = Array.isArray(data.results) ? data.results : [];
-        renderProductBrowser(loadedProducts);
-
-        /*
-         * Scanner behavior remains fast:
-         * an exact SKU search immediately adds the matching variant.
-         */
-        if(
-            q &&
-            loadedProducts.length === 1 &&
-            String(loadedProducts[0].sku || "").toLowerCase() === q.toLowerCase()
-        ){
-            addRow(loadedProducts[0]);
-            searchInput.value = "";
-            syncProductSelectionState();
-            searchInput.focus();
-        }
-    }catch(error){
-        resultsBox.innerHTML = `
-            <div class="product-browser-empty">
-                Could not load products. Please try again.
-            </div>
-        `;
-    }
-}
-
-function loadAllProducts(){
-    if(searchInput){
-        searchInput.value = "";
-    }
-
-    searchVariant(true);
-}
-
-function renderProductBrowser(products){
-    resultsBox.innerHTML = "";
-
-    if(!products.length){
-        resultsBox.innerHTML = `
-            <div class="product-browser-empty">
-                No products found for this shop.
-            </div>
-        `;
-        updateSelectedProductCount();
-        return;
-    }
-
-    products.forEach(v => {
-        const card = document.createElement("article");
-        card.className = "result-card";
-        card.dataset.variantId = String(v.id);
-        card.tabIndex = 0;
-        card.setAttribute("role", "button");
-        card.setAttribute("aria-label", "Add " + (v.item_name || "product"));
-
-        card.onclick = function(){
-            addRow(v);
-            syncProductSelectionState();
-        };
-
-        card.onkeydown = function(event){
-            if(event.key === "Enter" || event.key === " "){
-                event.preventDefault();
-                addRow(v);
-                syncProductSelectionState();
-            }
-        };
-
-        card.innerHTML = `
-            <div class="result-img">
-                ${inventoryImageMarkup(v.image)}
-            </div>
-
-            <div class="result-card-main">
-                <div class="result-name">${v.type_emoji || "📦"} ${v.item_name}</div>
-                <div class="result-meta">${v.brand || "No brand"} • ${v.display || "Default"}</div>
-                <div class="result-meta">Stock: ${v.stock} ${v.unit || ""}</div>
-                <div class="result-card-footer">
-                    <span class="sku">${v.sku || "No SKU"}</span>
-                    <button type="button" class="product-add-btn" tabindex="-1">＋ Add</button>
-                </div>
-            </div>
-        `;
-
-        resultsBox.appendChild(card);
-    });
-
-    syncProductSelectionState();
-    inventoryNormalizeMediaImages(resultsBox);
-}
-
-function syncProductSelectionState(){
-    const selectedIds = new Set(
-        selectedRows.map(row => String(row.variant_id))
-    );
-
-    resultsBox.querySelectorAll(".result-card").forEach(card => {
-        const isSelected = selectedIds.has(card.dataset.variantId);
-        card.classList.toggle("selected", isSelected);
-
-        const button = card.querySelector(".product-add-btn");
-        if(button){
-            button.textContent = isSelected ? "＋ Add More" : "＋ Add";
-        }
-    });
-
-    updateSelectedProductCount();
-}
-
-function updateSelectedProductCount(){
-    const counter = document.getElementById("selectedProductCount");
-
-    if(counter){
-        counter.textContent =
-            selectedRows.length +
-            (selectedRows.length === 1 ? " selected" : " selected");
-    }
-}
-function addRow(v){
-    let existing = selectedRows.find(r => r.variant_id === v.id);
-
-    if(existing){
-        existing.quantity += 1;
-        renderRows();
-        syncProductSelectionState();
-        return;
-    }
-
-    selectedRows.push({
-        variant_id: v.id,
-        image: v.image,
-        item_name: v.item_name,
-        brand: v.brand,
-        display: v.display,
-        sku: v.sku,
-        stock: v.stock,
-        unit: v.unit,
-        quantity: 1,
-        cost_price: v.cost_price || "0.00",
-        note: ""
-    });
-
-    renderRows();
-}
 
 function escapeHtml(value){
     return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
 }
 
-function renderRows(){
-    rowsBody.innerHTML = "";
-    mobileRowsList.innerHTML = "";
+function imageMarkup(url){
+    return url
+        ? `<img src="${escapeHtml(url)}" alt="Product">`
+        : `<span>📦</span>`;
+}
 
-    if(stockRowsCount){
-        stockRowsCount.textContent =
-            selectedRows.length + (selectedRows.length === 1 ? " item" : " items");
-    }
+function selectType(button,typeId){
+    activeType = String(typeId || "all");
 
-    if(selectedRows.length === 0){
-        rowsBody.innerHTML = `
-            <tr id="emptyRow">
-                <td colspan="${canEditCostPrice ? 8 : 7}">
-                    <div class="empty">No stock rows yet. Tap a product above.</div>
-                </td>
-            </tr>
-        `;
-
-        mobileRowsList.innerHTML = `
-            <div class="mobile-stock-empty">
-                Tap a product above to add it here.
-            </div>
-        `;
-        return;
-    }
-
-    selectedRows.forEach((row, index) => {
-        const safeName = escapeHtml(row.item_name);
-        const safeBrand = escapeHtml(row.brand || "No brand");
-        const safeDisplay = escapeHtml(row.display || "Default");
-        const safeSku = escapeHtml(row.sku || "No SKU");
-        const safeUnit = escapeHtml(row.unit || "");
-        const safeNote = escapeHtml(row.note || "");
-        const safeCost = escapeHtml(row.cost_price || "0.00");
-
-        /* Desktop table row */
-        const tr = document.createElement("tr");
-
-        let costCell = "";
-
-        if(canEditCostPrice){
-            costCell = `
-                <td>
-                    <input
-                        class="cost-input"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value="${safeCost}"
-                        onchange="updateRow(${index}, 'cost_price', this.value)"
-                    >
-                </td>
-            `;
-        }
-
-        tr.innerHTML = `
-            <td>
-                <div class="row-img">${inventoryImageMarkup(row.image)}</div>
-            </td>
-
-            <td>
-                <div style="font-weight:900;color:#17152f;">${safeName}</div>
-                <div style="color:#7b7288;">${safeBrand} • ${safeDisplay}</div>
-            </td>
-
-            <td>${safeSku}</td>
-            <td>${row.stock} ${safeUnit}</td>
-
-            <td>
-                <input
-                    class="qty-input"
-                    type="number"
-                    min="1"
-                    value="${row.quantity}"
-                    onchange="updateRow(${index}, 'quantity', this.value)"
-                >
-            </td>
-
-            ${costCell}
-
-            <td>
-                <input
-                    class="note-input"
-                    type="text"
-                    value="${safeNote}"
-                    onchange="updateRow(${index}, 'note', this.value)"
-                    placeholder="Optional"
-                >
-            </td>
-
-            <td>
-                <button type="button" class="remove-btn" onclick="removeRow(${index})">
-                    Remove
-                </button>
-            </td>
-        `;
-
-        rowsBody.appendChild(tr);
-
-        /* Phone card */
-        const card = document.createElement("article");
-        card.className = "mobile-stock-card";
-
-        const mobileCostField = canEditCostPrice ? `
-            <label>
-                <span class="mobile-control-label">Cost Price</span>
-                <input
-                    class="mobile-cost-input"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value="${safeCost}"
-                    onchange="updateRow(${index}, 'cost_price', this.value)"
-                >
-            </label>
-        ` : "";
-
-        const lowerControlsClass = canEditCostPrice
-            ? "mobile-two-controls"
-            : "mobile-stock-controls";
-
-        card.innerHTML = `
-            <div class="mobile-stock-top">
-                <div class="mobile-stock-photo">
-                    ${inventoryImageMarkup(row.image)}
-                </div>
-
-                <div class="mobile-stock-info">
-                    <strong>${safeName}</strong>
-                    <small>${safeBrand} • ${safeDisplay}</small>
-                </div>
-
-                <button
-                    type="button"
-                    class="mobile-remove-btn"
-                    onclick="removeRow(${index})"
-                    aria-label="Remove ${safeName}"
-                >
-                    🗑
-                </button>
-            </div>
-
-            <div class="mobile-stock-meta">
-                <div>
-                    <small>SKU</small>
-                    <strong>${safeSku}</strong>
-                </div>
-                <div>
-                    <small>Current Stock</small>
-                    <strong>${row.stock} ${safeUnit}</strong>
-                </div>
-            </div>
-
-            <div class="mobile-stock-controls">
-                <label>
-                    <span class="mobile-control-label">Quantity In</span>
-                    <div class="mobile-qty-stepper">
-                        <button type="button" onclick="adjustQuantity(${index}, -1)">−</button>
-                        <input
-                            type="number"
-                            min="1"
-                            value="${row.quantity}"
-                            inputmode="numeric"
-                            onchange="updateMobileQuantity(${index}, this.value)"
-                        >
-                        <button type="button" onclick="adjustQuantity(${index}, 1)">＋</button>
-                    </div>
-                </label>
-
-                <div class="${lowerControlsClass}">
-                    ${mobileCostField}
-
-                    <label>
-                        <span class="mobile-control-label">Note</span>
-                        <input
-                            class="mobile-note-input"
-                            type="text"
-                            value="${safeNote}"
-                            placeholder="Optional note"
-                            onchange="updateRow(${index}, 'note', this.value)"
-                        >
-                    </label>
-                </div>
-            </div>
-        `;
-
-        mobileRowsList.appendChild(card);
+    document.querySelectorAll(".type-chip").forEach(chip => {
+        chip.classList.toggle("active",chip === button);
     });
 
-    inventoryNormalizeMediaImages(rowsBody);
-    inventoryNormalizeMediaImages(mobileRowsList);
+    filterProducts();
 }
 
-function adjustQuantity(index, step){
-    if(!selectedRows[index]){
+function filterProducts(){
+    const query = (productSearch?.value || "").trim().toLowerCase();
+    let visible = 0;
+
+    document.querySelectorAll(".product-card").forEach(card => {
+        const matchesType = activeType === "all" || card.dataset.type === activeType;
+        const matchesSearch = !query || (card.dataset.search || "").includes(query);
+        const show = matchesType && matchesSearch;
+
+        card.classList.toggle("hidden",!show);
+        if(show){visible += 1;}
+    });
+
+    if(noProducts){
+        noProducts.classList.toggle("active",visible === 0);
+    }
+
+    if(visibleItemCount){
+        visibleItemCount.textContent = visible + (visible === 1 ? " item" : " items");
+    }
+}
+
+function handleSearchButton(){
+    const value = (productSearch?.value || "").trim();
+    const exact = variantCatalog.find(v => String(v.sku || "").toLowerCase() === value.toLowerCase());
+
+    if(value && exact){
+        addStockRow(exact);
+        productSearch.value = "";
+        filterProducts();
+        productSearch.focus();
         return;
     }
 
-    const current = parseInt(selectedRows[index].quantity || 1);
-    selectedRows[index].quantity = Math.max(1, current + step);
-    renderRows();
-    syncProductSelectionState();
+    filterProducts();
 }
 
-function updateMobileQuantity(index, value){
-    if(!selectedRows[index]){
-        return;
+if(productSearch){
+    productSearch.addEventListener("input",filterProducts);
+    productSearch.addEventListener("keydown",event => {
+        if(event.key === "Enter"){
+            event.preventDefault();
+            handleSearchButton();
+        }
+    });
+}
+
+function openVariantModal(itemId,itemName,itemBrand,itemImage){
+    const template = document.getElementById("stockVariants" + itemId);
+    const list = document.getElementById("modalVariantList");
+
+    document.getElementById("modalProductName").textContent = itemName || "Item";
+    document.getElementById("modalProductBrand").textContent = itemBrand || "No brand";
+    document.getElementById("modalProductPhoto").innerHTML = imageMarkup(itemImage);
+    list.innerHTML = template ? template.innerHTML : '<div class="modal-empty">No variant found.</div>';
+
+    document.getElementById("variantModalBackdrop").classList.add("active");
+    document.body.style.overflow = "hidden";
+}
+
+function closeVariantModal(){
+    document.getElementById("variantModalBackdrop").classList.remove("active");
+    document.body.style.overflow = "";
+}
+
+function selectStockVariant(button){
+    const data = {
+        id:Number(button.dataset.variantId),
+        item_name:button.dataset.itemName || "Item",
+        brand:button.dataset.brand || "No brand",
+        display:button.dataset.display || "Default",
+        sku:button.dataset.sku || "",
+        stock:Number(button.dataset.stock || 0),
+        unit:button.dataset.unit || "",
+        cost_price:button.dataset.cost || "0.00",
+        image:button.dataset.image || ""
+    };
+
+    addStockRow(data);
+    closeVariantModal();
+}
+
+function addStockRow(variant){
+    const existing = selectedRows.find(row => Number(row.variant_id) === Number(variant.id));
+
+    if(existing){
+        existing.quantity += 1;
+    }else{
+        selectedRows.push({
+            variant_id:Number(variant.id),
+            item_name:variant.item_name || "Item",
+            brand:variant.brand || "No brand",
+            display:variant.display || "Default",
+            sku:variant.sku || "",
+            stock:Number(variant.stock || 0),
+            unit:variant.unit || "",
+            cost_price:String(variant.cost_price || "0.00"),
+            image:variant.image || "",
+            quantity:1,
+            note:""
+        });
     }
 
-    selectedRows[index].quantity = Math.max(1, parseInt(value || "1"));
-    renderRows();
-    syncProductSelectionState();
+    renderStockRows();
 }
-function updateRow(index, field, value){
-    if(!selectedRows[index]){
-        return;
-    }
+
+function changeQuantity(index,amount){
+    const row = selectedRows[index];
+    if(!row){return;}
+    row.quantity = Math.max(1,Number(row.quantity || 1) + amount);
+    renderStockRows();
+}
+
+function setRowValue(index,field,value){
+    const row = selectedRows[index];
+    if(!row){return;}
 
     if(field === "quantity"){
-        selectedRows[index][field] = parseInt(value || "1");
+        row.quantity = Math.max(1,parseInt(value || "1",10) || 1);
     }else{
-        selectedRows[index][field] = value;
+        row[field] = value;
     }
 }
 
-function removeRow(index){
-    selectedRows.splice(index, 1);
-    renderRows();
-    syncProductSelectionState();
+function removeStockRow(index){
+    selectedRows.splice(index,1);
+    renderStockRows();
 }
 
-function prepareSubmit(){
-    const branchId = getBranchId();
+function clearAllRows(){
+    if(!selectedRows.length){return;}
+    if(confirm("Clear all selected stock rows?")){
+        selectedRows.splice(0,selectedRows.length);
+        renderStockRows();
+    }
+}
 
-    if(!branchId){
-        alert("Please select shop/branch first.");
+function renderStockRows(){
+    renderDesktopRows();
+    renderMobileRows();
+    rowsJson.value = JSON.stringify(selectedRows);
+
+    if(stockRowCount){
+        stockRowCount.textContent = selectedRows.length + (selectedRows.length === 1 ? " row" : " rows");
+    }
+}
+
+function renderDesktopRows(){
+    if(!stockRowsBody){return;}
+
+    if(!selectedRows.length){
+        stockRowsBody.innerHTML = `<tr class="empty-row"><td colspan="${canEditCost ? 8 : 7}">Tap an item and choose a variant.</td></tr>`;
+        return;
+    }
+
+    stockRowsBody.innerHTML = selectedRows.map((row,index) => `
+        <tr>
+            <td><div class="row-photo">${imageMarkup(row.image)}</div></td>
+            <td>
+                <div class="row-info">
+                    <strong>${escapeHtml(row.item_name)}</strong>
+                    <small>${escapeHtml(row.display)} · ${escapeHtml(row.brand)}</small>
+                </div>
+            </td>
+            <td>${escapeHtml(row.sku || "Auto SKU")}</td>
+            <td>${row.stock} ${escapeHtml(row.unit)}</td>
+            <td>
+                <div class="qty-control">
+                    <button type="button" onclick="changeQuantity(${index},-1)">−</button>
+                    <input class="row-input" type="number" min="1" value="${row.quantity}" oninput="setRowValue(${index},'quantity',this.value)">
+                    <button type="button" onclick="changeQuantity(${index},1)">＋</button>
+                </div>
+            </td>
+            ${canEditCost ? `
+                <td><input class="row-input" type="number" min="0" step="0.01" value="${escapeHtml(row.cost_price)}" oninput="setRowValue(${index},'cost_price',this.value)"></td>
+            ` : ""}
+            <td><input class="row-input" type="text" value="${escapeHtml(row.note)}" placeholder="Optional" oninput="setRowValue(${index},'note',this.value)"></td>
+            <td><button type="button" class="remove-row-btn" onclick="removeStockRow(${index})">✕</button></td>
+        </tr>
+    `).join("");
+}
+
+function renderMobileRows(){
+    if(!mobileStockList){return;}
+
+    if(!selectedRows.length){
+        mobileStockList.innerHTML = '<div class="mobile-empty">Tap an item and choose a variant.</div>';
+        return;
+    }
+
+    mobileStockList.innerHTML = selectedRows.map((row,index) => `
+        <article class="mobile-stock-card">
+            <div class="mobile-stock-photo">${imageMarkup(row.image)}</div>
+
+            <div class="mobile-stock-info">
+                <strong>${escapeHtml(row.item_name)}</strong>
+                <small>${escapeHtml(row.display)} · ${escapeHtml(row.sku || "Auto SKU")}</small>
+                <small>Current stock: ${row.stock} ${escapeHtml(row.unit)}</small>
+
+                <div class="mobile-stock-fields">
+                    <div class="mobile-qty">
+                        <button type="button" onclick="changeQuantity(${index},-1)">−</button>
+                        <input class="row-input" type="number" min="1" value="${row.quantity}" oninput="setRowValue(${index},'quantity',this.value)">
+                        <button type="button" onclick="changeQuantity(${index},1)">＋</button>
+                    </div>
+
+                    <input class="row-input" type="text" value="${escapeHtml(row.note)}" placeholder="Note" oninput="setRowValue(${index},'note',this.value)">
+
+                    ${canEditCost ? `
+                        <input class="row-input" type="number" min="0" step="0.01" value="${escapeHtml(row.cost_price)}" placeholder="Cost" oninput="setRowValue(${index},'cost_price',this.value)">
+                    ` : ""}
+                </div>
+            </div>
+
+            <button type="button" class="mobile-remove" onclick="removeStockRow(${index})">✕</button>
+        </article>
+    `).join("");
+}
+
+function prepareStockSubmit(){
+    if(!selectedRows.length){
+        alert("Please select at least one variant.");
         return false;
     }
 
-    const validRows = selectedRows.filter(r => parseInt(r.quantity) > 0);
+    selectedRows.forEach(row => {
+        row.quantity = Math.max(1,parseInt(row.quantity || "1",10) || 1);
+    });
 
-    if(validRows.length === 0){
-        alert("Please add at least one stock row.");
-        return false;
-    }
-
-    rowsJson.value = JSON.stringify(validRows);
+    rowsJson.value = JSON.stringify(selectedRows);
     return true;
 }
 
-document.addEventListener("keydown", function(e){
-    if(e.key === "Escape"){
-        closeShopPopup();
-    }
-});
-
-
-function inventoryResolveMediaUrl(rawUrl){
-    let value = String(rawUrl || "").trim().replace(/\\/g, "/");
-
-    if(!value){
-        return "";
-    }
-
-    if(/^(data:|blob:)/i.test(value)){
-        return value;
-    }
-
-    try{
-        const parsed = new URL(value, window.location.href);
-        const path = parsed.pathname || "";
-
-        /*
-         * iPhone/PWA can load the page through HTTPS while Django returns
-         * an absolute HTTP image URL. Keep the image path, but use the same
-         * origin and protocol as the current page.
-         */
-        if(
-            path.startsWith("/media/") ||
-            path.includes("/media/") ||
-            parsed.hostname === window.location.hostname
-        ){
-            return window.location.origin + path + parsed.search + parsed.hash;
-        }
-
-        return parsed.href;
-    }catch(error){
-        if(value.startsWith("/")){
-            return window.location.origin + value;
-        }
-
-        if(value.startsWith("media/")){
-            return window.location.origin + "/" + value;
-        }
-
-        return window.location.origin + "/media/" + value.replace(/^\.?\//, "");
-    }
+function openShopPopup(){
+    document.getElementById("shopModalBackdrop")?.classList.add("active");
+    document.body.style.overflow = "hidden";
 }
 
-function inventoryMediaFallback(img){
-    const holder = img?.parentElement;
-
-    if(img){
-        img.remove();
-    }
-
-    if(!holder){
-        return;
-    }
-
-    if(!holder.querySelector(".inventory-media-fallback")){
-        const fallback = document.createElement("span");
-        fallback.className = "inventory-media-fallback";
-        fallback.textContent = "📦";
-        holder.appendChild(fallback);
-    }
+function closeShopPopup(){
+    document.getElementById("shopModalBackdrop")?.classList.remove("active");
+    document.body.style.overflow = "";
 }
 
-function inventoryMediaError(img){
-    if(!img){
-        return;
-    }
-
-    const original = img.dataset.mediaSrc || img.getAttribute("src") || "";
-    const resolved = inventoryResolveMediaUrl(original);
-
-    if(
-        img.dataset.mediaRetried !== "1" &&
-        resolved &&
-        resolved !== img.getAttribute("src")
-    ){
-        img.dataset.mediaRetried = "1";
-        img.src = resolved;
-        return;
-    }
-
-    inventoryMediaFallback(img);
+function changeShop(branchId){
+    const url = new URL(window.location.href);
+    url.searchParams.set("branch",branchId);
+    window.location.href = url.toString();
 }
 
-function inventoryNormalizeMediaImages(root){
-    const scope = root || document;
-
-    scope.querySelectorAll("img.inventory-media-image").forEach(function(img){
-        const raw = img.dataset.mediaSrc || img.getAttribute("src") || "";
-        const resolved = inventoryResolveMediaUrl(raw);
-
-        if(resolved && resolved !== img.getAttribute("src")){
-            img.src = resolved;
-        }
-    });
-}
-
-document.addEventListener("DOMContentLoaded", function(){
-    inventoryNormalizeMediaImages(document);
-});
-
-
-
-function inventoryImageMarkup(rawUrl){
-    const url = inventoryResolveMediaUrl(rawUrl);
-
-    if(!url){
-        return '<span class="inventory-media-fallback">📦</span>';
-    }
-
-    const safeUrl = url.replace(/"/g, "&quot;");
-
-    return `<img class="inventory-media-image"
-                 src="${safeUrl}"
-                 data-media-src="${safeUrl}"
-                 alt="Inventory item"
-                 loading="eager"
-                 decoding="async"
-                 onerror="inventoryMediaError(this)">`;
-}
-
-
-
-document.addEventListener("DOMContentLoaded", function(){
-    if(getBranchId()){
-        loadAllProducts();
-    }else{
-        resultsBox.innerHTML = `
-            <div class="product-browser-empty">
-                Choose a shop to display its products.
-            </div>
-        `;
-    }
-});
-
+filterProducts();
+renderStockRows();
 </script>
 
 {% endblock %}

@@ -87,12 +87,17 @@ class ItemVariant(models.Model):
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     sale_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
+    # Controls how variants appear in Inventory, Batch Stock In and POS.
+    # Staff can change this order from the item detail page.
+    sort_order = models.PositiveIntegerField(default=0)
+
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ["item__name", "size", "color", "label", "id"]
+        ordering = ["item__name", "sort_order", "id"]
         indexes = [
             models.Index(fields=["item", "is_active"]),
+            models.Index(fields=["item", "sort_order"]),
             models.Index(fields=["sku"]),
         ]
 
@@ -158,11 +163,22 @@ class ItemVariant(models.Model):
         return "-".join([p for p in parts if p])
 
     def save(self, *args, **kwargs):
+        is_new = self.pk is None
+
         if not self.sale_price:
             self.sale_price = self.item.sale_price
 
         if not self.cost_price:
             self.cost_price = self.item.cost_price
+
+        if is_new and not self.sort_order:
+            last_variant = (
+                ItemVariant.objects
+                .filter(item=self.item)
+                .order_by("-sort_order", "-id")
+                .first()
+            )
+            self.sort_order = (last_variant.sort_order if last_variant else 0) + 1
 
         super().save(*args, **kwargs)
 

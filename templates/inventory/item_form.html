@@ -1016,6 +1016,411 @@ body.inventory-form-popup-open{
     line-height:1;
 }
 
+
+
+/* =========================================================
+   INLINE VARIANT BUILDER — CREATE ITEM + MANY VARIANTS
+========================================================= */
+.variant-builder{
+    margin-top:2px;
+    padding:22px;
+    border:1px solid #eaddec;
+    border-radius:26px;
+    background:linear-gradient(145deg,#fff,#fff8fb);
+}
+
+.variant-builder-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:16px;
+}
+
+.variant-builder-title{
+    min-width:0;
+}
+
+.variant-builder-title strong{
+    display:block;
+    color:#17152f;
+    font-size:20px;
+    font-weight:1000;
+}
+
+.variant-builder-title span{
+    display:block;
+    margin-top:4px;
+    color:#7b7288;
+    font-size:13px;
+    font-weight:800;
+    line-height:1.45;
+}
+
+.add-variant-btn{
+    min-height:48px;
+    padding:0 18px;
+    border:0;
+    border-radius:999px;
+    color:white;
+    background:linear-gradient(135deg,#19a974,#7be0b2);
+    font-weight:1000;
+    cursor:pointer;
+    white-space:nowrap;
+    box-shadow:0 10px 22px rgba(25,169,116,.18);
+}
+
+.variant-rows{
+    display:grid;
+    gap:12px;
+}
+
+.variant-row{
+    position:relative;
+    display:grid;
+    grid-template-columns:46px minmax(0,1fr) auto;
+    gap:12px;
+    align-items:start;
+    padding:14px;
+    border:1px solid #eaddec;
+    border-radius:22px;
+    background:white;
+    box-shadow:0 8px 20px rgba(130,91,60,.05);
+}
+
+.variant-row.dragging{
+    opacity:.55;
+    border-color:#9b7cf6;
+    box-shadow:0 14px 30px rgba(155,124,246,.18);
+}
+
+.variant-drag-handle{
+    width:46px;
+    height:46px;
+    border:1px solid #eaddec;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#7b5cff;
+    background:#f7f2ff;
+    font-size:22px;
+    font-weight:1000;
+    cursor:grab;
+    user-select:none;
+    touch-action:none;
+}
+
+.variant-drag-handle:active{
+    cursor:grabbing;
+}
+
+.variant-row-main{
+    min-width:0;
+}
+
+.variant-row-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:10px;
+}
+
+.variant-row-title strong{
+    color:#17152f;
+    font-size:14px;
+    font-weight:1000;
+}
+
+.variant-row-title small{
+    color:#8a8096;
+    font-size:11px;
+    font-weight:900;
+}
+
+.variant-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:9px;
+}
+
+.variant-field{
+    min-width:0;
+}
+
+.variant-field label{
+    display:block;
+    margin-bottom:4px;
+    color:#6b6178;
+    font-size:10px;
+    font-weight:1000;
+}
+
+.variant-field input{
+    width:100%;
+    min-width:0;
+    height:45px;
+    min-height:45px;
+    padding:0 11px;
+    border:1px solid #eaddec;
+    border-radius:13px;
+    background:#fff;
+    color:#17152f;
+    font-size:14px;
+    font-weight:850;
+}
+
+.variant-field input:focus{
+    outline:none;
+    border-color:#9b7cf6;
+    box-shadow:0 0 0 3px rgba(155,124,246,.12);
+}
+
+.variant-image-field{
+    grid-column:span 2;
+}
+
+.variant-image-input{
+    padding:9px!important;
+    height:auto!important;
+    min-height:45px!important;
+}
+
+.variant-image-preview{
+    display:none;
+    width:58px;
+    height:58px;
+    margin-top:7px;
+    overflow:hidden;
+    border:1px solid #eaddec;
+    border-radius:12px;
+    background:#fff8fb;
+}
+
+.variant-image-preview.active{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.variant-image-preview img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+
+.variant-row-actions{
+    display:grid;
+    gap:6px;
+}
+
+.variant-row-actions button{
+    width:40px;
+    height:40px;
+    border:0;
+    border-radius:12px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.variant-move-btn{
+    color:#7b5cff;
+    background:#f1ebff;
+}
+
+.variant-remove-btn{
+    color:#ff4d4d;
+    background:#fff0ef;
+}
+
+.variant-empty{
+    padding:20px;
+    border:1px dashed #d9c6ec;
+    border-radius:18px;
+    color:#7b7288;
+    background:#fffafd;
+    text-align:center;
+    font-weight:900;
+}
+
+.variant-builder-note{
+    margin-top:12px;
+    padding:10px 12px;
+    border-radius:14px;
+    color:#6f57d9;
+    background:#f4f0ff;
+    font-size:12px;
+    font-weight:900;
+}
+
+.manage-variant-note{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:15px;
+    border:1px solid #eaddec;
+    border-radius:20px;
+    background:#fff8fb;
+}
+
+.manage-variant-note span{
+    color:#6b6178;
+    font-weight:850;
+}
+
+.manage-variant-note a{
+    min-height:42px;
+    padding:0 15px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+    font-weight:1000;
+    white-space:nowrap;
+}
+
+@media(max-width:900px){
+    .variant-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+}
+
+@media(max-width:700px){
+    .variant-builder{
+        padding:8px;
+        border-radius:12px;
+    }
+
+    .variant-builder-head{
+        display:grid;
+        grid-template-columns:1fr auto;
+        gap:7px;
+        margin-bottom:8px;
+    }
+
+    .variant-builder-title strong{
+        font-size:12px;
+    }
+
+    .variant-builder-title span{
+        margin-top:2px;
+        font-size:8px;
+        line-height:1.25;
+    }
+
+    .add-variant-btn{
+        min-height:38px;
+        padding:0 10px;
+        border-radius:10px;
+        font-size:9px;
+        box-shadow:none;
+    }
+
+    .variant-rows{
+        gap:7px;
+    }
+
+    .variant-row{
+        grid-template-columns:30px minmax(0,1fr) 32px;
+        gap:6px;
+        padding:7px;
+        border-radius:11px;
+        box-shadow:none;
+    }
+
+    .variant-drag-handle{
+        width:30px;
+        height:38px;
+        border-radius:8px;
+        font-size:16px;
+    }
+
+    .variant-row-title{
+        margin-bottom:5px;
+    }
+
+    .variant-row-title strong{
+        font-size:9px;
+    }
+
+    .variant-row-title small{
+        font-size:7px;
+    }
+
+    .variant-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:5px;
+    }
+
+    .variant-field label{
+        margin-bottom:2px;
+        font-size:7px;
+    }
+
+    .variant-field input{
+        height:38px;
+        min-height:38px;
+        padding:0 7px;
+        border-radius:8px;
+        font-size:16px!important;
+    }
+
+    .variant-image-field{
+        grid-column:1/-1;
+    }
+
+    .variant-image-input{
+        padding:5px!important;
+        min-height:40px!important;
+        font-size:10px!important;
+    }
+
+    .variant-image-preview{
+        width:46px;
+        height:46px;
+        margin-top:4px;
+        border-radius:8px;
+    }
+
+    .variant-row-actions{
+        gap:4px;
+    }
+
+    .variant-row-actions button{
+        width:32px;
+        height:32px;
+        border-radius:8px;
+        font-size:10px;
+    }
+
+    .variant-builder-note{
+        margin-top:7px;
+        padding:6px 8px;
+        border-radius:8px;
+        font-size:8px;
+    }
+
+    .manage-variant-note{
+        display:grid;
+        padding:8px;
+        border-radius:11px;
+    }
+
+    .manage-variant-note span{
+        font-size:9px;
+    }
+
+    .manage-variant-note a{
+        min-height:38px;
+        border-radius:9px;
+        font-size:9px;
+    }
+}
+
 </style>
 
 <div class="form-page">
@@ -1026,12 +1431,19 @@ body.inventory-form-popup-open{
         <h1>{{ title }} 🐾</h1>
 
         <p>
-            Create the main product only. After saving, add real sellable variants with size, color, price, and stock.
+            {% if is_create %}
+                Create the main item and all of its sellable variants in one page.
+            {% else %}
+                Update the main item information. Variant editing and ordering stay on the item detail page.
+            {% endif %}
         </p>
 
         <div class="notice-box">
-            Example: create item <strong>Meo</strong> first. Then add variants:
-            Size M / Red / $10, Size M / Blue / $10, Size S / Red / $5.
+            {% if is_create %}
+                Example: create <strong>Collar</strong>, then add variants such as Size S / Red, Size M / Red, and Size L / Blue before saving.
+            {% else %}
+                Main item changes will return to the item detail page after saving.
+            {% endif %}
         </div>
 
         <form method="post" enctype="multipart/form-data">
@@ -1117,6 +1529,34 @@ body.inventory-form-popup-open{
                     <input type="hidden" name="remove_image" id="removeImageInput" value="0">
 
                     {% for e in form.image.errors %}<div class="error">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="form-box full">
+                    {% if is_create %}
+                        <div class="variant-builder">
+                            <div class="variant-builder-head">
+                                <div class="variant-builder-title">
+                                    <strong>Create Variants</strong>
+                                    <span>One item can have many sizes, colors, labels, prices and photos.</span>
+                                </div>
+
+                                <button type="button" class="add-variant-btn" onclick="addVariantRow()">
+                                    ＋ Add Variant
+                                </button>
+                            </div>
+
+                            <div id="variantRows" class="variant-rows"></div>
+
+                            <div class="variant-builder-note">
+                                Drag the handle to reorder on computer. On phone, use ▲ and ▼. The saved order will be used on the item detail and stock-in pages.
+                            </div>
+                        </div>
+                    {% elif form.instance.pk %}
+                        <div class="manage-variant-note">
+                            <span>Variants are managed separately so existing stock and SKU records stay safe.</span>
+                            <a href="{% url 'item_detail' form.instance.pk %}">Manage Variants</a>
+                        </div>
+                    {% endif %}
                 </div>
 
                 <div class="form-box">
@@ -1454,6 +1894,242 @@ if(dropZone && imageInput){
     });
 }
 
+
+
+/* =========================================================
+   INLINE VARIANT BUILDER
+========================================================= */
+let variantRowCounter = 0;
+let draggedVariantRow = null;
+
+function escapeVariantAttribute(value){
+    return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
+function variantRowMarkup(key){
+    const costEnabled = {% if form.cost_price %}true{% else %}false{% endif %};
+    const saleEnabled = {% if form.sale_price %}true{% else %}false{% endif %};
+
+    return `
+        <div class="variant-row" draggable="true" data-variant-key="${key}">
+            <button
+                type="button"
+                class="variant-drag-handle"
+                title="Drag to reorder"
+                aria-label="Drag variant to reorder"
+            >⋮⋮</button>
+
+            <div class="variant-row-main">
+                <div class="variant-row-title">
+                    <strong class="variant-number">Variant</strong>
+                    <small>Leave SKU blank for automatic SKU</small>
+                </div>
+
+                <input type="hidden" name="variant_key[]" value="${key}">
+
+                <div class="variant-grid">
+                    <div class="variant-field">
+                        <label>Label</label>
+                        <input type="text" name="variant_label[]" placeholder="Default / Premium">
+                    </div>
+
+                    <div class="variant-field">
+                        <label>Size</label>
+                        <input type="text" name="variant_size[]" placeholder="S / M / L">
+                    </div>
+
+                    <div class="variant-field">
+                        <label>Color</label>
+                        <input type="text" name="variant_color[]" placeholder="Red / Blue">
+                    </div>
+
+                    <div class="variant-field">
+                        <label>SKU</label>
+                        <input type="text" name="variant_sku[]" placeholder="Auto if blank">
+                    </div>
+
+                    ${costEnabled ? `
+                        <div class="variant-field">
+                            <label>Cost Price</label>
+                            <input type="number" step="0.01" min="0" name="variant_cost_price[]" placeholder="Use item cost">
+                        </div>
+                    ` : `<input type="hidden" name="variant_cost_price[]" value="">`}
+
+                    ${saleEnabled ? `
+                        <div class="variant-field">
+                            <label>Sale Price</label>
+                            <input type="number" step="0.01" min="0" name="variant_sale_price[]" placeholder="Use item price">
+                        </div>
+                    ` : `<input type="hidden" name="variant_sale_price[]" value="">`}
+
+                    <div class="variant-field variant-image-field">
+                        <label>Variant Photo</label>
+                        <input
+                            type="file"
+                            name="variant_image_${key}"
+                            accept="image/*"
+                            class="variant-image-input"
+                            onchange="previewVariantImage(this)"
+                        >
+                        <div class="variant-image-preview"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="variant-row-actions">
+                <button type="button" class="variant-move-btn" onclick="moveVariantRow(this,-1)" title="Move up">▲</button>
+                <button type="button" class="variant-move-btn" onclick="moveVariantRow(this,1)" title="Move down">▼</button>
+                <button type="button" class="variant-remove-btn" onclick="removeVariantRow(this)" title="Remove">✕</button>
+            </div>
+        </div>
+    `;
+}
+
+function addVariantRow(){
+    const holder = document.getElementById("variantRows");
+
+    if(!holder){
+        return;
+    }
+
+    variantRowCounter += 1;
+    holder.insertAdjacentHTML("beforeend", variantRowMarkup(variantRowCounter));
+
+    const row = holder.lastElementChild;
+    bindVariantDrag(row);
+    refreshVariantNumbers();
+
+    const firstInput = row.querySelector('input[name="variant_label[]"]');
+    if(firstInput && holder.children.length > 1){
+        firstInput.focus();
+    }
+}
+
+function removeVariantRow(button){
+    const row = button.closest(".variant-row");
+    const holder = document.getElementById("variantRows");
+
+    if(!row || !holder){
+        return;
+    }
+
+    if(holder.children.length === 1){
+        row.querySelectorAll('input:not([type="hidden"])').forEach(input => {
+            input.value = "";
+        });
+
+        const preview = row.querySelector(".variant-image-preview");
+        if(preview){
+            preview.classList.remove("active");
+            preview.innerHTML = "";
+        }
+        return;
+    }
+
+    row.remove();
+    refreshVariantNumbers();
+}
+
+function moveVariantRow(button, direction){
+    const row = button.closest(".variant-row");
+    const holder = document.getElementById("variantRows");
+
+    if(!row || !holder){
+        return;
+    }
+
+    if(direction < 0 && row.previousElementSibling){
+        holder.insertBefore(row, row.previousElementSibling);
+    }
+
+    if(direction > 0 && row.nextElementSibling){
+        holder.insertBefore(row.nextElementSibling, row);
+    }
+
+    refreshVariantNumbers();
+}
+
+function refreshVariantNumbers(){
+    document.querySelectorAll("#variantRows .variant-row").forEach((row,index) => {
+        const label = row.querySelector(".variant-number");
+        if(label){
+            label.textContent = `Variant ${index + 1}`;
+        }
+    });
+}
+
+function previewVariantImage(input){
+    const preview = input.parentElement.querySelector(".variant-image-preview");
+    const file = input.files && input.files[0];
+
+    if(!preview){
+        return;
+    }
+
+    if(!file || !file.type.startsWith("image/")){
+        preview.classList.remove("active");
+        preview.innerHTML = "";
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(event){
+        preview.classList.add("active");
+        preview.innerHTML = `<img src="${event.target.result}" alt="Variant preview">`;
+    };
+    reader.readAsDataURL(file);
+}
+
+function bindVariantDrag(row){
+    if(!row){
+        return;
+    }
+
+    row.addEventListener("dragstart", function(event){
+        draggedVariantRow = row;
+        row.classList.add("dragging");
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", row.dataset.variantKey || "");
+    });
+
+    row.addEventListener("dragend", function(){
+        row.classList.remove("dragging");
+        draggedVariantRow = null;
+        refreshVariantNumbers();
+    });
+
+    row.addEventListener("dragover", function(event){
+        event.preventDefault();
+
+        if(!draggedVariantRow || draggedVariantRow === row){
+            return;
+        }
+
+        const box = row.getBoundingClientRect();
+        const before = event.clientY < box.top + box.height / 2;
+        const holder = document.getElementById("variantRows");
+
+        holder.insertBefore(
+            draggedVariantRow,
+            before ? row : row.nextElementSibling
+        );
+    });
+}
+
+function initVariantBuilder(){
+    const holder = document.getElementById("variantRows");
+
+    if(!holder){
+        return;
+    }
+
+    addVariantRow();
+}
+
 initFakeSelect(typeSelect, typeLabel, "typePopupList", "typePopup");
 initFakeSelect(unitSelect, unitLabel, "unitPopupList", "unitPopup");
 refreshActiveToggleUI();
@@ -1556,6 +2232,7 @@ function inventoryNormalizeMediaImages(root){
 
 document.addEventListener("DOMContentLoaded", function(){
     inventoryNormalizeMediaImages(document);
+    initVariantBuilder();
 });
 
 

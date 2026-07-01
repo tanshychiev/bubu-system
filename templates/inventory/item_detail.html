@@ -4,1684 +4,1447 @@
 {% block content %}
 
 <style>
-a { text-decoration:none !important; }
+*{box-sizing:border-box}
+a{text-decoration:none}
+button,input,select,textarea{font-family:inherit}
 
-.inventory-hero {
-    display:grid;
-    grid-template-columns:1fr 620px;
-    align-items:center;
-    gap:25px;
-    margin-bottom:10px;
+.item-detail-page{
+    width:min(1180px,100%);
+    margin:0 auto;
+    padding:18px 20px 34px;
 }
 
-.inventory-title h1 {
-    font-size:42px;
-    margin:0;
-    color:#17152f;
-    font-weight:900;
-}
-
-.inventory-title p {
-    color:#7b7288;
-    font-weight:800;
-}
-
-.hero-img {
-    width:100%;
-    height:285px;
-    object-fit:contain;
-}
-
-.tool-row {
+.page-top{
     display:flex;
-    gap:14px;
-    flex-wrap:wrap;
-    margin-top:22px;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:14px;
+}
+
+.page-title small{
+    display:inline-flex;
+    min-height:25px;
+    padding:0 9px;
+    border-radius:999px;
     align-items:center;
+    color:#6f50d8;
+    background:#f0eaff;
+    font-size:9px;
+    font-weight:1000;
 }
 
-.search-pill {
-    width:280px;
-    height:54px;
-    border-radius:999px;
-    border:1px solid #eaddec;
-    padding:0 18px;
+.page-title h1{
+    margin:6px 0 0;
+    color:#100d35;
+    font-size:34px;
+    line-height:1.1;
+    font-weight:1000;
+}
+
+.page-title p{
+    margin:5px 0 0;
+    color:#81778c;
+    font-size:12px;
+    font-weight:850;
+}
+
+.top-actions{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:7px;
+}
+
+.action-btn{
+    min-height:44px;
+    padding:0 14px;
+    border:0;
+    border-radius:13px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    color:#40384c;
     background:white;
-    font-weight:800;
-}
-
-.btn-search {
-    height:54px;
-    border-radius:999px;
-    padding:0 32px;
-    border:none;
-    color:white;
-    font-weight:900;
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
-    box-shadow:0 12px 26px rgba(155,124,246,.25);
+    border:1px solid #eaddec;
+    font-size:11px;
+    font-weight:1000;
     cursor:pointer;
 }
 
-.btn-reset {
-    height:54px;
-    border-radius:999px;
-    padding:0 30px;
-    background:white;
-    border:1px solid #eaddec;
-    font-weight:900;
-    color:#6b6178;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-}
-
-.add-btn {
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    height:54px;
-    padding:0 28px;
-    border-radius:999px;
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
+.action-btn.primary{
     color:white;
-    font-weight:900;
-    box-shadow:0 12px 26px rgba(155,124,246,.25);
+    border-color:transparent;
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+    box-shadow:0 9px 20px rgba(142,99,255,.16);
 }
 
-.type-btn {
-    background:linear-gradient(135deg,#7b5cff,#b07cff);
-}
-
-.stock-batch-btn {
+.action-btn.green{
+    color:white;
+    border-color:transparent;
     background:linear-gradient(135deg,#19a974,#7be0b2);
 }
 
-.control-btn {
-    background:linear-gradient(135deg,#ff8c6b,#ffbd73);
+.detail-layout{
+    display:grid;
+    grid-template-columns:330px minmax(0,1fr);
+    gap:14px;
+    align-items:start;
 }
 
-/* ============================= */
-/* SHOP POPUP BUTTON */
-/* ============================= */
-.branch-popup-btn{
-    height:54px;
-    min-width:230px;
-    border-radius:999px;
-    border:1px solid #eaddec;
-    padding:0 22px;
+.card{
+    border:1px solid #efdfd7;
+    border-radius:22px;
     background:white;
+    box-shadow:0 10px 30px rgba(130,91,60,.07);
+}
+
+.item-card{
+    position:sticky;
+    top:14px;
+    padding:14px;
+}
+
+.item-photo{
+    height:275px;
+    border-radius:18px;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(145deg,#fff5ee,#f5f0ff);
+}
+
+.item-photo img{
+    width:100%;
+    height:100%;
+    padding:8px;
+    object-fit:contain;
+}
+
+.item-photo-empty{
+    font-size:78px;
+}
+
+.item-main-info{
+    padding:14px 4px 3px;
+}
+
+.item-type-badge{
+    display:inline-flex;
+    min-height:27px;
+    padding:0 9px;
+    border-radius:999px;
+    align-items:center;
+    color:#6f57d9;
+    background:#f4f0ff;
+    font-size:10px;
+    font-weight:1000;
+}
+
+.item-main-info h2{
+    margin:9px 0 2px;
+    color:#100d35;
+    font-size:24px;
+    line-height:1.15;
+    font-weight:1000;
+}
+
+.item-brand{
+    color:#81778c;
+    font-size:12px;
+    font-weight:850;
+}
+
+.summary-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+    margin-top:12px;
+}
+
+.summary-box{
+    min-width:0;
+    padding:10px;
+    border-radius:13px;
+    background:#fff8fb;
+    border:1px solid #f0e5ee;
+}
+
+.summary-box span,
+.summary-box strong{
+    display:block;
+}
+
+.summary-box span{
+    color:#81778c;
+    font-size:8px;
+    font-weight:1000;
+}
+
+.summary-box strong{
+    margin-top:4px;
+    overflow:hidden;
+    color:#100d35;
+    font-size:13px;
+    font-weight:1000;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.active-chip{
+    margin-top:10px;
+    min-height:38px;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#15915f;
+    background:#eafff4;
+    font-size:11px;
+    font-weight:1000;
+}
+
+.active-chip.off{
+    color:#dc4c4c;
+    background:#fff0ef;
+}
+
+.main-column{
+    min-width:0;
+    display:grid;
+    gap:12px;
+}
+
+.branch-card{
+    padding:13px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+}
+
+.branch-info{
+    min-width:0;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.branch-icon{
+    width:42px;
+    height:42px;
+    flex:0 0 42px;
+    border-radius:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:white;
+    font-size:20px;
+}
+
+.branch-info span,
+.branch-info strong{
+    display:block;
+}
+
+.branch-info span{
+    color:#81778c;
+    font-size:9px;
     font-weight:900;
-    color:#17152f;
-    box-shadow:0 10px 24px rgba(130,91,60,.06);
+}
+
+.branch-info strong{
+    margin-top:2px;
+    color:#100d35;
+    font-size:13px;
+    font-weight:1000;
+}
+
+.branch-change-btn{
+    min-height:39px;
+    padding:0 12px;
+    border:0;
+    border-radius:12px;
+    color:white;
+    background:linear-gradient(135deg,#34c6ff,#7b5cff);
+    font-size:10px;
+    font-weight:1000;
     cursor:pointer;
+}
+
+.variant-card-wrap{
+    padding:15px;
+}
+
+.section-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+}
+
+.section-head h2{
+    margin:0;
+    color:#100d35;
+    font-size:20px;
+    font-weight:1000;
+}
+
+.section-head p{
+    margin:4px 0 0;
+    color:#81778c;
+    font-size:10px;
+    font-weight:850;
+    line-height:1.4;
+}
+
+.order-status{
+    min-height:34px;
+    padding:0 10px;
+    border-radius:999px;
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    gap:8px;
+    color:#6f57d9;
+    background:#f4f0ff;
+    font-size:9px;
+    font-weight:1000;
+    white-space:nowrap;
 }
 
-.branch-popup-backdrop{
+.order-status.saving{
+    color:#b76b00;
+    background:#fff3dd;
+}
+
+.order-status.saved{
+    color:#15915f;
+    background:#eafff4;
+}
+
+.order-status.error{
+    color:#d94343;
+    background:#fff0ef;
+}
+
+.variant-list{
+    display:grid;
+    gap:9px;
+}
+
+.variant-row{
+    display:grid;
+    grid-template-columns:44px 76px minmax(0,1fr) auto;
+    gap:10px;
+    align-items:center;
+    padding:10px;
+    border:1px solid #eaddec;
+    border-radius:17px;
+    background:linear-gradient(180deg,#fff,#fffaf7);
+    transition:.18s;
+}
+
+.variant-row.dragging{
+    opacity:.55;
+    transform:scale(.995);
+    border-color:#8e63ff;
+    box-shadow:0 12px 26px rgba(142,99,255,.16);
+}
+
+.drag-handle{
+    width:44px;
+    height:52px;
+    border:1px solid #ded2ea;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#7b5cff;
+    background:#f4f0ff;
+    font-size:21px;
+    font-weight:1000;
+    cursor:grab;
+    touch-action:none;
+    user-select:none;
+}
+
+.drag-handle:active{
+    cursor:grabbing;
+}
+
+.variant-photo{
+    width:76px;
+    height:66px;
+    overflow:hidden;
+    border-radius:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fff5ee;
+}
+
+.variant-photo img{
+    width:100%;
+    height:100%;
+    padding:3px;
+    object-fit:contain;
+}
+
+.variant-photo span{
+    font-size:31px;
+}
+
+.variant-content{
+    min-width:0;
+}
+
+.variant-title-line{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    flex-wrap:wrap;
+}
+
+.variant-title-line strong{
+    color:#100d35;
+    font-size:14px;
+    font-weight:1000;
+}
+
+.variant-order-number{
+    min-width:25px;
+    height:25px;
+    padding:0 6px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:#6f57d9;
+    background:#f4f0ff;
+    font-size:9px;
+    font-weight:1000;
+}
+
+.variant-tags{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    margin-top:6px;
+}
+
+.variant-tags span{
+    min-height:24px;
+    padding:0 7px;
+    border-radius:7px;
+    display:inline-flex;
+    align-items:center;
+    color:#62586e;
+    background:#f7f4f8;
+    font-size:8px;
+    font-weight:900;
+}
+
+.variant-money-stock{
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+    margin-top:7px;
+}
+
+.variant-money-stock span{
+    min-height:27px;
+    padding:0 8px;
+    border-radius:8px;
+    display:inline-flex;
+    align-items:center;
+    font-size:9px;
+    font-weight:1000;
+}
+
+.sale-price-chip{
+    color:#6f57d9;
+    background:#f1ebff;
+}
+
+.cost-chip{
+    color:#a65a21;
+    background:#fff1e8;
+}
+
+.stock-chip{
+    color:#15915f;
+    background:#eafff4;
+}
+
+.stock-chip.zero{
+    color:#747474;
+    background:#f0f0f0;
+}
+
+.variant-actions{
+    display:grid;
+    grid-template-columns:repeat(2,40px);
+    gap:5px;
+}
+
+.variant-actions a,
+.variant-actions button{
+    width:40px;
+    height:38px;
+    border:0;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:13px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.move-btn{
+    color:#6f57d9;
+    background:#f1ebff;
+}
+
+.stock-btn{
+    color:#15915f;
+    background:#eafff4;
+}
+
+.edit-btn{
+    color:#d65e20;
+    background:#fff1e8;
+}
+
+.barcode-btn{
+    color:#1d78a8;
+    background:#eaf8ff;
+}
+
+.delete-btn{
+    color:#dc4c4c;
+    background:#fff0ef;
+}
+
+.branch-stock-details{
+    margin-top:7px;
+}
+
+.branch-stock-details summary{
+    width:max-content;
+    max-width:100%;
+    color:#6f57d9;
+    font-size:8px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.branch-stock-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    margin-top:5px;
+}
+
+.branch-stock-list span{
+    min-height:23px;
+    padding:0 7px;
+    border-radius:7px;
+    display:inline-flex;
+    align-items:center;
+    color:#62586e;
+    background:#f7f4f8;
+    font-size:8px;
+    font-weight:900;
+}
+
+.empty-variants{
+    min-height:210px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    border:1px dashed #d9c6ec;
+    border-radius:18px;
+    color:#81778c;
+    text-align:center;
+}
+
+.empty-variants b{
+    font-size:48px;
+}
+
+.empty-variants strong{
+    color:#100d35;
+    font-size:15px;
+    font-weight:1000;
+}
+
+.empty-variants a{
+    min-height:40px;
+    padding:0 13px;
+    border-radius:11px;
+    display:inline-flex;
+    align-items:center;
+    color:white;
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+    font-size:10px;
+    font-weight:1000;
+}
+
+.popup-backdrop{
     display:none;
     position:fixed;
     inset:0;
-    background:rgba(23,21,47,.35);
-    z-index:5999;
+    background:rgba(23,21,47,.42);
+    z-index:9990;
 }
 
-.branch-popup-backdrop.active{
-    display:block;
-}
+.popup-backdrop.active{display:block}
 
 .branch-popup{
     display:none;
     position:fixed;
     left:50%;
     top:50%;
-    transform:translate(-50%,-50%);
     width:420px;
-    max-width:calc(100% - 28px);
+    max-width:calc(100% - 24px);
+    max-height:80vh;
+    padding:14px;
+    overflow:auto;
+    transform:translate(-50%,-50%);
+    border:1px solid #efdfd7;
+    border-radius:24px;
     background:white;
-    border-radius:30px;
-    border:1px solid #f1ddd1;
     box-shadow:0 30px 90px rgba(23,21,47,.28);
-    z-index:6000;
-    padding:18px;
+    z-index:10000;
 }
 
-.branch-popup.active{
-    display:block;
-}
+.branch-popup.active{display:block}
 
-.branch-popup-head{
+.popup-head{
     display:flex;
-    justify-content:space-between;
     align-items:center;
-    margin-bottom:14px;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:10px;
 }
 
-.branch-popup-head h3{
+.popup-head h3{
     margin:0;
-    font-size:24px;
-    font-weight:900;
-    color:#17152f;
+    color:#100d35;
+    font-size:19px;
+    font-weight:1000;
 }
 
-.branch-popup-head button{
-    width:42px;
-    height:42px;
-    border-radius:50%;
+.popup-head button{
+    width:38px;
+    height:38px;
     border:0;
-    background:#fff3f1;
-    color:#ff4d4d;
-    font-weight:900;
+    border-radius:11px;
+    color:#dc4c4c;
+    background:#fff0ef;
+    font-weight:1000;
     cursor:pointer;
 }
 
-.branch-popup-list{
+.branch-list{
     display:grid;
-    gap:10px;
+    gap:7px;
 }
 
 .branch-option{
     width:100%;
-    min-height:64px;
-    border-radius:22px;
+    min-height:55px;
+    padding:0 12px;
     border:1px solid #eaddec;
-    background:#fffaf7;
-    padding:0 16px;
+    border-radius:15px;
     display:flex;
     align-items:center;
-    gap:12px;
+    gap:9px;
+    color:#100d35;
+    background:#fffaf7;
+    font-weight:1000;
     cursor:pointer;
-    font-weight:900;
-    color:#17152f;
 }
 
-.branch-option:hover,
 .branch-option.active{
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
     color:white;
     border-color:transparent;
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
 }
 
-.branch-option span{
-    font-size:22px;
-}
-
-.branch-option strong{
-    flex:1;
-    text-align:left;
-}
-
-.branch-option em{
-    font-style:normal;
-    font-size:12px;
-    padding:5px 10px;
-    border-radius:999px;
-    background:rgba(255,255,255,.25);
-}
-
-/* ============================= */
-/* CURRENT SHOP INFO */
-/* ============================= */
-.branch-info-box {
-    margin:18px 0 22px;
-    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
-    border:1px solid #f0e5ee;
-    border-radius:24px;
-    padding:16px 18px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:16px;
-    flex-wrap:wrap;
-}
-
-.branch-info-left {
-    display:flex;
-    align-items:center;
-    gap:12px;
-}
-
-.branch-icon {
-    width:48px;
-    height:48px;
-    border-radius:50%;
-    background:white;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:24px;
-    box-shadow:0 8px 18px rgba(130,91,60,.08);
-}
-
-.branch-info-title {
-    color:#17152f;
-    font-weight:900;
-    font-size:18px;
-}
-
-.branch-info-sub {
-    color:#7b7288;
-    font-weight:800;
-    margin-top:4px;
-}
-
-.branch-status-badge {
-    min-height:46px;
-    padding:0 18px;
-    border-radius:999px;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:900;
-    color:white;
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
-}
-
-.branch-status-badge.locked {
-    background:linear-gradient(135deg,#19a974,#7be0b2);
-}
-
-/* ============================= */
-/* PANEL */
-/* ============================= */
-.inventory-panel {
-    background:white;
-    border:1px solid #f5e8df;
-    border-radius:28px;
-    padding:22px;
-    box-shadow:0 20px 50px rgba(130,91,60,.10);
-}
-
-.category-tabs {
-    display:flex;
-    gap:12px;
-    flex-wrap:wrap;
-    margin-bottom:22px;
-}
-
-.type-tab-wrap{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-}
-
-.tab {
-    padding:14px 28px;
-    border-radius:999px;
-    background:white;
-    border:1px solid #f0e5ee;
-    color:#514a5f;
-    font-weight:900;
-    box-shadow:0 8px 18px rgba(130,91,60,.05);
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    min-height:50px;
-}
-
-.tab.active {
-    color:white;
-    background:linear-gradient(135deg,#9b7cf6,#b07cff);
-    box-shadow:0 12px 26px rgba(155,124,246,.25);
-}
-
-/* ============================= */
-/* PRODUCT GRID */
-/* ============================= */
-.product-grid {
-    display:grid;
-    grid-template-columns:repeat(5,1fr);
-    gap:18px;
-}
-
-.product-card {
-    background:linear-gradient(180deg,#fff,#fffaf7);
-    border:1px solid #f1ddd1;
-    border-radius:22px;
-    padding:14px;
-    box-shadow:0 10px 24px rgba(130,91,60,.06);
-    transition:.22s;
-}
-
-.product-card:hover {
-    transform:translateY(-4px);
-    box-shadow:0 18px 34px rgba(130,91,60,.12);
-}
-
-.product-img {
-    height:170px;
-    border-radius:18px;
-    background:#fff6ef;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    overflow:hidden;
-}
-
-.product-img img {
-    width:100%;
-    height:100%;
-    object-fit:contain;
-}
-
-.placeholder {
-    font-size:72px;
-}
-
-.badge {
-    display:inline-flex;
-    padding:7px 12px;
-    border-radius:999px;
-    font-weight:900;
-    font-size:13px;
-    margin-bottom:8px;
-    background:#eee4ff;
-    color:#7b5cff;
-}
-
-.product-name {
-    font-size:16px;
-    font-weight:900;
-    margin:12px 0 4px;
-}
-
-.product-name a {
-    color:#17152f;
-}
-
-.brand {
-    color:#7b7288;
-    font-weight:800;
-    margin-bottom:8px;
-}
-
-.stock {
-    display:inline-flex;
-    padding:6px 10px;
-    border-radius:999px;
-    background:#dff8ed;
-    color:#19a974;
-    font-weight:900;
-    font-size:13px;
-}
-
-.stock.low {
-    background:#ffe6e6;
-    color:#ff4d4d;
-}
-
-.stock.zero {
-    background:#f1f1f1;
-    color:#777;
-}
-
-.variant-list {
-    margin-top:10px;
-    display:flex;
-    gap:6px;
-    flex-wrap:wrap;
-}
-
-.variant-chip {
-    background:#fff8fb;
-    border:1px solid #f0e5ee;
-    color:#514a5f;
-    border-radius:999px;
-    padding:5px 9px;
-    font-size:12px;
-    font-weight:900;
-}
-
-.variant-chip.low {
-    background:#ffe6e6;
-    color:#ff4d4d;
-    border-color:#ffd1d1;
-}
-
-.variant-chip.good {
-    background:#eafff4;
-    color:#19a974;
-    border-color:#c8f5df;
-}
-
-.price-row {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-top:10px;
-    font-weight:900;
-}
-
-.cost {
-    color:#6b6178;
-}
-
-.price {
-    color:#7b5cff;
-}
-
-.action-row {
-    display:flex;
-    gap:8px;
-    margin-top:12px;
-    justify-content:flex-end;
-    flex-wrap:wrap;
-}
-
-.icon-btn {
-    min-width:38px;
-    height:38px;
-    padding:0 10px;
-    border-radius:12px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:900;
-    border:1px solid #eaddec;
-    background:#fbf8ff;
-}
-
-.view-btn {
-    color:#7b5cff;
-}
-
-.edit-btn {
-    color:#7b5cff;
-}
-
-.stock-btn {
-    color:#19a974;
-    background:#f0fff8;
-}
-
-.delete-btn {
-    color:#ff4d4d;
-    background:#fff3f1;
-}
-
-.empty-box {
-    min-height:350px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-    grid-column:1 / -1;
-}
-
-.empty-box h3 {
-    font-size:24px;
-    color:#17152f;
-    margin:8px 0;
-}
-
-.empty-box p {
-    color:#7b7288;
-    font-weight:800;
-}
-
-/* ============================= */
-/* MOBILE ACTION POPUP */
-/* ============================= */
-.mobile-action-toggle{
-    display:none;
-}
-
-.mobile-action-panel{
-    display:flex;
-    gap:14px;
-    flex-wrap:wrap;
-}
-
-.mobile-action-backdrop{
-    display:none;
-}
-
-/* ============================= */
-/* RESPONSIVE */
-/* ============================= */
-@media(max-width:1300px){
-    .product-grid{
-        grid-template-columns:repeat(4,1fr);
-    }
-}
-
-@media(max-width:1000px){
-    .inventory-hero{
-        grid-template-columns:1fr;
+@media(max-width:900px){
+    .detail-layout{
+        grid-template-columns:270px minmax(0,1fr);
     }
 
-    .hero-img{
+    .item-photo{
         height:220px;
     }
 
-    .product-grid{
-        grid-template-columns:repeat(2,1fr);
+    .variant-row{
+        grid-template-columns:40px 62px minmax(0,1fr);
+    }
+
+    .variant-actions{
+        grid-column:2/4;
+        grid-template-columns:repeat(6,minmax(0,1fr));
+    }
+
+    .variant-actions a,
+    .variant-actions button{
+        width:100%;
     }
 }
 
 @media(max-width:700px){
-    .inventory-title h1{
-        font-size:32px;
+    html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+
+    .item-detail-page{
+        padding:8px 7px calc(18px + env(safe-area-inset-bottom));
     }
 
-    .inventory-title p{
-        font-size:14px;
-        line-height:1.5;
+    .page-top{
+        display:grid;
+        gap:7px;
+        margin-bottom:7px;
     }
 
-    .hero-img{
-        display:none;
+    .page-title small{
+        min-height:20px;
+        padding:0 7px;
+        font-size:7px;
     }
 
-    .tool-row{
+    .page-title h1{
+        margin-top:4px;
+        font-size:21px;
+    }
+
+    .page-title p{
+        margin-top:3px;
+        font-size:8px;
+    }
+
+    .top-actions{
+        display:grid;
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        gap:4px;
+    }
+
+    .action-btn{
+        min-width:0;
+        min-height:38px;
+        padding:0 5px;
+        border-radius:9px;
+        font-size:8px;
+    }
+
+    .detail-layout{
         display:grid;
         grid-template-columns:1fr;
-        gap:12px;
+        gap:7px;
     }
 
-    .search-pill,
-    .branch-popup-btn,
-    .btn-search,
-    .btn-reset{
-        width:100%;
+    .card{
+        border-radius:13px;
+        box-shadow:none;
+    }
+
+    .item-card{
+        position:static;
+        padding:8px;
+        display:grid;
+        grid-template-columns:105px minmax(0,1fr);
+        gap:8px;
+    }
+
+    .item-photo{
+        height:105px;
+        border-radius:10px;
+    }
+
+    .item-photo img{
+        padding:3px;
+    }
+
+    .item-photo-empty{
+        font-size:43px;
+    }
+
+    .item-main-info{
+        padding:1px 0;
         min-width:0;
     }
 
-    .branch-popup{
-        left:14px;
-        right:14px;
-        top:auto;
-        bottom:18px;
-        width:auto;
-        max-width:none;
-        transform:none;
-        border-radius:28px;
+    .item-type-badge{
+        min-height:21px;
+        padding:0 6px;
+        font-size:7px;
     }
 
-    .mobile-action-toggle{
-        display:flex;
-        width:100%;
-        height:56px;
-        border-radius:999px;
-        align-items:center;
-        justify-content:center;
-        border:none;
-        color:white;
-        font-weight:900;
-        background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
-        box-shadow:0 14px 28px rgba(155,124,246,.25);
-        cursor:pointer;
+    .item-main-info h2{
+        margin:5px 0 1px;
+        font-size:16px;
     }
 
-    .mobile-action-backdrop{
-        display:none;
-        position:fixed;
-        inset:0;
-        background:rgba(23,21,47,.35);
-        z-index:4999;
+    .item-brand{
+        font-size:8px;
     }
 
-    .mobile-action-backdrop.active{
-        display:block;
-    }
-
-    .mobile-action-panel{
-        display:none;
-        position:fixed;
-        left:14px;
-        right:14px;
-        bottom:18px;
-        z-index:5000;
-        background:white;
-        border:1px solid #f1ddd1;
-        border-radius:28px;
-        padding:16px;
-        box-shadow:0 24px 70px rgba(23,21,47,.25);
-    }
-
-    .mobile-action-panel.active{
-        display:grid;
-        grid-template-columns:1fr;
-        gap:12px;
-    }
-
-    .mobile-action-panel .add-btn{
-        width:100%;
-        height:56px;
-    }
-
-    .branch-info-box{
-        display:block;
-        padding:14px;
-    }
-
-    .branch-status-badge{
-        width:100%;
-        margin-top:12px;
-    }
-
-    .inventory-panel{
-        padding:14px;
-        border-radius:22px;
-    }
-
-    .category-tabs{
-        flex-wrap:nowrap;
-        overflow-x:auto;
-        padding-bottom:8px;
-    }
-
-    .type-tab-wrap{
-        flex:0 0 auto;
-    }
-
-    .tab{
-        flex:0 0 auto;
-        padding:12px 20px;
-    }
-
-    .product-grid{
-        grid-template-columns:1fr;
-    }
-}
-/* =========================================================
-   COMPACT PHONE INVENTORY LIST
-========================================================= */
-@media(max-width:700px){
-    .inventory-hero{
-        display:block;
-        margin-bottom:5px;
-    }
-
-    .inventory-title h1{
-        margin:0;
-        font-size:21px;
-        line-height:1.1;
-    }
-
-    .inventory-title p{
-        margin:4px 0 7px;
-        font-size:9px;
-        line-height:1.3;
-    }
-
-    .hero-img{
-        display:none;
-    }
-
-    .tool-row{
-        display:grid;
-        grid-template-columns:minmax(0,1fr) auto auto;
+    .summary-grid{
         gap:4px;
         margin-top:6px;
     }
 
-    .search-pill{
-        grid-column:1/-1;
-        width:100%;
-        height:38px;
-        min-height:38px;
-        padding:0 10px;
-        border-radius:10px;
-        font-size:16px!important;
+    .summary-box{
+        padding:6px;
+        border-radius:8px;
     }
 
-    .branch-popup-btn{
-        grid-column:1/-1;
-        width:100%;
-        min-width:0;
-        height:36px;
-        min-height:36px;
-        padding:0 9px;
-        border-radius:9px;
+    .summary-box span{
+        font-size:6px;
+    }
+
+    .summary-box strong{
+        margin-top:2px;
         font-size:9px;
-        box-shadow:none;
     }
 
-    .btn-search,
-    .btn-reset{
-        width:auto;
-        min-width:72px;
-        height:34px;
-        min-height:34px;
-        padding:0 9px;
-        border-radius:9px;
-        font-size:9px;
-        box-shadow:none;
-    }
-
-    .mobile-action-toggle{
-        width:auto;
-        min-width:108px;
-        height:34px;
-        min-height:34px;
-        border-radius:9px;
-        padding:0 9px;
+    .active-chip{
+        margin-top:5px;
+        min-height:28px;
+        border-radius:8px;
         font-size:8px;
-        box-shadow:none;
     }
 
-    .branch-info-box{
-        margin:5px 0 7px;
-        padding:6px 7px;
-        border-radius:10px;
-        display:grid;
-        grid-template-columns:minmax(0,1fr) auto;
-        gap:5px;
-        align-items:center;
+    .main-column{
+        gap:7px;
     }
 
-    .branch-info-left{
-        min-width:0;
-        gap:6px;
+    .branch-card{
+        padding:7px;
+        border-radius:11px;
     }
 
     .branch-icon{
-        width:29px;
-        height:29px;
-        flex:0 0 29px;
-        font-size:14px;
-        box-shadow:none;
-    }
-
-    .branch-info-title{
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-        font-size:9px;
-    }
-
-    .branch-info-sub{
-        display:none;
-    }
-
-    .branch-status-badge{
-        width:auto;
-        min-height:26px;
-        margin:0;
-        padding:0 6px;
+        width:32px;
+        height:32px;
+        flex-basis:32px;
         border-radius:8px;
-        font-size:7px;
-    }
-
-    .inventory-panel{
-        padding:6px;
-        border-radius:12px;
-        box-shadow:none;
-    }
-
-    .category-tabs{
-        gap:4px;
-        margin-bottom:6px;
-        padding-bottom:3px;
-        flex-wrap:nowrap;
-        overflow-x:auto;
-        scrollbar-width:none;
-    }
-
-    .category-tabs::-webkit-scrollbar{
-        display:none;
-    }
-
-    .type-tab-wrap{
-        flex:0 0 auto;
-    }
-
-    .tab{
-        min-height:29px;
-        padding:0 9px;
-        border-radius:8px;
-        font-size:8px;
-        box-shadow:none;
-    }
-
-    .product-grid{
-        grid-template-columns:repeat(2,minmax(0,1fr));
-        gap:5px;
-    }
-
-    .product-card{
-        min-width:0;
-        padding:6px;
-        border-radius:11px;
-        box-shadow:none;
-    }
-
-    .product-card:hover{
-        transform:none;
-        box-shadow:none;
-    }
-
-    .product-card > .badge{
-        min-height:20px;
-        max-width:100%;
-        margin-bottom:4px;
-        padding:0 5px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-        font-size:6px;
-    }
-
-    .product-img{
-        height:92px;
-        border-radius:8px;
-    }
-
-    .placeholder{
-        font-size:35px;
-    }
-
-    .product-name{
-        min-height:24px;
-        margin:5px 0 1px;
-        overflow:hidden;
-        display:-webkit-box;
-        -webkit-box-orient:vertical;
-        -webkit-line-clamp:2;
-        font-size:9px;
-        line-height:1.2;
-    }
-
-    .brand{
-        margin-bottom:3px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-        font-size:7px;
-    }
-
-    .stock{
-        max-width:100%;
-        min-height:21px;
-        padding:0 5px;
-        align-items:center;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-        font-size:6px;
-    }
-
-    .variant-list{
-        min-height:21px;
-        max-height:43px;
-        margin-top:4px;
-        gap:2px;
-        overflow:hidden;
-    }
-
-    .variant-chip{
-        max-width:100%;
-        padding:2px 4px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-        font-size:6px;
-    }
-
-    .variant-chip:nth-child(n+3){
-        display:none;
-    }
-
-    .price-row{
-        margin-top:4px;
-        gap:3px;
-        font-size:7px;
-    }
-
-    .price-row span{
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-    }
-
-    .action-row{
-        display:grid;
-        grid-template-columns:repeat(4,minmax(0,1fr));
-        gap:3px;
-        margin-top:5px;
-    }
-
-    .icon-btn{
-        min-width:0;
-        width:100%;
-        height:28px;
-        min-height:28px;
-        padding:0 3px;
-        border-radius:7px;
-        font-size:7px;
-    }
-
-    .branch-popup{
-        left:7px;
-        right:7px;
-        bottom:7px;
-        padding:9px;
-        border-radius:15px;
-    }
-
-    .branch-popup-head{
-        margin-bottom:7px;
-    }
-
-    .branch-popup-head h3{
         font-size:15px;
     }
 
-    .branch-popup-head button{
-        width:34px;
-        height:34px;
+    .branch-info span{
+        font-size:6px;
     }
 
-    .branch-popup-list{
+    .branch-info strong{
+        font-size:9px;
+    }
+
+    .branch-change-btn{
+        min-height:32px;
+        padding:0 8px;
+        border-radius:8px;
+        font-size:8px;
+    }
+
+    .variant-card-wrap{
+        padding:8px;
+    }
+
+    .section-head{
+        margin-bottom:7px;
+    }
+
+    .section-head h2{
+        font-size:14px;
+    }
+
+    .section-head p{
+        margin-top:2px;
+        font-size:7px;
+    }
+
+    .order-status{
+        min-height:28px;
+        padding:0 7px;
+        font-size:7px;
+    }
+
+    .variant-list{
+        gap:6px;
+    }
+
+    .variant-row{
+        grid-template-columns:28px 54px minmax(0,1fr) 31px;
+        gap:5px;
+        padding:6px;
+        border-radius:10px;
+    }
+
+    .drag-handle{
+        width:28px;
+        height:45px;
+        border-radius:7px;
+        font-size:15px;
+    }
+
+    .variant-photo{
+        width:54px;
+        height:50px;
+        border-radius:8px;
+    }
+
+    .variant-photo span{
+        font-size:23px;
+    }
+
+    .variant-title-line{
+        gap:4px;
+    }
+
+    .variant-title-line strong{
+        font-size:9px;
+    }
+
+    .variant-order-number{
+        min-width:19px;
+        height:19px;
+        padding:0 4px;
+        font-size:6px;
+    }
+
+    .variant-tags{
+        gap:2px;
+        margin-top:3px;
+    }
+
+    .variant-tags span{
+        min-height:18px;
+        padding:0 4px;
+        border-radius:5px;
+        font-size:6px;
+    }
+
+    .variant-money-stock{
+        gap:2px;
+        margin-top:3px;
+    }
+
+    .variant-money-stock span{
+        min-height:20px;
+        padding:0 5px;
+        border-radius:5px;
+        font-size:6px;
+    }
+
+    .branch-stock-details{
+        margin-top:3px;
+    }
+
+    .branch-stock-details summary,
+    .branch-stock-list span{
+        font-size:6px;
+    }
+
+    .variant-actions{
+        grid-column:auto;
+        display:grid;
+        grid-template-columns:31px;
+        gap:3px;
+    }
+
+    .variant-actions a,
+    .variant-actions button{
+        width:31px;
+        height:27px;
+        border-radius:6px;
+        font-size:9px;
+    }
+
+    .variant-actions .desktop-extra{
+        display:none;
+    }
+
+    .empty-variants{
+        min-height:150px;
+        border-radius:11px;
+    }
+
+    .empty-variants b{
+        font-size:38px;
+    }
+
+    .empty-variants strong{
+        font-size:11px;
+    }
+
+    .empty-variants a{
+        min-height:35px;
+        border-radius:8px;
+        font-size:8px;
+    }
+
+    .branch-popup{
+        width:calc(100% - 14px);
+        max-height:82dvh;
+        padding:8px;
+        border-radius:15px;
+    }
+
+    .popup-head{
+        margin-bottom:6px;
+        padding:7px;
+        border-radius:10px;
+        color:white;
+        background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+    }
+
+    .popup-head h3{
+        color:white;
+        font-size:14px;
+    }
+
+    .popup-head button{
+        width:32px;
+        height:32px;
+        color:white;
+        background:rgba(255,255,255,.2);
+    }
+
+    .branch-list{
         gap:5px;
     }
 
     .branch-option{
-        min-height:43px;
-        padding:0 9px;
-        border-radius:10px;
-        font-size:9px;
-    }
-
-    .branch-option span{
-        font-size:15px;
-    }
-
-    .mobile-action-panel{
-        left:7px;
-        right:7px;
-        bottom:7px;
-        padding:9px;
-        border-radius:15px;
-    }
-
-    .mobile-action-panel.active{
-        gap:5px;
-    }
-
-    .mobile-action-panel .add-btn{
-        height:39px;
-        min-height:39px;
+        min-height:44px;
+        padding:0 8px;
         border-radius:9px;
         font-size:9px;
     }
 
-    .empty-box{
-        min-height:180px;
-        font-size:10px;
-    }
-
-    .empty-box > div > div{
-        font-size:42px!important;
-    }
-
-    input,
-    select,
-    textarea{
-        font-size:16px!important;
-    }
+    input,select,textarea{font-size:16px!important}
 }
 
-@media(max-width:360px){
-    .product-img{
-        height:82px;
+@media(max-width:380px){
+    .top-actions{
+        grid-template-columns:repeat(2,minmax(0,1fr));
     }
 
-    .product-name{
-        font-size:8px;
-    }
-}
-
-
-/* =========================================================
-   ROBUST INVENTORY IMAGE FALLBACK
-========================================================= */
-.product-img,
-.item-img,
-.variant-img,
-.result-img,
-.row-img,
-.preview-box{
-    position:relative;
-}
-
-.inventory-image-error{
-    display:flex!important;
-    align-items:center!important;
-    justify-content:center!important;
-}
-
-.inventory-image-fallback{
-    width:100%;
-    height:100%;
-    min-height:44px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:#8e63ff;
-    background:linear-gradient(135deg,#f4edff,#fff8f4);
-    font-size:clamp(24px,5vw,54px);
-    line-height:1;
-}
-
-@media(max-width:700px){
-    html{
-        -webkit-text-size-adjust:100%!important;
-        text-size-adjust:100%!important;
+    .item-card{
+        grid-template-columns:88px minmax(0,1fr);
     }
 
-    input,
-    select,
-    textarea,
-    [contenteditable="true"]{
-        font-size:16px!important;
+    .item-photo{
+        height:88px;
+    }
+
+    .variant-row{
+        grid-template-columns:26px 46px minmax(0,1fr) 29px;
+    }
+
+    .variant-photo{
+        width:46px;
+        height:45px;
     }
 }
-
-body.inventory-popup-open{
-    overflow:hidden!important;
-    touch-action:none;
-}
-
-@media(max-width:700px){
-    .branch-popup-backdrop,
-    .mobile-action-backdrop{
-        z-index:19990!important;
-        background:rgba(23,21,47,.48)!important;
-        backdrop-filter:blur(3px)!important;
-    }
-
-    .branch-popup,
-    .mobile-action-panel{
-        left:50%!important;
-        right:auto!important;
-        top:50%!important;
-        bottom:auto!important;
-        width:calc(100% - 16px)!important;
-        max-width:430px!important;
-        max-height:80dvh!important;
-        margin:0!important;
-        padding:10px!important;
-        overflow-y:auto!important;
-        transform:translate(-50%,-50%)!important;
-        border-radius:18px!important;
-        z-index:20000!important;
-    }
-
-    .branch-popup-head{
-        position:sticky!important;
-        top:-10px!important;
-        z-index:2!important;
-        margin:0 -2px 7px!important;
-        padding:8px!important;
-        border-radius:13px!important;
-        background:linear-gradient(135deg,#8e63ff,#ff8c6b)!important;
-    }
-
-    .branch-popup-head h3{
-        color:white!important;
-        font-size:15px!important;
-    }
-
-    .branch-popup-head button{
-        width:36px!important;
-        height:36px!important;
-        color:white!important;
-        background:rgba(255,255,255,.22)!important;
-    }
-
-    .branch-popup-list{
-        gap:5px!important;
-    }
-
-    .branch-option{
-        min-height:48px!important;
-        padding:0 9px!important;
-        border-radius:11px!important;
-        font-size:11px!important;
-    }
-
-    .mobile-action-panel.active{
-        display:grid!important;
-        grid-template-columns:1fr!important;
-        gap:6px!important;
-    }
-
-    .mobile-action-panel .add-btn{
-        min-height:46px!important;
-        height:46px!important;
-        border-radius:11px!important;
-        font-size:11px!important;
-    }
-}
-
-
-/* iPhone/PWA inventory image fix */
-.inventory-product-photo{
-    display:block!important;
-    width:100%!important;
-    height:100%!important;
-    max-width:100%!important;
-    opacity:1!important;
-    visibility:visible!important;
-    object-fit:contain!important;
-    filter:none!important;
-    transform:none!important;
-    background:white!important;
-}
-
-@media(max-width:700px){
-    .product-img{
-        isolation:isolate!important;
-        background:#fff6ef!important;
-    }
-
-    .inventory-product-photo{
-        position:relative!important;
-        z-index:1!important;
-    }
-}
-
 </style>
 
-<div class="inventory-hero">
-    <div class="inventory-title">
-        <h1>Pet Inventory 🐾</h1>
+<div class="item-detail-page">
+    <header class="page-top">
+        <div class="page-title">
+            <small>INVENTORY ITEM</small>
+            <h1>{{ item.name }}</h1>
+            <p>{{ item.brand|default:"No brand" }} · {{ item.variants.count }} variant{{ item.variants.count|pluralize }}</p>
+        </div>
 
-        <p>
-            Inventory is separated by shop/branch.
-            {% if current_branch %}
-                You are viewing stock for <strong>{{ current_branch.name }}</strong>.
-            {% else %}
-                No branch selected.
-            {% endif %}
-        </p>
-
-        <form method="get" class="tool-row" id="filterForm">
-            <input
-                class="search-pill"
-                type="text"
-                name="q"
-                placeholder="🔍 Search pet product..."
-                value="{{ request.GET.q }}"
-            >
-
-            {% if request.user.is_superuser %}
-                <input
-                    type="hidden"
-                    name="branch"
-                    id="branchInput"
-                    value="{% if current_branch %}{{ current_branch.id }}{% endif %}"
-                >
-
-                <button type="button" class="branch-popup-btn" onclick="openBranchPopup()">
-                    🏪 {% if current_branch %}{{ current_branch.name }}{% else %}Choose Shop{% endif %}
-                </button>
-            {% endif %}
-
-            {% if selected_type %}
-                <input type="hidden" name="type" value="{{ selected_type }}">
-            {% endif %}
-
-            <button class="btn-search" type="submit">Search</button>
-
-            <a href="{% url 'item_list' %}" class="btn-reset">Reset</a>
+        <div class="top-actions">
+            <a href="{% url 'item_list' %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}" class="action-btn">← Inventory</a>
 
             {% if can_manage_inventory %}
-                <button type="button" class="mobile-action-toggle" onclick="openMobileActions()">
-                    ＋ Inventory Actions
-                </button>
-
-                <div class="mobile-action-backdrop" id="mobileActionBackdrop" onclick="closeMobileActions()"></div>
-
-                <div class="mobile-action-panel" id="mobileActionPanel">
-                    <a href="{% url 'inventory_control_center' %}" class="add-btn control-btn">⚙️ Control Center</a>
-                    <a href="{% url 'item_type_create' %}" class="add-btn type-btn">+ Create Type</a>
-                    <a href="{% url 'item_create' %}" class="add-btn">+ Add Item</a>
-
-                    {% if current_branch and request.user.is_superuser %}
-                        <a href="{% url 'stock_batch_in' %}?branch={{ current_branch.id }}" class="add-btn stock-batch-btn">
-                            + Batch Stock In
-                        </a>
-                    {% else %}
-                        <a href="{% url 'stock_batch_in' %}" class="add-btn stock-batch-btn">
-                            + Batch Stock In
-                        </a>
-                    {% endif %}
-                </div>
+                <a href="{% url 'item_edit' item.id %}" class="action-btn">✎ Edit Item</a>
+                <a href="{% url 'item_variant_create' item.id %}" class="action-btn primary">＋ Variant</a>
+                <a href="{% url 'stock_batch_in' %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}" class="action-btn green">📦 Stock In</a>
             {% endif %}
-        </form>
+        </div>
+    </header>
 
-        {% if request.user.is_superuser %}
-            <div class="branch-popup-backdrop" id="branchPopupBackdrop" onclick="closeBranchPopup()"></div>
+    <div class="detail-layout">
+        <aside class="card item-card">
+            <div class="item-photo">
+                {% if item.image %}
+                    <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                {% else %}
+                    <div class="item-photo-empty">📦</div>
+                {% endif %}
+            </div>
 
-            <div class="branch-popup" id="branchPopup">
-                <div class="branch-popup-head">
-                    <h3>Choose Shop</h3>
-                    <button type="button" onclick="closeBranchPopup()">✕</button>
+            <div class="item-main-info">
+                <span class="item-type-badge">
+                    {% if item.item_type %}
+                        {{ item.item_type.emoji|default:"📦" }} {{ item.item_type.name }}
+                    {% else %}
+                        📦 No Type
+                    {% endif %}
+                </span>
+
+                <h2>{{ item.name }}</h2>
+                <div class="item-brand">{{ item.brand|default:"No brand" }}</div>
+
+                <div class="summary-grid">
+                    <div class="summary-box">
+                        <span>Shop Stock</span>
+                        <strong>{{ item.branch_stock_total }} {{ item.get_unit_display }}</strong>
+                    </div>
+
+                    <div class="summary-box">
+                        <span>Sale Price</span>
+                        <strong>${{ item.sale_price|floatformat:2 }}</strong>
+                    </div>
+
+                    {% if can_view_cost_price %}
+                    <div class="summary-box">
+                        <span>Cost Price</span>
+                        <strong>${{ item.cost_price|floatformat:2 }}</strong>
+                    </div>
+                    {% endif %}
+
+                    <div class="summary-box">
+                        <span>Variants</span>
+                        <strong>{{ item.variants.count }}</strong>
+                    </div>
                 </div>
 
-                <div class="branch-popup-list">
-                    {% for branch in branches %}
-                        <button
-                            type="button"
-                            class="branch-option {% if current_branch and current_branch.id == branch.id %}active{% endif %}"
-                            onclick="selectBranch('{{ branch.id }}')"
-                        >
-                            <span>🏪</span>
-                            <strong>{{ branch.name }}</strong>
+                <div class="active-chip {% if not item.is_active %}off{% endif %}">
+                    {% if item.is_active %}✅ Active Item{% else %}⏸ Inactive Item{% endif %}
+                </div>
+            </div>
+        </aside>
 
-                            {% if current_branch and current_branch.id == branch.id %}
-                                <em>Current</em>
+        <main class="main-column">
+            <section class="card branch-card">
+                <div class="branch-info">
+                    <div class="branch-icon">🏪</div>
+                    <div>
+                        <span>Current stock shop</span>
+                        <strong>{% if current_branch %}{{ current_branch.name }}{% else %}No shop selected{% endif %}</strong>
+                    </div>
+                </div>
+
+                {% if request.user.is_superuser %}
+                    <button type="button" class="branch-change-btn" onclick="openBranchPopup()">Change Shop</button>
+                {% else %}
+                    <span class="order-status saved">🔒 Assigned</span>
+                {% endif %}
+            </section>
+
+            <section class="card variant-card-wrap">
+                <div class="section-head">
+                    <div>
+                        <h2>Variants</h2>
+                        <p>Drag the handle to reorder. On phone, drag the handle or use ▲ and ▼.</p>
+                    </div>
+                    <span class="order-status" id="orderStatus">Order ready</span>
+                </div>
+
+                <form style="display:none;">{% csrf_token %}</form>
+
+                <div class="variant-list" id="variantSortable">
+                    {% for variant in item.variants.all %}
+                        <article class="variant-row" data-variant-id="{{ variant.id }}" draggable="true">
+                            <button type="button" class="drag-handle" aria-label="Drag variant" title="Drag to reorder">⋮⋮</button>
+
+                            <div class="variant-photo">
+                                {% if variant.display_image %}
+                                    <img src="{{ variant.display_image.url }}" alt="{{ variant.display_name }}">
+                                {% else %}
+                                    <span>📦</span>
+                                {% endif %}
+                            </div>
+
+                            <div class="variant-content">
+                                <div class="variant-title-line">
+                                    <span class="variant-order-number">#<b class="order-number">{{ forloop.counter }}</b></span>
+                                    <strong>{{ variant.display_name }}</strong>
+                                </div>
+
+                                <div class="variant-tags">
+                                    {% if variant.label %}<span>🏷 {{ variant.label }}</span>{% endif %}
+                                    {% if variant.size %}<span>📏 {{ variant.size }}</span>{% endif %}
+                                    {% if variant.color %}<span>🎨 {{ variant.color }}</span>{% endif %}
+                                    {% if variant.sku %}<span>SKU: {{ variant.sku }}</span>{% endif %}
+                                </div>
+
+                                <div class="variant-money-stock">
+                                    <span class="sale-price-chip">Sale ${{ variant.display_price|floatformat:2 }}</span>
+                                    {% if can_view_cost_price %}
+                                        <span class="cost-chip">Cost ${{ variant.display_cost|floatformat:2 }}</span>
+                                    {% endif %}
+                                    <span class="stock-chip {% if variant.branch_stock_qty <= 0 %}zero{% endif %}">
+                                        Stock {{ variant.branch_stock_qty }}
+                                    </span>
+                                </div>
+
+                                <details class="branch-stock-details">
+                                    <summary>View all shop stock</summary>
+                                    <div class="branch-stock-list">
+                                        {% for stock_row in variant.branch_stock_rows %}
+                                            <span>{{ stock_row.branch.name }}: {{ stock_row.quantity }}</span>
+                                        {% empty %}
+                                            <span>No branch stock yet</span>
+                                        {% endfor %}
+                                    </div>
+                                </details>
+                            </div>
+
+                            <div class="variant-actions">
+                                <button type="button" class="move-btn" onclick="moveVariant(this,-1)" title="Move up">▲</button>
+                                <button type="button" class="move-btn" onclick="moveVariant(this,1)" title="Move down">▼</button>
+
+                                {% if can_manage_inventory %}
+                                    <a href="{% url 'variant_stock_movement' variant.id %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}" class="stock-btn" title="Stock">＋</a>
+                                    <a href="{% url 'item_variant_edit' item.id variant.id %}" class="edit-btn" title="Edit">✎</a>
+                                    <a href="{% url 'variant_barcode_label' variant.id %}" target="_blank" class="barcode-btn desktop-extra" title="Barcode">▥</a>
+                                    <a href="{% url 'item_variant_delete' item.id variant.id %}" class="delete-btn desktop-extra" title="Delete">🗑</a>
+                                {% endif %}
+                            </div>
+                        </article>
+                    {% empty %}
+                        <div class="empty-variants">
+                            <b>📦</b>
+                            <strong>No variants yet</strong>
+                            <span>Create at least one variant before stocking this item.</span>
+                            {% if can_manage_inventory %}
+                                <a href="{% url 'item_variant_create' item.id %}">＋ Create Variant</a>
                             {% endif %}
-                        </button>
+                        </div>
                     {% endfor %}
                 </div>
-            </div>
-        {% endif %}
-    </div>
-
-    <img src="{% static 'img/inventory-hero.png' %}" class="hero-img">
-</div>
-
-<div class="branch-info-box">
-    <div class="branch-info-left">
-        <div class="branch-icon">🏪</div>
-
-        <div>
-            <div class="branch-info-title">
-                Current Shop:
-                {% if current_branch %}
-                    {{ current_branch.name }}
-                {% else %}
-                    No shop selected
-                {% endif %}
-            </div>
-
-            <div class="branch-info-sub">
-                {% if request.user.is_superuser %}
-                    Admin can choose which shop inventory to view.
-                {% else %}
-                    Stock view is locked to your assigned staff shop.
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <div class="branch-status-badge {% if not request.user.is_superuser %}locked{% endif %}">
-        {% if request.user.is_superuser %}
-            Admin Shop View
-        {% else %}
-            🔒 Branch Locked
-        {% endif %}
+            </section>
+        </main>
     </div>
 </div>
 
-{% if can_manage_inventory %}
-<div style="margin-bottom:18px;">
-    <a href="{% url 'inventory_control_center' %}" class="add-btn control-btn">⚙️ Inventory Control Center</a>
+{% if request.user.is_superuser %}
+<div class="popup-backdrop" id="branchBackdrop" onclick="closeBranchPopup()"></div>
+<div class="branch-popup" id="branchPopup">
+    <div class="popup-head">
+        <h3>Choose Shop</h3>
+        <button type="button" onclick="closeBranchPopup()">✕</button>
+    </div>
+
+    <div class="branch-list">
+        {% for branch in branches %}
+            <button
+                type="button"
+                class="branch-option {% if current_branch and current_branch.id == branch.id %}active{% endif %}"
+                onclick="changeBranch('{{ branch.id }}')"
+            >
+                <span>🏪</span>
+                <strong>{{ branch.name }}</strong>
+            </button>
+        {% empty %}
+            <div class="empty-variants">No active shop found.</div>
+        {% endfor %}
+    </div>
 </div>
 {% endif %}
 
-<div class="inventory-panel">
-
-    <div class="category-tabs">
-        <div class="type-tab-wrap">
-            <a
-                class="tab {% if not selected_type %}active{% endif %}"
-                href="{% url 'item_list' %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}"
-            >
-                ▦ All Items
-            </a>
-        </div>
-
-        {% for type in item_types %}
-            <div class="type-tab-wrap">
-                <a
-                    class="tab {% if selected_type == type.id|stringformat:'s' %}active{% endif %}"
-                    href="?type={{ type.id }}{% if request.user.is_superuser and current_branch %}&branch={{ current_branch.id }}{% endif %}"
-                >
-                    {{ type.emoji|default:"📦" }} {{ type.name }}
-                </a>
-            </div>
-        {% endfor %}
-    </div>
-
-    <div class="product-grid">
-
-        {% for item in items %}
-        <div class="product-card">
-
-            <span class="badge">
-                {% if item.item_type %}
-                    {{ item.item_type.emoji|default:"📦" }} {{ item.item_type.name }}
-                {% else %}
-                    📦 No Type
-                {% endif %}
-            </span>
-
-            <a href="{% url 'item_detail' item.id %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}">
-                <div class="product-img">
-                    {% if item.image %}
-                        <img
-                            class="inventory-product-photo"
-                            src="{{ item.image.url }}"
-                            data-media-src="{{ item.image.url }}"
-                            alt="{{ item.name }}"
-                            loading="eager"
-                            decoding="async"
-                            onerror="inventoryImageError(this)"
-                        >
-                    {% else %}
-                        <div class="placeholder">📦</div>
-                    {% endif %}
-                </div>
-            </a>
-
-            <div class="product-name">
-                <a href="?q={{ item.name|urlencode }}{% if request.user.is_superuser and current_branch %}&branch={{ current_branch.id }}{% endif %}">
-                    {{ item.name }}
-                </a>
-            </div>
-
-            <div class="brand">{{ item.brand|default:"No brand" }}</div>
-
-            {% if item.branch_stock_total <= 0 %}
-                <div class="stock zero">
-                    Out of Stock: {{ item.branch_stock_total }} {{ item.get_unit_display }}
-                </div>
-            {% elif item.branch_stock_total <= 3 %}
-                <div class="stock low">
-                    Low Stock: {{ item.branch_stock_total }} {{ item.get_unit_display }}
-                </div>
-            {% else %}
-                <div class="stock">
-                    Stock: {{ item.branch_stock_total }} {{ item.get_unit_display }}
-                </div>
-            {% endif %}
-
-            <div class="variant-list">
-                {% for variant in item.variants.all|slice:":3" %}
-                    <span class="variant-chip {% if variant.branch_stock_qty <= 0 %}low{% else %}good{% endif %}">
-                        {{ variant.display_name }}: {{ variant.branch_stock_qty }}
-                    </span>
-                {% empty %}
-                    <span class="variant-chip">No variant yet</span>
-                {% endfor %}
-            </div>
-
-            {% if can_view_cost_price or can_edit_cost_price %}
-            <div class="price-row">
-                {% if can_view_cost_price %}
-                    <span class="cost">Cost: ${{ item.cost_price|floatformat:2 }}</span>
-                {% else %}
-                    <span class="cost">Cost: Hidden</span>
-                {% endif %}
-
-                <span class="price">${{ item.sale_price|floatformat:2 }}</span>
-            </div>
-            {% endif %}
-
-            <div class="action-row">
-                <a
-                    href="{% url 'item_detail' item.id %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}"
-                    class="icon-btn view-btn"
-                    title="View"
-                >
-                    👁
-                </a>
-
-                {% if can_manage_inventory %}
-                    <a
-                        href="{% url 'item_variant_create' item.id %}"
-                        class="icon-btn stock-btn"
-                        title="Add variant"
-                    >
-                        + Size
-                    </a>
-
-                    <a
-                        href="{% url 'item_edit' item.id %}"
-                        class="icon-btn edit-btn"
-                        title="Edit"
-                    >
-                        ✎
-                    </a>
-
-                    <a
-                        href="{% url 'item_delete' item.id %}"
-                        class="icon-btn delete-btn"
-                        title="Delete"
-                    >
-                        🗑
-                    </a>
-                {% endif %}
-            </div>
-
-        </div>
-
-        {% empty %}
-        <div class="empty-box">
-            <div>
-                <div style="font-size:90px;">📦✨</div>
-                <h3>No items found</h3>
-                <p>Looks like your inventory is empty for this shop/filter.</p>
-            </div>
-        </div>
-        {% endfor %}
-
-    </div>
-</div>
-
 <script>
+const variantList = document.getElementById("variantSortable");
+const orderStatus = document.getElementById("orderStatus");
+let draggedRow = null;
+let pointerDraggedRow = null;
+let pointerHandle = null;
+
 function openBranchPopup(){
-    const popup = document.getElementById("branchPopup");
-    const backdrop = document.getElementById("branchPopupBackdrop");
-
-    if(popup){
-        popup.classList.add("active");
-    }
-
-    if(backdrop){
-        backdrop.classList.add("active");
-    }
-
-    document.body.classList.add("inventory-popup-open");
+    document.getElementById("branchPopup")?.classList.add("active");
+    document.getElementById("branchBackdrop")?.classList.add("active");
+    document.body.style.overflow = "hidden";
 }
 
 function closeBranchPopup(){
-    const popup = document.getElementById("branchPopup");
-    const backdrop = document.getElementById("branchPopupBackdrop");
-
-    if(popup){
-        popup.classList.remove("active");
-    }
-
-    if(backdrop){
-        backdrop.classList.remove("active");
-    }
-
-    document.body.classList.remove("inventory-popup-open");
+    document.getElementById("branchPopup")?.classList.remove("active");
+    document.getElementById("branchBackdrop")?.classList.remove("active");
+    document.body.style.overflow = "";
 }
 
-function selectBranch(branchId){
-    const input = document.getElementById("branchInput");
-    const form = document.getElementById("filterForm");
-
-    if(input){
-        input.value = branchId;
-    }
-
-    if(form){
-        form.submit();
-    }
+function changeBranch(branchId){
+    const url = new URL(window.location.href);
+    url.searchParams.set("branch", branchId);
+    window.location.href = url.toString();
 }
 
-function openMobileActions(){
-    const panel = document.getElementById("mobileActionPanel");
-    const backdrop = document.getElementById("mobileActionBackdrop");
-
-    if(panel){
-        panel.classList.add("active");
-    }
-
-    if(backdrop){
-        backdrop.classList.add("active");
-    }
-
-    document.body.classList.add("inventory-popup-open");
-}
-
-function closeMobileActions(){
-    const panel = document.getElementById("mobileActionPanel");
-    const backdrop = document.getElementById("mobileActionBackdrop");
-
-    if(panel){
-        panel.classList.remove("active");
-    }
-
-    if(backdrop){
-        backdrop.classList.remove("active");
-    }
-
-    document.body.classList.remove("inventory-popup-open");
-}
-
-document.addEventListener("keydown", function(e){
-    if(e.key === "Escape"){
-        closeBranchPopup();
-        closeMobileActions();
-    }
-});
-
-function inventorySameOriginMediaUrl(rawUrl){
-    const value = String(rawUrl || "").trim();
-
-    if(!value){
-        return "";
-    }
-
-    try{
-        const parsed = new URL(value, window.location.href);
-
-        /*
-         * iPhone/PWA may open the website through HTTPS while an ImageField
-         * returns an absolute HTTP media URL. Safari blocks that mixed content.
-         * Keep the media path but load it from the same origin as the page.
-         */
-        if(
-            parsed.pathname.startsWith("/media/") ||
-            parsed.pathname.includes("/media/")
-        ){
-            return window.location.origin + parsed.pathname + parsed.search;
-        }
-
-        return parsed.href;
-    }catch(error){
-        if(value.startsWith("/")){
-            return window.location.origin + value;
-        }
-
-        return window.location.origin + "/" + value.replace(/^\.?\//, "");
-    }
-}
-
-function inventoryImageFallback(img){
-    const holder = img?.parentElement;
-
-    if(img){
-        img.remove();
-    }
-
-    if(!holder){
+function refreshOrderNumbers(){
+    if(!variantList){
         return;
     }
 
-    holder.classList.add("inventory-image-error");
-
-    if(!holder.querySelector(".inventory-image-fallback")){
-        const fallback = document.createElement("span");
-        fallback.className = "inventory-image-fallback";
-        fallback.textContent = "📦";
-        holder.appendChild(fallback);
-    }
-}
-
-function inventoryImageError(img){
-    if(!img){
-        return;
-    }
-
-    const original = img.dataset.mediaSrc || img.getAttribute("src") || "";
-    const sameOriginUrl = inventorySameOriginMediaUrl(original);
-
-    /*
-     * Retry once using the page's own domain/protocol.
-     * This fixes HTTPS PWA -> HTTP media URL problems on iPhone Safari.
-     */
-    if(img.dataset.sameOriginRetried !== "1" && sameOriginUrl){
-        img.dataset.sameOriginRetried = "1";
-        img.src = sameOriginUrl;
-        return;
-    }
-
-    inventoryImageFallback(img);
-}
-
-function normalizeInventoryImages(){
-    document.querySelectorAll("img.inventory-product-photo").forEach(function(img){
-        const rawUrl = img.dataset.mediaSrc || img.getAttribute("src") || "";
-        const normalized = inventorySameOriginMediaUrl(rawUrl);
-
-        if(normalized && normalized !== img.src){
-            img.src = normalized;
+    variantList.querySelectorAll(".variant-row").forEach((row,index) => {
+        const number = row.querySelector(".order-number");
+        if(number){
+            number.textContent = String(index + 1);
         }
     });
 }
 
-document.addEventListener("DOMContentLoaded", normalizeInventoryImages);
-
-function inventoryNormalizeImageUrl(rawUrl){
-    let value = String(rawUrl || "").trim().replace(/\\/g, "/");
-
-    if(!value){
-        return "";
+function setOrderStatus(text,state=""){
+    if(!orderStatus){
+        return;
     }
 
-    if(/^(data:|blob:|https?:\/\/)/i.test(value)){
-        return value;
-    }
-
-    if(value.startsWith("//")){
-        return window.location.protocol + value;
-    }
-
-    if(value.startsWith("/")){
-        return value;
-    }
-
-    if(value.startsWith("media/") || value.startsWith("static/")){
-        return "/" + value;
-    }
-
-    return "/media/" + value.replace(/^\.?\//, "");
+    orderStatus.textContent = text;
+    orderStatus.className = "order-status" + (state ? " " + state : "");
 }
 
-function inventoryImageMarkup(rawUrl){
-    const url = inventoryNormalizeImageUrl(rawUrl);
-
-    if(!url){
-        return '<span class="inventory-image-fallback">📦</span>';
+async function saveVariantOrder(){
+    if(!variantList){
+        return;
     }
 
-    const safeUrl = url.replace(/"/g, "&quot;");
+    const ids = Array.from(variantList.querySelectorAll(".variant-row"))
+        .map(row => Number(row.dataset.variantId))
+        .filter(Boolean);
 
-    return `<img src="${safeUrl}" alt="Inventory item" loading="lazy" onerror="inventoryImageError(this)">`;
+    if(!ids.length){
+        return;
+    }
+
+    refreshOrderNumbers();
+    setOrderStatus("Saving order…","saving");
+
+    const token = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || "";
+
+    try{
+        const response = await fetch("{% url 'item_variant_reorder' item.id %}",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json",
+                "X-CSRFToken":token,
+                "X-Requested-With":"XMLHttpRequest"
+            },
+            body:JSON.stringify({variant_ids:ids})
+        });
+
+        const data = await response.json();
+
+        if(!response.ok || !data.success){
+            throw new Error(data.message || "Unable to save order.");
+        }
+
+        setOrderStatus("Order saved","saved");
+    }catch(error){
+        setOrderStatus("Save failed","error");
+    }
 }
 
+function moveVariant(button,direction){
+    const row = button.closest(".variant-row");
+
+    if(!row || !variantList){
+        return;
+    }
+
+    if(direction < 0 && row.previousElementSibling?.classList.contains("variant-row")){
+        variantList.insertBefore(row,row.previousElementSibling);
+        saveVariantOrder();
+    }
+
+    if(direction > 0 && row.nextElementSibling?.classList.contains("variant-row")){
+        variantList.insertBefore(row.nextElementSibling,row);
+        saveVariantOrder();
+    }
+}
+
+function bindDesktopDrag(row){
+    row.addEventListener("dragstart",event => {
+        draggedRow = row;
+        row.classList.add("dragging");
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain",row.dataset.variantId || "");
+    });
+
+    row.addEventListener("dragend",() => {
+        row.classList.remove("dragging");
+        draggedRow = null;
+        saveVariantOrder();
+    });
+
+    row.addEventListener("dragover",event => {
+        event.preventDefault();
+
+        if(!draggedRow || draggedRow === row){
+            return;
+        }
+
+        const box = row.getBoundingClientRect();
+        const before = event.clientY < box.top + box.height / 2;
+        variantList.insertBefore(draggedRow,before ? row : row.nextElementSibling);
+    });
+}
+
+function bindTouchDrag(row){
+    const handle = row.querySelector(".drag-handle");
+
+    if(!handle){
+        return;
+    }
+
+    handle.addEventListener("pointerdown",event => {
+        if(event.pointerType === "mouse"){
+            return;
+        }
+
+        pointerDraggedRow = row;
+        pointerHandle = handle;
+        row.classList.add("dragging");
+        handle.setPointerCapture?.(event.pointerId);
+        event.preventDefault();
+    });
+
+    handle.addEventListener("pointermove",event => {
+        if(!pointerDraggedRow || pointerHandle !== handle || !variantList){
+            return;
+        }
+
+        const target = document.elementFromPoint(event.clientX,event.clientY)?.closest(".variant-row");
+
+        if(!target || target === pointerDraggedRow || target.parentElement !== variantList){
+            return;
+        }
+
+        const box = target.getBoundingClientRect();
+        const before = event.clientY < box.top + box.height / 2;
+        variantList.insertBefore(pointerDraggedRow,before ? target : target.nextElementSibling);
+    });
+
+    function finishPointerDrag(){
+        if(pointerDraggedRow === row){
+            row.classList.remove("dragging");
+            pointerDraggedRow = null;
+            pointerHandle = null;
+            saveVariantOrder();
+        }
+    }
+
+    handle.addEventListener("pointerup",finishPointerDrag);
+    handle.addEventListener("pointercancel",finishPointerDrag);
+}
+
+if(variantList){
+    variantList.querySelectorAll(".variant-row").forEach(row => {
+        bindDesktopDrag(row);
+        bindTouchDrag(row);
+    });
+}
 </script>
 
 {% endblock %}

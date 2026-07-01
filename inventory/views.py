@@ -8,7 +8,8 @@ from barcode.writer import ImageWriter
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Sum
+from django.db import transaction
+from django.db.models import Prefetch, Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
@@ -283,16 +284,21 @@ def item_list(request):
     current_branch = get_selected_branch(request)
     branches = Branch.objects.filter(is_active=True).order_by("name")
 
+    variant_qs = ItemVariant.objects.order_by("sort_order", "id")
+
     items = (
         Item.objects
-        .prefetch_related("variants")
         .select_related("item_type")
-        .order_by("name")
+        .prefetch_related(Prefetch("variants", queryset=variant_qs))
+        .order_by("name", "id")
     )
 
     item_types = ItemType.objects.filter(is_active=True).order_by("name")
 
     if q:
+        # Text search should search the whole inventory. Do not keep an old
+        # category filter active, because that was causing valid items to show
+        # as "No items found".
         items = items.filter(
             Q(name__icontains=q)
             | Q(brand__icontains=q)
@@ -302,9 +308,11 @@ def item_list(request):
             | Q(variants__size__icontains=q)
             | Q(variants__label__icontains=q)
         ).distinct()
-
-    if type_id:
+        type_id = ""
+    elif type_id:
         items = items.filter(item_type_id=type_id)
+
+    items = list(items)
 
     for item in items:
         item.branch_stock_total = get_item_branch_qty(item, current_branch)
@@ -318,7 +326,9 @@ def item_list(request):
     return render(request, "inventory/item_list.html", {
         "items": items,
         "item_types": item_types,
+        "q": q,
         "selected_type": type_id,
+        "q": q,
         "current_branch": current_branch,
         "branches": branches,
         "can_manage_inventory": can_manage_inventory(request.user),
@@ -596,18 +606,109 @@ def unit_option_delete(request, pk):
     return redirect("inventory_control_center")
 
 
+
+def _posted_variant_rows(request):
+    """Return inline variant rows in the same order shown in the create form."""
+    keys = request.POST.getlist("variant_key[]")
+    labels = request.POST.getlist("variant_label[]")
+    sizes = request.POST.getlist("variant_size[]")
+    colors = request.POST.getlist("variant_color[]")
+    skus = request.POST.getlist("variant_sku[]")
+    cost_prices = request.POST.getlist("variant_cost_price[]")
+    sale_prices = request.POST.getlist("variant_sale_price[]")
+
+    rows = []
+
+    for index, key in enumerate(keys):
+        def value(values):
+            return values[index].strip() if index < len(values) else ""
+
+        rows.append({
+            "key": str(key).strip(),
+            "label": value(labels),
+            "size": value(sizes),
+            "color": value(colors),
+            "sku": value(skus),
+            "cost_price": value(cost_prices),
+            "sale_price": value(sale_prices),
+            "image": request.FILES.get(f"variant_image_{key}"),
+        })
+
+    return rows
+
+
+def _create_inline_variants(request, item, can_price):
+    """
+    Save variants created under the new item form.
+
+    If staff creates no rows, create one Default variant so the item can be
+    stocked immediately.
+    """
+    rows = _posted_variant_rows(request)
+    created = []
+
+    for position, row in enumerate(rows, start=1):
+        has_value = any([
+            row["label"],
+            row["size"],
+            row["color"],
+            row["sku"],
+            row["cost_price"],
+            row["sale_price"],
+            row["image"],
+        ])
+
+        if not has_value:
+            continue
+
+        if can_price:
+            cost_price = money(row["cost_price"], item.cost_price)
+            sale_price = money(row["sale_price"], item.sale_price)
+        else:
+            cost_price = item.cost_price
+            sale_price = item.sale_price
+
+        variant = ItemVariant.objects.create(
+            item=item,
+            sku=row["sku"],
+            image=row["image"],
+            size=row["size"],
+            color=row["color"],
+            label=row["label"],
+            cost_price=cost_price,
+            sale_price=sale_price,
+            sort_order=position,
+            is_active=True,
+        )
+        created.append(variant)
+
+    if not created:
+        created.append(
+            ItemVariant.objects.create(
+                item=item,
+                label="Default",
+                cost_price=item.cost_price,
+                sale_price=item.sale_price,
+                sort_order=1,
+                is_active=True,
+            )
+        )
+
+    return created
+
+
 # ==================================================
 # ITEM CRUD
 # ==================================================
 
 @login_required
+@transaction.atomic
 def item_create(request):
     if not can_manage_inventory(request.user):
         messages.error(request, "You do not have permission.")
         return redirect("item_list")
 
     seed_default_units()
-
     can_price = can_edit_cost_price(request.user)
 
     form = ItemForm(
@@ -627,13 +728,18 @@ def item_create(request):
             item.image = None
 
         item.save()
+        created_variants = _create_inline_variants(request, item, can_price)
 
-        messages.success(request, "Item created successfully.")
+        messages.success(
+            request,
+            f"Item created with {len(created_variants)} variant(s).",
+        )
         return redirect("item_detail", pk=item.pk)
 
     return render(request, "inventory/item_form.html", {
         "form": form,
         "title": "Create Item",
+        "is_create": True,
         "can_edit_cost_price": can_price,
     })
 
@@ -643,8 +749,12 @@ def item_detail(request, pk):
     current_branch = get_selected_branch(request)
     branches = Branch.objects.filter(is_active=True).order_by("name")
 
+    variant_qs = ItemVariant.objects.order_by("sort_order", "id")
+
     item = get_object_or_404(
-        Item.objects.select_related("item_type").prefetch_related("variants"),
+        Item.objects
+        .select_related("item_type")
+        .prefetch_related(Prefetch("variants", queryset=variant_qs)),
         pk=pk,
     )
 
@@ -727,6 +837,7 @@ def item_edit(request, pk):
     return render(request, "inventory/item_form.html", {
         "form": form,
         "title": "Edit Item",
+        "is_create": False,
         "can_edit_cost_price": can_price,
     })
 
@@ -874,6 +985,60 @@ def item_variant_delete(request, pk, variant_id):
     return render(request, "inventory/item_variant_confirm_delete.html", {
         "item": item,
         "variant": variant,
+    })
+
+
+@login_required
+@require_POST
+def item_variant_reorder(request, pk):
+    if not can_manage_inventory(request.user):
+        return JsonResponse({
+            "success": False,
+            "message": "You do not have permission.",
+        }, status=403)
+
+    item = get_object_or_404(Item, pk=pk)
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({
+            "success": False,
+            "message": "Invalid request data.",
+        }, status=400)
+
+    raw_ids = payload.get("variant_ids", [])
+
+    try:
+        variant_ids = [int(value) for value in raw_ids]
+    except (TypeError, ValueError):
+        return JsonResponse({
+            "success": False,
+            "message": "Invalid variant list.",
+        }, status=400)
+
+    valid_ids = set(
+        ItemVariant.objects
+        .filter(item=item, id__in=variant_ids)
+        .values_list("id", flat=True)
+    )
+
+    if len(valid_ids) != len(variant_ids) or len(set(variant_ids)) != len(variant_ids):
+        return JsonResponse({
+            "success": False,
+            "message": "One or more variants do not belong to this item.",
+        }, status=400)
+
+    with transaction.atomic():
+        for position, variant_id in enumerate(variant_ids, start=1):
+            ItemVariant.objects.filter(
+                item=item,
+                id=variant_id,
+            ).update(sort_order=position)
+
+    return JsonResponse({
+        "success": True,
+        "message": "Variant order saved.",
     })
 
 
@@ -1060,7 +1225,7 @@ def variant_search_api(request):
             | Q(label__icontains=q)
         )
 
-    variants = variants.order_by("item__name", "color", "size", "label")[:20]
+    variants = variants.order_by("item__name", "sort_order", "id")[:100]
 
     results = []
 
@@ -1112,7 +1277,11 @@ def stock_batch_in(request):
         branches = Branch.objects.filter(is_active=True).order_by("name")
     else:
         user_branch = get_user_branch(request.user)
-        branches = Branch.objects.filter(id=user_branch.id) if user_branch else Branch.objects.none()
+        branches = (
+            Branch.objects.filter(id=user_branch.id)
+            if user_branch
+            else Branch.objects.none()
+        )
 
     if not selected_branch:
         messages.error(request, "No branch assigned. Please ask admin to set your shop.")
@@ -1141,59 +1310,89 @@ def stock_batch_in(request):
 
         saved_count = 0
 
-        for row in rows:
-            variant_id = row.get("variant_id")
-            qty_raw = row.get("quantity") or 0
-            cost_raw = row.get("cost_price") or "0"
-            note = row.get("note", "").strip()
+        with transaction.atomic():
+            for row in rows:
+                variant_id = row.get("variant_id")
+                qty_raw = row.get("quantity") or 0
+                cost_raw = row.get("cost_price") or "0"
+                note = str(row.get("note", "")).strip()
 
-            try:
-                qty = int(qty_raw)
-            except Exception:
-                continue
+                try:
+                    qty = int(qty_raw)
+                except (TypeError, ValueError):
+                    continue
 
-            if not variant_id or qty <= 0:
-                continue
+                if not variant_id or qty <= 0:
+                    continue
 
-            variant = (
-                ItemVariant.objects
-                .select_related("item")
-                .filter(id=variant_id)
-                .first()
-            )
+                variant = (
+                    ItemVariant.objects
+                    .select_related("item")
+                    .filter(id=variant_id, is_active=True)
+                    .first()
+                )
 
-            if not variant:
-                continue
+                if not variant:
+                    continue
 
-            if can_cost:
-                cost_price = money(cost_raw)
-            else:
-                cost_price = variant.cost_price or variant.item.cost_price
+                if can_cost:
+                    cost_price = money(cost_raw, variant.display_cost)
+                else:
+                    cost_price = variant.display_cost
 
-            StockMovement.objects.create(
-                branch=selected_branch,
-                item=variant.item,
-                variant=variant,
-                movement_type="in",
-                quantity=qty,
-                cost_price=cost_price,
-                note=note or f"Batch stock in - {selected_branch.name}",
-                created_by=request.user,
-            )
-
-            saved_count += 1
+                StockMovement.objects.create(
+                    branch=selected_branch,
+                    item=variant.item,
+                    variant=variant,
+                    movement_type="in",
+                    quantity=qty,
+                    cost_price=cost_price,
+                    note=note or f"Batch stock in - {selected_branch.name}",
+                    created_by=request.user,
+                )
+                saved_count += 1
 
         if saved_count:
             messages.success(
                 request,
-                f"{saved_count} stock rows saved successfully for {selected_branch.name}.",
+                f"{saved_count} stock row(s) saved for {selected_branch.name}.",
             )
-            return redirect("item_list")
+            return redirect(
+                f"{request.path}?branch={selected_branch.id}"
+                if request.user.is_superuser
+                else request.path
+            )
 
         messages.error(request, "No valid stock rows to save.")
         return redirect("stock_batch_in")
 
+    variant_qs = (
+        ItemVariant.objects
+        .filter(is_active=True)
+        .order_by("sort_order", "id")
+    )
+
+    items = list(
+        Item.objects
+        .filter(is_active=True)
+        .select_related("item_type")
+        .prefetch_related(Prefetch("variants", queryset=variant_qs))
+        .order_by("name", "id")
+    )
+
+    for item in items:
+        item.branch_stock_total = 0
+
+        for variant in item.variants.all():
+            variant.branch_stock_qty = get_variant_branch_qty(
+                variant,
+                selected_branch,
+            )
+            item.branch_stock_total += variant.branch_stock_qty
+
     return render(request, "inventory/stock_batch_in.html", {
+        "items": items,
+        "item_types": ItemType.objects.filter(is_active=True).order_by("name"),
         "branches": branches,
         "selected_branch": selected_branch,
         "can_edit_cost_price": can_cost,

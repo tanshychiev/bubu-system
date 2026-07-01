@@ -1950,6 +1950,7 @@ body.inventory-detail-open{
             {% endif %}
         </div>
 
+        {# Text search intentionally does not submit the old type filter. #}
         <form method="get" class="tool-row clean-tool-row" id="filterForm">
 
             {% if request.user.is_superuser %}
@@ -1981,12 +1982,8 @@ body.inventory-detail-open{
                 type="text"
                 name="q"
                 placeholder="🔍 Search product..."
-                value="{{ request.GET.q }}"
+                value="{{ q|default:'' }}"
             >
-
-            {% if selected_type %}
-                <input type="hidden" name="type" value="{{ selected_type }}">
-            {% endif %}
 
             <div class="inventory-command-row">
                 <button class="btn-search" type="submit">Search</button>

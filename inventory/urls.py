@@ -2,7 +2,6 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-
     # =====================
     # MAIN
     # =====================
@@ -40,6 +39,7 @@ urlpatterns = [
     # =====================
     path("variant/<int:variant_id>/stock/", views.variant_stock_movement, name="variant_stock_movement"),
     path("variant/<int:variant_id>/barcode/", views.variant_barcode_label, name="variant_barcode_label"),
+    path("<int:pk>/variants/reorder/", views.item_variant_reorder, name="item_variant_reorder"),
     path("<int:pk>/variant/<int:variant_id>/edit/", views.item_variant_edit, name="item_variant_edit"),
     path("<int:pk>/variant/<int:variant_id>/delete/", views.item_variant_delete, name="item_variant_delete"),
 
