@@ -339,7 +339,7 @@
                                     {% if sale and sale.deadline %}
                                         {{ sale.deadline|date:"d M Y" }}
                                     {% else %}
-                                        Auto final day: +7 days
+                                        Auto final day: +5 days
                                     {% endif %}
                                 </strong>
                                 <em>📅</em>
@@ -2830,7 +2830,7 @@ function switchSaleMode(){
         if(petSelect){ petSelect.required = false; }
 
         const deadlineInputAuto = document.getElementById("deadlineInput");
-        if(deadlineInputAuto && !deadlineInputAuto.value){ setDeadlineDays(7); }
+        if(deadlineInputAuto && !deadlineInputAuto.value){ setDeadlineDays(5); }
     }else{
         inStockBox.style.display = "block";
         preorderBox.style.display = "none";
@@ -3626,7 +3626,7 @@ window.addEventListener("load", function(){
     const deadlineInputAuto = document.getElementById("deadlineInput");
 
     if(mode === "preorder" && deadlineInputAuto && !deadlineInputAuto.value){
-        setDeadlineDays(7);
+        setDeadlineDays(5);
     }
 });
 
