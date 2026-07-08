@@ -1412,344 +1412,6 @@ p{
     }
 }
 
-
-
-/* =========================================================
-   PHOTO GROUP V2 — CLEAN MOBILE BUTTON UI
-========================================================= */
-.bank-head-actions{
-    display:flex;
-    gap:6px;
-    align-items:center;
-    justify-content:flex-end;
-    flex-wrap:wrap;
-}
-
-.cool-bank-btn{
-    min-height:36px;
-    border:0;
-    border-radius:10px;
-    padding:0 12px;
-    color:white;
-    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
-    font-size:10px;
-    font-weight:900;
-    cursor:pointer;
-}
-
-.cool-bank-btn.secondary{
-    color:#6f57d9;
-    background:#f1ebff;
-    border:1px solid #eaddec;
-}
-
-.cool-photo-grid{
-    grid-template-columns:repeat(2,minmax(0,1fr));
-}
-
-.add-photo-card{
-    border-style:dashed;
-    color:#6f57d9;
-    text-align:left;
-}
-
-.add-photo-thumb{
-    background:#f1ebff!important;
-}
-
-.photo-remove-btn{
-    position:absolute;
-    top:5px;
-    right:5px;
-    width:23px;
-    height:23px;
-    border:0;
-    border-radius:7px;
-    background:#fff0ef;
-    color:#ff4d4d;
-    font-weight:900;
-    cursor:pointer;
-    z-index:3;
-}
-
-.cool-photo-card{
-    position:relative;
-}
-
-.photo-source-button{
-    width:100%;
-    min-height:38px;
-    border:1px solid #eaddec;
-    border-radius:10px;
-    padding:0 9px;
-    display:flex;
-    align-items:center;
-    justify-content:flex-start;
-    gap:7px;
-    color:#17152f;
-    background:linear-gradient(135deg,#fff,#fbf8ff);
-    font-size:12px;
-    font-weight:900;
-    cursor:pointer;
-}
-
-.photo-source-button span{
-    width:24px;
-    height:24px;
-    border-radius:8px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:#f1ebff;
-    color:#6f57d9;
-    flex-shrink:0;
-}
-
-.photo-source-button b{
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-}
-
-.photo-source-button.custom span{
-    background:#fff1e8;
-}
-
-.photo-picker-backdrop{
-    display:none;
-    position:fixed;
-    inset:0;
-    background:rgba(23,21,47,.45);
-    backdrop-filter:blur(3px);
-    z-index:10020;
-}
-
-.photo-picker-backdrop.active{
-    display:block;
-}
-
-body.photo-picker-open{
-    overflow:hidden!important;
-    touch-action:none;
-}
-
-.photo-picker-sheet{
-    display:none;
-    position:fixed;
-    left:50%;
-    top:50%;
-    bottom:auto;
-    transform:translate(-50%,-50%);
-    width:min(430px,calc(100% - 16px));
-    max-height:min(78dvh,620px);
-    overflow:auto;
-    border:1px solid #efdfd7;
-    border-radius:20px;
-    padding:10px;
-    background:white;
-    box-shadow:0 30px 90px rgba(23,21,47,.28);
-    z-index:10030;
-}
-
-.photo-picker-sheet.active{
-    display:block;
-}
-
-.photo-picker-head{
-    position:sticky;
-    top:0;
-    z-index:2;
-    padding:10px;
-    border-radius:14px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:8px;
-    color:white;
-    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
-}
-
-.photo-picker-head strong,
-.photo-picker-head small{
-    display:block;
-}
-
-.photo-picker-head strong{
-    font-size:14px;
-    font-weight:900;
-}
-
-.photo-picker-head small{
-    margin-top:2px;
-    font-size:9px;
-    font-weight:800;
-    opacity:.92;
-}
-
-.photo-picker-head button{
-    width:34px;
-    height:34px;
-    border:0;
-    border-radius:10px;
-    color:white;
-    background:rgba(255,255,255,.22);
-    font-size:18px;
-    font-weight:900;
-    cursor:pointer;
-}
-
-.photo-picker-options{
-    display:grid;
-    gap:6px;
-    margin-top:8px;
-}
-
-.photo-option-btn{
-    width:100%;
-    min-height:56px;
-    border:1px solid #eaddec;
-    border-radius:14px;
-    padding:7px 9px;
-    display:grid;
-    grid-template-columns:42px minmax(0,1fr);
-    grid-template-areas:"icon title" "icon sub";
-    gap:1px 9px;
-    text-align:left;
-    color:#17152f;
-    background:#fffaf7;
-    cursor:pointer;
-}
-
-.photo-option-btn span{
-    grid-area:icon;
-    width:42px;
-    height:42px;
-    border-radius:12px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:#6f57d9;
-    background:#f1ebff;
-    font-size:17px;
-    font-weight:900;
-}
-
-.photo-option-btn strong{
-    grid-area:title;
-    align-self:end;
-    font-size:12px;
-    font-weight:900;
-}
-
-.photo-option-btn small{
-    grid-area:sub;
-    color:#7b7288;
-    font-size:8px;
-    font-weight:800;
-}
-
-.photo-option-btn.add span{
-    background:#eafff4;
-    color:#15915f;
-}
-
-.photo-option-btn.custom span{
-    background:#fff1e8;
-    color:#d65e20;
-}
-
-.photo-option-btn.muted{
-    opacity:.65;
-}
-
-@media(max-width:700px){
-    .cool-bank-head{
-        align-items:center;
-    }
-
-    .bank-head-actions{
-        gap:4px;
-    }
-
-    .cool-bank-btn{
-        min-height:30px;
-        border-radius:8px;
-        padding:0 8px;
-        font-size:7px;
-    }
-
-    .cool-photo-grid{
-        grid-template-columns:1fr;
-        gap:4px;
-    }
-
-    .cool-photo-card,
-    .add-photo-card{
-        min-height:44px;
-    }
-
-    .photo-source-button{
-        min-height:32px;
-        border-radius:8px;
-        padding:0 7px;
-        gap:5px;
-        font-size:10px;
-    }
-
-    .photo-source-button span{
-        width:22px;
-        height:22px;
-        border-radius:7px;
-        font-size:12px;
-    }
-
-    .photo-picker-sheet{
-        left:50%;
-        top:50%;
-        bottom:auto;
-        transform:translate(-50%,-50%);
-        width:calc(100% - 18px);
-        max-height:82dvh;
-        border-radius:16px;
-        padding:8px;
-    }
-
-    .photo-picker-head{
-        padding:8px;
-        border-radius:11px;
-    }
-
-    .photo-picker-head strong{
-        font-size:13px;
-    }
-
-    .photo-picker-head small{
-        font-size:8px;
-    }
-
-    .photo-option-btn{
-        min-height:50px;
-        border-radius:11px;
-        grid-template-columns:36px minmax(0,1fr);
-        gap:1px 7px;
-    }
-
-    .photo-option-btn span{
-        width:36px;
-        height:36px;
-        border-radius:10px;
-        font-size:15px;
-    }
-
-    .photo-option-btn strong{
-        font-size:11px;
-    }
-
-    .photo-option-btn small{
-        font-size:7px;
-    }
-}
-
 </style>
 
 {% if is_bulk_create %}
@@ -1767,26 +1429,32 @@ body.photo-picker-open{
         </div>
 
         <div class="bulk-help-clean">
-            All rows use <strong>Main</strong> by default. Tap <strong>＋ Add Photo</strong> only when you need another picture, then choose it from the phone-style photo button in each row.
+            Upload shared photos once, then choose <strong>Main / A / B / C / D</strong> for each variant. If all variants use the same product picture, leave every row as <strong>Main</strong>.
         </div>
 
         <form method="post" enctype="multipart/form-data" id="bulkVariantForm">
             {% csrf_token %}
 
             <section class="photo-bank">
-                <div class="photo-bank-head cool-bank-head">
+                <div class="photo-bank-head">
                     <div>
                         <h2>Photo Bank</h2>
-                        <p>Add only the photos you need. All rows use Main by default.</p>
+                        <p>Use one photo for many variants.</p>
                     </div>
-                    <div class="bank-head-actions">
-                        <button type="button" class="cool-bank-btn secondary" onclick="openPhotoPicker(null,'all')">Set All</button>
-                        <button type="button" class="cool-bank-btn" onclick="addPhotoGroup()">＋ Add Photo</button>
+                    <div class="apply-photo-all">
+                        <select id="applyPhotoSourceSelect" aria-label="Apply photo source to all variants">
+                            <option value="main">Main</option>
+                            <option value="a">Photo A</option>
+                            <option value="b">Photo B</option>
+                            <option value="c">Photo C</option>
+                            <option value="d">Photo D</option>
+                        </select>
+                        <button type="button" onclick="applyPhotoSourceToAll()">Set All</button>
                     </div>
                 </div>
 
-                <div class="photo-bank-grid cool-photo-grid" id="photoBankGrid">
-                    <div class="photo-card main-photo-card cool-photo-card" data-bank-card="main">
+                <div class="photo-bank-grid">
+                    <div class="photo-card main-photo-card">
                         <div class="photo-thumb">
                             {% if item.image %}
                                 <img src="{{ item.image.url }}" alt="Main product image" decoding="async" loading="eager">
@@ -1800,27 +1468,31 @@ body.photo-picker-open{
                         </div>
                     </div>
 
-                    <button type="button" class="photo-card add-photo-card" id="addPhotoBankCard" onclick="addPhotoGroup()">
-                        <div class="photo-thumb add-photo-thumb"><span>＋</span></div>
-                        <div class="photo-card-text">
-                            <strong>Add photo</strong>
-                            <small>For Photo A, B, C...</small>
-                        </div>
-                    </button>
+                    <label class="photo-card upload-photo-card" for="photoGroupA">
+                        <div class="photo-thumb" data-photo-preview="a"><span>A</span></div>
+                        <div class="photo-card-text"><strong>Photo A</strong><small>Tap upload</small></div>
+                        <input id="photoGroupA" type="file" name="variant_group_image_a" accept="image/*" onchange="previewGroupPhoto(this,'a')">
+                    </label>
+
+                    <label class="photo-card upload-photo-card" for="photoGroupB">
+                        <div class="photo-thumb" data-photo-preview="b"><span>B</span></div>
+                        <div class="photo-card-text"><strong>Photo B</strong><small>Tap upload</small></div>
+                        <input id="photoGroupB" type="file" name="variant_group_image_b" accept="image/*" onchange="previewGroupPhoto(this,'b')">
+                    </label>
+
+                    <label class="photo-card upload-photo-card" for="photoGroupC">
+                        <div class="photo-thumb" data-photo-preview="c"><span>C</span></div>
+                        <div class="photo-card-text"><strong>Photo C</strong><small>Optional</small></div>
+                        <input id="photoGroupC" type="file" name="variant_group_image_c" accept="image/*" onchange="previewGroupPhoto(this,'c')">
+                    </label>
+
+                    <label class="photo-card upload-photo-card" for="photoGroupD">
+                        <div class="photo-thumb" data-photo-preview="d"><span>D</span></div>
+                        <div class="photo-card-text"><strong>Photo D</strong><small>Optional</small></div>
+                        <input id="photoGroupD" type="file" name="variant_group_image_d" accept="image/*" onchange="previewGroupPhoto(this,'d')">
+                    </label>
                 </div>
             </section>
-
-            <div class="photo-picker-backdrop" id="photoPickerBackdrop" onclick="closePhotoPicker()"></div>
-            <div class="photo-picker-sheet" id="photoPickerSheet">
-                <div class="photo-picker-head">
-                    <div>
-                        <strong id="photoPickerTitle">Choose Photo</strong>
-                        <small id="photoPickerSub">Select photo source</small>
-                    </div>
-                    <button type="button" onclick="closePhotoPicker()">×</button>
-                </div>
-                <div class="photo-picker-options" id="photoPickerOptions"></div>
-            </div>
 
             <section class="bulk-variant-section">
                 <div class="bulk-section-head">
@@ -1877,12 +1549,15 @@ body.photo-picker-open{
                             {% endif %}
 
                             <div class="bulk-field-clean photo-source-field">
-                                <label>Photo</label>
-                                <input type="hidden" name="variant_photo_source[]" value="main">
-                                <button type="button" class="photo-source-button" onclick="openPhotoPicker(this,'row')">
-                                    <span>📦</span>
-                                    <b>Main</b>
-                                </button>
+                                <label>Photo Source</label>
+                                <select name="variant_photo_source[]" onchange="toggleCustomPhoto(this)">
+                                    <option value="main">Main</option>
+                                    <option value="a">Photo A</option>
+                                    <option value="b">Photo B</option>
+                                    <option value="c">Photo C</option>
+                                    <option value="d">Photo D</option>
+                                    <option value="custom">Custom</option>
+                                </select>
                             </div>
                         </div>
 
@@ -1912,27 +1587,8 @@ body.photo-picker-open{
 
 <script>
 const bulkRows = document.getElementById("bulkVariantRows");
-const photoBankGrid = document.getElementById("photoBankGrid");
-const addPhotoBankCard = document.getElementById("addPhotoBankCard");
-const photoPickerSheet = document.getElementById("photoPickerSheet");
-const photoPickerBackdrop = document.getElementById("photoPickerBackdrop");
-const photoPickerOptions = document.getElementById("photoPickerOptions");
-const photoPickerTitle = document.getElementById("photoPickerTitle");
-const photoPickerSub = document.getElementById("photoPickerSub");
-
 let bulkCounter = 1;
-let nextPhotoIndex = 0;
-let pickerTarget = null;
-let pickerMode = "row";
-
-const photoLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-const photoGroups = [
-    {key:"main", label:"Main", short:"Main", emoji:"📦", hasFile:true}
-];
-
-function getPhotoGroup(key){
-    return photoGroups.find(group => group.key === key) || photoGroups[0];
-}
+const bulkMainImageUrl = "{% if item.image %}{{ item.image.url|escapejs }}{% endif %}";
 
 function bulkRefreshNumbers(){
     const rows = document.querySelectorAll(".bulk-row-clean");
@@ -1950,51 +1606,9 @@ function bulkRefreshNumbers(){
     }
 }
 
-function addPhotoGroup(){
-    if(nextPhotoIndex >= photoLetters.length){
-        alert("Maximum photo groups reached.");
-        return;
-    }
-
-    const letter = photoLetters[nextPhotoIndex];
-    const key = letter.toLowerCase();
-    nextPhotoIndex += 1;
-
-    photoGroups.push({
-        key:key,
-        label:`Photo ${letter}`,
-        short:letter,
-        emoji:letter,
-        hasFile:false
-    });
-
-    const card = document.createElement("label");
-    card.className = "photo-card upload-photo-card cool-photo-card bank-added-card";
-    card.setAttribute("data-bank-card", key);
-    card.setAttribute("for", `photoGroup_${key}`);
-    card.innerHTML = `
-        <button type="button" class="photo-remove-btn" onclick="removePhotoGroup(event,'${key}')">×</button>
-        <div class="photo-thumb" data-photo-preview="${key}"><span>${letter}</span></div>
-        <div class="photo-card-text">
-            <strong>Photo ${letter}</strong>
-            <small>Tap upload</small>
-        </div>
-        <input type="hidden" name="variant_group_key[]" value="${key}">
-        <input id="photoGroup_${key}" type="file" name="variant_group_image_${key}" accept="image/*" onchange="previewGroupPhoto(this,'${key}')">
-    `;
-
-    photoBankGrid.insertBefore(card, addPhotoBankCard);
-    refreshAllPhotoButtons();
-
-    setTimeout(() => {
-        card.querySelector('input[type="file"]')?.click();
-    }, 80);
-}
-
 function previewGroupPhoto(input,key){
     const preview = document.querySelector(`[data-photo-preview="${key}"]`);
     const file = input.files && input.files[0];
-    const group = getPhotoGroup(key);
 
     if(!preview || !file){
         return;
@@ -2002,134 +1616,30 @@ function previewGroupPhoto(input,key){
 
     const reader = new FileReader();
     reader.onload = function(event){
-        preview.innerHTML = `<img src="${event.target.result}" alt="${group.label}">`;
-        const card = preview.closest(".photo-card");
-        card?.classList.add("has-photo");
-        const small = card?.querySelector(".photo-card-text small");
-        if(small){
-            small.textContent = "Ready";
-        }
-        group.hasFile = true;
-        refreshAllPhotoButtons();
+        preview.innerHTML = `<img src="${event.target.result}" alt="Photo ${key.toUpperCase()}">`;
+        preview.closest(".photo-card")?.classList.add("has-photo");
     };
     reader.readAsDataURL(file);
 }
 
-function removePhotoGroup(event,key){
-    event.preventDefault();
-    event.stopPropagation();
+function applyPhotoSourceToAll(){
+    const value = document.getElementById("applyPhotoSourceSelect")?.value || "main";
 
-    const index = photoGroups.findIndex(group => group.key === key);
-    if(index <= 0){
-        return;
-    }
-
-    photoGroups.splice(index,1);
-    document.querySelector(`[data-bank-card="${key}"]`)?.remove();
-
-    document.querySelectorAll('input[name="variant_photo_source[]"]').forEach(input => {
-        if(input.value === key){
-            setRowPhotoSource(input.closest(".bulk-row-clean"), "main");
-        }
+    document.querySelectorAll('select[name="variant_photo_source[]"]').forEach(select => {
+        select.value = value;
+        toggleCustomPhoto(select);
     });
-
-    refreshAllPhotoButtons();
 }
 
-function buildPhotoOptionButton(group){
-    const disabled = group.key !== "main" && !group.hasFile;
-    return `
-        <button type="button" class="photo-option-btn ${disabled ? "muted" : ""}" onclick="choosePhotoSource('${group.key}')">
-            <span>${group.emoji}</span>
-            <strong>${group.label}</strong>
-            <small>${disabled ? "Upload not selected yet" : "Use this photo"}</small>
-        </button>
-    `;
-}
+function toggleCustomPhoto(select){
+    const row = select.closest(".bulk-row-clean");
+    const box = row?.querySelector(".custom-photo-box");
 
-function openPhotoPicker(button,mode="row"){
-    pickerMode = mode;
-    pickerTarget = button;
-
-    if(photoPickerTitle){
-        photoPickerTitle.textContent = mode === "all" ? "Set Photo For All Rows" : "Choose Photo";
-    }
-    if(photoPickerSub){
-        photoPickerSub.textContent = mode === "all" ? "Every variant row will use this photo" : "Choose for this variant row";
-    }
-
-    const groupOptions = photoGroups.map(buildPhotoOptionButton).join("");
-    const customOption = mode === "row" ? `
-        <button type="button" class="photo-option-btn custom" onclick="choosePhotoSource('custom')">
-            <span>📸</span>
-            <strong>Custom</strong>
-            <small>Upload only for this row</small>
-        </button>
-    ` : "";
-    const addOption = `
-        <button type="button" class="photo-option-btn add" onclick="closePhotoPicker(); addPhotoGroup();">
-            <span>＋</span>
-            <strong>Add Photo</strong>
-            <small>Create Photo ${photoLetters[nextPhotoIndex] || ""}</small>
-        </button>
-    `;
-
-    photoPickerOptions.innerHTML = groupOptions + customOption + addOption;
-    photoPickerBackdrop?.classList.add("active");
-    photoPickerSheet?.classList.add("active");
-    document.body.style.overflow = "hidden";
-}
-
-function closePhotoPicker(){
-    photoPickerBackdrop?.classList.remove("active");
-    photoPickerSheet?.classList.remove("active");
-    document.body.style.overflow = "";
-    pickerTarget = null;
-}
-
-function choosePhotoSource(key){
-    if(pickerMode === "all"){
-        document.querySelectorAll(".bulk-row-clean").forEach(row => {
-            setRowPhotoSource(row,key);
-        });
-        closePhotoPicker();
+    if(!box){
         return;
     }
 
-    const row = pickerTarget?.closest(".bulk-row-clean");
-    setRowPhotoSource(row,key);
-    closePhotoPicker();
-}
-
-function setRowPhotoSource(row,key){
-    if(!row){
-        return;
-    }
-
-    const input = row.querySelector('input[name="variant_photo_source[]"]');
-    const button = row.querySelector(".photo-source-button");
-    const customBox = row.querySelector(".custom-photo-box");
-    const group = key === "custom" ? {label:"Custom", emoji:"📸"} : getPhotoGroup(key);
-
-    if(input){
-        input.value = key;
-    }
-
-    if(button){
-        button.innerHTML = `<span>${group.emoji}</span><b>${group.label}</b>`;
-        button.classList.toggle("custom", key === "custom");
-    }
-
-    if(customBox){
-        customBox.style.display = key === "custom" ? "block" : "none";
-    }
-}
-
-function refreshAllPhotoButtons(){
-    document.querySelectorAll(".bulk-row-clean").forEach(row => {
-        const input = row.querySelector('input[name="variant_photo_source[]"]');
-        setRowPhotoSource(row, input?.value || "main");
-    });
+    box.style.display = select.value === "custom" ? "block" : "none";
 }
 
 function previewCustomPhoto(input){
@@ -2157,7 +1667,11 @@ function bulkClearRow(row){
         input.value = "";
     });
 
-    setRowPhotoSource(row,"main");
+    const photoSelect = row.querySelector('select[name="variant_photo_source[]"]');
+    if(photoSelect){
+        photoSelect.value = "main";
+        toggleCustomPhoto(photoSelect);
+    }
 
     const customPreview = row.querySelector(".custom-photo-preview");
     if(customPreview){
@@ -2229,12 +1743,15 @@ function bulkRowHtml(key){
                 {% endif %}
 
                 <div class="bulk-field-clean photo-source-field">
-                    <label>Photo</label>
-                    <input type="hidden" name="variant_photo_source[]" value="main">
-                    <button type="button" class="photo-source-button" onclick="openPhotoPicker(this,'row')">
-                        <span>📦</span>
-                        <b>Main</b>
-                    </button>
+                    <label>Photo Source</label>
+                    <select name="variant_photo_source[]" onchange="toggleCustomPhoto(this)">
+                        <option value="main">Main</option>
+                        <option value="a">Photo A</option>
+                        <option value="b">Photo B</option>
+                        <option value="c">Photo C</option>
+                        <option value="d">Photo D</option>
+                        <option value="custom">Custom</option>
+                    </select>
                 </div>
             </div>
 
@@ -2259,14 +1776,12 @@ function bulkAddRow(amount){
     }
 
     bulkRefreshNumbers();
-    refreshAllPhotoButtons();
 
     const newest = bulkRows.lastElementChild;
     newest?.querySelector('input[name="variant_size[]"]')?.focus();
 }
 
 bulkRefreshNumbers();
-refreshAllPhotoButtons();
 </script>
 
 {% else %}

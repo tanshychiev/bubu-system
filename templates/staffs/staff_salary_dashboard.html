@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.salary-page{padding:22px;}
+.salary-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:16px;}
+.salary-head h1{margin:0;font-size:30px;font-weight:1000;color:#17152f;}
+.salary-head p{margin:6px 0 0;color:#7b7288;font-weight:900;}
+.salary-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.salary-btn{min-height:42px;padding:0 16px;border-radius:14px;border:0;background:linear-gradient(135deg,#8e63ff,#ff8464);color:white;font-weight:1000;display:inline-flex;align-items:center;justify-content:center;}
+.salary-filter{display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:10px;margin:16px 0;padding:14px;border-radius:18px;background:white;border:1px solid #f0dcd0;}
+.salary-filter input,.salary-filter select{height:44px;border:1.5px solid #eadfec;border-radius:12px;padding:0 12px;font-weight:900;}
+.salary-filter button{height:44px;border:0;border-radius:12px;background:#8e63ff;color:white;font-weight:1000;}
+.salary-stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px;}
+.salary-stat{padding:14px;border-radius:18px;background:white;border:1px solid #f0dcd0;box-shadow:0 8px 20px rgba(0,0,0,.04);}
+.salary-stat span{display:block;color:#7b7288;font-weight:900;font-size:12px;}
+.salary-stat strong{display:block;margin-top:6px;font-size:22px;color:#17152f;font-weight:1000;}
+.salary-table-card{overflow:auto;background:white;border:1px solid #f0dcd0;border-radius:20px;box-shadow:0 10px 24px rgba(0,0,0,.05);}
+.salary-table{width:100%;border-collapse:collapse;min-width:1320px;}
+.salary-table th{background:#f8f3ff;color:#17152f;font-size:12px;padding:12px;font-weight:1000;text-align:left;white-space:nowrap;}
+.salary-table td{border-top:1px solid #f3e7df;padding:12px;font-size:13px;font-weight:900;color:#4c465a;vertical-align:middle;white-space:nowrap;}
+.staff-name strong{display:block;color:#17152f;font-size:14px;}
+.staff-name small{display:block;color:#7b7288;margin-top:3px;}
+.status-pill{padding:7px 10px;border-radius:999px;font-weight:1000;font-size:11px;display:inline-flex;}
+.status-opening_soon{background:#fff7df;color:#b86b00;}
+.status-open_today{background:#eafff3;color:#16a05d;}
+.status-overdue{background:#ffe7ec;color:#ff4d6d;}
+.status-paid{background:#e7f5ff;color:#2299e8;}
+.status-opened{background:#f3e8ff;color:#8e63ff;}
+.status-waiting{background:#f1f1f1;color:#777;}
+.row-action{min-height:34px;padding:0 12px;border-radius:10px;background:#f0e9ff;color:#7047db;font-weight:1000;display:inline-flex;align-items:center;}
+.row-action.open{background:linear-gradient(135deg,#8e63ff,#ff8464);color:white;}
+.row-action.disabled{background:#eee;color:#999;pointer-events:none;}
+.money-good{color:#16a05d!important;}.money-bad{color:#e03131!important;}.money-main{color:#8e63ff!important;font-weight:1000!important;}
+@media(max-width:767px){.salary-page{padding:10px}.salary-head{display:block}.salary-actions{margin-top:12px}.salary-filter{grid-template-columns:1fr}.salary-stat-grid{grid-template-columns:1fr 1fr}.salary-table-card{border-radius:14px}.salary-table th,.salary-table td{padding:9px;font-size:11px}}
+</style>
+
+<div class="salary-page">
+    <div class="salary-head">
+        <div>
+            <h1>Staff Salary Center</h1>
+            <p>Check salary open date, late, day off, commission and final salary.</p>
+        </div>
+        <div class="salary-actions">
+            <a href="{% url 'staff_commission_list' %}" class="salary-btn">Commission List</a>
+            <a href="{% url 'staff_attendance_report' %}" class="salary-btn">Attendance Report</a>
+        </div>
+    </div>
+
+    <form method="get" class="salary-filter">
+        <input type="text" name="q" value="{{ q }}" placeholder="Search staff name...">
+        <select name="branch">
+            <option value="">All branches</option>
+            {% for branch in branches %}
+                <option value="{{ branch.id }}" {% if selected_branch_id|stringformat:'s' == branch.id|stringformat:'s' %}selected{% endif %}>{{ branch.name }}</option>
+            {% endfor %}
+        </select>
+        <select name="status">
+            <option value="">All status</option>
+            <option value="opening_soon" {% if status_filter == 'opening_soon' %}selected{% endif %}>Opening soon</option>
+            <option value="open_today" {% if status_filter == 'open_today' %}selected{% endif %}>Open today</option>
+            <option value="overdue" {% if status_filter == 'overdue' %}selected{% endif %}>Overdue</option>
+            <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+        </select>
+        <button type="submit">Search</button>
+    </form>
+
+    <div class="salary-stat-grid">
+        <div class="salary-stat"><span>Staff</span><strong>{{ totals.staff_count }}</strong></div>
+        <div class="salary-stat"><span>Opening Soon</span><strong>{{ totals.opening_soon }}</strong></div>
+        <div class="salary-stat"><span>Open Today</span><strong>{{ totals.open_today }}</strong></div>
+        <div class="salary-stat"><span>Overdue</span><strong>{{ totals.overdue }}</strong></div>
+        <div class="salary-stat"><span>Total Net Salary</span><strong>${{ totals.net_salary|floatformat:2 }}</strong></div>
+    </div>
+
+    <div class="salary-table-card">
+        <table class="salary-table">
+            <thead>
+                <tr>
+                    <th>Staff</th>
+                    <th>Salary Period</th>
+                    <th>Open Date</th>
+                    <th>Status</th>
+                    <th>Base</th>
+                    <th>Pet Comm.</th>
+                    <th>Grooming Comm.</th>
+                    <th>Dog Sales</th>
+                    <th>Pet Bonus</th>
+                    <th>Late</th>
+                    <th>Day Off</th>
+                    <th>Bonus</th>
+                    <th>Deduction</th>
+                    <th>Final Salary</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td class="staff-name">
+                        <strong>{{ row.staff_name }}</strong>
+                        <small>{% if row.branch %}{{ row.branch.name }}{% else %}No Branch{% endif %}</small>
+                    </td>
+                    <td>{{ row.period_start|date:"d M" }} - {{ row.period_end|date:"d M Y" }}</td>
+                    <td>
+                        {{ row.expected_open_date|date:"d M Y" }}<br>
+                        <small>{% if row.days_left > 0 %}{{ row.days_left }} days left{% elif row.days_left == 0 %}Today{% else %}{{ row.days_left|add:"0" }} days{% endif %}</small>
+                    </td>
+                    <td><span class="status-pill status-{{ row.status }}">{{ row.status|title }}</span></td>
+                    <td>${{ row.base_salary|floatformat:2 }}</td>
+                    <td class="money-good">${{ row.pet_commission|floatformat:2 }}</td>
+                    <td class="money-good">${{ row.grooming_commission|floatformat:2 }}</td>
+                    <td>{{ row.dog_count }}</td>
+                    <td class="money-good">${{ row.pet_target_bonus|floatformat:2 }}</td>
+                    <td>{{ row.late_count }} late<br><small>{{ row.late_minutes }} min</small></td>
+                    <td>{{ row.day_off_used }}/{{ row.allowed_day_off }}<br><small>Over {{ row.over_day_off }}</small></td>
+                    <td class="money-good">${{ row.attendance_bonus|add:row.unused_day_off_bonus|floatformat:2 }}</td>
+                    <td class="money-bad">${{ row.day_off_deduction|add:row.late_deduction|add:row.absent_deduction|floatformat:2 }}</td>
+                    <td class="money-main">${{ row.net_salary|floatformat:2 }}</td>
+                    <td>
+                        {% if row.payroll %}
+                            <a class="row-action" href="{% url 'payroll_record_detail' row.payroll.id %}">View</a>
+                        {% else %}
+                            <a class="row-action open" href="{% url 'staff_salary_open' row.staff.id %}">Open</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="15">No staff salary setting found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

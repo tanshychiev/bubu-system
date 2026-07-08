@@ -1790,6 +1790,19 @@ tbody tr:hover{background:#fffaf6}
                class="{% if request.resolver_match.url_name == 'staff_qr_list' or request.resolver_match.url_name == 'staff_qr_create' or request.resolver_match.url_name == 'staff_scan_page' or request.resolver_match.url_name == 'staff_scan_submit' %}active{% endif %}">
                 <span class="bubu-nav-icon tone-coral"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 5.5h3v3h-3zM15.5 5.5h3v3h-3zM5.5 15.5h3v3h-3z" fill="currentColor" opacity=".16" stroke="none"/><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4z"/><path d="M14 14h2v2h-2zM18 14h2v4h-2zM14 18h4v2h-4z"/></svg></span><span>Attendance QR</span>
             </a>
+
+
+            <a href="{% url 'staff_salary_dashboard' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'staff_salary_dashboard' or request.resolver_match.url_name == 'staff_commission_list' or request.resolver_match.url_name == 'payroll_record_detail' %}active{% endif %}">
+                <span class="bubu-nav-icon tone-gold"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8" fill="currentColor" opacity=".12" stroke="none"/><circle cx="12" cy="12" r="8"/><path d="M9.5 9.5c.6-1 1.6-1.5 2.8-1.5 1.7 0 2.9.9 2.9 2.2 0 3-5.5 1.2-5.5 4 0 1.2 1.1 2.1 2.8 2.1 1.2 0 2.2-.5 2.8-1.4M12 6.2v11.6"/></svg></span><span>Staff Salary</span>
+            </a>
+
+            <a href="{% url 'staff_commission_list' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'staff_commission_list' %}active{% endif %}">
+                <span class="bubu-nav-icon tone-green"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h12v6.5H6z" fill="currentColor" opacity=".10" stroke="none"/><path d="M4 9h16l-1-5H5L4 9Z"/><path d="M5 9v11h14V9"/><path d="M8 20v-6h4v6M15 12h2"/></svg></span><span>Commission List</span>
+            </a>
             {% endif %}
         </div>
 
@@ -1847,7 +1860,7 @@ tbody tr:hover{background:#fffaf6}
             type="button"
             class="bubu-top-back"
             id="bubuTopBack"
-            data-fallback="{% url 'dashboard' %}"
+            data-fallback="{% url 'pos' %}"
             onclick="bubuGoBack()"
             aria-label="Go back"
         >
@@ -2071,22 +2084,12 @@ function openBreedMasterList(event, link){
 
 
 function bubuGoBack(){
-    const button = document.getElementById("bubuTopBack");
-    const fallback = button?.dataset?.fallback || "/";
-
-    try{
-        const referrer = document.referrer ? new URL(document.referrer) : null;
-        const sameSite = referrer && referrer.origin === window.location.origin;
-
-        if(sameSite && window.history.length > 1){
-            window.history.back();
-            return;
-        }
-    }catch(error){
-        // Fall back to dashboard below.
-    }
-
-    window.location.assign(fallback);
+    /*
+     * Final Back behavior:
+     * Do not use browser history because it can go back many pages.
+     * Always send phone Back button to the POS final page.
+     */
+    window.location.assign("{% url 'pos' %}");
 }
 
 </script>

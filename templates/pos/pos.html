@@ -372,6 +372,29 @@
                 </div>
             </div>
 
+            <div class="groomer-commission-box" id="groomerCommissionBox" {% if not has_grooming_items %}style="display:none;"{% endif %}>
+                <div class="groomer-title">
+                    <strong>✂️ Groomer Commission</strong>
+                    <small>Required when this sale has grooming service.</small>
+                </div>
+
+                <label>
+                    Groomer PIN / Band Code
+                    <input
+                        type="password"
+                        name="groomer_pin"
+                        id="groomerPin"
+                        inputmode="numeric"
+                        placeholder="Enter groomer PIN"
+                        autocomplete="off"
+                    >
+                </label>
+
+                <small class="groomer-help">
+                    Only a checked-in groomer PIN can count commission.
+                </small>
+            </div>
+
             <div class="delivery-setup-box" id="deliverySetupBox">
                 <div class="delivery-section-title">Delivery</div>
 
@@ -2268,6 +2291,60 @@ a{
 
 .cash-pay-field.hide-cash{
     display:none;
+}
+
+/* =========================
+   GROOMER COMMISSION
+========================= */
+.groomer-commission-box{
+    margin:16px 0;
+    padding:16px;
+    border-radius:22px;
+    background:#fff8f1;
+    border:2px solid #ffd9aa;
+}
+
+.groomer-title{
+    margin-bottom:12px;
+}
+
+.groomer-title strong{
+    display:block;
+    font-size:18px;
+    font-weight:1000;
+    color:#080634;
+}
+
+.groomer-title small,
+.groomer-help{
+    display:block;
+    margin-top:5px;
+    color:#b45f00;
+    font-weight:900;
+}
+
+.groomer-commission-box label{
+    display:block;
+    font-weight:1000;
+    color:#080634;
+}
+
+.groomer-commission-box input{
+    width:100%;
+    height:58px;
+    margin-top:8px;
+    border:2px solid #ffd9aa;
+    border-radius:18px;
+    padding:0 16px;
+    font-size:20px;
+    font-weight:1000;
+    background:white;
+    outline:none;
+}
+
+.groomer-commission-box input:focus{
+    border-color:#ffb85c;
+    box-shadow:0 0 0 4px rgba(255,184,92,.14);
 }
 
 /* =========================
@@ -5851,6 +5928,7 @@ a{
 let baseTotal = parseFloat("{{ total|default:'0.00' }}");
 let subtotalBase = parseFloat("{{ subtotal|default:'0.00' }}");
 let petRemainingBase = parseFloat("{{ selected_pet_remaining|default:'0.00' }}");
+let groomingTotalBase = parseFloat("{{ grooming_total|default:'0.00' }}");
 let total = baseTotal;
 
 const payRate = 4100;
@@ -5934,6 +6012,7 @@ window.addEventListener("load", function(){
     syncSelectedDeliveryCompany();
     syncSelectedItemsFromCart();
     setCurrentSaleType();
+    toggleGroomerCommissionBox();
     calcChange();
 
     const paymentForm = document.getElementById("paymentForm");
@@ -6139,6 +6218,7 @@ function openPaymentModal(){
     document.getElementById("paymentModal").style.display = "flex";
     syncSelectedItemsFromCart();
     setCurrentSaleType();
+    toggleGroomerCommissionBox();
     calcChange();
 
     setTimeout(function(){
@@ -6175,6 +6255,57 @@ function valueOf(id){
     if(!el) return "";
     return el.value || "";
 }
+
+function toggleGroomerCommissionBox(){
+    const box = document.getElementById("groomerCommissionBox");
+    const input = document.getElementById("groomerPin");
+
+    if(!box){
+        return;
+    }
+
+    if(groomingTotalBase > 0.009){
+        box.style.display = "block";
+    }else{
+        box.style.display = "none";
+        if(input){
+            input.value = "";
+        }
+    }
+}
+
+function validateGroomerCommission(){
+    if(groomingTotalBase <= 0.009){
+        return true;
+    }
+
+    if(getSelectedSaleType() === "prepare_delivery"){
+        alert("Grooming service must be checked out as Walk-in, not Prepare for Delivery.");
+        return false;
+    }
+
+    const input = document.getElementById("groomerPin");
+
+    if(!input || !input.value.trim()){
+        alert("Please enter groomer PIN / band code before checkout.");
+
+        if(input){
+            input.focus();
+        }
+
+        return false;
+    }
+
+    const payInfo = getPOSPaymentInfo();
+
+    if(payInfo.paidUsd < payInfo.totalUsd){
+        alert("Grooming checkout must be fully paid before commission can count.");
+        return false;
+    }
+
+    return true;
+}
+
 
 function text(id, value){
     const el = document.getElementById(id);
@@ -7610,6 +7741,10 @@ function submitPOSCheckout(e, action){
         return false;
     }
 
+    if(!validateGroomerCommission()){
+        return false;
+    }
+
     const payInfo = getPOSPaymentInfo();
 
     if(
@@ -7719,15 +7854,21 @@ function setPOSTotalsFromAjax(data){
     const newSubtotal = parseFloat(data.subtotal || "0");
     const newTotal = parseFloat(data.total || "0");
     const newPetRemaining = parseFloat(data.selected_pet_remaining || "0");
+    const newGroomingTotal = parseFloat(data.grooming_total || "0");
 
     subtotalBase = isNaN(newSubtotal) ? 0 : newSubtotal;
     baseTotal = isNaN(newTotal) ? 0 : newTotal;
     petRemainingBase = isNaN(newPetRemaining) ? 0 : newPetRemaining;
+    groomingTotalBase = isNaN(newGroomingTotal) ? 0 : newGroomingTotal;
     total = baseTotal;
 
     const finalHidden = document.getElementById("final_total_hidden");
     if(finalHidden){
         finalHidden.value = baseTotal.toFixed(2);
+    }
+
+    if(typeof toggleGroomerCommissionBox === "function"){
+        toggleGroomerCommissionBox();
     }
 
     if(typeof calcChange === "function"){

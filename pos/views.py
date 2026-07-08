@@ -38,7 +38,11 @@ from .models import (
 from .services.aba_qr import create_real_aba_payment, check_real_aba_payment
 
 from pets.models import PetSale
-
+from staffs.models import (
+    GroomingCommission,
+    StaffAttendance,
+    StaffPayrollSetting,
+)
 
 
 # ==================================================
@@ -341,6 +345,69 @@ def _build_cart_items(cart, branch=None):
     return cart_items, subtotal
 
 
+
+def _cart_grooming_amount(cart_items):
+    total_amount = Decimal("0.00")
+
+    for cart_item in cart_items:
+        type_name = (cart_item.get("item_type_name") or "").lower()
+
+        if "groom" in type_name:
+            total_amount += Decimal(cart_item.get("total") or 0)
+
+    return total_amount
+
+
+def _find_checked_in_groomer_by_pin(pin, branch):
+    pin = str(pin or "").strip()
+
+    if not pin:
+        return None, "Please enter groomer PIN / band code."
+
+    settings_qs = (
+        StaffPayrollSetting.objects
+        .select_related("staff", "staff__user", "staff__branch")
+        .filter(
+            attendance_pin=pin,
+            is_active=True,
+            staff__user__is_active=True,
+        )
+    )
+
+    if branch:
+        settings_qs = settings_qs.filter(staff__branch=branch)
+
+    setting_count = settings_qs.count()
+
+    if setting_count == 0:
+        return None, "Groomer PIN not found for this shop."
+
+    if setting_count > 1:
+        return None, "This PIN is used by more than one staff. Please fix staff payroll PIN first."
+
+    setting = settings_qs.first()
+    staff = setting.staff
+    today = timezone.localdate()
+
+    attendance = (
+        StaffAttendance.objects
+        .filter(
+            staff=staff,
+            date=today,
+            check_in_time__isnull=False,
+            status__in=["present", "late", "half_day"],
+        )
+        .order_by("-id")
+        .first()
+    )
+
+    if not attendance:
+        staff_name = staff.user.get_full_name() or staff.user.username
+        return None, f"{staff_name} has not checked in today. Cannot count grooming commission."
+
+    return setting, ""
+
+
 def _add_to_cart(request, item, variant=None):
     cart = _get_cart(request)
     key = _cart_key(item.id, variant.id if variant else None)
@@ -467,6 +534,8 @@ def _build_pos_cart_context(request):
 
     final_total = subtotal + selected_pet_remaining
 
+    has_grooming_items = grooming_total > Decimal("0.00")
+
     return {
         "cart_items": cart_items,
         "subtotal": subtotal,
@@ -475,6 +544,7 @@ def _build_pos_cart_context(request):
         "total": final_total,
         "product_total": product_total,
         "grooming_total": grooming_total,
+        "has_grooming_items": has_grooming_items,
         "service_total": service_total,
         "pet_total": pet_total,
         "selected_pet_sale": selected_pet_sale,
@@ -502,6 +572,7 @@ def _cart_ajax_response(request, success=True, message=""):
         "total": f"{ctx['total']:.2f}",
         "product_total": f"{ctx['product_total']:.2f}",
         "grooming_total": f"{ctx['grooming_total']:.2f}",
+        "has_grooming_items": bool(ctx.get("has_grooming_items")),
         "service_total": f"{ctx['service_total']:.2f}",
         "pet_total": f"{ctx['pet_total']:.2f}",
         "selected_pet_remaining": f"{ctx['selected_pet_remaining']:.2f}",
@@ -738,6 +809,8 @@ def pos(request):
         else:
             product_total += line_total
 
+    has_grooming_items = grooming_total > Decimal("0.00")
+
     # ==================================================
     # SELECTED PET SALE FROM PET MODULE
     # ==================================================
@@ -782,6 +855,7 @@ def pos(request):
 
         "product_total": product_total,
         "grooming_total": grooming_total,
+        "has_grooming_items": has_grooming_items,
         "service_total": service_total,
         "pet_total": pet_total,
 
@@ -1076,6 +1150,32 @@ def pos_checkout(request):
     balance_amount = final_total - paid_amount
 
     # ==================================================
+    # GROOMING COMMISSION VALIDATION
+    # ==================================================
+    grooming_sale_amount = _cart_grooming_amount(cart_items)
+    has_grooming_items = grooming_sale_amount > Decimal("0.00")
+    groomer_setting = None
+
+    if has_grooming_items:
+        if sale_type == "prepare_delivery":
+            messages.error(request, "Grooming service must be checked out as Walk-in, not Prepare for Delivery.")
+            return redirect("pos")
+
+        if paid_raw < final_total:
+            messages.error(request, "Grooming checkout must be fully paid before commission can count.")
+            return redirect("pos")
+
+        groomer_pin = request.POST.get("groomer_pin", "").strip()
+        groomer_setting, groomer_error = _find_checked_in_groomer_by_pin(
+            groomer_pin,
+            branch,
+        )
+
+        if groomer_error:
+            messages.error(request, groomer_error)
+            return redirect("pos")
+
+    # ==================================================
     # CUSTOMER RECORD
     # ==================================================
     customer = None
@@ -1229,6 +1329,24 @@ def pos_checkout(request):
                     sale=sale,
                     branch=branch,
                 )
+
+    # ==================================================
+    # GROOMING COMMISSION
+    # ==================================================
+    if has_grooming_items and groomer_setting:
+        GroomingCommission.objects.update_or_create(
+            sale=sale,
+            defaults={
+                "staff": groomer_setting.staff,
+                "branch": branch,
+                "sale_amount": grooming_sale_amount,
+                "commission_rate": groomer_setting.default_commission_rate,
+                "status": "approved",
+                "approved_at": timezone.now(),
+                "created_by": request.user,
+                "note": f"Auto from POS Sale #{sale.id}. Grooming amount ${grooming_sale_amount:.2f}.",
+            },
+        )
 
     # ==================================================
     # PAYMENT RECORDS

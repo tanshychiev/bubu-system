@@ -48,6 +48,27 @@ class StaffPayrollSetting(models.Model):
     late_deduction_per_day = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     absent_deduction_per_day = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
+    # Salary attendance rule
+    allowed_day_off_per_month = models.PositiveIntegerField(default=3)
+    unused_day_off_bonus_per_day = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    over_day_off_deduction_per_day = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    no_late_bonus = models.DecimalField(max_digits=10, decimal_places=2, default=10)
+    allowed_late_times = models.PositiveIntegerField(default=3)
+
+    # Commission rules
+    pet_sale_commission_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=5,
+        help_text="Pet sale commission percentage. Example: 5 means 5%.",
+    )
+    grooming_commission_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=5,
+        help_text="Grooming commission percentage. Example: 5 means 5%.",
+    )
+
     is_active = models.BooleanField(default=True)
     note = models.TextField(blank=True)
 
@@ -354,6 +375,86 @@ class StaffCommission(models.Model):
         return f"{self.staff_name} - Pet Sale #{self.pet_sale_id} - ${self.commission_amount}"
 
 
+class GroomingCommission(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("paid", "Paid"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    staff = models.ForeignKey(
+        StaffProfile,
+        on_delete=models.CASCADE,
+        related_name="grooming_commissions",
+    )
+
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="grooming_commissions",
+    )
+
+    sale = models.OneToOneField(
+        "pos.Sale",
+        on_delete=models.CASCADE,
+        related_name="grooming_commission",
+    )
+
+    sale_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    commission_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=5,
+        help_text="Example: 5 means 5% of grooming sale amount.",
+    )
+    commission_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="approved")
+
+    payroll_record = models.ForeignKey(
+        "PayrollRecord",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="grooming_commissions",
+    )
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_grooming_commissions",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    note = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    @property
+    def staff_name(self):
+        return self.staff.user.get_full_name() or self.staff.user.username
+
+    def save(self, *args, **kwargs):
+        self.commission_amount = (
+            Decimal(self.sale_amount or 0)
+            * Decimal(self.commission_rate or 0)
+            / Decimal("100")
+        )
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.staff_name} - POS Sale #{self.sale_id} - ${self.commission_amount}"
+
+
 class PayrollRecord(models.Model):
     STATUS_CHOICES = [
         ("draft", "Draft"),
@@ -383,7 +484,22 @@ class PayrollRecord(models.Model):
     )
 
     base_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    pet_sale_commission = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    grooming_commission = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_commission = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    dog_sale_count = models.PositiveIntegerField(default=0)
+    pet_sale_target_bonus = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    allowed_day_off = models.PositiveIntegerField(default=3)
+    used_day_off = models.PositiveIntegerField(default=0)
+    over_day_off_days = models.PositiveIntegerField(default=0)
+    unused_day_off_days = models.PositiveIntegerField(default=0)
+
+    attendance_bonus = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    unused_day_off_bonus = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    day_off_deduction = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     late_days = models.PositiveIntegerField(default=0)
     late_minutes = models.PositiveIntegerField(default=0)
@@ -442,7 +558,11 @@ class PayrollRecord(models.Model):
         self.net_salary = (
             Decimal(self.base_salary or 0)
             + Decimal(self.total_commission or 0)
+            + Decimal(self.attendance_bonus or 0)
+            + Decimal(self.unused_day_off_bonus or 0)
+            + Decimal(self.pet_sale_target_bonus or 0)
             + Decimal(self.bonus or 0)
+            - Decimal(self.day_off_deduction or 0)
             - Decimal(self.late_deduction or 0)
             - Decimal(self.absent_deduction or 0)
             - Decimal(self.other_deduction or 0)

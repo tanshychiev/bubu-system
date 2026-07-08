@@ -868,7 +868,7 @@ def item_delete(request, pk):
 def clone_uploaded_image(uploaded_file):
     """
     Return a fresh file object for ImageField saving.
-    Needed because the same Photo A / B / C upload can be used by many variants.
+    Needed because the same Photo A / B / C / D upload can be used by many variants.
     """
     if not uploaded_file:
         return None
@@ -894,14 +894,19 @@ def item_variant_create(request, pk):
     if request.method == "POST":
         rows = _posted_variant_rows(request)
         photo_sources = request.POST.getlist("variant_photo_source[]")
-        group_keys = request.POST.getlist("variant_group_key[]")
 
-        group_images = {}
-        for raw_key in group_keys:
+        # Dynamic Photo Bank: only photos the user adds are posted here.
+        # Example names: variant_group_key[]=a and variant_group_image_a=<file>
+        group_keys = []
+        for raw_key in request.POST.getlist("variant_group_key[]"):
             key = str(raw_key or "").strip().lower()
-            if not key:
-                continue
-            group_images[key] = request.FILES.get(f"variant_group_image_{key}")
+            if key and key not in group_keys:
+                group_keys.append(key)
+
+        group_images = {
+            key: request.FILES.get(f"variant_group_image_{key}")
+            for key in group_keys
+        }
 
         created = []
 
@@ -947,10 +952,10 @@ def item_variant_create(request, pk):
 
             selected_image = None
 
-            if photo_source in group_images:
-                selected_image = clone_uploaded_image(group_images.get(photo_source))
-            elif photo_source == "custom":
+            if photo_source == "custom":
                 selected_image = clone_uploaded_image(custom_image)
+            elif photo_source in group_images:
+                selected_image = clone_uploaded_image(group_images.get(photo_source))
 
             # If selected_image is None, variant.display_image will fallback to item.image.
             variant = ItemVariant.objects.create(
@@ -984,7 +989,6 @@ def item_variant_create(request, pk):
         "is_bulk_create": True,
         "can_edit_cost_price": can_price,
     })
-
 
 @login_required
 def item_variant_edit(request, pk, variant_id):

@@ -366,6 +366,59 @@ def sync_completed_pet_sale_to_customer(request, sale):
     return customer
 
 
+
+def create_or_update_pet_sale_commission(sale):
+    """Auto-create seller commission when a pet sale is completed."""
+    if not sale or sale.status != "completed":
+        return None
+
+    seller_user = sale.seller or sale.created_by
+    if not seller_user:
+        return None
+
+    try:
+        staff = seller_user.staff_profile
+    except Exception:
+        return None
+
+    try:
+        from staffs.models import StaffCommission, StaffPayrollSetting
+    except Exception:
+        return None
+
+    setting = StaffPayrollSetting.objects.filter(
+        staff=staff,
+        is_active=True,
+        commission_enabled=True,
+    ).first()
+
+    if not setting:
+        return None
+
+    try:
+        sale_amount = Decimal(sale.final_price or 0)
+    except Exception:
+        sale_amount = Decimal(sale.sale_price or 0) - Decimal(getattr(sale, "discount_amount", 0) or 0)
+
+    if sale_amount < 0:
+        sale_amount = Decimal("0.00")
+
+    rate = setting.pet_sale_commission_rate or setting.default_commission_rate or Decimal("0")
+
+    commission, _created = StaffCommission.objects.update_or_create(
+        pet_sale=sale,
+        defaults={
+            "staff": staff,
+            "sale_amount": sale_amount,
+            "commission_rate": rate,
+            "status": "approved",
+            "approved_at": timezone.now(),
+            "note": "Auto-created from completed pet sale.",
+        },
+    )
+
+    return commission
+
 def complete_pet_sale(request, sale, extra_paid=None, warranty_days=None):
     if extra_paid is not None:
         sale.paid_amount = (sale.paid_amount or Decimal("0.00")) + extra_paid
@@ -391,6 +444,7 @@ def complete_pet_sale(request, sale, extra_paid=None, warranty_days=None):
         sale.pet.save(update_fields=["status"])
 
     sync_completed_pet_sale_to_customer(request, sale)
+    create_or_update_pet_sale_commission(sale)
 
     return sale
 

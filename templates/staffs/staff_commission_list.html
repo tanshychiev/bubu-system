@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.commission-page{padding:22px;}.commission-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:16px}.commission-head h1{margin:0;font-size:30px;font-weight:1000;color:#17152f}.commission-head p{margin:6px 0 0;color:#7b7288;font-weight:900}.commission-btn{min-height:42px;padding:0 16px;border-radius:14px;background:linear-gradient(135deg,#8e63ff,#ff8464);color:white;font-weight:1000;display:inline-flex;align-items:center}.commission-filter{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr auto;gap:10px;margin:16px 0;padding:14px;border-radius:18px;background:white;border:1px solid #f0dcd0}.commission-filter input,.commission-filter select{height:44px;border:1.5px solid #eadfec;border-radius:12px;padding:0 12px;font-weight:900}.commission-filter button{height:44px;border:0;border-radius:12px;background:#8e63ff;color:white;font-weight:1000}.commission-stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}.commission-stat{padding:14px;border-radius:18px;background:white;border:1px solid #f0dcd0;box-shadow:0 8px 20px rgba(0,0,0,.04)}.commission-stat span{display:block;color:#7b7288;font-weight:900;font-size:12px}.commission-stat strong{display:block;margin-top:6px;font-size:22px;color:#17152f;font-weight:1000}.commission-table-card{overflow:auto;background:white;border:1px solid #f0dcd0;border-radius:20px;box-shadow:0 10px 24px rgba(0,0,0,.05)}.commission-table{width:100%;border-collapse:collapse;min-width:1050px}.commission-table th{background:#f8f3ff;color:#17152f;font-size:12px;padding:12px;font-weight:1000;text-align:left;white-space:nowrap}.commission-table td{border-top:1px solid #f3e7df;padding:12px;font-size:13px;font-weight:900;color:#4c465a;vertical-align:middle;white-space:nowrap}.type-pill,.status-pill{padding:7px 10px;border-radius:999px;font-weight:1000;font-size:11px;display:inline-flex}.type-Pet{background:#fff0e8;color:#ff5d73}.type-Grooming{background:#fff7df;color:#b86b00}.status-pending{background:#fff7df;color:#b86b00}.status-approved{background:#eafff3;color:#16a05d}.status-paid{background:#e7f5ff;color:#2299e8}.status-cancelled{background:#ffe7ec;color:#ff4d6d}.money-main{color:#8e63ff!important;font-weight:1000!important}@media(max-width:767px){.commission-page{padding:10px}.commission-head{display:block}.commission-filter{grid-template-columns:1fr}.commission-stat-grid{grid-template-columns:1fr 1fr}}
+</style>
+<div class="commission-page">
+    <div class="commission-head">
+        <div><h1>Commission List</h1><p>Check pet sale and grooming commission in one page.</p></div>
+        <a href="{% url 'staff_salary_dashboard' %}" class="commission-btn">Back to Salary</a>
+    </div>
+    <form method="get" class="commission-filter">
+        <input type="text" name="q" value="{{ q }}" placeholder="Search staff or sale ID...">
+        <select name="type"><option value="">All Type</option><option value="pet" {% if commission_type == 'pet' %}selected{% endif %}>Pet Sale</option><option value="grooming" {% if commission_type == 'grooming' %}selected{% endif %}>Grooming</option></select>
+        <select name="status"><option value="">All Status</option><option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option><option value="approved" {% if status == 'approved' %}selected{% endif %}>Approved</option><option value="paid" {% if status == 'paid' %}selected{% endif %}>Paid</option><option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>Cancelled</option></select>
+        <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}">
+        <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}">
+        <button type="submit">Search</button>
+    </form>
+    <div class="commission-stat-grid">
+        <div class="commission-stat"><span>Total Rows</span><strong>{{ totals.count }}</strong></div>
+        <div class="commission-stat"><span>Total Commission</span><strong>${{ totals.amount|floatformat:2 }}</strong></div>
+        <div class="commission-stat"><span>Pending</span><strong>{{ totals.pending }}</strong></div>
+        <div class="commission-stat"><span>Approved</span><strong>{{ totals.approved }}</strong></div>
+        <div class="commission-stat"><span>Paid</span><strong>{{ totals.paid }}</strong></div>
+    </div>
+    <div class="commission-table-card"><table class="commission-table"><thead><tr><th>Date</th><th>Staff</th><th>Branch</th><th>Type</th><th>Source</th><th>Sale Amount</th><th>Rate</th><th>Commission</th><th>Status</th><th>Payroll</th><th>Note</th></tr></thead><tbody>
+        {% for row in rows %}<tr><td>{{ row.date|date:"d M Y" }}</td><td>{{ row.staff.user.get_full_name|default:row.staff.user.username }}</td><td>{% if row.branch %}{{ row.branch.name }}{% else %}-{% endif %}</td><td><span class="type-pill type-{{ row.type|cut:' Sale' }}">{{ row.type }}</span></td><td>{{ row.source }}</td><td>${{ row.sale_amount|floatformat:2 }}</td><td>{{ row.rate|floatformat:2 }}%</td><td class="money-main">${{ row.amount|floatformat:2 }}</td><td><span class="status-pill status-{{ row.status }}">{{ row.status|title }}</span></td><td>{% if row.payroll %}<a href="{% url 'payroll_record_detail' row.payroll.id %}">Payroll #{{ row.payroll.id }}</a>{% else %}-{% endif %}</td><td>{{ row.note|default:"-" }}</td></tr>{% empty %}<tr><td colspan="11">No commission found.</td></tr>{% endfor %}
+    </tbody></table></div>
+</div>
+{% endblock %}

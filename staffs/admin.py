@@ -8,6 +8,7 @@ from .models import (
     StaffAttendance,
     StaffPermissionRequest,
     StaffCommission,
+    GroomingCommission,
     PayrollRecord,
     PayrollHistory,
 )
@@ -25,11 +26,13 @@ class StaffPayrollSettingAdmin(admin.ModelAdmin):
         "attendance_pin",
         "commission_enabled",
         "default_commission_rate",
+        "pet_sale_commission_rate",
+        "grooming_commission_rate",
+        "allowed_day_off_per_month",
+        "no_late_bonus",
         "is_active",
     ]
-
     list_filter = ["is_active", "commission_enabled", "staff__branch"]
-
     search_fields = [
         "staff__user__username",
         "staff__user__first_name",
@@ -72,9 +75,7 @@ class StaffAttendanceAdmin(admin.ModelAdmin):
         "is_suspicious",
         "scan_method",
     ]
-
     list_filter = ["branch", "status", "scan_method", "is_suspicious", "date"]
-
     search_fields = [
         "staff__user__username",
         "staff__user__first_name",
@@ -95,9 +96,7 @@ class StaffPermissionRequestAdmin(admin.ModelAdmin):
         "reviewed_at",
         "created_at",
     ]
-
     list_filter = ["request_type", "status", "date_from", "date_to"]
-
     search_fields = [
         "staff__user__username",
         "staff__user__first_name",
@@ -118,9 +117,7 @@ class StaffCommissionAdmin(admin.ModelAdmin):
         "payroll_record",
         "created_at",
     ]
-
     list_filter = ["status", "created_at"]
-
     search_fields = [
         "staff__user__username",
         "staff__user__first_name",
@@ -128,8 +125,33 @@ class StaffCommissionAdmin(admin.ModelAdmin):
     ]
 
 
+@admin.register(GroomingCommission)
+class GroomingCommissionAdmin(admin.ModelAdmin):
+    list_display = [
+        "staff",
+        "branch",
+        "sale",
+        "sale_amount",
+        "commission_rate",
+        "commission_amount",
+        "status",
+        "payroll_record",
+        "created_at",
+    ]
+    list_filter = ["branch", "status", "created_at"]
+    search_fields = [
+        "staff__user__username",
+        "staff__user__first_name",
+        "staff__user__last_name",
+        "sale__id",
+    ]
+    readonly_fields = ["commission_amount", "created_at"]
+
+
 @admin.register(PayrollRecord)
 class PayrollRecordAdmin(admin.ModelAdmin):
+    date_hierarchy = "period_start"
+    readonly_fields = ["net_salary", "created_at", "opened_at", "paid_at"]
     list_display = [
         "staff",
         "branch_name",
@@ -139,7 +161,15 @@ class PayrollRecordAdmin(admin.ModelAdmin):
         "opened_at",
         "open_late_days",
         "base_salary",
+        "pet_sale_commission",
+        "grooming_commission",
         "total_commission",
+        "dog_sale_count",
+        "pet_sale_target_bonus",
+        "attendance_bonus",
+        "used_day_off",
+        "over_day_off_days",
+        "day_off_deduction",
         "late_days",
         "late_minutes",
         "absent_days",
@@ -147,9 +177,7 @@ class PayrollRecordAdmin(admin.ModelAdmin):
         "net_salary",
         "status",
     ]
-
     list_filter = ["status", "period_start", "period_end"]
-
     search_fields = [
         "staff__user__username",
         "staff__user__first_name",
@@ -161,7 +189,6 @@ class PayrollRecordAdmin(admin.ModelAdmin):
 class PayrollHistoryAdmin(admin.ModelAdmin):
     list_display = ["payroll", "action", "created_by", "created_at"]
     list_filter = ["action", "created_at"]
-
     search_fields = [
         "payroll__staff__user__username",
         "payroll__staff__user__first_name",
