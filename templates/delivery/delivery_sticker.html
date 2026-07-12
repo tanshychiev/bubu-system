@@ -1,438 +1,632 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Delivery A4 Label #DLV-{{ delivery.id|stringformat:"04d" }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>A5 Sticker #DLV-{{ delivery.id|stringformat:"04d" }}</title>
 
     <style>
-        @page {
-            size: A4;
-            margin: 10mm;
+        @page{
+            size:A5 portrait;
+            margin:5mm;
         }
 
-        * {
-            box-sizing: border-box;
+        *{box-sizing:border-box}
+
+        :root{
+            --ink:#17152f;
+            --muted:#766e81;
+            --purple:#8e63ff;
+            --purple-dark:#7047db;
+            --pink:#ff7f91;
+            --green:#168f59;
+            --line:#ded8e5;
+            --soft:#f8f5ff;
+            --warm:#fff7fa;
         }
 
-        body {
-            margin: 0;
-            background: #f4f4f4;
-            font-family: Arial, "Khmer OS Battambang", sans-serif;
-            color: #111;
+        body{
+            margin:0;
+            padding:76px 14px 28px;
+            color:var(--ink);
+            background:linear-gradient(135deg,#f4efff,#fff4f7);
+            font-family:Arial,"Khmer OS Battambang",sans-serif;
         }
 
-        .print-btn {
-            position: fixed;
-            top: 14px;
-            right: 14px;
-            min-height: 52px;
-            padding: 0 22px;
-            border: none;
-            border-radius: 16px;
-            background: #111;
-            color: #fff;
-            font-size: 16px;
-            font-weight: 900;
-            cursor: pointer;
-            z-index: 99;
+        a{text-decoration:none}
+
+        .screen-actions{
+            position:fixed;
+            top:12px;
+            left:50%;
+            z-index:100;
+            width:min(calc(100% - 24px),148mm);
+            transform:translateX(-50%);
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:8px;
         }
 
-        .a4-page {
-            width: 210mm;
-            min-height: 297mm;
-            margin: 0 auto;
-            background: #fff;
-            padding: 14mm;
+        .screen-btn{
+            min-height:50px;
+            border:0;
+            border-radius:15px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:7px;
+            font-size:14px;
+            font-weight:900;
+            cursor:pointer;
         }
 
-        .label-card {
-            width: 100%;
-            min-height: 260mm;
-            border: 3px solid #111;
-            border-radius: 10mm;
-            padding: 12mm;
-            display: flex;
-            flex-direction: column;
-            gap: 9mm;
+        .back-btn{
+            color:var(--purple-dark);
+            background:#fff;
+            border:1px solid #dfd3f4;
+            box-shadow:0 8px 22px rgba(56,39,78,.08);
         }
 
-        .top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 3px solid #111;
-            padding-bottom: 8mm;
+        .print-btn{
+            color:#fff;
+            background:linear-gradient(135deg,var(--purple),var(--pink));
+            box-shadow:0 9px 22px rgba(142,99,255,.22);
         }
 
-        .brand {
-            font-size: 34px;
-            font-weight: 900;
-            line-height: 1.1;
+        .a5-page{
+            width:148mm;
+            min-height:210mm;
+            margin:0 auto;
+            padding:5mm;
+            background:#fff;
+            box-shadow:0 20px 55px rgba(42,29,58,.14);
         }
 
-        .brand small {
-            display: block;
-            margin-top: 3mm;
-            font-size: 18px;
-            font-weight: 800;
+        .label-card{
+            position:relative;
+            min-height:200mm;
+            padding:6mm;
+            overflow:hidden;
+            border:2px solid var(--ink);
+            border-radius:6mm;
+            display:flex;
+            flex-direction:column;
+            gap:4mm;
+            background:#fff;
         }
 
-        .code {
-            text-align: right;
-            font-size: 17px;
-            font-weight: 900;
+        .paid-stamp{
+            position:absolute;
+            top:71mm;
+            right:8mm;
+            z-index:5;
+            width:43mm;
+            height:24mm;
+            border:3px solid var(--green);
+            border-radius:4mm;
+            transform:rotate(-10deg);
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            color:var(--green);
+            background:rgba(255,255,255,.90);
+            font-weight:1000;
+            line-height:1.05;
         }
 
-        .code strong {
-            display: block;
-            margin-top: 2mm;
-            font-size: 34px;
+        .paid-stamp strong{
+            font-size:22px;
         }
 
-        .section {
-            border-bottom: 2px dashed #aaa;
-            padding-bottom: 7mm;
+        .paid-stamp span{
+            margin-top:2px;
+            font-size:10px;
+            letter-spacing:.5px;
         }
 
-        .label-title {
-            font-size: 15px;
-            font-weight: 900;
-            color: #555;
-            text-transform: uppercase;
-            margin-bottom: 3mm;
+        .top{
+            padding-bottom:4mm;
+            border-bottom:2px solid var(--ink);
+            display:grid;
+            grid-template-columns:1fr auto;
+            align-items:center;
+            gap:5mm;
         }
 
-        .customer-name {
-            font-size: 36px;
-            font-weight: 900;
-            line-height: 1.2;
-            word-break: break-word;
+        .brand-row{
+            display:flex;
+            align-items:center;
+            gap:3mm;
+            min-width:0;
         }
 
-        .phone {
-            font-size: 34px;
-            font-weight: 900;
-            line-height: 1.2;
+        .brand-logo{
+            width:17mm;
+            height:17mm;
+            flex:0 0 auto;
+            object-fit:contain;
         }
 
-        .location {
-            font-size: 28px;
-            font-weight: 900;
-            line-height: 1.35;
-            word-break: break-word;
+        .shop-name{
+            font-size:26px;
+            font-weight:1000;
+            line-height:1;
+            overflow-wrap:anywhere;
         }
 
-        .two-col {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8mm;
+        .top-meta{
+            text-align:right;
+            font-size:9px;
+            font-weight:900;
+            color:var(--muted);
+            line-height:1.35;
         }
 
-        .info-box {
-            border: 3px solid #111;
-            border-radius: 8mm;
-            padding: 8mm;
-            min-height: 55mm;
+        .top-meta strong{
+            display:block;
+            margin-bottom:1.2mm;
+            color:var(--ink);
+            font-size:18px;
+            line-height:1;
         }
 
-        .cod-box {
-            background: #fff2cc;
+        .top-meta .date{
+            color:var(--purple-dark);
+            font-size:11px;
         }
 
-        .paid-box {
-            background: #e8fff0;
+        .customer-grid{
+            display:grid;
+            grid-template-columns:1.1fr .9fr;
+            gap:3mm;
         }
 
-        .amount {
-            font-size: 38px;
-            font-weight: 900;
-            line-height: 1.1;
+        .customer-card,
+        .service-card,
+        .address-card,
+        .note-card{
+            padding:3.5mm;
+            border:1.5px solid var(--line);
+            border-radius:4mm;
+            background:#fff;
         }
 
-        .sub-text {
-            margin-top: 3mm;
-            font-size: 20px;
-            font-weight: 900;
-            line-height: 1.25;
+        .section-label{
+            margin-bottom:1.5mm;
+            color:var(--muted);
+            font-size:8.5px;
+            font-weight:900;
+            text-transform:uppercase;
+            letter-spacing:.4px;
         }
 
-        .service-name {
-            font-size: 30px;
-            font-weight: 900;
-            line-height: 1.2;
-            word-break: break-word;
+        .customer-name{
+            font-size:20px;
+            font-weight:1000;
+            line-height:1.15;
+            overflow-wrap:anywhere;
         }
 
-        .note-box {
-            border: 2px solid #111;
-            border-radius: 6mm;
-            padding: 7mm;
-            min-height: 35mm;
+        .phone{
+            margin-top:2mm;
+            font-size:17px;
+            font-weight:1000;
         }
 
-        .note-text {
-            font-size: 22px;
-            font-weight: 800;
-            line-height: 1.35;
-            word-break: break-word;
+        .service-name{
+            font-size:15px;
+            font-weight:1000;
+            line-height:1.2;
+            overflow-wrap:anywhere;
         }
 
-        .bottom {
-            margin-top: auto;
-            border-top: 3px solid #111;
-            padding-top: 6mm;
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 5mm;
-            font-size: 17px;
-            font-weight: 900;
+        .service-meta{
+            margin-top:2mm;
+            color:var(--muted);
+            font-size:10px;
+            font-weight:850;
+            line-height:1.3;
         }
 
-        .bottom-item {
-            border: 2px solid #111;
-            border-radius: 5mm;
-            padding: 5mm;
-            text-align: center;
+        .address-card{
+            background:var(--soft);
         }
 
-        @media print {
-            body {
-                background: #fff;
+        .address{
+            font-size:14px;
+            font-weight:900;
+            line-height:1.38;
+            overflow-wrap:anywhere;
+        }
+
+        .items-card{
+            overflow:hidden;
+            border:1.5px solid var(--line);
+            border-radius:4mm;
+        }
+
+        .items-head{
+            min-height:9mm;
+            padding:0 3mm;
+            display:grid;
+            grid-template-columns:1fr 15mm 23mm;
+            align-items:center;
+            gap:2mm;
+            color:#fff;
+            background:var(--ink);
+            font-size:8.5px;
+            font-weight:900;
+            text-transform:uppercase;
+        }
+
+        .item-row{
+            min-height:9mm;
+            padding:1.8mm 3mm;
+            display:grid;
+            grid-template-columns:1fr 15mm 23mm;
+            align-items:center;
+            gap:2mm;
+            border-top:1px solid #ece8ef;
+            font-size:9.5px;
+            font-weight:850;
+        }
+
+        .item-row:nth-child(odd){
+            background:#fbf9fe;
+        }
+
+        .item-name{
+            min-width:0;
+            line-height:1.2;
+            overflow-wrap:anywhere;
+        }
+
+        .item-name small{
+            display:block;
+            margin-top:1px;
+            color:var(--muted);
+            font-size:7.5px;
+            font-weight:800;
+        }
+
+        .item-qty,
+        .item-total{
+            text-align:right;
+            white-space:nowrap;
+        }
+
+        .empty-row{
+            padding:4mm;
+            color:var(--muted);
+            text-align:center;
+            font-size:10px;
+            font-weight:850;
+        }
+
+        .money-row{
+            display:grid;
+            grid-template-columns:repeat(3,1fr);
+            gap:2.5mm;
+        }
+
+        .money-box{
+            min-height:22mm;
+            padding:3mm;
+            border:1.5px solid var(--line);
+            border-radius:4mm;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            background:#fff;
+        }
+
+        .money-box span{
+            color:var(--muted);
+            font-size:8px;
+            font-weight:900;
+            text-transform:uppercase;
+        }
+
+        .money-box strong{
+            display:block;
+            margin-top:1.5mm;
+            font-size:18px;
+            line-height:1;
+        }
+
+        .money-box.cod{
+            color:#fff;
+            border-color:transparent;
+            background:linear-gradient(135deg,var(--purple-dark),var(--purple));
+        }
+
+        .money-box.cod span{
+            color:rgba(255,255,255,.82);
+        }
+
+        .money-box.paid{
+            color:var(--green);
+            border-color:#a9e8c9;
+            background:#edfff5;
+        }
+
+        .note-card{
+            min-height:19mm;
+            background:var(--warm);
+        }
+
+        .note{
+            font-size:10px;
+            font-weight:850;
+            line-height:1.35;
+            overflow-wrap:anywhere;
+        }
+
+        .footer{
+            margin-top:auto;
+            padding-top:3mm;
+            border-top:1px dashed #aaa;
+            text-align:center;
+            color:var(--purple-dark);
+            font-size:11px;
+            font-weight:1000;
+        }
+
+        @media print{
+            body{
+                padding:0;
+                background:#fff;
             }
 
-            .print-btn {
-                display: none;
+            .screen-actions{
+                display:none!important;
             }
 
-            .a4-page {
-                margin: 0;
-                width: auto;
-                min-height: auto;
-                padding: 0;
+            .a5-page{
+                width:auto;
+                min-height:auto;
+                margin:0;
+                padding:0;
+                box-shadow:none;
             }
 
-            .label-card {
-                min-height: 277mm;
+            .label-card{
+                min-height:200mm;
+                print-color-adjust:exact;
+                -webkit-print-color-adjust:exact;
             }
         }
 
-        @media screen and (max-width: 700px) {
-            body {
-                background: #fff;
+        @media screen and (max-width:720px){
+            body{
+                padding:72px 8px 18px;
             }
 
-            .a4-page {
-                width: 100%;
-                min-height: 100vh;
-                padding: 14px;
+            .screen-btn{
+                min-height:48px;
+                font-size:12px;
             }
 
-            .label-card {
-                min-height: calc(100vh - 28px);
-                border-radius: 22px;
-                padding: 18px;
-                gap: 18px;
+            .a5-page{
+                width:100%;
+                min-height:0;
+                padding:8px;
             }
 
-            .top {
-                flex-direction: column;
-                gap: 14px;
+            .label-card{
+                min-height:calc(100vh - 98px);
+                padding:12px;
+                border-radius:18px;
+                gap:12px;
             }
 
-            .code {
-                text-align: left;
+            .top,
+            .customer-grid{
+                grid-template-columns:1fr;
             }
 
-            .brand {
-                font-size: 26px;
+            .top-meta{
+                text-align:left;
             }
 
-            .brand small {
-                font-size: 15px;
+            .brand-logo{
+                width:52px;
+                height:52px;
             }
 
-            .code strong {
-                font-size: 26px;
+            .shop-name{
+                font-size:24px;
             }
 
-            .customer-name,
-            .phone {
-                font-size: 25px;
+            .customer-name{
+                font-size:18px;
             }
 
-            .location {
-                font-size: 21px;
+            .phone{
+                font-size:16px;
             }
 
-            .two-col {
-                grid-template-columns: 1fr;
+            .money-row{
+                grid-template-columns:repeat(3,1fr);
+                gap:6px;
             }
 
-            .amount {
-                font-size: 30px;
+            .money-box{
+                min-height:70px;
+                padding:8px;
             }
 
-            .service-name {
-                font-size: 24px;
+            .money-box strong{
+                font-size:15px;
             }
 
-            .note-text {
-                font-size: 18px;
+            .items-head,
+            .item-row{
+                grid-template-columns:1fr 42px 62px;
             }
 
-            .bottom {
-                grid-template-columns: 1fr;
+            .paid-stamp{
+                top:250px;
+                right:18px;
+                width:130px;
+                height:70px;
+            }
+        }
+
+        @media screen and (max-width:390px){
+            .money-row{
+                grid-template-columns:1fr;
             }
 
-            .print-btn {
-                top: auto;
-                left: 12px;
-                right: 12px;
-                bottom: 12px;
-                width: calc(100% - 24px);
+            .paid-stamp{
+                top:300px;
             }
         }
     </style>
-
-<style id="bubu-sticker-screen-style">
-@media screen {
-    body {
-        background: linear-gradient(135deg, #f7f2ff, #fff5f8);
-    }
-
-    .print-btn {
-        background: linear-gradient(135deg, #8f6cf5, #ff7f91);
-        box-shadow: 0 10px 25px rgba(143, 108, 245, .24);
-    }
-
-    .a4-page {
-        box-shadow: 0 18px 50px rgba(45, 33, 66, .12);
-    }
-}
-
-@media print {
-    .a4-page {
-        box-shadow: none;
-    }
-}
-</style>
-
 </head>
 
 <body>
+    <div class="screen-actions">
+        <a href="{% url 'delivery_detail' delivery.id %}" class="screen-btn back-btn">
+            ← Back to System
+        </a>
 
-<button class="print-btn" onclick="window.print()">🖨 Print A4 Label</button>
-
-<div class="a4-page">
-    <div class="label-card">
-
-        <div class="top">
-            <div class="brand">
-                BUBU DELIVERY
-                <small>
-                    {% if delivery.branch %}
-                        Shop: {{ delivery.branch.name }}
-                    {% else %}
-                        Shop: No Branch
-                    {% endif %}
-                </small>
-            </div>
-
-            <div class="code">
-                Delivery Code
-                <strong>#DLV-{{ delivery.id|stringformat:"04d" }}</strong>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="label-title">Customer Name</div>
-            <div class="customer-name">
-                {{ delivery.customer_name|default:"Walk-in Customer" }}
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="label-title">Phone Number</div>
-            <div class="phone">
-                📞 {{ delivery.phone|default:"-" }}
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="label-title">Customer Location</div>
-            <div class="location">
-                {{ delivery.location|default:"Need add address" }}
-            </div>
-        </div>
-
-        <div class="two-col">
-            <div class="info-box {% if delivery.payment_type == 'paid' %}paid-box{% else %}cod-box{% endif %}">
-                <div class="label-title">COD / Payment</div>
-
-                {% if delivery.payment_type == "paid" %}
-                    <div class="amount">PAID</div>
-                    <div class="sub-text">$0.00 COD</div>
-                {% elif delivery.payment_type == "cod_collect" %}
-                    <div class="amount">${{ delivery.expected_collect|floatformat:2 }}</div>
-                    <div class="sub-text">COD Collect</div>
-                {% elif delivery.payment_type == "cod_shop" %}
-                    <div class="amount">${{ delivery.total_price|floatformat:2 }}</div>
-                    <div class="sub-text">COD Pay To Shop</div>
-                {% else %}
-                    <div class="amount">${{ delivery.total_price|floatformat:2 }}</div>
-                    <div class="sub-text">Check Payment</div>
-                {% endif %}
-            </div>
-
-            <div class="info-box">
-                <div class="label-title">Delivery Service</div>
-
-                <div class="service-name">
-                    {% if delivery.delivery_company %}
-                        {{ delivery.delivery_company.name }}
-                    {% else %}
-                        No Service
-                    {% endif %}
-                </div>
-
-                <div class="sub-text">
-                    {% if delivery.delivery_area == "province" %}
-                        Province Delivery
-                    {% else %}
-                        Phnom Penh Delivery
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <div class="note-box">
-            <div class="label-title">Delivery Note</div>
-            <div class="note-text">
-                {{ delivery.delivery_note|default:"-" }}
-            </div>
-        </div>
-
-        <div class="bottom">
-            <div class="bottom-item">
-                Date<br>
-                {{ delivery.delivery_date|date:"M d, Y" }}
-            </div>
-
-            <div class="bottom-item">
-                Delivery Fee<br>
-                ${{ delivery.delivery_fee|floatformat:2 }}
-            </div>
-
-            <div class="bottom-item">
-                Status<br>
-                {{ delivery.get_status_display }}
-            </div>
-        </div>
-
+        <button type="button" class="screen-btn print-btn" onclick="window.print()">
+            🖨 Print A5
+        </button>
     </div>
-</div>
 
+    <main class="a5-page">
+        <article class="label-card">
+
+            {% if delivery.payment_type == "paid" %}
+                <div class="paid-stamp">
+                    <strong>បង់រួច</strong>
+                    <span>PAID · COD $0.00</span>
+                </div>
+            {% endif %}
+
+            <header class="top">
+                <div class="brand-row">
+                    <img src="{% static 'img/bubu-logo.png' %}"
+                         class="brand-logo"
+                         alt="BUBU">
+
+                    <div class="shop-name">BUBU Sensok</div>
+                </div>
+
+                <div class="top-meta">
+                    <strong>#DLV-{{ delivery.id|stringformat:"04d" }}</strong>
+                    <div class="date">
+                        {{ delivery.delivery_date|date:"d M Y" }}
+                    </div>
+                </div>
+            </header>
+
+            <section class="customer-grid">
+                <div class="customer-card">
+                    <div class="section-label">Customer</div>
+                    <div class="customer-name">
+                        {{ delivery.customer_name|default:"Walk-in Customer" }}
+                    </div>
+                    <div class="phone">
+                        ☎ {{ delivery.phone|default:"-" }}
+                    </div>
+                </div>
+
+                <div class="service-card">
+                    <div class="section-label">Delivery Service</div>
+                    <div class="service-name">
+                        {% if delivery.delivery_company %}
+                            {{ delivery.delivery_company.name }}
+                        {% else %}
+                            No Service
+                        {% endif %}
+                    </div>
+
+                    <div class="service-meta">
+                        {{ delivery.get_delivery_area_display }}
+                    </div>
+                </div>
+            </section>
+
+            <section class="address-card">
+                <div class="section-label">Customer Address</div>
+                <div class="address">
+                    {{ delivery.location|default:"Need add address" }}
+                </div>
+            </section>
+
+            <section class="items-card">
+                <div class="items-head">
+                    <div>Item</div>
+                    <div style="text-align:right">Qty</div>
+                    <div style="text-align:right">Total</div>
+                </div>
+
+                {% for item in delivery.items.all %}
+                    <div class="item-row">
+                        <div class="item-name">
+                            {{ item.variant.item.name }}
+                            <small>
+                                {{ item.variant.display_name }}
+                                · ${{ item.unit_price|floatformat:2 }} each
+                            </small>
+                        </div>
+
+                        <div class="item-qty">
+                            {{ item.qty }}
+                        </div>
+
+                        <div class="item-total">
+                            ${{ item.line_total|floatformat:2 }}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-row">
+                        No delivery item rows.
+                    </div>
+                {% endfor %}
+            </section>
+
+            <section class="money-row">
+                <div class="money-box">
+                    <span>Item Total</span>
+                    <strong>${{ delivery.total_price|floatformat:2 }}</strong>
+                </div>
+
+                <div class="money-box">
+                    <span>Delivery Fee</span>
+                    <strong>${{ delivery.delivery_fee|floatformat:2 }}</strong>
+                </div>
+
+                <div class="money-box cod {% if delivery.payment_type == 'paid' %}paid{% endif %}">
+                    <span>Total COD</span>
+
+                    {% if delivery.payment_type == "paid" %}
+                        <strong>$0.00</strong>
+                    {% else %}
+                        <strong>${{ delivery.cod_total|floatformat:2 }}</strong>
+                    {% endif %}
+                </div>
+            </section>
+
+            {% if delivery.delivery_note %}
+                <section class="note-card">
+                    <div class="section-label">Delivery Note</div>
+                    <div class="note">
+                        {{ delivery.delivery_note }}
+                    </div>
+                </section>
+            {% endif %}
+
+            <footer class="footer">
+                Thank you for supporting BUBU Pet Store. ❤️
+            </footer>
+        </article>
+    </main>
 </body>
 </html>

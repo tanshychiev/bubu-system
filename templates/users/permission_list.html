@@ -1,45 +1,75 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="page-head">
-    <div>
-        <h1>Permissions 🛡️</h1>
-        <div class="page-subtitle">System permissions from Django apps.</div>
+<style>
+.permission-list-page .page-head{margin-bottom:14px}
+.permission-list-page .tool-row{margin-bottom:14px}
+.permission-list-page .table-card{overflow:hidden}
+
+@media(max-width:767px){
+    .permission-list-page .page-head{display:grid;grid-template-columns:1fr auto;align-items:center;gap:7px}
+    .permission-list-page .page-head h1{font-size:21px}
+    .permission-list-page .page-subtitle{margin:2px 0 0;font-size:9px}
+    .permission-list-page .page-head .btn{min-height:36px;padding:0 9px;font-size:9px}
+
+    .permission-list-page .tool-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .permission-list-page .search-input{grid-column:1/-1;min-height:38px;font-size:13px!important}
+    .permission-list-page .tool-row .btn{width:100%;min-height:36px;font-size:10px}
+
+    .permission-list-page table,.permission-list-page thead,.permission-list-page tbody{display:block;width:100%}
+    .permission-list-page thead{display:none}
+    .permission-list-page tbody{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:8px}
+    .permission-list-page tr{display:block;min-width:0;padding:9px;border:1px solid #eaddec;border-radius:13px;background:#fffafc}
+    .permission-list-page td{display:block;padding:2px 0;border:0!important;white-space:normal;text-align:left;font-size:8px;line-height:1.25;overflow-wrap:anywhere}
+    .permission-list-page td::before{content:attr(data-label) ": ";color:#7b7288;font-weight:1000}
+    .permission-list-page td:nth-child(3){margin-top:4px;color:#17152f;font-size:9px}
+}
+@media(max-width:360px){
+    .permission-list-page tbody{grid-template-columns:1fr}
+}
+</style>
+
+<div class="permission-list-page">
+    <div class="page-head">
+        <div>
+            <h1>Permissions 🛡️</h1>
+            <div class="page-subtitle">System permissions from Django apps.</div>
+        </div>
+        <a href="{% url 'role_list' %}" class="btn btn-add">Manage Roles</a>
     </div>
-    <a href="{% url 'role_list' %}" class="btn btn-add">Manage Roles</a>
-</div>
 
-<form method="get" class="tool-row">
-    <input class="search-input" type="text" name="q" value="{{ q }}" placeholder="Search permission...">
-    <button class="btn btn-search" type="submit">Search</button>
-    <a href="{% url 'permission_list' %}" class="btn btn-reset">Clear</a>
-</form>
+    <form method="get" class="tool-row">
+        <input class="search-input" type="text" name="q" value="{{ q }}" placeholder="Search permission...">
+        <button class="btn btn-search" type="submit">Search</button>
+        <a href="{% url 'permission_list' %}" class="btn btn-reset">Clear</a>
+    </form>
 
-<div class="table-card">
-    <table>
-        <thead>
-            <tr>
-                <th>App</th>
-                <th>Model</th>
-                <th>Name</th>
-                <th>Codename</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for p in permissions %}
-            <tr>
-                <td>{{ p.content_type.app_label }}</td>
-                <td>{{ p.content_type.model }}</td>
-                <td><b>{{ p.name }}</b></td>
-                <td>{{ p.codename }}</td>
-            </tr>
-        {% empty %}
-            <tr>
-                <td colspan="4">No permissions found.</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>App</th>
+                    <th>Model</th>
+                    <th>Name</th>
+                    <th>Codename</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for p in permissions %}
+                <tr>
+                    <td data-label="App">{{ p.content_type.app_label }}</td>
+                    <td data-label="Model">{{ p.content_type.model }}</td>
+                    <td data-label="Name"><b>{{ p.name }}</b></td>
+                    <td data-label="Code">{{ p.codename }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4">No permissions found.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 {% endblock %}

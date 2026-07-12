@@ -467,4 +467,121 @@ document.addEventListener("keydown",event=>{
     if(event.key==="Escape")closeSelectPopup();
 });
 </script>
+
+
+<style id="bubu-mobile-easy-company-form">
+@media (max-width:620px){
+    .delivery-shell{
+        padding:5px 3px 84px!important;
+        max-width:100%!important;
+    }
+    .page-title-row{
+        display:grid!important;
+        grid-template-columns:1fr auto!important;
+        align-items:center!important;
+        gap:6px!important;
+        margin-bottom:7px!important;
+    }
+    .page-title-row h1{font-size:21px!important}
+    .page-title-row p{
+        margin-top:2px!important;
+        font-size:10px!important;
+    }
+    .page-title-row .btn{
+        min-height:40px!important;
+        padding:0 9px!important;
+        border-radius:12px!important;
+        font-size:10px!important;
+    }
+    .form-card{
+        padding:7px!important;
+        border-radius:15px!important;
+    }
+    .form-section{
+        margin-bottom:7px!important;
+        padding:9px!important;
+        border-radius:13px!important;
+    }
+    .form-section h2{
+        margin-bottom:7px!important;
+        font-size:14px!important;
+    }
+    .quick-grid{
+        grid-template-columns:repeat(3,minmax(0,1fr))!important;
+        gap:5px!important;
+    }
+    .quick-btn{
+        min-height:40px!important;
+        padding:0 4px!important;
+        border-radius:11px!important;
+        font-size:9px!important;
+    }
+    .form-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:7px!important;
+    }
+    .field.full,
+    .field:has(textarea){
+        grid-column:1/-1!important;
+    }
+    .field label{
+        margin-bottom:4px!important;
+        font-size:9px!important;
+    }
+    .field input,
+    .field textarea,
+    .field select,
+    .select-trigger{
+        min-height:45px!important;
+        padding:0 9px!important;
+        border-radius:12px!important;
+        font-size:13px!important;
+    }
+    .field textarea{
+        min-height:68px!important;
+        padding-top:9px!important;
+    }
+    .check-row{
+        min-height:44px!important;
+        padding:7px!important;
+        border-radius:12px!important;
+        font-size:11px!important;
+    }
+    .save-row{
+        position:sticky!important;
+        bottom:4px!important;
+        z-index:20!important;
+        display:grid!important;
+        grid-template-columns:1fr 1.4fr!important;
+        gap:6px!important;
+        padding:7px!important;
+        border:1px solid #eee4f3!important;
+        border-radius:15px!important;
+        background:rgba(255,255,255,.96)!important;
+    }
+    .save-row .btn{
+        width:100%!important;
+        min-height:45px!important;
+        padding:0 7px!important;
+        border-radius:12px!important;
+        font-size:10px!important;
+    }
+    .popup-backdrop{
+        padding:0!important;
+        align-items:flex-end!important;
+    }
+    .popup-panel{
+        width:100%!important;
+        max-width:none!important;
+        border-radius:22px 22px 0 0!important;
+    }
+}
+@media (max-width:345px){
+    .page-title-row{grid-template-columns:1fr!important}
+    .form-grid{grid-template-columns:1fr!important}
+    .field.full,
+    .field:has(textarea){grid-column:auto!important}
+}
+</style>
+
 {% endblock %}

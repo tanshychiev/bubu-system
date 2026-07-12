@@ -642,4 +642,156 @@
                                                 </section>
                                             {% endif %}
                                         </div>
-                                    {% endblock %}
+                                    
+
+<style id="bubu-mobile-easy-delivery-detail">
+@media (max-width:760px){
+    .page{
+        padding:5px 3px 84px!important;
+        max-width:100%!important;
+    }
+    .actions{
+        margin-bottom:7px!important;
+        display:grid!important;
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:5px!important;
+    }
+    .actions .btn{
+        min-height:42px!important;
+        padding:0 6px!important;
+        border-radius:12px!important;
+        font-size:10px!important;
+    }
+    .actions .btn:first-child{grid-column:auto!important}
+    .hero{
+        margin-bottom:7px!important;
+        padding:11px!important;
+        border-radius:15px!important;
+    }
+    .hero h1{
+        font-size:19px!important;
+        line-height:1.2!important;
+    }
+    .hero p{
+        margin-top:3px!important;
+        font-size:10px!important;
+        line-height:1.35!important;
+    }
+    .hero img{display:none!important}
+    .card{
+        margin-bottom:7px!important;
+        padding:10px!important;
+        border-radius:15px!important;
+    }
+    .card h2{
+        margin-bottom:7px!important;
+        font-size:15px!important;
+    }
+    .grid,
+    .money{
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:5px!important;
+    }
+    .workflow{
+        grid-template-columns:1fr!important;
+        gap:7px!important;
+    }
+    .full{grid-column:1/-1!important}
+    .box{
+        padding:7px!important;
+        border-radius:10px!important;
+    }
+    .box span{font-size:8px!important}
+    .box strong{
+        margin-top:2px!important;
+        font-size:11px!important;
+        line-height:1.25!important;
+    }
+    .money .box strong{font-size:14px!important}
+    .work{
+        padding:9px!important;
+        border-radius:13px!important;
+    }
+    .work h3{
+        margin-bottom:3px!important;
+        font-size:13px!important;
+    }
+    .work p{
+        min-height:0!important;
+        margin:4px 0!important;
+        font-size:9px!important;
+    }
+    .work input,
+    .work textarea{
+        min-height:42px!important;
+        padding:7px 9px!important;
+        border-radius:11px!important;
+        font-size:13px!important;
+    }
+    .work textarea{min-height:58px!important}
+    .work .btn{
+        min-height:42px!important;
+        border-radius:11px!important;
+        font-size:10px!important;
+    }
+
+    .items{overflow:visible!important}
+    .items table,
+    .items tbody{
+        display:block!important;
+        width:100%!important;
+        min-width:0!important;
+    }
+    .items thead{display:none!important}
+    .items tbody{
+        display:grid!important;
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:6px!important;
+    }
+    .items tr{
+        display:block!important;
+        min-width:0!important;
+        padding:8px!important;
+        border:1px solid #eee5f6!important;
+        border-radius:12px!important;
+        background:#faf8ff!important;
+    }
+    .items td{
+        width:100%!important;
+        padding:3px 0!important;
+        border:0!important;
+        display:flex!important;
+        align-items:flex-start!important;
+        justify-content:space-between!important;
+        gap:6px!important;
+        font-size:9px!important;
+        line-height:1.2!important;
+        text-align:right!important;
+        overflow-wrap:anywhere!important;
+    }
+    .items td::before{
+        flex:0 0 auto!important;
+        color:#7b7288!important;
+        font-size:8px!important;
+        font-weight:900!important;
+        text-align:left!important;
+    }
+    .items td:nth-child(1)::before{content:"Product"}
+    .items td:nth-child(2)::before{content:"Variant"}
+    .items td:nth-child(3)::before{content:"Qty"}
+    .items td:nth-child(4)::before{content:"Price"}
+    .items td:nth-child(5)::before{content:"Total"}
+    .items td[colspan]{
+        display:block!important;
+        text-align:center!important;
+    }
+    .items td[colspan]::before{display:none!important}
+}
+@media (max-width:340px){
+    .grid,.money{grid-template-columns:1fr!important}
+    .full{grid-column:auto!important}
+    .items tbody{grid-template-columns:1fr!important}
+}
+</style>
+
+{% endblock %}

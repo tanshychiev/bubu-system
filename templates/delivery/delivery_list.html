@@ -2436,4 +2436,153 @@ tbody tr:hover{
     });
 </script>
 
+
+
+<style id="bubu-mobile-easy-delivery-list">
+@media (max-width:760px){
+    .delivery-page{
+        padding:5px 3px 84px!important;
+        overflow-x:hidden!important;
+    }
+    .page-head{
+        display:block!important;
+        margin-bottom:7px!important;
+    }
+    .page-head h1{
+        font-size:22px!important;
+        line-height:1.15!important;
+    }
+    .page-subtitle{
+        margin-top:4px!important;
+        font-size:11px!important;
+        line-height:1.35!important;
+    }
+    .pet-hero-img{display:none!important}
+
+    .tool-row{
+        margin-top:9px!important;
+        display:grid!important;
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:6px!important;
+    }
+    .tool-row .search-input{
+        grid-column:1/-1!important;
+    }
+    .search-input,
+    .touch-select-btn,
+    .tool-row .btn{
+        width:100%!important;
+        height:46px!important;
+        min-height:46px!important;
+        padding:0 10px!important;
+        border-radius:14px!important;
+        font-size:13px!important;
+    }
+    .top-action-row{
+        margin:8px 0 10px!important;
+        display:grid!important;
+        grid-template-columns:1fr 1fr!important;
+        gap:6px!important;
+    }
+    .create-delivery-btn,
+    .btn-company{
+        width:100%!important;
+        min-height:48px!important;
+        height:48px!important;
+        padding:0 8px!important;
+        border-radius:14px!important;
+        font-size:12px!important;
+        position:static!important;
+    }
+
+    .table-card{display:none!important}
+    .delivery-mobile-list{
+        display:grid!important;
+        gap:7px!important;
+    }
+    .delivery-mobile-card{
+        padding:10px!important;
+        border-radius:15px!important;
+        box-shadow:0 5px 14px rgba(63,47,85,.05)!important;
+    }
+    .mobile-card-head{gap:7px!important}
+    .mobile-delivery-id{font-size:12px!important}
+    .mobile-customer-name{
+        margin-top:2px!important;
+        font-size:15px!important;
+    }
+    .mobile-phone{
+        margin-top:2px!important;
+        font-size:10px!important;
+    }
+    .mobile-tags{
+        margin-top:7px!important;
+        gap:4px!important;
+    }
+    .mobile-tags .badge{
+        min-height:24px!important;
+        padding:3px 7px!important;
+        font-size:9px!important;
+    }
+    .mobile-info-grid{
+        margin-top:7px!important;
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:5px!important;
+    }
+    .mobile-info-box{
+        padding:7px!important;
+        border-radius:10px!important;
+    }
+    .mobile-info-box span{font-size:8px!important}
+    .mobile-info-box strong{
+        margin-top:2px!important;
+        font-size:10px!important;
+        line-height:1.22!important;
+    }
+    .mobile-info-full{grid-column:1/-1!important}
+    .mobile-action-grid{
+        margin-top:7px!important;
+        grid-template-columns:repeat(3,minmax(0,1fr))!important;
+        gap:5px!important;
+    }
+    .mobile-action-btn{
+        min-height:40px!important;
+        padding:0 3px!important;
+        border-radius:11px!important;
+        font-size:10px!important;
+    }
+
+    .popup-backdrop{
+        padding:0!important;
+        align-items:flex-end!important;
+    }
+    .touch-popup,
+    .date-picker-popup{
+        width:100%!important;
+        max-width:none!important;
+        max-height:88dvh!important;
+        margin:0!important;
+        padding:13px!important;
+        border-radius:22px 22px 0 0!important;
+    }
+    .popup-option{
+        min-height:50px!important;
+        margin-bottom:6px!important;
+        border-radius:14px!important;
+        font-size:14px!important;
+    }
+    .popup-close{
+        min-height:48px!important;
+        border-radius:14px!important;
+    }
+}
+@media (max-width:340px){
+    .tool-row{grid-template-columns:1fr!important}
+    .tool-row .search-input{grid-column:auto!important}
+    .top-action-row{grid-template-columns:1fr!important}
+    .mobile-info-grid{grid-template-columns:1fr 1fr!important}
+    .mobile-action-grid{grid-template-columns:repeat(3,1fr)!important}
+}
+</style>
+
 {% endblock %}

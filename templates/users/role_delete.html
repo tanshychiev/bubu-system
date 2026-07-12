@@ -1,13 +1,26 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="card" style="max-width:600px;margin:0 auto;text-align:center;">
+<style>
+.delete-role-card{max-width:560px;margin:0 auto;padding:24px;text-align:center}
+.delete-role-card h1{font-size:28px}
+.delete-role-actions{display:flex;justify-content:center;gap:10px;margin-top:20px}
+@media(max-width:767px){
+    .delete-role-card{padding:16px;border-radius:17px}
+    .delete-role-card h1{font-size:22px}
+    .delete-role-card h2{font-size:18px}
+    .delete-role-card .page-subtitle{font-size:11px}
+    .delete-role-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:14px}
+    .delete-role-actions .btn{width:100%;min-height:38px;padding:0 8px;font-size:10px}
+}
+</style>
+
+<div class="card delete-role-card">
     <h1>Delete Role 🗑</h1>
     <p class="page-subtitle">Are you sure you want to delete this role?</p>
-
     <h2>{{ role.name }}</h2>
 
-    <form method="post" class="tool-row" style="justify-content:center;margin-top:24px;">
+    <form method="post" class="delete-role-actions">
         {% csrf_token %}
         <button type="submit" class="btn btn-danger">Yes, Delete</button>
         <a href="{% url 'role_list' %}" class="btn btn-reset">Cancel</a>

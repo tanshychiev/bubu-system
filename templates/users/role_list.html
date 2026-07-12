@@ -1,46 +1,78 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="page-head">
-    <div>
-        <h1>Roles 🔐</h1>
-        <div class="page-subtitle">Total Roles: <b>{{ total_roles }}</b></div>
+<style>
+.role-list-page .page-head{margin-bottom:14px}
+.role-list-page .tool-row{margin-bottom:14px}
+.role-list-page .table-card{overflow:hidden}
+
+@media(max-width:767px){
+    .role-list-page .page-head{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px}
+    .role-list-page .page-head h1{font-size:22px}
+    .role-list-page .page-subtitle{margin:2px 0 0;font-size:10px}
+    .role-list-page .page-head .btn{min-height:36px;padding:0 11px;font-size:10px}
+
+    .role-list-page .tool-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .role-list-page .search-input{grid-column:1/-1;min-height:38px;font-size:13px!important}
+    .role-list-page .tool-row .btn{width:100%;min-height:36px;font-size:10px}
+
+    .role-list-page table,.role-list-page thead,.role-list-page tbody{display:block;width:100%}
+    .role-list-page thead{display:none}
+    .role-list-page tbody{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:8px}
+    .role-list-page tr{display:block;min-width:0;padding:10px;border:1px solid #eaddec;border-radius:14px;background:#fffafc}
+    .role-list-page td{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border:0!important;white-space:normal;text-align:right;font-size:9px}
+    .role-list-page td::before{content:attr(data-label);color:#7b7288;font-weight:1000;text-align:left}
+    .role-list-page td:last-child{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:4px}
+    .role-list-page td:last-child::before{display:none}
+    .role-list-page .mini-btn{width:100%;min-height:28px;margin:0;padding:0 5px;font-size:8px}
+}
+@media(max-width:360px){
+    .role-list-page tbody{grid-template-columns:1fr}
+}
+</style>
+
+<div class="role-list-page">
+    <div class="page-head">
+        <div>
+            <h1>Roles 🔐</h1>
+            <div class="page-subtitle">Total Roles: <b>{{ total_roles }}</b></div>
+        </div>
+        <a href="{% url 'role_create' %}" class="btn btn-add">Add Role</a>
     </div>
-    <a href="{% url 'role_create' %}" class="btn btn-add">Add Role</a>
-</div>
 
-<form method="get" class="tool-row">
-    <input class="search-input" type="text" name="q" value="{{ q }}" placeholder="Search role...">
-    <button class="btn btn-search" type="submit">Search</button>
-    <a href="{% url 'role_list' %}" class="btn btn-reset">Clear</a>
-</form>
+    <form method="get" class="tool-row">
+        <input class="search-input" type="text" name="q" value="{{ q }}" placeholder="Search role...">
+        <button class="btn btn-search" type="submit">Search</button>
+        <a href="{% url 'role_list' %}" class="btn btn-reset">Clear</a>
+    </form>
 
-<div class="table-card">
-    <table>
-        <thead>
-            <tr>
-                <th>Role Name</th>
-                <th>Total Permissions</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for role in roles %}
-            <tr>
-                <td><b>{{ role.name }}</b></td>
-                <td>{{ role.permissions.count }}</td>
-                <td>
-                    <a href="{% url 'role_edit' role.id %}" class="mini-btn btn-edit">✎ Edit</a>
-                    <a href="{% url 'role_delete' role.id %}" class="mini-btn btn-delete">🗑 Delete</a>
-                </td>
-            </tr>
-        {% empty %}
-            <tr>
-                <td colspan="3">No roles found.</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Role Name</th>
+                    <th>Total Permissions</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for role in roles %}
+                <tr>
+                    <td data-label="Role"><b>{{ role.name }}</b></td>
+                    <td data-label="Permissions">{{ role.permissions.count }}</td>
+                    <td data-label="Action">
+                        <a href="{% url 'role_edit' role.id %}" class="mini-btn btn-edit">✎ Edit</a>
+                        <a href="{% url 'role_delete' role.id %}" class="mini-btn btn-delete">🗑 Delete</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3">No roles found.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 {% endblock %}

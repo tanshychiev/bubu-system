@@ -1,231 +1,246 @@
 {% extends "base.html" %}
-{% load static %}
 {% block content %}
-    <style>
-    :root {
-        --bubu-ink:#17152f;
-        --bubu-muted:#7b7288;
-        --bubu-purple:#8f6cf5;
-        --bubu-purple-dark:#7357d4;
-        --bubu-pink:#ff7f91;
-        --bubu-red:#ef5574;
-        --bubu-border:#f0ded5;
-        --bubu-border-purple:#e5d9f5;
-        --bubu-soft:#fbf8ff;
-        --bubu-soft-warm:#fff8fb;
-        --bubu-shadow:0 14px 34px rgba(111,75,50,.08);
+
+<style>
+*{box-sizing:border-box}
+:root{
+    --ink:#17152f;
+    --muted:#7b7288;
+    --purple:#8e63ff;
+    --purple-dark:#7047db;
+    --red:#ef5574;
+    --line:#eadff3;
+    --warm:#f0ded5;
+}
+a{text-decoration:none}
+.delete-page{
+    width:100%;
+    max-width:720px;
+    margin:0 auto;
+    padding:18px;
+    color:var(--ink);
+}
+.delete-hero{
+    margin-bottom:10px;
+    padding:18px;
+    display:flex;
+    align-items:center;
+    gap:13px;
+    border:1px solid var(--warm);
+    border-radius:22px;
+    background:linear-gradient(135deg,#fff8fb,#f8f4ff);
+    box-shadow:0 8px 22px rgba(63,47,85,.06);
+}
+.delete-icon{
+    width:60px;
+    height:60px;
+    flex:0 0 60px;
+    border-radius:18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--red);
+    background:#ffe8eb;
+    font-size:28px;
+}
+.delete-hero h1{
+    margin:0;
+    font-size:27px;
+    font-weight:1000;
+}
+.delete-hero p{
+    margin:4px 0 0;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:850;
+    line-height:1.4;
+}
+.delete-card{
+    padding:16px;
+    border:1px solid var(--warm);
+    border-radius:22px;
+    background:#fff;
+    box-shadow:0 10px 26px rgba(63,47,85,.07);
+}
+.delivery-info{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px;
+}
+.info-row{
+    min-width:0;
+    padding:10px;
+    border:1px solid #eee5f6;
+    border-radius:13px;
+    background:#faf8ff;
+}
+.info-row span{
+    display:block;
+    color:var(--muted);
+    font-size:9px;
+    font-weight:900;
+}
+.info-row strong{
+    display:block;
+    margin-top:3px;
+    color:var(--ink);
+    font-size:13px;
+    font-weight:1000;
+    line-height:1.25;
+    overflow-wrap:anywhere;
+}
+.warning{
+    margin:10px 0;
+    padding:10px;
+    border:1px solid #ffc9d2;
+    border-radius:13px;
+    color:#c93850;
+    background:#fff0f2;
+    font-size:11px;
+    font-weight:900;
+    line-height:1.4;
+}
+.action-row{
+    display:grid;
+    grid-template-columns:1fr 1.2fr;
+    gap:7px;
+}
+.btn-delete-page{
+    min-height:48px;
+    border:0;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 10px;
+    font-size:12px;
+    font-weight:1000;
+    cursor:pointer;
+}
+.btn-cancel{
+    color:var(--purple-dark);
+    background:#fff;
+    border:1px solid var(--line);
+}
+.btn-confirm{
+    color:#fff;
+    background:linear-gradient(135deg,#ff7588,var(--red));
+    box-shadow:0 8px 18px rgba(239,85,116,.18);
+}
+@media(max-width:650px){
+    .delete-page{padding:5px 3px 84px}
+    .delete-hero{
+        margin-bottom:7px;
+        padding:10px;
+        border-radius:15px;
     }
-    * {
-        box-sizing:border-box
+    .delete-icon{
+        width:46px;
+        height:46px;
+        flex-basis:46px;
+        border-radius:13px;
+        font-size:22px;
     }
-    a {
-        text-decoration:none
+    .delete-hero h1{font-size:19px}
+    .delete-hero p{font-size:9px}
+    .delete-card{
+        padding:9px;
+        border-radius:15px;
     }
-    .delete-page {
-        max-width:760px;
-        margin:0 auto;
-        padding:32px 28px;
-        color:var(--bubu-ink);
+    .delivery-info{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:5px;
     }
-    .delete-hero {
-        margin-bottom:16px;
-        padding:22px;
-        display:flex;
-        align-items:center;
-        gap:16px;
-        border:1px solid var(--bubu-border);
-        border-radius:26px;
-        background:linear-gradient(135deg,var(--bubu-soft-warm),var(--bubu-soft));
-        box-shadow:0 9px 24px rgba(111,75,50,.06);
+    .info-row{
+        padding:7px;
+        border-radius:10px;
     }
-    .delete-icon {
-        width:72px;
-        height:72px;
-        flex:0 0 auto;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        border-radius:22px;
-        background:#ffe8eb;
-        color:var(--bubu-red);
-        font-size:34px;
+    .info-row span{font-size:7px}
+    .info-row strong{font-size:10px}
+    .warning{
+        margin:7px 0;
+        padding:8px;
+        border-radius:10px;
+        font-size:9px;
     }
-    .delete-hero h1 {
-        margin:0;
-        font-size:30px;
-        font-weight:1000;
+    .action-row{
+        position:sticky;
+        bottom:4px;
+        grid-template-columns:1fr 1.25fr;
+        padding:6px;
+        border:1px solid #eee4f3;
+        border-radius:14px;
+        background:rgba(255,255,255,.96);
     }
-    .delete-hero p {
-        margin:7px 0 0;
-        color:var(--bubu-muted);
-        font-weight:850;
-        line-height:1.5;
+    .btn-delete-page{
+        min-height:44px;
+        padding:0 5px;
+        border-radius:11px;
+        font-size:10px;
     }
-    .delete-card {
-        padding:22px;
-        border:1px solid var(--bubu-border);
-        border-radius:26px;
-        background:#fff;
-        box-shadow:var(--bubu-shadow);
-    }
-    .delivery-info {
-        overflow:hidden;
-        border:1px solid #eee5f6;
-        border-radius:19px;
-        background:linear-gradient(145deg,#fff,#faf8ff);
-    }
-    .info-row {
-        min-height:52px;
-        padding:11px 15px;
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:14px;
-        border-bottom:1px dashed var(--bubu-border);
-    }
-    .info-row:last-child {
-        border-bottom:0
-    }
-    .info-row span {
-        color:var(--bubu-muted);
-        font-size:13px;
-        font-weight:900;
-    }
-    .info-row strong {
-        color:var(--bubu-ink);
-        text-align:right;
-        font-weight:1000;
-    }
-    .warning {
-        margin:16px 0;
-        padding:13px 15px;
-        border:1px solid #ffc9d2;
-        border-radius:16px;
-        background:#fff0f2;
-        color:#c93850;
-        font-weight:900;
-        line-height:1.45;
-    }
-    .action-row {
-        display:grid;
-        grid-template-columns:1fr 1fr;
-        gap:10px;
-    }
-    .btn {
-        min-height:54px;
-        border:0;
-        border-radius:18px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-weight:1000;
-        cursor:pointer;
-    }
-    .btn-cancel {
-        border:1px solid var(--bubu-border-purple);
-        background:#fff;
-        color:var(--bubu-purple-dark);
-    }
-    .btn-delete {
-        background:linear-gradient(135deg,#ff7588,var(--bubu-red));
-        color:#fff;
-        box-shadow:0 10px 22px rgba(239,85,116,.20);
-    }
-    @media(max-width:650px) {
-        .delete-page {
-            padding:10px 8px 88px
-        }
-        .delete-hero {
-            padding:16px;
-            border-radius:21px
-        }
-        .delete-icon {
-            width:58px;
-            height:58px;
-            border-radius:18px;
-            font-size:28px
-        }
-        .delete-hero h1 {
-            font-size:25px
-        }
-        .delete-card {
-            padding:15px;
-            border-radius:21px
-        }
-        .info-row {
-            display:block
-        }
-        .info-row strong {
-            display:block;
-            margin-top:5px;
-            text-align:left
-        }
-        .action-row {
-            grid-template-columns:1fr
-        }
-    }
-    </style>
-    <div class="delete-page">
-        <div class="delete-hero">
-            <div class="delete-icon">🗑️</div>
-            <div>
-                <h1>Delete Delivery?</h1>
-                <p>Check the customer, company, delivery status and COD information before removing this record.</p>
-            </div>
-        </div>
-        <div class="delete-card">
-            <div class="delivery-info">
-                <div class="info-row">
-                    <span>Delivery ID</span>
-                    <strong>#DLV-{{ delivery.id|stringformat:"04d" }}</strong>
-                </div>
-                <div class="info-row">
-                    <span>Shop</span>
-                    <strong>
-                        {% if delivery.branch %}
-                            {{ delivery.branch.name }}
-                        {% else %}
-                            No Branch
-                        {% endif %}
-                    </strong>
-                </div>
-                <div class="info-row">
-                    <span>Delivery Company</span>
-                    <strong>
-                        {% if delivery.delivery_company %}
-                            {{ delivery.delivery_company.name }}
-                        {% else %}
-                            No Company
-                        {% endif %}
-                    </strong>
-                </div>
-                <div class="info-row">
-                    <span>Customer</span>
-                    <strong>{{ delivery.customer_name|default:"-" }}</strong>
-                </div>
-                <div class="info-row">
-                    <span>Phone</span>
-                    <strong>{{ delivery.phone|default:"-" }}</strong>
-                </div>
-                <div class="info-row">
-                    <span>Total / COD</span>
-                    <strong>${{ delivery.total_price|floatformat:2 }}</strong>
-                </div>
-                <div class="info-row">
-                    <span>Status</span>
-                    <strong>{{ delivery.get_status_display }}</strong>
-                </div>
-            </div>
-            <div class="warning">
-                Deleting a record does not automatically restore inventory. Use “Return + Restore Stock” from Delivery Detail when goods physically return to the shop.
-            </div>
-            <form method="post">
-                {% csrf_token %}
-                <div class="action-row">
-                    <a href="{% url 'delivery_detail' delivery.id %}" class="btn btn-cancel">Cancel</a>
-                    <button type="submit" class="btn btn-delete">Yes, Delete Delivery</button>
-                </div>
-            </form>
+}
+@media(max-width:330px){
+    .delivery-info{grid-template-columns:1fr}
+}
+</style>
+
+<div class="delete-page">
+    <div class="delete-hero">
+        <div class="delete-icon">🗑️</div>
+        <div>
+            <h1>Delete Delivery?</h1>
+            <p>Check the delivery information carefully before deleting this record.</p>
         </div>
     </div>
+
+    <div class="delete-card">
+        <div class="delivery-info">
+            <div class="info-row">
+                <span>Delivery ID</span>
+                <strong>#DLV-{{ delivery.id|stringformat:"04d" }}</strong>
+            </div>
+            <div class="info-row">
+                <span>Shop</span>
+                <strong>{% if delivery.branch %}{{ delivery.branch.name }}{% else %}No Branch{% endif %}</strong>
+            </div>
+            <div class="info-row">
+                <span>Delivery Company</span>
+                <strong>{% if delivery.delivery_company %}{{ delivery.delivery_company.name }}{% else %}No Company{% endif %}</strong>
+            </div>
+            <div class="info-row">
+                <span>Customer</span>
+                <strong>{{ delivery.customer_name|default:"-" }}</strong>
+            </div>
+            <div class="info-row">
+                <span>Phone</span>
+                <strong>{{ delivery.phone|default:"-" }}</strong>
+            </div>
+            <div class="info-row">
+                <span>Total / COD</span>
+                <strong>${{ delivery.total_price|floatformat:2 }}</strong>
+            </div>
+            <div class="info-row">
+                <span>Status</span>
+                <strong>{{ delivery.get_status_display }}</strong>
+            </div>
+            <div class="info-row">
+                <span>Delivery Date</span>
+                <strong>{{ delivery.delivery_date|date:"d M Y" }}</strong>
+            </div>
+        </div>
+
+        <div class="warning">
+            Deleting does not restore inventory. Use “Return + Restore Stock” when goods physically return to the shop.
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="action-row">
+                <a href="{% url 'delivery_detail' delivery.id %}" class="btn-delete-page btn-cancel">Cancel</a>
+                <button type="submit" class="btn-delete-page btn-confirm">Yes, Delete</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 {% endblock %}

@@ -489,4 +489,121 @@ document.addEventListener("DOMContentLoaded",()=>{
 @media(max-width:900px){.mobile-list{grid-template-columns:repeat(2,1fr)!important}}
 @media(max-width:620px){.mobile-list{grid-template-columns:1fr!important}}
 </style>
+
+
+<style id="bubu-mobile-easy-company-list">
+@media (max-width:760px){
+    .delivery-shell{
+        padding:5px 3px 84px!important;
+        max-width:100%!important;
+    }
+    .page-title-row{
+        display:grid!important;
+        grid-template-columns:1fr!important;
+        gap:5px!important;
+        margin-bottom:7px!important;
+    }
+    .page-title-row h1{font-size:21px!important}
+    .page-title-row p{
+        margin-top:2px!important;
+        font-size:10px!important;
+    }
+    .title-actions{
+        margin-top:3px!important;
+        display:grid!important;
+        grid-template-columns:1fr 1fr!important;
+        gap:5px!important;
+    }
+    .title-actions .btn{
+        width:100%!important;
+        min-height:42px!important;
+        padding:0 6px!important;
+        border-radius:12px!important;
+        font-size:10px!important;
+    }
+    .filter-card{
+        padding:7px!important;
+        border-radius:14px!important;
+        margin-bottom:7px!important;
+    }
+    .filter-grid,
+    .filter-grid[style]{
+        grid-template-columns:1fr 1fr!important;
+        gap:5px!important;
+    }
+    .select-button,
+    .filter-grid .btn{
+        min-height:44px!important;
+        padding:0 8px!important;
+        border-radius:12px!important;
+        font-size:11px!important;
+    }
+    .table-card{display:none!important}
+    .mobile-list,
+    .mobile-list[style]{
+        display:grid!important;
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:6px!important;
+    }
+    .mobile-card{
+        min-width:0!important;
+        padding:9px!important;
+        border-radius:13px!important;
+    }
+    .mobile-card-title{
+        font-size:12px!important;
+        line-height:1.2!important;
+    }
+    .mobile-card-head small{font-size:8px!important}
+    .mobile-card-head .badge{
+        min-height:22px!important;
+        padding:2px 6px!important;
+        font-size:8px!important;
+    }
+    .mobile-card-grid{
+        margin-top:7px!important;
+        grid-template-columns:1fr 1fr!important;
+        gap:4px!important;
+    }
+    .mobile-box{
+        padding:6px!important;
+        border-radius:9px!important;
+    }
+    .mobile-box span{font-size:7px!important}
+    .mobile-box strong{
+        margin-top:2px!important;
+        font-size:9px!important;
+        line-height:1.2!important;
+        overflow-wrap:anywhere!important;
+    }
+    .mobile-actions,
+    .mobile-actions[style]{
+        margin-top:7px!important;
+        grid-template-columns:1fr 1fr!important;
+        gap:4px!important;
+    }
+    .mobile-actions a,
+    .mobile-actions button{
+        min-height:38px!important;
+        padding:0 3px!important;
+        border-radius:10px!important;
+        font-size:9px!important;
+    }
+    .popup-backdrop{
+        padding:0!important;
+        align-items:flex-end!important;
+    }
+    .popup-sheet{
+        width:100%!important;
+        max-width:none!important;
+        margin:0!important;
+        border-radius:22px 22px 0 0!important;
+    }
+}
+@media (max-width:345px){
+    .mobile-list,
+    .mobile-list[style]{grid-template-columns:1fr!important}
+}
+</style>
+
 {% endblock %}
