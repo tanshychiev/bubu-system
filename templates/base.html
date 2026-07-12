@@ -1504,10 +1504,245 @@ tbody tr:hover{background:#fffaf6}
     }
 }
 
+
+/* =========================================================
+   BUBU GLOBAL PAGE LOADER — DESKTOP + PHONE
+========================================================= */
+html.bubu-loading,
+html.bubu-loading body{
+    overflow:hidden!important;
+}
+
+.bubu-page-loader{
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:
+        calc(18px + env(safe-area-inset-top))
+        calc(18px + env(safe-area-inset-right))
+        calc(18px + env(safe-area-inset-bottom))
+        calc(18px + env(safe-area-inset-left));
+    background:
+        radial-gradient(circle at 24% 18%,rgba(255,216,201,.88),transparent 34%),
+        radial-gradient(circle at 78% 78%,rgba(218,204,255,.88),transparent 35%),
+        linear-gradient(145deg,#fffaf6 0%,#fff 52%,#f6f0ff 100%);
+    opacity:1;
+    visibility:visible;
+    pointer-events:all;
+    transition:opacity .28s ease,visibility .28s ease;
+    -webkit-tap-highlight-color:transparent;
+}
+
+.bubu-page-loader.is-hidden{
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+}
+
+.bubu-loader-card{
+    width:min(310px,88vw);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+}
+
+.bubu-loader-logo-wrap{
+    position:relative;
+    width:132px;
+    height:132px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.bubu-loader-ring,
+.bubu-loader-ring::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    border:3px solid rgba(142,99,255,.14);
+    border-top-color:var(--purple);
+    border-right-color:var(--orange);
+    animation:bubuLoaderSpin 1.15s linear infinite;
+}
+
+.bubu-loader-ring::before{
+    inset:10px;
+    border-width:2px;
+    border-top-color:var(--orange);
+    border-right-color:transparent;
+    animation-duration:1.7s;
+    animation-direction:reverse;
+}
+
+.bubu-loader-logo-shell{
+    position:relative;
+    z-index:2;
+    width:94px;
+    height:94px;
+    border-radius:28px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.94);
+    border:1px solid rgba(255,255,255,.95);
+    box-shadow:
+        0 18px 42px rgba(91,60,125,.16),
+        inset 0 1px 0 rgba(255,255,255,1);
+    animation:bubuLoaderFloat 1.8s ease-in-out infinite;
+}
+
+.bubu-loader-logo{
+    width:78px;
+    height:78px;
+    display:block;
+    object-fit:contain;
+}
+
+.bubu-loader-brand{
+    margin-top:17px;
+    color:#3d2e2a;
+    font-size:24px;
+    line-height:1;
+    font-weight:1000;
+    letter-spacing:.7px;
+}
+
+.bubu-loader-text{
+    margin-top:8px;
+    color:#8c7b8f;
+    font-size:12px;
+    line-height:1.3;
+    font-weight:900;
+}
+
+.bubu-loader-dots::after{
+    content:"";
+    display:inline-block;
+    width:18px;
+    text-align:left;
+    animation:bubuLoaderDots 1.25s steps(4,end) infinite;
+}
+
+.bubu-loader-progress{
+    width:170px;
+    height:5px;
+    margin-top:16px;
+    overflow:hidden;
+    border-radius:999px;
+    background:rgba(142,99,255,.12);
+}
+
+.bubu-loader-progress span{
+    width:48%;
+    height:100%;
+    display:block;
+    border-radius:inherit;
+    background:linear-gradient(90deg,var(--purple),var(--orange));
+    box-shadow:0 0 12px rgba(142,99,255,.35);
+    animation:bubuLoaderProgress 1.25s ease-in-out infinite;
+}
+
+@keyframes bubuLoaderSpin{
+    to{transform:rotate(360deg)}
+}
+
+@keyframes bubuLoaderFloat{
+    0%,100%{transform:translateY(0) scale(1)}
+    50%{transform:translateY(-5px) scale(1.02)}
+}
+
+@keyframes bubuLoaderDots{
+    0%{content:""}
+    25%{content:"."}
+    50%{content:".."}
+    75%,100%{content:"..."}
+}
+
+@keyframes bubuLoaderProgress{
+    0%{transform:translateX(-115%)}
+    55%{transform:translateX(95%)}
+    100%{transform:translateX(225%)}
+}
+
+@media(max-width:767px){
+    .bubu-loader-logo-wrap{
+        width:116px;
+        height:116px;
+    }
+
+    .bubu-loader-logo-shell{
+        width:84px;
+        height:84px;
+        border-radius:24px;
+    }
+
+    .bubu-loader-logo{
+        width:69px;
+        height:69px;
+    }
+
+    .bubu-loader-brand{
+        margin-top:14px;
+        font-size:21px;
+    }
+
+    .bubu-loader-text{
+        font-size:11px;
+    }
+
+    .bubu-loader-progress{
+        width:150px;
+    }
+}
+
+@media(prefers-reduced-motion:reduce){
+    .bubu-loader-ring,
+    .bubu-loader-ring::before,
+    .bubu-loader-logo-shell,
+    .bubu-loader-progress span,
+    .bubu-loader-dots::after{
+        animation-duration:2.6s!important;
+    }
+}
+
 </style>
 </head>
 
 <body>
+
+<div class="bubu-page-loader" id="bubuPageLoader" role="status" aria-live="polite" aria-label="BUBU page is loading">
+    <div class="bubu-loader-card">
+        <div class="bubu-loader-logo-wrap" aria-hidden="true">
+            <span class="bubu-loader-ring"></span>
+            <span class="bubu-loader-logo-shell">
+                <img
+                    src="{% static 'img/bubu-logo.png' %}"
+                    class="bubu-loader-logo"
+                    alt=""
+                >
+            </span>
+        </div>
+        <div class="bubu-loader-brand">BUBU</div>
+        <div class="bubu-loader-text">
+            Loading Pet Store<span class="bubu-loader-dots"></span>
+        </div>
+        <div class="bubu-loader-progress" aria-hidden="true">
+            <span></span>
+        </div>
+    </div>
+</div>
+
+<noscript>
+    <style>.bubu-page-loader{display:none!important}</style>
+</noscript>
+
 
 
 
@@ -1912,6 +2147,160 @@ tbody tr:hover{background:#fffaf6}
     </main>
 </div>
 
+
+<script>
+(function(){
+    "use strict";
+
+    const loader = document.getElementById("bubuPageLoader");
+
+    if(!loader){
+        return;
+    }
+
+    const startedAt = performance.now();
+    const minimumVisibleMs = 300;
+    let hideTimer = null;
+    let navigationTimer = null;
+
+    function showBubuLoader(){
+        if(hideTimer){
+            window.clearTimeout(hideTimer);
+            hideTimer = null;
+        }
+
+        document.documentElement.classList.add("bubu-loading");
+        loader.classList.remove("is-hidden");
+        loader.setAttribute("aria-hidden","false");
+    }
+
+    function hideBubuLoader(force){
+        const elapsed = performance.now() - startedAt;
+        const delay = force ? 0 : Math.max(0,minimumVisibleMs - elapsed);
+
+        if(hideTimer){
+            window.clearTimeout(hideTimer);
+        }
+
+        hideTimer = window.setTimeout(function(){
+            loader.classList.add("is-hidden");
+            loader.setAttribute("aria-hidden","true");
+            document.documentElement.classList.remove("bubu-loading");
+        },delay);
+    }
+
+    function isNormalInternalLink(event,link){
+        if(!link || event.defaultPrevented){
+            return false;
+        }
+
+        if(event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey){
+            return false;
+        }
+
+        if(link.hasAttribute("download") || link.target === "_blank" || link.dataset.noLoader !== undefined){
+            return false;
+        }
+
+        const rawHref = (link.getAttribute("href") || "").trim();
+
+        if(!rawHref || rawHref.startsWith("#") || /^(mailto:|tel:|javascript:)/i.test(rawHref)){
+            return false;
+        }
+
+        let nextUrl;
+
+        try{
+            nextUrl = new URL(link.href,window.location.href);
+        }catch(error){
+            return false;
+        }
+
+        if(nextUrl.origin !== window.location.origin){
+            return false;
+        }
+
+        const currentUrl = new URL(window.location.href);
+        const sameDocument =
+            nextUrl.pathname === currentUrl.pathname &&
+            nextUrl.search === currentUrl.search &&
+            nextUrl.hash !== currentUrl.hash;
+
+        return !sameDocument;
+    }
+
+    function goWithBubuLoader(url){
+        if(!url){
+            return;
+        }
+
+        showBubuLoader();
+
+        if(navigationTimer){
+            window.clearTimeout(navigationTimer);
+        }
+
+        navigationTimer = window.setTimeout(function(){
+            window.location.assign(url);
+        },110);
+    }
+
+    window.showBubuLoader = showBubuLoader;
+    window.hideBubuLoader = hideBubuLoader;
+    window.goWithBubuLoader = goWithBubuLoader;
+
+    showBubuLoader();
+
+    window.addEventListener("load",function(){
+        window.requestAnimationFrame(function(){
+            window.requestAnimationFrame(function(){
+                hideBubuLoader(false);
+            });
+        });
+    },{once:true});
+
+    window.addEventListener("pageshow",function(event){
+        if(event.persisted){
+            hideBubuLoader(true);
+        }
+    });
+
+    /* Safety fallback if one external asset never finishes loading. */
+    window.setTimeout(function(){
+        hideBubuLoader(false);
+    },4500);
+
+    document.addEventListener("click",function(event){
+        const link = event.target.closest("a[href]");
+
+        if(!isNormalInternalLink(event,link)){
+            return;
+        }
+
+        event.preventDefault();
+        goWithBubuLoader(link.href);
+    });
+
+    document.addEventListener("submit",function(event){
+        const form = event.target;
+
+        if(!(form instanceof HTMLFormElement) || form.dataset.noLoader !== undefined){
+            return;
+        }
+
+        if(form.target === "_blank"){
+            return;
+        }
+
+        showBubuLoader();
+    });
+
+    window.addEventListener("beforeunload",function(){
+        showBubuLoader();
+    });
+})();
+</script>
+
 <script>
 const BUBU_OPEN_MENU_KEY = "bubu_open_sidebar_menu";
 const BUBU_SCROLL_KEY = "bubu_sidebar_scroll_top";
@@ -2075,7 +2464,11 @@ function openBreedMasterList(event, link){
     const url = link?.dataset?.breedListUrl || link?.getAttribute("href");
 
     if(url){
-        window.location.assign(url);
+        if(typeof window.goWithBubuLoader === "function"){
+            window.goWithBubuLoader(url);
+        }else{
+            window.location.assign(url);
+        }
     }
 
     return false;
@@ -2089,7 +2482,13 @@ function bubuGoBack(){
      * Do not use browser history because it can go back many pages.
      * Always send phone Back button to the POS final page.
      */
-    window.location.assign("{% url 'pos' %}");
+    const posUrl = "{% url 'pos' %}";
+
+    if(typeof window.goWithBubuLoader === "function"){
+        window.goWithBubuLoader(posUrl);
+    }else{
+        window.location.assign(posUrl);
+    }
 }
 
 </script>
