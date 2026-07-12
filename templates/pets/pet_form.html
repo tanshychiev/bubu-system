@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static cost_tags %}
 
 {% block content %}
 
@@ -271,13 +271,19 @@
                             </button>
                         </label>
 
-                        {% if perms.auth.view_user %}
+                        {% if can_edit_cost_price %}
                             <label class="{% if form.cost_price.errors %}field-error{% endif %}">
                                 Cost Price
-                                <input type="number" step="0.01" name="cost_price" id="costPriceInput" value="{{ pet.cost_price|default:'0.00' }}">
+                                {% if not can_view_cost_price %}
+                                <div class="cost-write-note">
+                                    <strong class="{% if form.cost_status == 'No Cost' %}no-cost{% endif %}">{{ form.cost_status|default:"No Cost" }}</strong>
+                                    <span>Saved amount is hidden. Enter only to add or replace cost.</span>
+                                </div>
+                                {% endif %}
+                                <input type="number" min="0" step="0.01" name="cost_price" id="costPriceInput"
+                                       value="{% if can_view_cost_price %}{{ pet.cost_price|default:'0.00' }}{% endif %}"
+                                       placeholder="{% if can_view_cost_price %}0.00{% else %}Enter new cost{% endif %}" autocomplete="off">
                             </label>
-                        {% else %}
-                            <input type="hidden" name="cost_price" id="costPriceInput" value="{{ pet.cost_price|default:'0.00' }}">
                         {% endif %}
 
                         <label class="{% if form.sale_price.errors %}field-error{% endif %}">
@@ -612,13 +618,19 @@
                             <input type="number" name="quantity" id="bulkQuantityInput" min="1" max="30" value="2">
                         </label>
 
-                        {% if perms.auth.view_user %}
+                        {% if can_edit_cost_price %}
                             <label>
                                 Cost Price
-                                <input type="number" step="0.01" name="cost_price" id="bulkCostPriceInput" value="0.00">
+                                {% if not can_view_cost_price %}
+                                <div class="cost-write-note">
+                                    <strong class="no-cost">No Cost</strong>
+                                    <span>Enter a shared cost, or leave blank.</span>
+                                </div>
+                                {% endif %}
+                                <input type="number" min="0" step="0.01" name="cost_price" id="bulkCostPriceInput"
+                                       value="{% if can_view_cost_price %}0.00{% endif %}"
+                                       placeholder="{% if can_view_cost_price %}0.00{% else %}Enter new cost{% endif %}" autocomplete="off">
                             </label>
-                        {% else %}
-                            <input type="hidden" name="cost_price" id="bulkCostPriceInput" value="0.00">
                         {% endif %}
 
                         <label>
@@ -667,7 +679,7 @@
     <input type="text" id="breedSearchInput" class="popup-search" placeholder="Search breed..." oninput="filterBreedButtons('breedOptionList', 'breedSearchInput')">
 
     <div class="breed-option-list" id="breedOptionList">
-        <button type="button" class="breed-select-card breed-option" data-search="no breed manual old data" onclick="chooseBreed('', 'Choose Breed Master', '', '', '', '')">
+        <button type="button" class="breed-select-card breed-option" data-search="no breed manual old data" onclick="chooseBreed('', 'Choose Breed Master', '', '', '', '', 'No Cost')">
             <div class="breed-icon">🐾</div>
             <div class="breed-info">
                 <strong>No Breed Master</strong>
@@ -682,11 +694,12 @@
                 data-breed-id="{{ breed.id }}"
                 data-breed-label="{{ breed.get_pet_type_display|escape }} - {{ breed.name|escape }}"
                 data-pet-type="{{ breed.pet_type }}"
-                data-cost="{{ breed.default_cost_price }}"
+                data-cost="{% if can_view_cost_price %}{{ breed.default_cost_price }}{% endif %}"
+                data-cost-status="{{ breed.cost_status }}"
                 data-sale="{{ breed.default_sale_price }}"
                 data-breed-name="{{ breed.name|escape }}"
                 data-search="{{ breed.get_pet_type_display }} {{ breed.name }} {{ breed.color_options }} {{ breed.special_type_options }}"
-                onclick="chooseBreed('{{ breed.id }}', '{{ breed.get_pet_type_display }} - {{ breed.name|escapejs }}', '{{ breed.pet_type }}', '{{ breed.default_cost_price }}', '{{ breed.default_sale_price }}', '{{ breed.name|escapejs }}')"
+                onclick="chooseBreed('{{ breed.id }}', '{{ breed.get_pet_type_display }} - {{ breed.name|escapejs }}', '{{ breed.pet_type }}', '{% if can_view_cost_price %}{{ breed.default_cost_price }}{% endif %}', '{{ breed.default_sale_price }}', '{{ breed.name|escapejs }}', '{{ breed.cost_status|escapejs }}')"
             >
                 <div class="breed-photo">
                     {% if breed.photo %}
@@ -699,6 +712,7 @@
                 <div class="breed-info">
                     <strong>{{ breed.name }}</strong>
                     <span>{{ breed.get_pet_type_display }}</span>
+                    <span class="cost-status-text">Cost: {% cost_display breed.default_cost_price %}</span>
                 </div>
             </button>
         {% endfor %}
@@ -722,11 +736,12 @@
                 data-breed-id="{{ breed.id }}"
                 data-breed-label="{{ breed.get_pet_type_display|escape }} - {{ breed.name|escape }}"
                 data-pet-type="{{ breed.pet_type }}"
-                data-cost="{{ breed.default_cost_price }}"
+                data-cost="{% if can_view_cost_price %}{{ breed.default_cost_price }}{% endif %}"
+                data-cost-status="{{ breed.cost_status }}"
                 data-sale="{{ breed.default_sale_price }}"
                 data-breed-name="{{ breed.name|escape }}"
                 data-search="{{ breed.get_pet_type_display }} {{ breed.name }} {{ breed.color_options }} {{ breed.special_type_options }}"
-                onclick="chooseBulkBreed('{{ breed.id }}', '{{ breed.get_pet_type_display }} - {{ breed.name|escapejs }}', '{{ breed.pet_type }}', '{{ breed.default_cost_price }}', '{{ breed.default_sale_price }}', '{{ breed.name|escapejs }}')"
+                onclick="chooseBulkBreed('{{ breed.id }}', '{{ breed.get_pet_type_display }} - {{ breed.name|escapejs }}', '{{ breed.pet_type }}', '{% if can_view_cost_price %}{{ breed.default_cost_price }}{% endif %}', '{{ breed.default_sale_price }}', '{{ breed.name|escapejs }}', '{{ breed.cost_status|escapejs }}')"
             >
                 <div class="breed-photo">
                     {% if breed.photo %}
@@ -739,6 +754,7 @@
                 <div class="breed-info">
                     <strong>{{ breed.name }}</strong>
                     <span>{{ breed.get_pet_type_display }}</span>
+                    <span class="cost-status-text">Cost: {% cost_display breed.default_cost_price %}</span>
                 </div>
             </button>
         {% endfor %}
@@ -2950,7 +2966,7 @@ function chooseOption(inputId, labelId, value, label){
     closeOptionPopups();
 }
 
-function chooseBreed(id, label, petType, costPrice, salePrice, breedName){
+function chooseBreed(id, label, petType, costPrice, salePrice, breedName, costStatus){
     document.getElementById("breedProfileInput").value = id;
     document.getElementById("breedProfileLabel").innerText = label;
 
@@ -2963,8 +2979,8 @@ function chooseBreed(id, label, petType, costPrice, salePrice, breedName){
             manualBreed.value = breedName || "";
         }
 
-        if(costInput && Number(costInput.value || 0) <= 0){
-            costInput.value = Number(costPrice || 0).toFixed(2);
+        if(costInput && costPrice !== "" && Number(costInput.value || 0) <= 0){
+            costInput.value = Number(costPrice).toFixed(2);
         }
 
         if(saleInput && Number(saleInput.value || 0) <= 0){
@@ -2983,7 +2999,7 @@ function chooseBreed(id, label, petType, costPrice, salePrice, breedName){
     closeOptionPopups();
 }
 
-function chooseBulkBreed(id, label, petType, costPrice, salePrice, breedName){
+function chooseBulkBreed(id, label, petType, costPrice, salePrice, breedName, costStatus){
     document.getElementById("bulkBreedProfileInput").value = id;
     document.getElementById("bulkBreedProfileLabel").innerText = label;
 
@@ -3001,8 +3017,8 @@ function chooseBulkBreed(id, label, petType, costPrice, salePrice, breedName){
     const costInput = document.getElementById("bulkCostPriceInput");
     const saleInput = document.getElementById("bulkSalePriceInput");
 
-    if(costInput && Number(costInput.value || 0) <= 0){
-        costInput.value = Number(costPrice || 0).toFixed(2);
+    if(costInput && costPrice !== "" && Number(costInput.value || 0) <= 0){
+        costInput.value = Number(costPrice).toFixed(2);
     }
 
     if(saleInput && Number(saleInput.value || 0) <= 0){
@@ -3064,7 +3080,8 @@ function generateBulkCards(){
     const sharedBranchLabel = document.getElementById("bulkBranchLabel").innerText || "No Branch";
 
     const sharedAge = document.getElementById("bulkAgeInput").value || "0";
-    const sharedCost = document.getElementById("bulkCostPriceInput").value || "0.00";
+    const sharedCostInput = document.getElementById("bulkCostPriceInput");
+    const sharedCost = sharedCostInput ? sharedCostInput.value : "";
     const sharedSale = document.getElementById("bulkSalePriceInput").value || "0.00";
 
     let breedName = breedLabel;
@@ -3128,13 +3145,13 @@ function generateBulkCards(){
                     </div>
                 </label>
 
-                {% if perms.auth.view_user %}
+                {% if can_edit_cost_price %}
                 <label>
                     Cost Price
-                    <input type="number" step="0.01" name="cost_price_${i}" value="${sharedCost}">
+                    {% if not can_view_cost_price %}<span class="cost-status-pill no-cost">No Cost</span>{% endif %}
+                    <input type="number" min="0" step="0.01" name="cost_price_${i}" value="${sharedCost}"
+                           placeholder="{% if can_view_cost_price %}0.00{% else %}Enter new cost{% endif %}" autocomplete="off">
                 </label>
-                {% else %}
-                <input type="hidden" name="cost_price_${i}" value="${sharedCost}">
                 {% endif %}
 
                 <label>
@@ -3708,12 +3725,12 @@ function applyBreedFromQuery(){
     if(!button){ return; }
 
     const d = button.dataset;
-    chooseBreed(d.breedId, d.breedLabel, d.petType, d.cost, d.sale, d.breedName);
+    chooseBreed(d.breedId, d.breedLabel, d.petType, d.cost, d.sale, d.breedName, d.costStatus);
 
     const bulkButton = document.querySelector('#bulkBreedOptionList [data-breed-id="' + breedId + '"]');
     if(bulkButton){
         const b = bulkButton.dataset;
-        chooseBulkBreed(b.breedId, b.breedLabel, b.petType, b.cost, b.sale, b.breedName);
+        chooseBulkBreed(b.breedId, b.breedLabel, b.petType, b.cost, b.sale, b.breedName, b.costStatus);
     }
 }
 
@@ -3801,5 +3818,15 @@ function setupCompactPetFormMobile(){
 document.addEventListener("DOMContentLoaded", setupCompactPetFormMobile);
 
 </script>
+
+
+
+<style id="bubu-two-role-cost-style">
+.cost-write-note{margin:0 0 8px;padding:9px 11px;border:1px solid #dfd3f4;border-radius:13px;display:flex;align-items:center;justify-content:space-between;gap:8px;color:#665a74;background:#faf7ff;font-size:10px;font-weight:900;line-height:1.35}
+.cost-write-note strong,.cost-status-pill{display:inline-flex;align-items:center;justify-content:center;min-height:26px;padding:4px 8px;border-radius:999px;color:#6f50d8!important;background:#eee7ff;font-size:9px!important;font-weight:1000!important;white-space:nowrap}
+.cost-write-note strong.no-cost,.cost-status-pill.no-cost{color:#b86600!important;background:#fff0d4}
+.cost-status-text{color:#6f50d8!important;font-weight:1000!important}
+@media(max-width:650px){.cost-write-note{padding:7px 8px;border-radius:10px;font-size:9px}}
+</style>
 
 {% endblock %}

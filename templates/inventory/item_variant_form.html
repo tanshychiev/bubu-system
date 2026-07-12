@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load cost_tags %}
 {% block content %}
 
 <style>
@@ -1868,8 +1869,13 @@ body.photo-picker-open{
                             </div>
 
                             <div class="bulk-field-clean">
-                                <label>Cost $</label>
-                                <input type="number" step="0.01" name="variant_cost_price[]" placeholder="{{ item.cost_price|floatformat:2 }}">
+                                <label>
+                                    Cost $
+                                    {% if not can_view_cost_price %}
+                                        <span class="cost-inline-state">{% cost_display item.cost_price %}</span>
+                                    {% endif %}
+                                </label>
+                                <input type="number" step="0.01" name="variant_cost_price[]" placeholder="{% if can_view_cost_price %}{{ item.cost_price|floatformat:2 }}{% else %}Enter new cost{% endif %}">
                             </div>
                             {% else %}
                                 <input type="hidden" name="variant_sale_price[]" value="">
@@ -2220,8 +2226,13 @@ function bulkRowHtml(key){
                 </div>
 
                 <div class="bulk-field-clean">
-                    <label>Cost $</label>
-                    <input type="number" step="0.01" name="variant_cost_price[]" placeholder="{{ item.cost_price|floatformat:2 }}">
+                    <label>
+                                    Cost $
+                                    {% if not can_view_cost_price %}
+                                        <span class="cost-inline-state">{% cost_display item.cost_price %}</span>
+                                    {% endif %}
+                                </label>
+                    <input type="number" step="0.01" name="variant_cost_price[]" placeholder="{% if can_view_cost_price %}{{ item.cost_price|floatformat:2 }}{% else %}Enter new cost{% endif %}">
                 </div>
                 {% else %}
                     <input type="hidden" name="variant_sale_price[]" value="">
@@ -2330,6 +2341,16 @@ refreshAllPhotoButtons();
                 {% if form.cost_price %}
                 <div class="form-box">
                     <label>Cost Price</label>
+
+                    {% if not can_view_cost_price %}
+                    <div class="cost-write-note">
+                        <strong class="{% if form.cost_status == 'No Cost' %}no-cost{% endif %}">
+                            {{ form.cost_status }}
+                        </strong>
+                        <span>Saved amount is hidden. Enter only to add or replace cost.</span>
+                    </div>
+                    {% endif %}
+
                     {{ form.cost_price }}
                     {% for e in form.cost_price.errors %}<div class="error">{{ e }}</div>{% endfor %}
                 </div>
@@ -2697,5 +2718,66 @@ document.addEventListener("DOMContentLoaded", function(){
 
 
 {% endif %}
+
+
+
+<style id="bubu-cost-visibility-style">
+.cost-write-note{
+    margin:0 0 8px;
+    padding:9px 11px;
+    border:1px solid #dfd3f4;
+    border-radius:13px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    color:#665a74;
+    background:#faf7ff;
+    font-size:10px;
+    font-weight:900;
+    line-height:1.3;
+}
+.cost-write-note strong{
+    flex:0 0 auto;
+    padding:5px 8px;
+    border-radius:999px;
+    color:#6f50d8;
+    background:#eee7ff;
+    font-size:9px;
+    font-weight:1000;
+}
+.cost-write-note strong.no-cost{
+    color:#c56a00;
+    background:#fff1d8;
+}
+.cost-visibility-status{
+    display:inline-flex;
+    align-items:center;
+    min-height:26px;
+    padding:4px 8px;
+    border-radius:999px;
+    color:#6f50d8;
+    background:#f0eaff;
+    font-size:10px!important;
+    font-weight:1000!important;
+}
+.cost-inline-state{
+    margin-left:4px;
+    padding:3px 6px;
+    border-radius:999px;
+    color:#6f50d8;
+    background:#eee7ff;
+    font-size:8px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+@media(max-width:650px){
+    .cost-write-note{
+        padding:7px 8px;
+        border-radius:10px;
+        font-size:9px;
+    }
+}
+</style>
 
 {% endblock %}

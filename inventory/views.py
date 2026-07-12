@@ -15,6 +15,8 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
+from core.cost_access import can_edit_cost, can_view_cost, is_owner
+
 from .forms import (
     BranchForm,
     ItemForm,
@@ -42,19 +44,19 @@ from .models import (
 # ==================================================
 
 def can_manage_inventory(user):
-    return user.is_authenticated and (user.is_staff or user.is_superuser)
+    return can_edit_cost(user)
+
+
+def can_manage_inventory_settings(user):
+    return is_owner(user)
 
 
 def can_view_cost_price(user):
-    return user.is_authenticated and (
-        user.is_superuser or user.has_perm("inventory.can_view_cost_price")
-    )
+    return can_view_cost(user)
 
 
 def can_edit_cost_price(user):
-    return user.is_authenticated and (
-        user.is_superuser or user.has_perm("inventory.can_edit_cost_price")
-    )
+    return can_edit_cost(user)
 
 
 # ==================================================
@@ -353,8 +355,8 @@ def inventory_control_center(request):
     - Search/edit item
     - Record item edit history
     """
-    if not can_manage_inventory(request.user):
-        messages.error(request, "You do not have permission.")
+    if not can_manage_inventory_settings(request.user):
+        messages.error(request, "Only Owner/Admin can open inventory settings.")
         return redirect("item_list")
 
     seed_default_units()
@@ -532,8 +534,8 @@ def inventory_control_center(request):
 
 @login_required
 def item_type_create(request):
-    if not can_manage_inventory(request.user):
-        messages.error(request, "You do not have permission.")
+    if not can_manage_inventory_settings(request.user):
+        messages.error(request, "Only Owner/Admin can manage inventory settings.")
         return redirect("item_list")
 
     form = ItemTypeForm(request.POST or None)
@@ -552,8 +554,8 @@ def item_type_create(request):
 @login_required
 @require_POST
 def item_type_delete(request, pk):
-    if not can_manage_inventory(request.user):
-        messages.error(request, "You do not have permission.")
+    if not can_manage_inventory_settings(request.user):
+        messages.error(request, "Only Owner/Admin can manage inventory settings.")
         return redirect("item_list")
 
     item_type = get_object_or_404(ItemType, pk=pk)
@@ -583,8 +585,8 @@ def item_type_delete(request, pk):
 @login_required
 @require_POST
 def unit_option_delete(request, pk):
-    if not can_manage_inventory(request.user):
-        messages.error(request, "You do not have permission.")
+    if not can_manage_inventory_settings(request.user):
+        messages.error(request, "Only Owner/Admin can manage inventory settings.")
         return redirect("item_list")
 
     unit = get_object_or_404(UnitOption, pk=pk)
@@ -711,11 +713,14 @@ def item_create(request):
 
     seed_default_units()
     can_price = can_edit_cost_price(request.user)
+    can_view_cost = can_view_cost_price(request.user)
 
     form = ItemForm(
         request.POST or None,
         request.FILES or None,
-        can_edit_price=can_price,
+        can_edit_cost_price=can_price,
+        can_view_cost_price=can_view_cost,
+        can_edit_sale_price=True,
     )
 
     if request.method == "POST" and form.is_valid():
@@ -742,6 +747,7 @@ def item_create(request):
         "title": "Create Item",
         "is_create": True,
         "can_edit_cost_price": can_price,
+        "can_view_cost_price": can_view_cost,
     })
 
 
@@ -788,6 +794,7 @@ def item_edit(request, pk):
 
     item = get_object_or_404(Item.objects.prefetch_related("variants"), pk=pk)
     can_price = can_edit_cost_price(request.user)
+    can_view_cost = can_view_cost_price(request.user)
 
     before = snapshot_item(item)
 
@@ -798,7 +805,9 @@ def item_edit(request, pk):
         request.POST or None,
         request.FILES or None,
         instance=item,
-        can_edit_price=can_price,
+        can_edit_cost_price=can_price,
+        can_view_cost_price=can_view_cost,
+        can_edit_sale_price=True,
     )
 
     if request.method == "POST" and form.is_valid():
@@ -840,6 +849,7 @@ def item_edit(request, pk):
         "title": "Edit Item",
         "is_create": False,
         "can_edit_cost_price": can_price,
+        "can_view_cost_price": can_view_cost,
     })
 
 
@@ -890,6 +900,7 @@ def item_variant_create(request, pk):
 
     item = get_object_or_404(Item, pk=pk)
     can_price = can_edit_cost_price(request.user)
+    can_view_cost = can_view_cost_price(request.user)
 
     if request.method == "POST":
         rows = _posted_variant_rows(request)
@@ -983,6 +994,7 @@ def item_variant_create(request, pk):
         "title": "Create Variant",
         "is_bulk_create": True,
         "can_edit_cost_price": can_price,
+        "can_view_cost_price": can_view_cost,
     })
 
 
@@ -996,6 +1008,7 @@ def item_variant_edit(request, pk, variant_id):
     variant = get_object_or_404(ItemVariant, pk=variant_id, item=item)
 
     can_price = can_edit_cost_price(request.user)
+    can_view_cost = can_view_cost_price(request.user)
     before = snapshot_variant(variant)
 
     old_cost_price = variant.cost_price
@@ -1006,7 +1019,8 @@ def item_variant_edit(request, pk, variant_id):
         request.FILES or None,
         instance=variant,
         can_edit_cost_price=can_price,
-        can_edit_price=can_price,
+        can_view_cost_price=can_view_cost,
+        can_edit_sale_price=True,
     )
 
     if request.method == "POST" and form.is_valid():
@@ -1036,6 +1050,7 @@ def item_variant_edit(request, pk, variant_id):
         "histories": histories,
         "title": "Edit Variant",
         "can_edit_cost_price": can_price,
+        "can_view_cost_price": can_view_cost,
     })
 
 
@@ -1129,12 +1144,14 @@ def stock_movement(request, pk):
         pk=pk,
     )
     can_cost = can_edit_cost_price(request.user)
+    can_view_cost = can_view_cost_price(request.user)
 
     form = StockMovementForm(
         request.POST or None,
         item=item,
         user=request.user,
         can_edit_cost_price=can_cost,
+        can_view_cost_price=can_view_cost,
     )
 
     if request.method == "POST" and form.is_valid():
@@ -1177,6 +1194,7 @@ def stock_movement(request, pk):
         "form": form,
         "movements": movements,
         "can_edit_cost_price": can_cost,
+        "can_view_cost_price": can_view_cost,
     })
 
 
@@ -1196,6 +1214,7 @@ def variant_stock_movement(request, variant_id):
     )
     item = variant.item
     can_cost = can_edit_cost_price(request.user)
+    can_view_cost = can_view_cost_price(request.user)
 
     selected_branch = get_selected_branch(request)
 
@@ -1216,10 +1235,12 @@ def variant_stock_movement(request, variant_id):
         quantity = int(request.POST.get("quantity") or 0)
         note = request.POST.get("note", "")
 
-        if can_cost:
-            cost_price = money(request.POST.get("cost_price"))
+        posted_cost = request.POST.get("cost_price")
+
+        if can_cost and str(posted_cost or "").strip():
+            cost_price = money(posted_cost, variant.display_cost)
         else:
-            cost_price = variant.cost_price or item.cost_price
+            cost_price = variant.display_cost
 
         if movement_type not in ["in", "out", "adjust", "damage"]:
             messages.error(request, "Invalid stock type.")
@@ -1265,6 +1286,7 @@ def variant_stock_movement(request, variant_id):
         "current_stock": current_stock,
         "movements": movements,
         "can_edit_cost_price": can_cost,
+        "can_view_cost_price": can_view_cost,
     })
 
 
@@ -1300,6 +1322,7 @@ def variant_search_api(request):
     variants = variants.order_by("item__name", "sort_order", "id")[:100]
 
     results = []
+    user_can_view_cost = can_view_cost_price(request.user)
 
     for variant in variants:
         image_url = ""
@@ -1324,7 +1347,9 @@ def variant_search_api(request):
             "display": variant.display_name(),
             "stock": branch_stock,
             "unit": variant.item.get_unit_display(),
-            "cost_price": str(variant.cost_price),
+            "cost_price": str(variant.display_cost) if user_can_view_cost else "",
+            "cost_status": variant.cost_status,
+            "can_view_cost": user_can_view_cost,
             "sale_price": str(variant.sale_price),
             "image": image_url,
         })
@@ -1343,6 +1368,7 @@ def stock_batch_in(request):
         return redirect("item_list")
 
     can_cost = can_edit_cost_price(request.user)
+    can_view_cost = can_view_cost_price(request.user)
     selected_branch = get_selected_branch(request)
 
     if request.user.is_superuser:
@@ -1386,7 +1412,7 @@ def stock_batch_in(request):
             for row in rows:
                 variant_id = row.get("variant_id")
                 qty_raw = row.get("quantity") or 0
-                cost_raw = row.get("cost_price") or "0"
+                cost_raw = row.get("cost_price")
                 note = str(row.get("note", "")).strip()
 
                 try:
@@ -1407,7 +1433,7 @@ def stock_batch_in(request):
                 if not variant:
                     continue
 
-                if can_cost:
+                if can_cost and str(cost_raw or "").strip():
                     cost_price = money(cost_raw, variant.display_cost)
                 else:
                     cost_price = variant.display_cost
@@ -1468,6 +1494,7 @@ def stock_batch_in(request):
         "branches": branches,
         "selected_branch": selected_branch,
         "can_edit_cost_price": can_cost,
+        "can_view_cost_price": can_view_cost,
     })
 
 

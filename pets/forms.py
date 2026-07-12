@@ -13,7 +13,54 @@ from .models import (
 )
 
 
-class PetBreedForm(forms.ModelForm):
+class WriteOnlyCostMixin:
+    cost_field_name = "cost_price"
+
+    def setup_cost_access(self, can_edit_cost_price, can_view_cost_price):
+        self.can_edit_cost_price = bool(can_edit_cost_price)
+        self.can_view_cost_price = bool(can_view_cost_price)
+        field_name = self.cost_field_name
+        self._original_cost = Decimal("0.00")
+
+        if self.instance and getattr(self.instance, "pk", None):
+            self._original_cost = getattr(self.instance, field_name, Decimal("0.00")) or Decimal("0.00")
+
+        self.cost_status = "Already Added" if self._original_cost > 0 else "No Cost"
+
+        if not self.can_edit_cost_price:
+            self.fields.pop(field_name, None)
+            return
+
+        field = self.fields[field_name]
+        field.required = False
+        field.widget.attrs.update({
+            "autocomplete": "off",
+            "data-cost-status": self.cost_status,
+        })
+
+        if not self.can_view_cost_price:
+            self.initial[field_name] = ""
+            field.initial = ""
+            field.widget.attrs["placeholder"] = (
+                "Enter a new cost"
+                if self.cost_status == "No Cost"
+                else "Cost already added — enter only to replace"
+            )
+
+    def clean_write_only_cost(self):
+        field_name = self.cost_field_name
+        if field_name not in self.fields:
+            return self._original_cost
+
+        value = self.cleaned_data.get(field_name)
+        if value is None:
+            return self._original_cost
+        if value < 0:
+            raise forms.ValidationError("Cost cannot be negative.")
+        return value
+
+
+class PetBreedForm(WriteOnlyCostMixin, forms.ModelForm):
     class Meta:
         model = PetBreed
         fields = [
@@ -69,7 +116,19 @@ class PetBreedForm(forms.ModelForm):
         }
 
 
-class PetForm(forms.ModelForm):
+    cost_field_name = "default_cost_price"
+
+    def __init__(self, *args, **kwargs):
+        can_edit_cost_price = kwargs.pop("can_edit_cost_price", False)
+        can_view_cost_price = kwargs.pop("can_view_cost_price", False)
+        super().__init__(*args, **kwargs)
+        self.setup_cost_access(can_edit_cost_price, can_view_cost_price)
+
+    def clean_default_cost_price(self):
+        return self.clean_write_only_cost()
+
+
+class PetForm(WriteOnlyCostMixin, forms.ModelForm):
     class Meta:
         model = Pet
         fields = [
@@ -152,8 +211,14 @@ class PetForm(forms.ModelForm):
             }),
         }
 
+    cost_field_name = "cost_price"
+
     def __init__(self, *args, **kwargs):
+        can_edit_cost_price = kwargs.pop("can_edit_cost_price", False)
+        can_view_cost_price = kwargs.pop("can_view_cost_price", False)
         super().__init__(*args, **kwargs)
+
+        self.setup_cost_access(can_edit_cost_price, can_view_cost_price)
 
         self.fields["branch"].queryset = Branch.objects.filter(
             is_active=True,
@@ -186,6 +251,10 @@ class PetForm(forms.ModelForm):
             raise forms.ValidationError("Age cannot be negative.")
 
         return cleaned
+
+
+    def clean_cost_price(self):
+        return self.clean_write_only_cost()
 
 
 class PetSaleForm(forms.ModelForm):
@@ -352,7 +421,7 @@ class PetSaleForm(forms.ModelForm):
         return cleaned
 
 
-class PetWarrantyClaimForm(forms.ModelForm):
+class PetWarrantyClaimForm(WriteOnlyCostMixin, forms.ModelForm):
     class Meta:
         model = PetWarrantyClaim
         fields = [
@@ -384,3 +453,15 @@ class PetWarrantyClaimForm(forms.ModelForm):
                 "accept": "image/*",
             }),
         }
+
+    cost_field_name = "compensation_cost"
+
+    def __init__(self, *args, **kwargs):
+        can_edit_cost_price = kwargs.pop("can_edit_cost_price", False)
+        can_view_cost_price = kwargs.pop("can_view_cost_price", False)
+        super().__init__(*args, **kwargs)
+        self.setup_cost_access(can_edit_cost_price, can_view_cost_price)
+
+    def clean_compensation_cost(self):
+        return self.clean_write_only_cost()
+

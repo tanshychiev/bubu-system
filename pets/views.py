@@ -13,6 +13,7 @@ from django.utils.dateparse import parse_date
 from inventory.models import Branch
 from core.telegram import send_telegram_message, send_telegram_photos
 from customers.models import Customer, CustomerPet, CustomerHistory
+from core.cost_access import can_edit_cost, can_view_cost
 
 from .forms import PetForm, PetBreedForm, PetSaleForm, PetWarrantyClaimForm
 from .models import Pet, PetBreed, PetSale, PetVaccine, PetSalePhoto
@@ -767,6 +768,8 @@ def pet_list(request):
         "preorder_count": all_pets.filter(status="preorder").count(),
         "sick_dead_count": all_pets.filter(status__in=["sick", "dead"]).count(),
         "all_count": all_pets.count(),
+        "can_view_cost_price": can_view_cost(request.user),
+        "can_edit_cost_price": can_edit_cost(request.user),
     })
 
 
@@ -780,6 +783,8 @@ def pet_create(request):
     """
     breeds = PetBreed.objects.filter(is_active=True).order_by("pet_type", "name")
     branches = Branch.objects.filter(is_active=True).order_by("name")
+    user_can_view_cost = can_view_cost(request.user)
+    user_can_edit_cost = can_edit_cost(request.user)
 
     if request.method == "POST":
         stock_mode = request.POST.get("stock_mode", "single")
@@ -793,7 +798,7 @@ def pet_create(request):
             default_branch_id = request.POST.get("branch", "").strip()
 
             default_age_months = request.POST.get("age_months_at_stock_in") or 0
-            default_cost_price = request.POST.get("cost_price") or 0
+            default_cost_price = (request.POST.get("cost_price") or 0) if user_can_edit_cost else 0
             default_sale_price = request.POST.get("sale_price") or 0
 
             try:
@@ -828,7 +833,7 @@ def pet_create(request):
                 pet_note = request.POST.get(f"note_{i}", "").strip()
 
                 age_months = request.POST.get(f"age_months_{i}") or default_age_months
-                cost_price = request.POST.get(f"cost_price_{i}") or default_cost_price
+                cost_price = (request.POST.get(f"cost_price_{i}") or default_cost_price) if user_can_edit_cost else 0
                 sale_price = request.POST.get(f"sale_price_{i}") or default_sale_price
 
                 photos = request.FILES.getlist(f"photos_{i}[]")
@@ -868,7 +873,12 @@ def pet_create(request):
         # =====================================================
         # SINGLE STOCK-IN MODE
         # =====================================================
-        form = PetForm(request.POST, request.FILES)
+        form = PetForm(
+            request.POST,
+            request.FILES,
+            can_edit_cost_price=user_can_edit_cost,
+            can_view_cost_price=user_can_view_cost,
+        )
 
         if form.is_valid():
             pet = form.save(commit=False)
@@ -886,22 +896,35 @@ def pet_create(request):
         messages.error(request, "Please check the form and try again.")
 
     else:
-        form = PetForm()
+        form = PetForm(
+            can_edit_cost_price=user_can_edit_cost,
+            can_view_cost_price=user_can_view_cost,
+        )
 
     return render(request, "pets/pet_form.html", {
         "form": form,
         "pet": None,
         "breeds": breeds,
         "branches": branches,
+        "can_view_cost_price": user_can_view_cost,
+        "can_edit_cost_price": user_can_edit_cost,
     })
 
 
 @login_required
 def pet_edit(request, pk):
     pet = get_object_or_404(Pet, pk=pk)
+    user_can_view_cost = can_view_cost(request.user)
+    user_can_edit_cost = can_edit_cost(request.user)
 
     if request.method == "POST":
-        form = PetForm(request.POST, request.FILES, instance=pet)
+        form = PetForm(
+            request.POST,
+            request.FILES,
+            instance=pet,
+            can_edit_cost_price=user_can_edit_cost,
+            can_view_cost_price=user_can_view_cost,
+        )
 
         if form.is_valid():
             pet = form.save(commit=False)
@@ -920,13 +943,19 @@ def pet_edit(request, pk):
         messages.error(request, "Please check the form and try again.")
 
     else:
-        form = PetForm(instance=pet)
+        form = PetForm(
+            instance=pet,
+            can_edit_cost_price=user_can_edit_cost,
+            can_view_cost_price=user_can_view_cost,
+        )
 
     return render(request, "pets/pet_form.html", {
         "form": form,
         "pet": pet,
         "breeds": PetBreed.objects.filter(is_active=True).order_by("pet_type", "name"),
         "branches": Branch.objects.filter(is_active=True).order_by("name"),
+        "can_view_cost_price": user_can_view_cost,
+        "can_edit_cost_price": user_can_edit_cost,
     })
 
 
@@ -939,6 +968,8 @@ def pet_detail(request, pk):
 
     return render(request, "pets/pet_detail.html", {
         "pet": pet,
+        "can_view_cost_price": can_view_cost(request.user),
+        "can_edit_cost_price": can_edit_cost(request.user),
     })
 
 
@@ -965,13 +996,22 @@ def pet_breed_list(request):
         "breeds": breeds,
         "q": q,
         "pet_type": pet_type,
+        "can_view_cost_price": can_view_cost(request.user),
+        "can_edit_cost_price": can_edit_cost(request.user),
     })
 
 
 @login_required
 def pet_breed_create(request):
+    user_can_view_cost = can_view_cost(request.user)
+    user_can_edit_cost = can_edit_cost(request.user)
+
     if request.method == "POST":
-        form = PetBreedForm(request.POST, request.FILES)
+        form = PetBreedForm(
+            request.POST, request.FILES,
+            can_edit_cost_price=user_can_edit_cost,
+            can_view_cost_price=user_can_view_cost,
+        )
 
         if form.is_valid():
             breed = form.save(commit=False)
@@ -988,20 +1028,31 @@ def pet_breed_create(request):
         messages.error(request, "Please check the form and try again.")
 
     else:
-        form = PetBreedForm()
+        form = PetBreedForm(
+            can_edit_cost_price=user_can_edit_cost,
+            can_view_cost_price=user_can_view_cost,
+        )
 
     return render(request, "pets/pet_breed_form.html", {
         "form": form,
         "breed": None,
+        "can_view_cost_price": user_can_view_cost,
+        "can_edit_cost_price": user_can_edit_cost,
     })
 
 
 @login_required
 def pet_breed_edit(request, pk):
     breed = get_object_or_404(PetBreed, pk=pk)
+    user_can_view_cost = can_view_cost(request.user)
+    user_can_edit_cost = can_edit_cost(request.user)
 
     if request.method == "POST":
-        form = PetBreedForm(request.POST, request.FILES, instance=breed)
+        form = PetBreedForm(
+            request.POST, request.FILES, instance=breed,
+            can_edit_cost_price=user_can_edit_cost,
+            can_view_cost_price=user_can_view_cost,
+        )
 
         if form.is_valid():
             breed = form.save(commit=False)
@@ -1019,11 +1070,17 @@ def pet_breed_edit(request, pk):
         messages.error(request, "Please check the form and try again.")
 
     else:
-        form = PetBreedForm(instance=breed)
+        form = PetBreedForm(
+            instance=breed,
+            can_edit_cost_price=user_can_edit_cost,
+            can_view_cost_price=user_can_view_cost,
+        )
 
     return render(request, "pets/pet_breed_form.html", {
         "form": form,
         "breed": breed,
+        "can_view_cost_price": user_can_view_cost,
+        "can_edit_cost_price": user_can_edit_cost,
     })
 
 
@@ -1107,6 +1164,8 @@ def pet_available_for_sale(request):
         "preorder_count": all_pets.filter(status="preorder").count(),
         "sick_dead_count": all_pets.filter(status__in=["sick", "dead"]).count(),
         "all_count": all_pets.count(),
+        "can_view_cost_price": can_view_cost(request.user),
+        "can_edit_cost_price": can_edit_cost(request.user),
     })
 
 
@@ -1168,6 +1227,8 @@ def pet_sale_list(request):
         "total_final_amount": total_final_amount,
         "total_paid": total_paid,
         "total_balance": total_balance,
+        "can_view_cost_price": can_view_cost(request.user),
+        "can_edit_cost_price": can_edit_cost(request.user),
     })
 
 
@@ -1364,6 +1425,8 @@ def pet_sale_detail(request, pk):
     return render(request, "pets/pet_sale_detail.html", {
         "sale": sale,
         "copy_text": sale.build_copy_text(),
+        "can_view_cost_price": can_view_cost(request.user),
+        "can_edit_cost_price": can_edit_cost(request.user),
     })
 
 
@@ -1451,6 +1514,8 @@ def pet_warranty_print(request, pk):
 
     return render(request, "pets/pet_warranty_print.html", {
         "sale": sale,
+        "can_view_cost_price": can_view_cost(request.user),
+        "can_edit_cost_price": can_edit_cost(request.user),
     })
 
 
@@ -1465,15 +1530,23 @@ def pet_sale_receipt_print(request, pk):
 
     return render(request, "pets/pet_sale_receipt_print.html", {
         "sale": sale,
+        "can_view_cost_price": can_view_cost(request.user),
+        "can_edit_cost_price": can_edit_cost(request.user),
     })
 
 
 @login_required
 def pet_warranty_claim_create(request, sale_id):
     sale = get_object_or_404(PetSale, pk=sale_id)
+    user_can_view_cost = can_view_cost(request.user)
+    user_can_edit_cost = can_edit_cost(request.user)
 
     if request.method == "POST":
-        form = PetWarrantyClaimForm(request.POST, request.FILES)
+        form = PetWarrantyClaimForm(
+            request.POST, request.FILES,
+            can_edit_cost_price=user_can_edit_cost,
+            can_view_cost_price=user_can_view_cost,
+        )
 
         if form.is_valid():
             claim = form.save(commit=False)
@@ -1487,11 +1560,16 @@ def pet_warranty_claim_create(request, sale_id):
         messages.error(request, "Please check the warranty form and try again.")
 
     else:
-        form = PetWarrantyClaimForm()
+        form = PetWarrantyClaimForm(
+            can_edit_cost_price=user_can_edit_cost,
+            can_view_cost_price=user_can_view_cost,
+        )
 
     return render(request, "pets/pet_warranty_claim_form.html", {
         "form": form,
         "sale": sale,
+        "can_view_cost_price": user_can_view_cost,
+        "can_edit_cost_price": user_can_edit_cost,
     })
 
 

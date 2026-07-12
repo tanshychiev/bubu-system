@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static cost_tags %}
 
 {% block content %}
 
@@ -1378,7 +1378,8 @@ button,input,textarea{font-family:inherit}
                             data-sku="{{ variant.sku }}"
                             data-stock="{{ variant.branch_stock_qty }}"
                             data-unit="{{ item.get_unit_display }}"
-                            data-cost="{{ variant.display_cost }}"
+                            data-cost="{% if can_view_cost_price %}{{ variant.display_cost }}{% endif %}"
+                            data-cost-status="{{ variant.cost_status }}"
                             data-image="{% if variant.display_image %}{{ variant.display_image.url }}{% endif %}"
                             onclick="selectStockVariant(this)"
                         >
@@ -1510,6 +1511,7 @@ button,input,textarea{font-family:inherit}
 
 <script>
 const canEditCost = {% if can_edit_cost_price %}true{% else %}false{% endif %};
+const canViewCost = {% if can_view_cost_price %}true{% else %}false{% endif %};
 const selectedRows = [];
 let activeType = "all";
 
@@ -1524,7 +1526,8 @@ const variantCatalog = [
             sku:"{{ variant.sku|escapejs }}",
             stock:{{ variant.branch_stock_qty|default:0 }},
             unit:"{{ item.get_unit_display|escapejs }}",
-            cost_price:"{{ variant.display_cost }}",
+            cost_price:"{% if can_view_cost_price %}{{ variant.display_cost }}{% endif %}",
+            cost_status:"{{ variant.cost_status|escapejs }}",
             image:"{% if variant.display_image %}{{ variant.display_image.url|escapejs }}{% endif %}"
         },
         {% endfor %}
@@ -1639,7 +1642,8 @@ function selectStockVariant(button){
         sku:button.dataset.sku || "",
         stock:Number(button.dataset.stock || 0),
         unit:button.dataset.unit || "",
-        cost_price:button.dataset.cost || "0.00",
+        cost_price:button.dataset.cost || "",
+        cost_status:button.dataset.costStatus || "No Cost",
         image:button.dataset.image || ""
     };
 
@@ -1661,7 +1665,8 @@ function addStockRow(variant){
             sku:variant.sku || "",
             stock:Number(variant.stock || 0),
             unit:variant.unit || "",
-            cost_price:String(variant.cost_price || "0.00"),
+            cost_price:String(variant.cost_price || ""),
+            cost_status:variant.cost_status || "No Cost",
             image:variant.image || "",
             quantity:1,
             note:""
@@ -1739,7 +1744,19 @@ function renderDesktopRows(){
                 </div>
             </td>
             ${canEditCost ? `
-                <td><input class="row-input" type="number" min="0" step="0.01" value="${escapeHtml(row.cost_price)}" oninput="setRowValue(${index},'cost_price',this.value)"></td>
+                <td>
+                    ${!canViewCost ? `<span class="js-cost-state">${escapeHtml(row.cost_status || "No Cost")}</span>` : ""}
+                    <input
+                        class="row-input"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value="${escapeHtml(row.cost_price)}"
+                        placeholder="${canViewCost ? "Cost" : "Enter new cost"}"
+                        autocomplete="off"
+                        oninput="setRowValue(${index},'cost_price',this.value)"
+                    >
+                </td>
             ` : ""}
             <td><input class="row-input" type="text" value="${escapeHtml(row.note)}" placeholder="Optional" oninput="setRowValue(${index},'note',this.value)"></td>
             <td><button type="button" class="remove-row-btn" onclick="removeStockRow(${index})">✕</button></td>
@@ -1774,7 +1791,19 @@ function renderMobileRows(){
                     <input class="row-input" type="text" value="${escapeHtml(row.note)}" placeholder="Note" oninput="setRowValue(${index},'note',this.value)">
 
                     ${canEditCost ? `
-                        <input class="row-input" type="number" min="0" step="0.01" value="${escapeHtml(row.cost_price)}" placeholder="Cost" oninput="setRowValue(${index},'cost_price',this.value)">
+                        <div class="mobile-write-cost">
+                            ${!canViewCost ? `<span class="js-cost-state">${escapeHtml(row.cost_status || "No Cost")}</span>` : ""}
+                            <input
+                                class="row-input"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value="${escapeHtml(row.cost_price)}"
+                                placeholder="${canViewCost ? "Cost" : "Enter new cost"}"
+                                autocomplete="off"
+                                oninput="setRowValue(${index},'cost_price',this.value)"
+                            >
+                        </div>
                     ` : ""}
                 </div>
             </div>
@@ -1817,5 +1846,84 @@ function changeShop(branchId){
 filterProducts();
 renderStockRows();
 </script>
+
+
+
+<style id="bubu-cost-visibility-style">
+.cost-write-note{
+    margin:0 0 8px;
+    padding:9px 11px;
+    border:1px solid #dfd3f4;
+    border-radius:13px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    color:#665a74;
+    background:#faf7ff;
+    font-size:10px;
+    font-weight:900;
+    line-height:1.3;
+}
+.cost-write-note strong{
+    flex:0 0 auto;
+    padding:5px 8px;
+    border-radius:999px;
+    color:#6f50d8;
+    background:#eee7ff;
+    font-size:9px;
+    font-weight:1000;
+}
+.cost-write-note strong.no-cost{
+    color:#c56a00;
+    background:#fff1d8;
+}
+.cost-visibility-status{
+    display:inline-flex;
+    align-items:center;
+    min-height:26px;
+    padding:4px 8px;
+    border-radius:999px;
+    color:#6f50d8;
+    background:#f0eaff;
+    font-size:10px!important;
+    font-weight:1000!important;
+}
+.cost-inline-state{
+    margin-left:4px;
+    padding:3px 6px;
+    border-radius:999px;
+    color:#6f50d8;
+    background:#eee7ff;
+    font-size:8px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+@media(max-width:650px){
+    .cost-write-note{
+        padding:7px 8px;
+        border-radius:10px;
+        font-size:9px;
+    }
+}
+</style>
+
+<style id="bubu-batch-write-cost-style">
+.js-cost-state{
+    display:inline-flex;
+    margin:0 0 5px;
+    padding:3px 7px;
+    border-radius:999px;
+    color:#6f50d8;
+    background:#eee7ff;
+    font-size:8px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+.mobile-write-cost{
+    display:grid;
+    gap:4px;
+}
+</style>
 
 {% endblock %}

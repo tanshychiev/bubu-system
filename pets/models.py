@@ -59,6 +59,14 @@ class PetBreed(models.Model):
     class Meta:
         ordering = ["pet_type", "name"]
 
+    @property
+    def has_cost(self):
+        return bool(self.default_cost_price and self.default_cost_price > 0)
+
+    @property
+    def cost_status(self):
+        return "Already Added" if self.has_cost else "No Cost"
+
     def __str__(self):
         return f"{self.get_pet_type_display()} - {self.name}"
 
@@ -211,6 +219,14 @@ class Pet(models.Model):
             return latest.next_recommended_date
 
         return None
+
+    @property
+    def has_cost(self):
+        return bool(self.cost_price and self.cost_price > 0)
+
+    @property
+    def cost_status(self):
+        return "Already Added" if self.has_cost else "No Cost"
 
     def save(self, *args, **kwargs):
         if self.breed_profile:
@@ -415,6 +431,26 @@ class PetSale(models.Model):
         return "-"
 
     @property
+    def linked_cost_price(self):
+        if self.pet:
+            return self.pet.cost_price or Decimal("0.00")
+        return Decimal("0.00")
+
+    @property
+    def has_cost(self):
+        return bool(self.linked_cost_price and self.linked_cost_price > 0)
+
+    @property
+    def cost_status(self):
+        return "Already Added" if self.has_cost else "No Cost"
+
+    @property
+    def profit_amount(self):
+        if not self.has_cost:
+            return None
+        return self.final_price - self.linked_cost_price
+
+    @property
     def final_price(self):
         sale_price = self.sale_price or Decimal("0.00")
         discount = self.discount_amount or Decimal("0.00")
@@ -558,6 +594,14 @@ class PetWarrantyClaim(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def has_cost(self):
+        return bool(self.compensation_cost and self.compensation_cost > 0)
+
+    @property
+    def cost_status(self):
+        return "Already Added" if self.has_cost else "No Cost"
 
     def __str__(self):
         return f"Warranty Claim - {self.sale.customer_name}"

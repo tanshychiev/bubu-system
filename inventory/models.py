@@ -61,6 +61,14 @@ class Item(models.Model):
         return sum(v.quantity for v in self.variants.filter(is_active=True))
 
     @property
+    def has_cost(self):
+        return bool(self.cost_price and self.cost_price > 0)
+
+    @property
+    def cost_status(self):
+        return "Already Added" if self.has_cost else "No Cost"
+
+    @property
     def profit_per_item(self):
         return self.sale_price - self.cost_price
 
@@ -126,6 +134,14 @@ class ItemVariant(models.Model):
         if self.cost_price and self.cost_price > 0:
             return self.cost_price
         return self.item.cost_price
+
+    @property
+    def has_cost(self):
+        return bool(self.display_cost and self.display_cost > 0)
+
+    @property
+    def cost_status(self):
+        return "Already Added" if self.has_cost else "No Cost"
 
     @property
     def display_image(self):
@@ -280,6 +296,14 @@ class StockMovement(models.Model):
             self.after_quantity = new_qty
 
         super().save(*args, **kwargs)
+
+    @property
+    def has_cost(self):
+        return bool(self.cost_price and self.cost_price > 0)
+
+    @property
+    def cost_status(self):
+        return "Already Added" if self.has_cost else "No Cost"
 
     def __str__(self):
         name = self.variant if self.variant else self.item

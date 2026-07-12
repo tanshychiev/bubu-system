@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static cost_tags %}
 
 {% block content %}
 
@@ -130,8 +130,10 @@
 
                         <div class="price-grid">
                             <div>
-                                <small>Default Cost</small>
-                                <strong>${{ breed.default_cost_price|default:"0.00"|floatformat:2 }}</strong>
+                                <small>{% if can_view_cost_price %}Default Cost{% else %}Cost Status{% endif %}</small>
+                                <strong class="{% if not can_view_cost_price %}cost-status-pill{% if not breed.has_cost %} no-cost{% endif %}{% endif %}">
+                                    {% cost_display breed.default_cost_price %}
+                                </strong>
                             </div>
 
                             <div>
@@ -836,6 +838,16 @@ a{
         font-size:16px!important;
     }
 }
+</style>
+
+
+
+<style id="bubu-two-role-cost-style">
+.cost-write-note{margin:0 0 8px;padding:9px 11px;border:1px solid #dfd3f4;border-radius:13px;display:flex;align-items:center;justify-content:space-between;gap:8px;color:#665a74;background:#faf7ff;font-size:10px;font-weight:900;line-height:1.35}
+.cost-write-note strong,.cost-status-pill{display:inline-flex;align-items:center;justify-content:center;min-height:26px;padding:4px 8px;border-radius:999px;color:#6f50d8!important;background:#eee7ff;font-size:9px!important;font-weight:1000!important;white-space:nowrap}
+.cost-write-note strong.no-cost,.cost-status-pill.no-cost{color:#b86600!important;background:#fff0d4}
+.cost-status-text{color:#6f50d8!important;font-weight:1000!important}
+@media(max-width:650px){.cost-write-note{padding:7px 8px;border-radius:10px;font-size:9px}}
 </style>
 
 {% endblock %}

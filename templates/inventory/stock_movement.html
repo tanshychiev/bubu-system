@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load cost_tags %}
 {% block content %}
 
 <div class="sm-page">
@@ -34,10 +35,22 @@
                 {{ form.quantity }}
             </label>
 
+            {% if form.cost_price %}
             <label class="sm-field">
                 Cost Price
+
+                {% if not can_view_cost_price %}
+                <div class="cost-write-note">
+                    <strong class="{% if form.cost_status == 'No Cost' %}no-cost{% endif %}">
+                        {{ form.cost_status }}
+                    </strong>
+                    <span>Amount hidden. Enter only to add or replace.</span>
+                </div>
+                {% endif %}
+
                 {{ form.cost_price }}
             </label>
+            {% endif %}
 
             <label class="sm-field sm-full">
                 Note
@@ -74,7 +87,7 @@
                             <td>{{ m.created_at|date:"d M Y H:i" }}</td>
                             <td>{{ m.get_movement_type_display }}</td>
                             <td>{{ m.quantity }}</td>
-                            <td>${{ m.cost_price|floatformat:2 }}</td>
+                            <td>{% cost_display m.cost_price %}</td>
                             <td>{{ m.note|default:"-" }}</td>
                         </tr>
                     {% empty %}
@@ -531,5 +544,66 @@ document.addEventListener("keydown",function(event){
     }
 });
 </script>
+
+
+
+<style id="bubu-cost-visibility-style">
+.cost-write-note{
+    margin:0 0 8px;
+    padding:9px 11px;
+    border:1px solid #dfd3f4;
+    border-radius:13px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    color:#665a74;
+    background:#faf7ff;
+    font-size:10px;
+    font-weight:900;
+    line-height:1.3;
+}
+.cost-write-note strong{
+    flex:0 0 auto;
+    padding:5px 8px;
+    border-radius:999px;
+    color:#6f50d8;
+    background:#eee7ff;
+    font-size:9px;
+    font-weight:1000;
+}
+.cost-write-note strong.no-cost{
+    color:#c56a00;
+    background:#fff1d8;
+}
+.cost-visibility-status{
+    display:inline-flex;
+    align-items:center;
+    min-height:26px;
+    padding:4px 8px;
+    border-radius:999px;
+    color:#6f50d8;
+    background:#f0eaff;
+    font-size:10px!important;
+    font-weight:1000!important;
+}
+.cost-inline-state{
+    margin-left:4px;
+    padding:3px 6px;
+    border-radius:999px;
+    color:#6f50d8;
+    background:#eee7ff;
+    font-size:8px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+@media(max-width:650px){
+    .cost-write-note{
+        padding:7px 8px;
+        border-radius:10px;
+        font-size:9px;
+    }
+}
+</style>
 
 {% endblock %}

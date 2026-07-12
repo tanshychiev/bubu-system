@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static cost_tags %}
 
 {% block content %}
 
@@ -238,12 +238,14 @@
                                     Sex: {{ selected_pet.gender|default:"-" }} ·
                                     Color: {{ selected_pet.color|default:"-" }} ·
                                     Type: {{ selected_pet.special_type|default:"-" }} ·
-                                    Age: {{ selected_pet.current_age_display }}
+                                    Age: {{ selected_pet.current_age_display }} ·
+                                    Cost: {% cost_display selected_pet.cost_price %}
                                 {% elif sale and sale.pet %}
                                     Sex: {{ sale.pet.gender|default:"-" }} ·
                                     Color: {{ sale.pet.color|default:"-" }} ·
                                     Type: {{ sale.pet.special_type|default:"-" }} ·
-                                    Age: {{ sale.pet.current_age_display }}
+                                    Age: {{ sale.pet.current_age_display }} ·
+                                    Cost: {% cost_display sale.pet.cost_price %}
                                 {% else %}
                                     Choose one in-stock pet.
                                 {% endif %}
@@ -615,7 +617,8 @@
                     '{{ pet.color|default:"-"|escapejs }}',
                     '{{ pet.special_type|default:"-"|escapejs }}',
                     '{{ pet.current_age_display|escapejs }}',
-                    '{{ pet.sale_price }}'
+                    '{{ pet.sale_price }}',
+                    '{% cost_display pet.cost_price %}'
                 )"
             >
                 <div class="pet-popup-photo">
@@ -641,10 +644,9 @@
                     </span>
 
                     <div class="pet-popup-tags">
-                        {% if pet.special_type %}
-                            <em>{{ pet.special_type }}</em>
-                        {% endif %}
+                        {% if pet.special_type %}<em>{{ pet.special_type }}</em>{% endif %}
                         <em>Age: {{ pet.current_age_display }}</em>
+                        <em>Cost: {% cost_display pet.cost_price %}</em>
                     </div>
                 </div>
 
@@ -2902,7 +2904,7 @@ function closePetPopup(){
     setSalePopupState(false);
 }
 
-function selectPetFromPopup(id, name, gender, color, special, age, price){
+function selectPetFromPopup(id, name, gender, color, special, age, price, costDisplay){
     const petInput = document.getElementById("petSelect");
     const nameShow = document.getElementById("petNameShow");
     const specShow = document.getElementById("petSpecShow");
@@ -2912,7 +2914,7 @@ function selectPetFromPopup(id, name, gender, color, special, age, price){
 
     if(petInput){ petInput.value = id; }
     if(nameShow){ nameShow.innerText = name; }
-    if(specShow){ specShow.innerText = `Sex: ${gender} · Color: ${color} · Type: ${special} · Age: ${age}`; }
+    if(specShow){ specShow.innerText = `Sex: ${gender} · Color: ${color} · Type: ${special} · Age: ${age} · Cost: ${costDisplay}`; }
     if(priceShow){ priceShow.innerText = money(price); }
 
     if(salePrice && Number(salePrice.value || 0) <= 0){
@@ -3721,5 +3723,15 @@ function setupMobileSaleForm(){
 document.addEventListener("DOMContentLoaded", setupMobileSaleForm);
 
 </script>
+
+
+
+<style id="bubu-two-role-cost-style">
+.cost-write-note{margin:0 0 8px;padding:9px 11px;border:1px solid #dfd3f4;border-radius:13px;display:flex;align-items:center;justify-content:space-between;gap:8px;color:#665a74;background:#faf7ff;font-size:10px;font-weight:900;line-height:1.35}
+.cost-write-note strong,.cost-status-pill{display:inline-flex;align-items:center;justify-content:center;min-height:26px;padding:4px 8px;border-radius:999px;color:#6f50d8!important;background:#eee7ff;font-size:9px!important;font-weight:1000!important;white-space:nowrap}
+.cost-write-note strong.no-cost,.cost-status-pill.no-cost{color:#b86600!important;background:#fff0d4}
+.cost-status-text{color:#6f50d8!important;font-weight:1000!important}
+@media(max-width:650px){.cost-write-note{padding:7px 8px;border-radius:10px;font-size:9px}}
+</style>
 
 {% endblock %}
