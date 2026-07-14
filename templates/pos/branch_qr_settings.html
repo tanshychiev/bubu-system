@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+.qr-settings-page{max-width:1180px;margin:0 auto}
+.qr-settings-head{margin-bottom:20px;display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.qr-settings-head h1{margin:0 0 7px}
+.qr-settings-head p{margin:0;color:#7b7288;font-weight:800;line-height:1.5}
+.qr-settings-badge{min-height:38px;padding:0 14px;border-radius:999px;display:inline-flex;align-items:center;color:#7047db;background:#f3edff;font-size:12px;font-weight:1000;white-space:nowrap}
+.qr-settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.qr-branch-card{padding:18px;border:1px solid #f0e3e6;border-radius:20px;background:white;box-shadow:0 12px 30px rgba(93,62,96,.07)}
+.qr-branch-top{margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.qr-branch-name{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:1000}
+.qr-branch-icon{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f3edff,#fff0ea);font-size:21px}
+.qr-status{min-height:30px;padding:0 10px;border-radius:999px;display:inline-flex;align-items:center;font-size:10px;font-weight:1000}
+.qr-status.has{color:#16875f;background:#e7f9f1}
+.qr-status.none{color:#bd6f18;background:#fff3df}
+.qr-preview-shell{min-height:310px;margin-bottom:14px;padding:16px;border:2px dashed #dfd0f4;border-radius:18px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#fff,#fbf7ff)}
+.qr-preview-shell img{width:280px;max-width:100%;max-height:280px;display:block;object-fit:contain;border-radius:12px;background:white}
+.qr-empty{color:#8f7b9a;text-align:center;font-weight:900;line-height:1.45}
+.qr-empty-icon{margin-bottom:8px;font-size:54px}
+.qr-field{margin-top:12px}
+.qr-field label{margin-bottom:6px;display:block;color:#564d62;font-size:12px;font-weight:1000}
+.qr-field input[type="text"],.qr-field input[type="file"]{width:100%}
+.qr-help{margin-top:6px;color:#968b9d;font-size:10px;font-weight:800;line-height:1.4}
+.qr-card-actions{margin-top:15px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.qr-save{min-height:44px;padding:0 18px;border:0;border-radius:13px;color:white;background:linear-gradient(135deg,#8e63ff,#ff8464);font-weight:1000;cursor:pointer}
+.qr-remove{display:flex;align-items:center;gap:7px;color:#db5c47;font-size:11px;font-weight:1000}
+.qr-remove input{width:18px;height:18px;min-height:18px}
+.qr-note-box{margin-top:18px;padding:14px 16px;border:1px solid #f1dfd3;border-radius:15px;color:#6b5e68;background:#fff9f4;font-size:12px;font-weight:850;line-height:1.55}
+@media(max-width:820px){.qr-settings-grid{grid-template-columns:1fr}.qr-settings-head{display:block}.qr-settings-badge{margin-top:10px}.qr-preview-shell{min-height:250px}}
+</style>
+
+<div class="qr-settings-page">
+    <div class="qr-settings-head">
+        <div>
+            <h1>Branch Payment QR</h1>
+            <p>Upload or replace the QR shown on each branch's customer display. No code change is needed next time.</p>
+        </div>
+        <div class="qr-settings-badge">Owner / Admin only</div>
+    </div>
+
+    <div class="qr-settings-grid">
+        {% for branch in branches %}
+        <form method="post" enctype="multipart/form-data" class="qr-branch-card">
+            {% csrf_token %}
+            <input type="hidden" name="branch_id" value="{{ branch.id }}">
+
+            <div class="qr-branch-top">
+                <div class="qr-branch-name">
+                    <span class="qr-branch-icon">🏪</span>
+                    <span>{{ branch.name }}</span>
+                </div>
+                {% if branch.payment_qr_image %}
+                    <span class="qr-status has">QR Uploaded</span>
+                {% else %}
+                    <span class="qr-status none">No QR</span>
+                {% endif %}
+            </div>
+
+            <div class="qr-preview-shell">
+                {% if branch.payment_qr_image %}
+                    <img src="{{ branch.payment_qr_image.url }}" alt="{{ branch.name }} payment QR" id="qrPreview{{ branch.id }}">
+                {% else %}
+                    <div class="qr-empty" id="qrEmpty{{ branch.id }}">
+                        <div class="qr-empty-icon">▦</div>
+                        Upload the {{ branch.name }} payment QR
+                    </div>
+                    <img src="" alt="" id="qrPreview{{ branch.id }}" style="display:none">
+                {% endif %}
+            </div>
+
+            <div class="qr-field">
+                <label>Choose new QR image</label>
+                <input type="file" name="payment_qr_image" accept="image/png,image/jpeg,image/webp" onchange="previewBranchQR(this, '{{ branch.id }}')">
+                <div class="qr-help">PNG, JPG or WEBP. A clear square QR image works best.</div>
+            </div>
+
+            <div class="qr-field">
+                <label>Text below QR</label>
+                <input type="text" name="payment_qr_label" value="{{ branch.payment_qr_label|default:'Scan to pay' }}" maxlength="100" placeholder="Scan to pay">
+            </div>
+
+            <div class="qr-card-actions">
+                <button type="submit" class="qr-save">Save {{ branch.name }} QR</button>
+                {% if branch.payment_qr_image %}
+                <label class="qr-remove">
+                    <input type="checkbox" name="remove_qr" value="1">
+                    Remove current QR
+                </label>
+                {% endif %}
+            </div>
+        </form>
+        {% empty %}
+        <div class="card">No branches found. Create a branch first.</div>
+        {% endfor %}
+    </div>
+
+    <div class="qr-note-box">
+        The QR is a static image. BUBU does not read the customer's ABA transaction automatically. When the cashier records payment and completes checkout, the customer display shows “Payment Received” and a thank-you screen.
+    </div>
+</div>
+
+<script>
+function previewBranchQR(input, branchId){
+    const file = input.files && input.files[0];
+    if(!file){return;}
+    const preview = document.getElementById(`qrPreview${branchId}`);
+    const empty = document.getElementById(`qrEmpty${branchId}`);
+    if(!preview){return;}
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "block";
+    if(empty){empty.style.display = "none";}
+}
+</script>
+{% endblock %}
