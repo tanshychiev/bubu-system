@@ -2,897 +2,723 @@
 {% block content %}
 
 <style>
+*{box-sizing:border-box}
+
 .cash-page{
-    max-width:1200px;
+    width:min(1180px,100%);
     margin:0 auto;
+    padding:18px 20px 34px;
 }
 
 .cash-head{
     display:flex;
+    align-items:flex-start;
     justify-content:space-between;
-    align-items:center;
-    gap:16px;
-    margin-bottom:24px;
+    gap:14px;
+    margin-bottom:14px;
 }
 
 .cash-head h1{
-    font-size:38px;
     margin:0;
-    color:#1c143a;
-    font-weight:900;
+    color:#171238;
+    font-size:30px;
+    line-height:1.1;
+    font-weight:1000;
 }
 
 .cash-head p{
-    color:#7b6f92;
-    font-weight:800;
-    margin:8px 0 0;
+    margin:6px 0 0;
+    color:#7c708b;
+    font-size:12px;
+    font-weight:850;
 }
 
 .head-actions{
     display:flex;
-    gap:10px;
+    gap:7px;
     flex-wrap:wrap;
 }
 
-.btn-main{
-    background:linear-gradient(135deg,#7b5cff,#b07cff);
-    color:white;
-    padding:13px 24px;
-    border-radius:999px;
-    font-weight:900;
-    border:none;
+.btn{
+    min-height:40px;
+    padding:0 14px;
+    border:0;
+    border-radius:12px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:#362a48;
+    background:#f4eff8;
+    font-size:11px;
+    font-weight:1000;
     text-decoration:none;
     cursor:pointer;
-    display:inline-flex;
+}
+
+.btn.primary{
+    color:#fff;
+    background:linear-gradient(135deg,#7458ec,#a66cf1);
+}
+
+.card{
+    border:1px solid #eddfd7;
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 8px 24px rgba(83,56,72,.05);
+}
+
+.toolbar-card{
+    margin-bottom:12px;
+    padding:12px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
     align-items:center;
-    justify-content:center;
+    gap:10px;
 }
 
-.btn-soft{
-    background:#f8f6ff;
-    color:#7b5cff;
-    padding:13px 24px;
-    border-radius:999px;
-    font-weight:900;
-    border:1.5px solid #e2dbff;
-    text-decoration:none;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-}
-
-.shop-card,
-.date-card,
-.summary-grid,
-.count-card,
-.sales-card{
-    background:white;
-    border:1px solid #f0dcd0;
-    border-radius:24px;
-    box-shadow:0 12px 30px rgba(111,75,50,0.06);
-    padding:22px;
-    margin-bottom:22px;
-}
-
-.shop-card{
+.branch-line{
+    min-width:0;
     display:flex;
-    justify-content:space-between;
     align-items:center;
-    gap:16px;
-    background:linear-gradient(135deg,#fff8fb,#fbf8ff);
+    gap:9px;
 }
 
-.shop-title{
-    font-weight:900;
-    color:#1c143a;
-    font-size:20px;
+.branch-icon{
+    width:39px;
+    height:39px;
+    flex:0 0 39px;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(135deg,#f1ebff,#fff0e9);
+    font-size:19px;
 }
 
-.shop-sub{
-    color:#7b6f92;
-    font-weight:800;
-    margin-top:6px;
+.branch-line small,
+.branch-line strong{
+    display:block;
 }
 
-.shop-badge{
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
-    color:white;
-    border-radius:999px;
-    padding:12px 20px;
-    font-weight:900;
+.branch-line small{
+    color:#887c91;
+    font-size:8px;
+    font-weight:1000;
+    text-transform:uppercase;
+}
+
+.branch-line strong{
+    margin-top:2px;
+    overflow:hidden;
+    color:#171238;
+    font-size:14px;
+    font-weight:1000;
+    text-overflow:ellipsis;
     white-space:nowrap;
 }
 
 .date-form{
     display:flex;
-    gap:12px;
     align-items:center;
-    flex-wrap:wrap;
+    gap:7px;
 }
 
-.date-touch-btn{
-    min-height:62px;
-    min-width:260px;
-    border-radius:999px;
-    border:1.5px solid #eadbd4;
-    background:white;
-    color:#1c143a;
+.date-form input{
+    min-height:40px;
+    padding:0 10px;
+    border:1px solid #dfd4dc;
+    border-radius:11px;
+    color:#171238;
+    background:#fff;
+    font-size:12px;
     font-weight:900;
-    font-size:16px;
-    padding:0 24px;
-    display:inline-flex;
+}
+
+.section-title{
+    margin:0 0 9px;
+    color:#171238;
+    font-size:17px;
+    font-weight:1000;
+}
+
+.received-grid{
+    margin-bottom:12px;
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
+}
+
+.received-card{
+    min-width:0;
+    padding:15px;
+    border-radius:18px;
+    position:relative;
+    overflow:hidden;
+}
+
+.received-card.cash{
+    border:1px solid #f1d6b4;
+    background:linear-gradient(145deg,#fff9eb,#fff);
+}
+
+.received-card.aba{
+    border:1px solid #c9e8dc;
+    background:linear-gradient(145deg,#effcf6,#fff);
+}
+
+.received-card.total{
+    border:1px solid #ded1f7;
+    background:linear-gradient(145deg,#f5f0ff,#fff);
+}
+
+.received-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:12px;
+}
+
+.received-head strong{
+    color:#171238;
+    font-size:15px;
+    font-weight:1000;
+}
+
+.received-icon{
+    width:34px;
+    height:34px;
+    border-radius:11px;
+    display:flex;
     align-items:center;
     justify-content:center;
-    gap:10px;
-    cursor:pointer;
-    box-shadow:0 8px 18px rgba(111,75,50,0.06);
+    background:rgba(255,255,255,.86);
+    font-size:17px;
 }
 
-.date-touch-btn:hover{
-    border-color:#9b7cf6;
-}
-
-.summary-grid{
+.currency-grid{
     display:grid;
-    grid-template-columns:repeat(7,1fr);
-    gap:16px;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
 }
 
-.summary-box{
-    background:#fff8fb;
-    border-radius:20px;
-    padding:20px;
+.currency-box{
+    min-width:0;
+    padding:9px;
+    border-radius:11px;
+    background:rgba(255,255,255,.82);
 }
 
-.summary-box.warning{
-    background:#fff8e8;
-    border:1.5px solid #ffe0a6;
+.currency-box span,
+.currency-box strong{
+    display:block;
 }
 
-.summary-box.success{
-    background:#edfff5;
-    border:1.5px solid #c3f2d6;
+.currency-box span{
+    color:#81758c;
+    font-size:8px;
+    font-weight:1000;
 }
 
-.summary-box .label{
-    color:#7b6f92;
+.currency-box strong{
+    margin-top:3px;
+    overflow:hidden;
+    color:#171238;
+    font-size:17px;
+    font-weight:1000;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.equivalent{
+    margin-top:8px;
+    padding-top:8px;
+    border-top:1px dashed rgba(71,53,87,.18);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    color:#756980;
+    font-size:9px;
     font-weight:900;
-    margin-bottom:8px;
-    font-size:13px;
 }
 
-.summary-box .value{
-    font-size:24px;
+.equivalent strong{
+    color:#171238;
+    font-size:14px;
+}
+
+.total-main{
+    margin-top:2px;
+    color:#6848df;
+    font-size:30px;
+    line-height:1;
+    font-weight:1000;
+}
+
+.total-sub{
+    margin-top:7px;
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    color:#776c82;
+    font-size:9px;
     font-weight:900;
-    color:#1c143a;
 }
 
-.summary-box .value.khr{
-    font-size:22px;
+.total-sub strong{
+    color:#171238;
 }
 
-.count-card h2,
-.sales-card h2{
-    color:#1c143a;
-    font-size:28px;
-    margin:0 0 18px;
+.drawer-card{
+    margin-bottom:12px;
+    padding:14px;
+}
+
+.drawer-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:8px;
+}
+
+.drawer-box{
+    min-width:0;
+    padding:11px;
+    border-radius:13px;
+    background:#faf7fb;
+}
+
+.drawer-box.highlight{
+    color:#116b3d;
+    background:#ecfbf3;
+    border:1px solid #c9eed9;
+}
+
+.drawer-box.warning{
+    background:#fff8e9;
+    border:1px solid #f5deb0;
+}
+
+.drawer-box span,
+.drawer-box strong{
+    display:block;
+}
+
+.drawer-box span{
+    color:#82768c;
+    font-size:8px;
+    line-height:1.25;
+    font-weight:1000;
+}
+
+.drawer-box strong{
+    margin-top:5px;
+    overflow:hidden;
+    color:#171238;
+    font-size:17px;
+    font-weight:1000;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.drawer-box.highlight strong{
+    color:#13794a;
+}
+
+.count-card{
+    margin-bottom:12px;
+    padding:14px;
+}
+
+.count-intro{
+    margin-bottom:10px;
+    padding:9px 11px;
+    border-radius:12px;
+    color:#5d4d70;
+    background:#f8f4ff;
+    font-size:10px;
     font-weight:900;
-}
-
-.cash-help-box{
-    margin-bottom:18px;
-    padding:16px;
-    border-radius:20px;
-    background:#f8f6ff;
-    border:1.5px dashed #b9a8ff;
-    color:#47366e;
-    font-weight:900;
-    line-height:1.5;
+    line-height:1.45;
 }
 
 .count-grid{
     display:grid;
-    grid-template-columns:1fr 1fr 1fr;
-    gap:18px;
-}
-
-.float-grid{
-    display:grid;
     grid-template-columns:1fr 1fr;
-    gap:18px;
-    margin-bottom:18px;
+    gap:10px;
 }
 
 .count-box{
-    background:#fff8fb;
-    border-radius:20px;
-    padding:18px;
-}
-
-.count-box.float-box{
-    background:#fff8e8;
-    border:1.5px solid #ffe0a6;
-}
-
-.count-box.expected-box{
-    background:#edfff5;
-    border:1.5px solid #c3f2d6;
+    padding:12px;
+    border-radius:15px;
+    background:#fff9fb;
+    border:1px solid #f0e1e8;
 }
 
 .count-box label{
     display:block;
+    color:#171238;
+    font-size:11px;
+    font-weight:1000;
+}
+
+.expected-line{
+    margin:4px 0 8px;
+    color:#83778c;
+    font-size:9px;
     font-weight:900;
-    color:#1c143a;
-    margin-bottom:10px;
 }
 
 .count-box input{
     width:100%;
-    padding:16px;
-    border-radius:16px;
-    border:1.5px solid #eadbd4;
+    min-height:50px;
+    padding:0 12px;
+    border:1.5px solid #decfd8;
+    border-radius:12px;
+    outline:0;
+    color:#171238;
+    background:#fff;
     font-size:20px;
-    font-weight:900;
-    box-sizing:border-box;
+    font-weight:1000;
 }
 
-.readonly-value{
-    width:100%;
-    padding:16px;
-    border-radius:16px;
-    background:white;
-    border:1.5px solid #d7f1df;
-    font-size:22px;
-    font-weight:900;
-    color:#168a3a;
-    box-sizing:border-box;
+.count-box input:focus{
+    border-color:#8b68ef;
+    box-shadow:0 0 0 3px rgba(123,92,255,.10);
 }
 
 .diff{
-    margin-top:12px;
-    font-weight:900;
-    padding:10px 14px;
-    border-radius:14px;
+    margin-top:8px;
+    min-height:34px;
+    padding:0 10px;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:10px;
+    font-weight:1000;
 }
 
 .diff.good{
-    background:#eaffef;
-    color:#168a3a;
+    color:#147844;
+    background:#eafaf1;
 }
 
 .diff.bad{
-    background:#fff0f0;
-    color:#d62828;
+    color:#d52b35;
+    background:#fff0f1;
 }
 
 .diff.zero{
-    background:#f4f1ff;
-    color:#7b5cff;
+    color:#6848df;
+    background:#f1ecff;
 }
 
-.diff.warning{
-    background:#fff7df;
-    color:#b86b00;
-}
-
-.note-box{
-    margin-top:18px;
+.count-bottom{
+    margin-top:10px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:9px;
+    align-items:end;
 }
 
 .note-box label{
     display:block;
-    margin-bottom:10px;
-    color:#1c143a;
-    font-weight:900;
+    margin-bottom:5px;
+    color:#171238;
+    font-size:10px;
+    font-weight:1000;
 }
 
 .note-box textarea{
     width:100%;
-    min-height:100px;
-    padding:16px;
-    border-radius:18px;
-    border:1.5px solid #eadbd4;
+    min-height:68px;
+    padding:9px 10px;
+    border:1px solid #dfd3dc;
+    border-radius:12px;
+    outline:0;
+    resize:vertical;
+    color:#42364c;
+    background:#fff;
+    font-size:11px;
     font-weight:800;
-    box-sizing:border-box;
 }
 
-.save-row{
-    margin-top:18px;
+.save-area{
+    min-width:180px;
+}
+
+.save-area .btn{
+    width:100%;
+    min-height:50px;
+}
+
+.saved-meta{
+    margin-top:5px;
+    color:#8a7f92;
+    font-size:8px;
+    font-weight:900;
+    text-align:center;
+}
+
+.sales-card{
+    padding:14px;
+}
+
+.sales-head{
+    margin-bottom:9px;
     display:flex;
-    justify-content:flex-end;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+}
+
+.sales-head h2{
+    margin:0;
+    color:#171238;
+    font-size:17px;
+    font-weight:1000;
+}
+
+.sales-head span{
+    padding:5px 8px;
+    border-radius:999px;
+    color:#704ddc;
+    background:#f0ebff;
+    font-size:9px;
+    font-weight:1000;
 }
 
 .table-wrap{
-    overflow-x:auto;
+    overflow:auto;
 }
 
 .sales-table{
     width:100%;
+    min-width:950px;
     border-collapse:collapse;
-    min-width:980px;
 }
 
 .sales-table th{
-    background:#fff8fb;
-    padding:14px;
+    padding:9px;
+    color:#766a81;
+    background:#faf7fb;
+    font-size:8px;
+    font-weight:1000;
     text-align:left;
-    color:#1c143a;
     white-space:nowrap;
 }
 
 .sales-table td{
-    padding:14px;
-    border-top:1px solid #f4e3d8;
-    font-weight:800;
-    white-space:nowrap;
+    padding:9px;
+    border-top:1px solid #f0e6eb;
+    color:#30263a;
+    font-size:10px;
+    font-weight:850;
+    vertical-align:top;
 }
 
 .sales-table small{
-    color:#7b6f92;
-    font-weight:800;
+    color:#8c8194;
 }
 
 .status-pill{
     display:inline-flex;
-    padding:7px 12px;
+    padding:4px 7px;
     border-radius:999px;
-    background:#f4f1ff;
-    color:#7b5cff;
-    font-weight:900;
-    font-size:13px;
+    color:#6848df;
+    background:#f0ebff;
+    font-size:8px;
+    font-weight:1000;
+}
+
+.payment-lines{
+    line-height:1.5;
+}
+
+.view-btn{
+    min-height:30px;
+    padding:0 9px;
+    border-radius:9px;
+    color:#6848df;
+    background:#f0ebff;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:8px;
+    font-weight:1000;
+    text-decoration:none;
 }
 
 .empty-row{
+    padding:25px!important;
+    color:#8a7f92!important;
     text-align:center;
-    padding:40px !important;
-    color:#7b6f92;
-    font-weight:900;
 }
 
-/* ========================= */
-/* CUSTOM DATE POPUP */
-/* ========================= */
-
-.calendar-backdrop{
-    display:none;
-    position:fixed;
-    inset:0;
-    background:rgba(28,20,58,.38);
-    z-index:9000;
-}
-
-.calendar-backdrop.active{
-    display:block;
-}
-
-.calendar-popup{
-    display:none;
-    position:fixed;
-    left:50%;
-    top:50%;
-    transform:translate(-50%,-50%);
-    width:360px;
-    max-width:calc(100% - 28px);
-    background:white;
-    border-radius:28px;
-    overflow:hidden;
-    box-shadow:0 28px 80px rgba(28,20,58,.30);
-    z-index:9001;
-    border:1px solid #eee1d8;
-}
-
-.calendar-popup.active{
-    display:block;
-}
-
-.calendar-top{
-    background:linear-gradient(135deg,#7b5cff,#8f63ff);
-    color:white;
-    padding:16px 18px 14px;
-}
-
-.calendar-top small{
-    display:block;
-    opacity:.9;
-    font-weight:800;
-    margin-bottom:4px;
-}
-
-.calendar-selected-text{
-    font-size:24px;
-    font-weight:900;
-    line-height:1.2;
-}
-
-.calendar-body{
-    padding:14px;
-}
-
-.quick-row{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin-bottom:12px;
-}
-
-.quick-btn{
-    min-height:52px;
-    border:none;
-    border-radius:16px;
-    color:white;
-    font-size:15px;
-    font-weight:900;
-    cursor:pointer;
-}
-
-.quick-btn.today{
-    background:linear-gradient(135deg,#19a974,#54d59b);
-}
-
-.quick-btn.yesterday{
-    background:linear-gradient(135deg,#7b5cff,#ff8c6b);
-}
-
-.calendar-month-row{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:10px;
-}
-
-.calendar-month-title{
-    font-size:16px;
-    font-weight:900;
-    color:#1c143a;
-}
-
-.calendar-nav{
-    display:flex;
-    gap:6px;
-}
-
-.calendar-nav button{
-    width:38px;
-    height:38px;
-    border:none;
-    border-radius:50%;
-    background:#f4f1ff;
-    color:#7b5cff;
-    font-size:18px;
-    font-weight:900;
-    cursor:pointer;
-}
-
-.calendar-weekdays,
-.calendar-grid{
-    display:grid;
-    grid-template-columns:repeat(7,1fr);
-    gap:6px;
-}
-
-.calendar-weekdays div{
-    text-align:center;
-    font-size:12px;
-    font-weight:900;
-    color:#8e86a3;
-    padding:6px 0;
-}
-
-.calendar-day{
-    height:42px;
-    border:none;
-    border-radius:50%;
-    background:transparent;
-    font-size:14px;
-    font-weight:900;
-    color:#1c143a;
-    cursor:pointer;
-}
-
-.calendar-day.other{
-    color:#c4bdd3;
-}
-
-.calendar-day:hover{
-    background:#f3efff;
-}
-
-.calendar-day.selected{
-    background:#7b5cff;
-    color:white;
-    box-shadow:0 8px 18px rgba(123,92,255,.28);
-}
-
-.calendar-day.today-mark{
-    border:2px solid #19a974;
-}
-
-.calendar-bottom{
-    display:flex;
-    justify-content:flex-end;
-    gap:10px;
-    border-top:1px solid #f0e7ea;
-    padding:14px;
-}
-
-.calendar-cancel,
-.calendar-ok{
-    min-width:90px;
-    min-height:44px;
-    border:none;
-    border-radius:999px;
-    font-weight:900;
-    cursor:pointer;
-}
-
-.calendar-cancel{
-    background:#f5f1ff;
-    color:#7b5cff;
-}
-
-.calendar-ok{
-    background:linear-gradient(135deg,#7b5cff,#8f63ff);
-    color:white;
-}
-
-@media (max-width:1250px){
-    .summary-grid{
-        grid-template-columns:repeat(3,1fr);
-    }
-}
-
-@media (max-width:900px){
-    .cash-head,
-    .date-form,
-    .shop-card{
-        flex-direction:column;
-        align-items:stretch;
-    }
-
-    .head-actions{
-        display:grid;
+@media(max-width:950px){
+    .received-grid{
         grid-template-columns:1fr;
     }
 
-    .summary-grid,
-    .count-grid,
-    .float-grid{
-        grid-template-columns:1fr;
-    }
-
-    .btn-main,
-    .btn-soft,
-    .date-touch-btn{
-        width:100%;
-        box-sizing:border-box;
-        min-height:60px;
-    }
-
-    .save-row{
-        display:block;
-    }
-
-    .cash-head h1{
-        font-size:32px;
-    }
-
-    .calendar-popup{
-        left:14px;
-        right:14px;
-        bottom:18px;
-        top:auto;
-        width:auto;
-        max-width:none;
-        transform:none;
-        border-radius:26px;
-    }
-}
-
-@media (max-width:500px){
-    .quick-row{
+    .drawer-grid{
         grid-template-columns:1fr 1fr;
     }
-
-    .calendar-day{
-        height:40px;
-        font-size:13px;
-    }
-
-    .calendar-selected-text{
-        font-size:22px;
-    }
 }
 
-
-/* =========================================================
-   PHONE SCREEN UPDATE V10 — DAILY CASH COUNT
-========================================================= */
 @media(max-width:700px){
-    html{
-        -webkit-text-size-adjust:100%!important;
-        text-size-adjust:100%!important;
-    }
-
-    input,
-    select,
-    textarea{
-        font-size:16px!important;
-    }
-
     .cash-page{
-        width:100%!important;
-        padding:8px 8px 86px!important;
+        padding:8px 8px 82px;
     }
 
     .cash-head{
-        display:grid!important;
-        grid-template-columns:minmax(0,1fr) auto!important;
-        align-items:center!important;
-        gap:8px!important;
-        margin-bottom:8px!important;
+        display:block;
+        margin-bottom:8px;
     }
 
     .cash-head h1{
-        font-size:22px!important;
-        line-height:1.1!important;
+        font-size:22px;
     }
 
     .cash-head p{
-        margin-top:3px!important;
-        font-size:9px!important;
-        line-height:1.3!important;
+        font-size:9px;
     }
 
     .head-actions{
-        display:grid!important;
-        grid-template-columns:1fr!important;
-        gap:5px!important;
+        margin-top:7px;
+        display:grid;
+        grid-template-columns:1fr 1fr;
     }
 
-    .head-actions .btn-main,
-    .head-actions .btn-soft{
-        width:auto!important;
-        min-height:36px!important;
-        padding:0 9px!important;
-        border-radius:10px!important;
-        font-size:8px!important;
-    }
-
-    .shop-card,
-    .date-card,
-    .summary-grid,
-    .count-card,
-    .sales-card{
-        margin-bottom:8px!important;
-        padding:9px!important;
-        border-radius:15px!important;
-        box-shadow:none!important;
-    }
-
-    .shop-card{
-        display:grid!important;
-        grid-template-columns:minmax(0,1fr) auto!important;
-        align-items:center!important;
-        gap:7px!important;
-    }
-
-    .shop-title{
-        font-size:12px!important;
-    }
-
-    .shop-sub{
-        margin-top:2px!important;
-        font-size:8px!important;
-        line-height:1.25!important;
-    }
-
-    .shop-badge{
-        padding:7px 8px!important;
-        border-radius:10px!important;
-        font-size:8px!important;
+    .toolbar-card{
+        padding:8px;
+        grid-template-columns:1fr;
     }
 
     .date-form{
-        display:grid!important;
-        grid-template-columns:minmax(0,1fr) 64px!important;
-        gap:6px!important;
-        align-items:center!important;
+        display:grid;
+        grid-template-columns:minmax(0,1fr) auto;
     }
 
-    .date-form > strong{
-        grid-column:1/-1!important;
-        font-size:9px!important;
+    .date-form input{
+        width:100%;
+        font-size:16px;
     }
 
-    .date-touch-btn{
-        width:100%!important;
-        min-width:0!important;
-        min-height:42px!important;
-        padding:0 9px!important;
-        border-radius:11px!important;
-        font-size:10px!important;
+    .received-grid{
+        gap:7px;
     }
 
-    .date-form .btn-main{
-        width:64px!important;
-        min-height:42px!important;
-        padding:0!important;
-        border-radius:11px!important;
-        font-size:9px!important;
+    .received-card{
+        padding:10px;
+        border-radius:14px;
     }
 
-    .summary-grid{
-        display:grid!important;
-        grid-template-columns:repeat(2,minmax(0,1fr))!important;
-        gap:6px!important;
+    .currency-box strong{
+        font-size:15px;
     }
 
-    .summary-box{
-        min-width:0!important;
-        padding:8px!important;
-        border-radius:11px!important;
+    .total-main{
+        font-size:25px;
     }
 
-    .summary-box .label{
-        min-height:20px!important;
-        margin-bottom:3px!important;
-        font-size:7px!important;
-        line-height:1.25!important;
+    .drawer-card,
+    .count-card,
+    .sales-card{
+        padding:9px;
+        border-radius:14px;
     }
 
-    .summary-box .value,
-    .summary-box .value.khr{
-        overflow:hidden!important;
-        font-size:13px!important;
-        text-overflow:ellipsis!important;
-        white-space:nowrap!important;
+    .drawer-grid{
+        gap:6px;
     }
 
-    .count-card h2,
-    .sales-card h2{
-        margin-bottom:7px!important;
-        font-size:18px!important;
+    .drawer-box{
+        padding:8px;
+        border-radius:10px;
     }
 
-    .cash-help-box{
-        margin-bottom:7px!important;
-        padding:7px!important;
-        border-radius:10px!important;
-        font-size:8px!important;
-        line-height:1.3!important;
-    }
-
-    .float-grid{
-        grid-template-columns:1fr 1fr!important;
-        gap:6px!important;
-        margin-bottom:7px!important;
+    .drawer-box strong{
+        font-size:14px;
     }
 
     .count-grid{
-        grid-template-columns:1fr!important;
-        gap:7px!important;
+        grid-template-columns:1fr;
+        gap:7px;
     }
 
     .count-box{
-        padding:8px!important;
-        border-radius:11px!important;
+        padding:9px;
+        border-radius:12px;
     }
 
-    .count-box label{
-        margin-bottom:4px!important;
-        font-size:9px!important;
-        line-height:1.25!important;
+    .count-box input{
+        min-height:48px;
+        font-size:18px;
     }
 
-    .count-box input,
-    .readonly-value{
-        min-height:43px!important;
-        padding:0 9px!important;
-        border-radius:10px!important;
-        font-size:16px!important;
+    .count-bottom{
+        grid-template-columns:1fr;
     }
 
-    .readonly-value{
-        display:flex!important;
-        align-items:center!important;
-    }
-
-    .diff{
-        margin-top:5px!important;
-        padding:6px 7px!important;
-        border-radius:8px!important;
-        font-size:8px!important;
-        line-height:1.25!important;
-    }
-
-    .note-box{
-        margin-top:7px!important;
-    }
-
-    .note-box label{
-        margin-bottom:4px!important;
-        font-size:9px!important;
-    }
-
-    .note-box textarea{
-        min-height:62px!important;
-        padding:8px!important;
-        border-radius:10px!important;
-        resize:none!important;
-    }
-
-    .save-row{
-        position:sticky!important;
-        bottom:max(6px,env(safe-area-inset-bottom))!important;
-        z-index:40!important;
-        margin-top:7px!important;
-        padding:5px!important;
-        border:1px solid #e5d8e4!important;
-        border-radius:13px!important;
-        background:rgba(255,255,255,.96)!important;
-        box-shadow:0 10px 25px rgba(42,28,58,.15)!important;
-        backdrop-filter:blur(12px)!important;
-    }
-
-    .save-row .btn-main{
-        width:100%!important;
-        min-height:44px!important;
-        border-radius:11px!important;
-        font-size:11px!important;
-    }
-
-    .table-wrap{
-        overflow:visible!important;
+    .save-area{
+        min-width:0;
+        position:sticky;
+        bottom:6px;
+        z-index:20;
+        padding:5px;
+        border:1px solid #e4d9e1;
+        border-radius:13px;
+        background:rgba(255,255,255,.96);
+        box-shadow:0 10px 28px rgba(46,30,53,.16);
+        backdrop-filter:blur(10px);
     }
 
     .sales-table{
-        min-width:0!important;
-        display:block!important;
+        min-width:0;
+        display:block;
     }
 
     .sales-table thead{
-        display:none!important;
+        display:none;
     }
 
     .sales-table tbody{
-        display:grid!important;
-        gap:7px!important;
+        display:grid;
+        gap:7px;
     }
 
     .sales-table tr{
-        display:block!important;
-        padding:8px!important;
-        border:1px solid #eadde5!important;
-        border-radius:13px!important;
-        background:linear-gradient(145deg,#fff,#fff9f6)!important;
+        display:block;
+        padding:8px;
+        border:1px solid #e9dfe5;
+        border-radius:12px;
+        background:#fff;
     }
 
     .sales-table td{
-        display:flex!important;
-        align-items:center!important;
-        justify-content:space-between!important;
-        gap:8px!important;
-        padding:5px 0!important;
-        border:0!important;
-        border-bottom:1px dashed #eee2e9!important;
-        white-space:normal!important;
-        font-size:9px!important;
-        text-align:right!important;
+        display:flex;
+        justify-content:space-between;
+        gap:10px;
+        padding:5px 0;
+        border-top:0;
+        border-bottom:1px dashed #eee4e9;
+        font-size:9px;
+        text-align:right;
     }
 
     .sales-table td:last-child{
-        border-bottom:0!important;
+        border-bottom:0;
     }
 
     .sales-table td::before{
-        flex:0 0 68px;
-        color:#8a8096;
+        flex:0 0 72px;
+        color:#8a7f92;
         font-size:7px;
-        font-weight:900;
+        font-weight:1000;
         text-align:left;
     }
 
-    .sales-table td:nth-child(1)::before{content:"ID";}
+    .sales-table td:nth-child(1)::before{content:"Sale";}
     .sales-table td:nth-child(2)::before{content:"Time";}
     .sales-table td:nth-child(3)::before{content:"Customer";}
     .sales-table td:nth-child(4)::before{content:"Status";}
@@ -900,260 +726,259 @@
     .sales-table td:nth-child(6)::before{content:"Paid";}
     .sales-table td:nth-child(7)::before{content:"Change";}
     .sales-table td:nth-child(8)::before{content:"Payments";}
-    .sales-table td:nth-child(9)::before{content:"View";}
-
-    .status-pill{
-        padding:4px 7px!important;
-        font-size:7px!important;
-    }
-
-    .sales-table .btn-soft{
-        min-height:34px!important;
-        padding:0 9px!important;
-        border-radius:9px!important;
-        font-size:8px!important;
-    }
-
-    .calendar-popup{
-        left:50%!important;
-        right:auto!important;
-        top:50%!important;
-        bottom:auto!important;
-        width:calc(100% - 18px)!important;
-        max-width:390px!important;
-        max-height:90dvh!important;
-        transform:translate(-50%,-50%)!important;
-        border-radius:20px!important;
-    }
-
-    .calendar-top{
-        padding:10px!important;
-    }
-
-    .calendar-selected-text{
-        font-size:18px!important;
-    }
-
-    .calendar-body{
-        padding:8px!important;
-    }
-
-    .quick-btn{
-        min-height:40px!important;
-        border-radius:10px!important;
-        font-size:9px!important;
-    }
-
-    .calendar-day{
-        height:34px!important;
-        font-size:10px!important;
-    }
-
-    .calendar-bottom{
-        padding:9px!important;
-    }
-
-    .calendar-cancel,
-    .calendar-ok{
-        min-height:40px!important;
-        min-width:80px!important;
-        font-size:10px!important;
-    }
+    .sales-table td:nth-child(9)::before{content:"Action";}
 }
-
 </style>
 
 <div class="cash-page">
-
     <div class="cash-head">
         <div>
-            <h1>Daily Cash Count 💵</h1>
-            <p>Check system money vs staff counted money by shop/branch.</p>
+            <h1>Daily Money Check</h1>
+            <p>See Cash and ABA received, then count only the physical cash drawer.</p>
         </div>
 
         <div class="head-actions">
-            <a href="{% url 'sale_list' %}" class="btn-soft">← Back Sales</a>
-            <a href="{% url 'pos' %}" class="btn-main">New Sale</a>
+            <a href="{% url 'sale_list' %}" class="btn">← Sales</a>
+            <a href="{% url 'pos' %}" class="btn primary">New Sale</a>
         </div>
     </div>
 
-    <div class="shop-card">
-        <div>
-            <div class="shop-title">Current Shop / Branch</div>
-            <div class="shop-sub">
-                This cash count is saved separately for this shop and date.
+    <div class="card toolbar-card">
+        <div class="branch-line">
+            <div class="branch-icon">🏪</div>
+            <div>
+                <small>Current branch</small>
+                <strong>
+                    {% if current_branch %}
+                        {{ current_branch.name }}
+                    {% else %}
+                        No Branch
+                    {% endif %}
+                </strong>
             </div>
         </div>
 
-        <div class="shop-badge">
-            🏪 {% if current_branch %}{{ current_branch.name }}{% else %}No Branch{% endif %}
-        </div>
-    </div>
-
-    <div class="date-card">
-        <form method="get" class="date-form" id="dateForm">
-            <strong>Count Date:</strong>
-
-            <input type="hidden" name="date" id="dateInput" value="{{ count_date|date:'Y-m-d' }}">
-
-            <button type="button" class="date-touch-btn" onclick="openCalendarPopup()">
-                📅 <span id="dateLabel">{{ count_date|date:"d M Y" }}</span>
-            </button>
-
-            <button class="btn-main" type="submit">View</button>
+        <form method="get" class="date-form">
+            <input
+                type="date"
+                name="date"
+                value="{{ count_date|date:'Y-m-d' }}"
+                aria-label="Cash count date"
+            >
+            <button type="submit" class="btn primary">View</button>
         </form>
     </div>
 
-    <div class="summary-grid">
-        <div class="summary-box">
-            <div class="label">Total Sales</div>
-            <div class="value">${{ total_sales|floatformat:2 }}</div>
+    <h2 class="section-title">Money Received</h2>
+
+    <div class="received-grid">
+        <div class="received-card cash">
+            <div class="received-head">
+                <strong>Cash Received</strong>
+                <span class="received-icon">💵</span>
+            </div>
+
+            <div class="currency-grid">
+                <div class="currency-box">
+                    <span>Cash USD</span>
+                    <strong>${{ system_cash_usd|floatformat:2 }}</strong>
+                </div>
+
+                <div class="currency-box">
+                    <span>Cash KHR</span>
+                    <strong>{{ system_cash_khr|floatformat:0 }}៛</strong>
+                </div>
+            </div>
+
+            <div class="equivalent">
+                <span>USD equivalent</span>
+                <strong>${{ cash_received_usd_equivalent|floatformat:2 }}</strong>
+            </div>
         </div>
 
-        <div class="summary-box">
-            <div class="label">Total Paid</div>
-            <div class="value">${{ total_paid|floatformat:2 }}</div>
+        <div class="received-card aba">
+            <div class="received-head">
+                <strong>ABA Received</strong>
+                <span class="received-icon">🏦</span>
+            </div>
+
+            <div class="currency-grid">
+                <div class="currency-box">
+                    <span>ABA USD</span>
+                    <strong>${{ system_aba_usd|floatformat:2 }}</strong>
+                </div>
+
+                <div class="currency-box">
+                    <span>ABA KHR</span>
+                    <strong>{{ system_aba_khr|floatformat:0 }}៛</strong>
+                </div>
+            </div>
+
+            <div class="equivalent">
+                <span>USD equivalent</span>
+                <strong>${{ aba_received_usd_equivalent|floatformat:2 }}</strong>
+            </div>
         </div>
 
-        <div class="summary-box warning">
-            <div class="label">Change Given Today</div>
-            <div class="value">${{ total_change|default:"0.00"|floatformat:2 }}</div>
-        </div>
+        <div class="received-card total">
+            <div class="received-head">
+                <strong>Total Received</strong>
+                <span class="received-icon">🧾</span>
+            </div>
 
-        <div class="summary-box">
-            <div class="label">Cash USD Should Have</div>
-            <div class="value">${{ system_cash_usd|floatformat:2 }}</div>
-        </div>
+            <div class="total-main">
+                ${{ total_received_usd_equivalent|floatformat:2 }}
+            </div>
 
-        <div class="summary-box warning">
-            <div class="label">Start Change / Float</div>
-            <div class="value khr">{{ opening_change_khr|floatformat:0 }}៛</div>
-        </div>
+            <div class="total-sub">
+                <span>Total sale paid</span>
+                <strong>${{ total_paid|floatformat:2 }}</strong>
+            </div>
 
-        <div class="summary-box">
-            <div class="label">Cash KHR Sales</div>
-            <div class="value khr">{{ system_cash_khr|floatformat:0 }}៛</div>
-        </div>
+            <div class="total-sub">
+                <span>Change given</span>
+                <strong>-${{ total_change|floatformat:2 }}</strong>
+            </div>
 
-        <div class="summary-box success">
-            <div class="label">Cash KHR Should Have</div>
-            <div class="value khr">{{ expected_cash_khr|floatformat:0 }}៛</div>
+            <div class="equivalent">
+                <span>Net after change</span>
+                <strong>${{ net_received_after_change|floatformat:2 }}</strong>
+            </div>
         </div>
     </div>
 
-    <form method="post" class="count-card">
+    <div class="card drawer-card">
+        <h2 class="section-title">Cash Drawer Should Have</h2>
+
+        <div class="drawer-grid">
+            <div class="drawer-box">
+                <span>Cash USD Sales</span>
+                <strong>${{ system_cash_usd|floatformat:2 }}</strong>
+            </div>
+
+            <div class="drawer-box">
+                <span>Cash KHR Sales</span>
+                <strong>{{ system_cash_khr|floatformat:0 }}៛</strong>
+            </div>
+
+            <div class="drawer-box warning">
+                <span>Start Change / Float</span>
+                <strong>{{ opening_change_khr|floatformat:0 }}៛</strong>
+            </div>
+
+            <div class="drawer-box highlight">
+                <span>Total KHR in Drawer</span>
+                <strong>{{ expected_cash_khr|floatformat:0 }}៛</strong>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" class="card count-card">
         {% csrf_token %}
 
-        <h2>Staff Count Money</h2>
+        <h2 class="section-title">Staff Count Physical Cash</h2>
 
-        <div class="cash-help-box">
-            KHR Count Rule: Start Change / Float + Cash KHR Sales = Cash KHR Should Have.
-            Example: 100,000៛ + 20,000៛ = 120,000៛.
+        <div class="count-intro">
+            Count only the money physically inside the drawer.
+            ABA is already recorded automatically from POS payments.
+            KHR count must include the opening float.
         </div>
 
-        <div class="float-grid">
-            <div class="count-box float-box">
-                <label>Start Change / Float KHR</label>
-                <input
-                    type="number"
-                    step="1"
-                    name="opening_change_khr"
-                    value="{{ cash_count.opening_change_khr|default:100000|floatformat:0 }}"
-                >
-
-                <div class="diff warning">
-                    Petty cash/change money for staff drawer. Default is 100,000៛, but you can change it here.
-                </div>
-            </div>
-
-            <div class="count-box expected-box">
-                <label>Cash KHR Should Have</label>
-                <div class="readonly-value">
-                    {{ expected_cash_khr|floatformat:0 }}៛
-                </div>
-
-                <div class="diff zero">
-                    This includes start change + KHR cash sales.
-                </div>
-            </div>
-        </div>
+        <input
+            type="hidden"
+            name="opening_change_khr"
+            value="{{ cash_count.opening_change_khr|default:100000|floatformat:0 }}"
+        >
 
         <div class="count-grid">
-
             <div class="count-box">
                 <label>Cash USD Counted</label>
+                <div class="expected-line">
+                    System expects ${{ system_cash_usd|floatformat:2 }}
+                </div>
+
                 <input
                     type="number"
                     step="0.01"
+                    min="0"
                     name="counted_cash_usd"
                     value="{{ cash_count.counted_cash_usd|floatformat:2 }}"
+                    inputmode="decimal"
+                    required
                 >
 
                 {% if diff_usd > 0 %}
-                    <div class="diff good">Over: ${{ diff_usd|floatformat:2 }}</div>
+                    <div class="diff good">Over ${{ diff_usd|floatformat:2 }}</div>
                 {% elif diff_usd < 0 %}
-                    <div class="diff bad">Missing: ${{ diff_usd|floatformat:2 }}</div>
+                    <div class="diff bad">Missing ${{ diff_usd|floatformat:2 }}</div>
                 {% else %}
                     <div class="diff zero">Correct</div>
                 {% endif %}
             </div>
 
             <div class="count-box">
-                <label>Cash KHR Counted Including Start Change</label>
+                <label>Cash KHR Counted</label>
+                <div class="expected-line">
+                    Include float · System expects {{ expected_cash_khr|floatformat:0 }}៛
+                </div>
+
                 <input
                     type="number"
                     step="1"
+                    min="0"
                     name="counted_cash_khr"
                     value="{{ cash_count.counted_cash_khr|floatformat:0 }}"
+                    inputmode="numeric"
+                    required
                 >
 
                 {% if diff_khr > 0 %}
-                    <div class="diff good">Over: {{ diff_khr|floatformat:0 }}៛</div>
+                    <div class="diff good">Over {{ diff_khr|floatformat:0 }}៛</div>
                 {% elif diff_khr < 0 %}
-                    <div class="diff bad">Missing: {{ diff_khr|floatformat:0 }}៛</div>
+                    <div class="diff bad">Missing {{ diff_khr|floatformat:0 }}៛</div>
                 {% else %}
                     <div class="diff zero">Correct</div>
                 {% endif %}
             </div>
+        </div>
 
-            <div class="count-box">
-                <label>ABA USD Counted</label>
-                <input
-                    type="number"
-                    step="0.01"
-                    name="counted_aba_usd"
-                    value="{{ cash_count.counted_aba_usd|floatformat:2 }}"
-                >
-
-                {% if diff_aba > 0 %}
-                    <div class="diff good">Over: ${{ diff_aba|floatformat:2 }}</div>
-                {% elif diff_aba < 0 %}
-                    <div class="diff bad">Missing: ${{ diff_aba|floatformat:2 }}</div>
-                {% else %}
-                    <div class="diff zero">Correct</div>
-                {% endif %}
+        <div class="count-bottom">
+            <div class="note-box">
+                <label>Note</label>
+                <textarea
+                    name="note"
+                    placeholder="Write a reason only when cash is missing or over."
+                >{{ cash_count.note }}</textarea>
             </div>
 
-        </div>
+            <div class="save-area">
+                <button type="submit" class="btn primary">
+                    Save Cash Count
+                </button>
 
-        <div class="note-box">
-            <label>Note</label>
-            <textarea name="note" placeholder="Write reason if money missing or over...">{{ cash_count.note }}</textarea>
-        </div>
-
-        <div class="save-row">
-            <button type="submit" class="btn-main">Save Cash Count</button>
+                {% if cash_count.counted_at %}
+                    <div class="saved-meta">
+                        Last saved {{ cash_count.counted_at|date:"d M Y H:i" }}
+                        {% if cash_count.counted_by %}
+                            by {{ cash_count.counted_by.get_full_name|default:cash_count.counted_by.username }}
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </form>
 
-    <div class="sales-card">
-        <h2>Sales for Selected Day</h2>
+    <div class="card sales-card">
+        <div class="sales-head">
+            <h2>Sales for Selected Day</h2>
+            <span>{{ sales|length }} sales</span>
+        </div>
 
         <div class="table-wrap">
             <table class="sales-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th>Sale</th>
                         <th>Time</th>
                         <th>Customer</th>
                         <th>Status</th>
@@ -1161,270 +986,69 @@
                         <th>Paid</th>
                         <th>Change</th>
                         <th>Payments</th>
-                        <th>View</th>
+                        <th></th>
                     </tr>
                 </thead>
 
                 <tbody>
                     {% for sale in sales %}
-                    <tr>
-                        <td>#{{ sale.id }}</td>
-                        <td>{{ sale.created_at|date:"H:i" }}</td>
-                        <td>
-                            {% if sale.customer %}
-                                <strong>{{ sale.customer.name|default:"No Name" }}</strong>
-                                {% if sale.customer.phone %}
-                                    <br>
-                                    <small>{{ sale.customer.phone }}</small>
+                        <tr>
+                            <td>#{{ sale.id }}</td>
+                            <td>{{ sale.created_at|date:"H:i" }}</td>
+
+                            <td>
+                                {% if sale.customer %}
+                                    <strong>{{ sale.customer.name|default:"No Name" }}</strong>
+                                    {% if sale.customer.phone %}
+                                        <br><small>{{ sale.customer.phone }}</small>
+                                    {% endif %}
+                                {% else %}
+                                    Walk-in
                                 {% endif %}
-                            {% else %}
-                                Walk-in
-                            {% endif %}
-                        </td>
-                        <td>
-                            <span class="status-pill">{{ sale.status }}</span>
-                        </td>
-                        <td>${{ sale.total_amount|floatformat:2 }}</td>
-                        <td>${{ sale.paid_amount|floatformat:2 }}</td>
-                        <td>${{ sale.change_amount|floatformat:2 }}</td>
-                        <td>
-                            {% for payment in sale.payments.all %}
-                                {{ payment.get_method_display }}: {{ payment.amount|floatformat:2 }}{% if not forloop.last %}<br>{% endif %}
-                            {% empty %}
-                                -
-                            {% endfor %}
-                        </td>
-                        <td>
-                            <a href="{% url 'sale_detail' sale.id %}" class="btn-soft">View</a>
-                        </td>
-                    </tr>
+                            </td>
+
+                            <td>
+                                <span class="status-pill">{{ sale.status }}</span>
+                            </td>
+
+                            <td>${{ sale.total_amount|floatformat:2 }}</td>
+                            <td>${{ sale.paid_amount|floatformat:2 }}</td>
+                            <td>${{ sale.change_amount|floatformat:2 }}</td>
+
+                            <td class="payment-lines">
+                                {% for payment in sale.payments.all %}
+                                    {{ payment.get_method_display }}:
+                                    {% if payment.method == "cash_khr" or payment.method == "aba_khr" %}
+                                        {{ payment.amount|floatformat:0 }}៛
+                                    {% else %}
+                                        ${{ payment.amount|floatformat:2 }}
+                                    {% endif %}
+                                    {% if not forloop.last %}<br>{% endif %}
+                                {% empty %}
+                                    -
+                                {% endfor %}
+                            </td>
+
+                            <td>
+                                <a
+                                    href="{% url 'sale_detail' sale.id %}"
+                                    class="view-btn"
+                                >
+                                    View
+                                </a>
+                            </td>
+                        </tr>
                     {% empty %}
-                    <tr>
-                        <td colspan="9" class="empty-row">No sales found for this day.</td>
-                    </tr>
+                        <tr>
+                            <td colspan="9" class="empty-row">
+                                No walk-in sales found for this day.
+                            </td>
+                        </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
-
 </div>
-
-<!-- CUSTOM CALENDAR POPUP -->
-<div class="calendar-backdrop" id="calendarBackdrop" onclick="closeCalendarPopup()"></div>
-
-<div class="calendar-popup" id="calendarPopup">
-    <div class="calendar-top">
-        <small>Selected date</small>
-        <div class="calendar-selected-text" id="calendarSelectedText"></div>
-    </div>
-
-    <div class="calendar-body">
-        <div class="quick-row">
-            <button type="button" class="quick-btn today" onclick="pickQuickDate('today')">Today</button>
-            <button type="button" class="quick-btn yesterday" onclick="pickQuickDate('yesterday')">Yesterday</button>
-        </div>
-
-        <div class="calendar-month-row">
-            <div class="calendar-month-title" id="calendarMonthTitle"></div>
-            <div class="calendar-nav">
-                <button type="button" onclick="changeMonth(-1)">‹</button>
-                <button type="button" onclick="changeMonth(1)">›</button>
-            </div>
-        </div>
-
-        <div class="calendar-weekdays">
-            <div>Su</div>
-            <div>Mo</div>
-            <div>Tu</div>
-            <div>We</div>
-            <div>Th</div>
-            <div>Fr</div>
-            <div>Sa</div>
-        </div>
-
-        <div class="calendar-grid" id="calendarGrid"></div>
-    </div>
-
-    <div class="calendar-bottom">
-        <button type="button" class="calendar-cancel" onclick="closeCalendarPopup()">Cancel</button>
-        <button type="button" class="calendar-ok" onclick="applyCalendarDate()">OK</button>
-    </div>
-</div>
-
-<script>
-const dateInput = document.getElementById("dateInput");
-const dateLabel = document.getElementById("dateLabel");
-const dateForm = document.getElementById("dateForm");
-
-const calendarPopup = document.getElementById("calendarPopup");
-const calendarBackdrop = document.getElementById("calendarBackdrop");
-const calendarGrid = document.getElementById("calendarGrid");
-const calendarMonthTitle = document.getElementById("calendarMonthTitle");
-const calendarSelectedText = document.getElementById("calendarSelectedText");
-
-let selectedDate = parseLocalDate(dateInput.value);
-let tempSelectedDate = new Date(selectedDate.getTime());
-let currentMonthDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-
-function parseLocalDate(value){
-    if(!value){
-        return new Date();
-    }
-
-    const parts = value.split("-");
-    if(parts.length !== 3){
-        return new Date();
-    }
-
-    return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-}
-
-function formatYMD(date){
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-}
-
-function formatLongDate(date){
-    return date.toLocaleDateString("en-US", {
-        weekday:"short",
-        month:"short",
-        day:"numeric",
-        year:"numeric"
-    });
-}
-
-function formatShortDate(date){
-    return date.toLocaleDateString("en-GB", {
-        day:"2-digit",
-        month:"short",
-        year:"numeric"
-    });
-}
-
-function sameDate(a, b){
-    return a.getFullYear() === b.getFullYear()
-        && a.getMonth() === b.getMonth()
-        && a.getDate() === b.getDate();
-}
-
-function openCalendarPopup(){
-    tempSelectedDate = new Date(selectedDate.getTime());
-    currentMonthDate = new Date(tempSelectedDate.getFullYear(), tempSelectedDate.getMonth(), 1);
-    renderCalendar();
-    calendarPopup.classList.add("active");
-    calendarBackdrop.classList.add("active");
-}
-
-function closeCalendarPopup(){
-    calendarPopup.classList.remove("active");
-    calendarBackdrop.classList.remove("active");
-}
-
-function renderCalendar(){
-    const year = currentMonthDate.getFullYear();
-    const month = currentMonthDate.getMonth();
-
-    calendarMonthTitle.textContent = currentMonthDate.toLocaleDateString("en-US", {
-        month:"long",
-        year:"numeric"
-    });
-
-    calendarSelectedText.textContent = formatLongDate(tempSelectedDate);
-
-    calendarGrid.innerHTML = "";
-
-    const firstDay = new Date(year, month, 1);
-    const startWeekday = firstDay.getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const prevMonthDays = new Date(year, month, 0).getDate();
-
-    for(let i = 0; i < 42; i++){
-        let dayNumber;
-        let btnDate;
-        let isOtherMonth = false;
-
-        if(i < startWeekday){
-            dayNumber = prevMonthDays - startWeekday + i + 1;
-            btnDate = new Date(year, month - 1, dayNumber);
-            isOtherMonth = true;
-        }else if(i >= startWeekday + daysInMonth){
-            dayNumber = i - (startWeekday + daysInMonth) + 1;
-            btnDate = new Date(year, month + 1, dayNumber);
-            isOtherMonth = true;
-        }else{
-            dayNumber = i - startWeekday + 1;
-            btnDate = new Date(year, month, dayNumber);
-        }
-
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "calendar-day";
-        btn.textContent = dayNumber;
-
-        if(isOtherMonth){
-            btn.classList.add("other");
-        }
-
-        const today = new Date();
-        if(sameDate(btnDate, new Date(today.getFullYear(), today.getMonth(), today.getDate()))){
-            btn.classList.add("today-mark");
-        }
-
-        if(sameDate(btnDate, tempSelectedDate)){
-            btn.classList.add("selected");
-        }
-
-        btn.onclick = function(){
-            tempSelectedDate = new Date(btnDate.getTime());
-
-            if(isOtherMonth){
-                currentMonthDate = new Date(tempSelectedDate.getFullYear(), tempSelectedDate.getMonth(), 1);
-            }
-
-            renderCalendar();
-        };
-
-        calendarGrid.appendChild(btn);
-    }
-}
-
-function changeMonth(step){
-    currentMonthDate = new Date(
-        currentMonthDate.getFullYear(),
-        currentMonthDate.getMonth() + step,
-        1
-    );
-    renderCalendar();
-}
-
-function pickQuickDate(type){
-    const base = new Date();
-    const quick = new Date(base.getFullYear(), base.getMonth(), base.getDate());
-
-    if(type === "yesterday"){
-        quick.setDate(quick.getDate() - 1);
-    }
-
-    tempSelectedDate = quick;
-    currentMonthDate = new Date(quick.getFullYear(), quick.getMonth(), 1);
-    renderCalendar();
-}
-
-function applyCalendarDate(){
-    selectedDate = new Date(tempSelectedDate.getTime());
-    const value = formatYMD(selectedDate);
-
-    dateInput.value = value;
-    dateLabel.textContent = formatShortDate(selectedDate);
-
-    closeCalendarPopup();
-    dateForm.submit();
-}
-
-dateLabel.textContent = formatShortDate(selectedDate);
-</script>
 
 {% endblock %}

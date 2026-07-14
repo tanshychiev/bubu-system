@@ -12,7 +12,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_date, parse_datetime
 from django.views.decorators.csrf import csrf_exempt
 
 from customers.models import Customer
@@ -1939,11 +1939,25 @@ def pos_exchange_rate(request):
 
 @login_required
 def cash_count_dashboard(request):
-    selected_date = request.GET.get("date")
+    """
+    Simple daily money summary for one branch.
+
+    Staff only counts physical cash:
+    - Cash USD in drawer
+    - Cash KHR in drawer, including the opening float
+
+    ABA is read directly from recorded POS payments and is shown as
+    a read-only received total. This keeps the page easy and avoids asking
+    staff to "count" bank money like physical cash.
+    """
+    selected_date = (request.GET.get("date") or "").strip()
 
     if selected_date:
-        count_date = selected_date
+        count_date = parse_date(selected_date)
     else:
+        count_date = timezone.localdate()
+
+    if not count_date:
         count_date = timezone.localdate()
 
     current_branch = get_pos_branch(request)
@@ -1955,8 +1969,8 @@ def cash_count_dashboard(request):
         )
         return redirect("pos")
 
-    # Cash count only counts POS walk-in sales.
-    # Prepare Delivery sales should be handled in Delivery page.
+    # Cash count only includes POS walk-in sales.
+    # Prepare Delivery sales are handled from the Delivery workflow.
     sales = (
         Sale.objects
         .filter(
@@ -1976,22 +1990,30 @@ def cash_count_dashboard(request):
     )
 
     system_cash_usd = (
-        payments.filter(method="cash_usd").aggregate(total=Sum("amount"))["total"]
+        payments
+        .filter(method="cash_usd")
+        .aggregate(total=Sum("amount"))["total"]
         or Decimal("0")
     )
 
     system_cash_khr = (
-        payments.filter(method="cash_khr").aggregate(total=Sum("amount"))["total"]
+        payments
+        .filter(method="cash_khr")
+        .aggregate(total=Sum("amount"))["total"]
         or Decimal("0")
     )
 
     system_aba_usd = (
-        payments.filter(method="aba_usd").aggregate(total=Sum("amount"))["total"]
+        payments
+        .filter(method="aba_usd")
+        .aggregate(total=Sum("amount"))["total"]
         or Decimal("0")
     )
 
     system_aba_khr = (
-        payments.filter(method="aba_khr").aggregate(total=Sum("amount"))["total"]
+        payments
+        .filter(method="aba_khr")
+        .aggregate(total=Sum("amount"))["total"]
         or Decimal("0")
     )
 
@@ -2010,8 +2032,34 @@ def cash_count_dashboard(request):
         or Decimal("0")
     )
 
-    # This is the branch default petty cash / change float.
-    # Example: BUBU TK = 100,000៛, BUBU PP = 150,000៛
+    khr_rate = get_khr_rate()
+
+    if not khr_rate or khr_rate <= 0:
+        khr_rate = Decimal("4100")
+
+    cash_received_usd_equivalent = (
+        system_cash_usd
+        + (system_cash_khr / khr_rate)
+    )
+
+    aba_received_usd_equivalent = (
+        system_aba_usd
+        + (system_aba_khr / khr_rate)
+    )
+
+    total_received_usd_equivalent = (
+        cash_received_usd_equivalent
+        + aba_received_usd_equivalent
+    )
+
+    net_received_after_change = (
+        total_received_usd_equivalent
+        - total_change
+    )
+
+    if net_received_after_change < Decimal("0"):
+        net_received_after_change = Decimal("0")
+
     branch_float, _ = BranchCashFloat.objects.get_or_create(
         branch=current_branch,
         defaults={
@@ -2019,9 +2067,7 @@ def cash_count_dashboard(request):
         },
     )
 
-    # When a new date cash count is created,
-    # it auto uses this branch's petty cash setting.
-    cash_count, created = CashCount.objects.get_or_create(
+    cash_count, _created = CashCount.objects.get_or_create(
         branch=current_branch,
         date=count_date,
         defaults={
@@ -2035,56 +2081,109 @@ def cash_count_dashboard(request):
     if request.method == "POST":
         cash_count.opening_change_khr = money(
             request.POST.get("opening_change_khr"),
-            str(branch_float.default_change_khr or Decimal("100000")),
+            str(
+                branch_float.default_change_khr
+                or Decimal("100000")
+            ),
         )
-        cash_count.counted_cash_usd = money(request.POST.get("counted_cash_usd"))
-        cash_count.counted_cash_khr = money(request.POST.get("counted_cash_khr"))
-        cash_count.counted_aba_usd = money(request.POST.get("counted_aba_usd"))
-        cash_count.note = request.POST.get("note", "")
+
+        cash_count.counted_cash_usd = money(
+            request.POST.get("counted_cash_usd")
+        )
+
+        cash_count.counted_cash_khr = money(
+            request.POST.get("counted_cash_khr")
+        )
+
+        # ABA is read from POS payment records, so staff does not need
+        # to enter it manually on this simplified page.
+        cash_count.counted_aba_usd = system_aba_usd
+
+        cash_count.note = (
+            request.POST.get("note") or ""
+        ).strip()
+
         cash_count.counted_by = request.user
         cash_count.counted_at = timezone.now()
 
-    # Always refresh system money from sales/payment records.
+    # Always refresh the saved system totals from the payment records.
     cash_count.system_cash_usd = system_cash_usd
     cash_count.system_cash_khr = system_cash_khr
     cash_count.system_aba_usd = system_aba_usd
 
-    opening_change_khr = cash_count.opening_change_khr or branch_float.default_change_khr or Decimal("100000")
-    expected_cash_khr = opening_change_khr + system_cash_khr
+    opening_change_khr = (
+        cash_count.opening_change_khr
+        or branch_float.default_change_khr
+        or Decimal("100000")
+    )
+
+    expected_cash_khr = (
+        opening_change_khr
+        + system_cash_khr
+    )
 
     cash_count.expected_cash_khr = expected_cash_khr
     cash_count.save()
 
     if request.method == "POST":
-        return redirect(f"{request.path}?date={count_date}")
+        messages.success(
+            request,
+            "Daily cash count saved.",
+        )
+        return redirect(
+            f"{request.path}?date={count_date}"
+        )
 
-    diff_usd = cash_count.counted_cash_usd - system_cash_usd
-    diff_khr = cash_count.counted_cash_khr - expected_cash_khr
-    diff_aba = cash_count.counted_aba_usd - system_aba_usd
+    diff_usd = (
+        cash_count.counted_cash_usd
+        - system_cash_usd
+    )
 
-    return render(request, "pos/cash_count_dashboard.html", {
-        "count_date": count_date,
-        "current_branch": current_branch,
-        "sales": sales,
-        "cash_count": cash_count,
+    diff_khr = (
+        cash_count.counted_cash_khr
+        - expected_cash_khr
+    )
 
-        "total_sales": total_sales,
-        "total_paid": total_paid,
-        "total_change": total_change,
+    return render(
+        request,
+        "pos/cash_count_dashboard.html",
+        {
+            "count_date": count_date,
+            "current_branch": current_branch,
+            "sales": sales,
+            "cash_count": cash_count,
 
-        "system_cash_usd": system_cash_usd,
-        "system_cash_khr": system_cash_khr,
-        "system_aba_usd": system_aba_usd,
-        "system_aba_khr": system_aba_khr,
+            "total_sales": total_sales,
+            "total_paid": total_paid,
+            "total_change": total_change,
 
-        "branch_float": branch_float,
-        "opening_change_khr": opening_change_khr,
-        "expected_cash_khr": expected_cash_khr,
+            "system_cash_usd": system_cash_usd,
+            "system_cash_khr": system_cash_khr,
+            "system_aba_usd": system_aba_usd,
+            "system_aba_khr": system_aba_khr,
 
-        "diff_usd": diff_usd,
-        "diff_khr": diff_khr,
-        "diff_aba": diff_aba,
-    })
+            "cash_received_usd_equivalent": (
+                cash_received_usd_equivalent
+            ),
+            "aba_received_usd_equivalent": (
+                aba_received_usd_equivalent
+            ),
+            "total_received_usd_equivalent": (
+                total_received_usd_equivalent
+            ),
+            "net_received_after_change": (
+                net_received_after_change
+            ),
+            "khr_rate": khr_rate,
+
+            "branch_float": branch_float,
+            "opening_change_khr": opening_change_khr,
+            "expected_cash_khr": expected_cash_khr,
+
+            "diff_usd": diff_usd,
+            "diff_khr": diff_khr,
+        },
+    )
 
 @login_required
 def sale_receipt(request, pk):
