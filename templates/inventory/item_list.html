@@ -1994,14 +1994,14 @@ body.inventory-detail-open{
                     Reset
                 </a>
 
-                {% if can_manage_inventory %}
+                {% if can_manage_inventory or can_create_inventory_type or can_manage_inventory_settings %}
                     <button type="button" class="mobile-action-toggle" onclick="openMobileActions()">
                         ＋ Actions
                     </button>
                 {% endif %}
             </div>
 
-            {% if can_manage_inventory %}
+            {% if can_manage_inventory or can_create_inventory_type or can_manage_inventory_settings %}
                 <div class="mobile-action-backdrop" id="mobileActionBackdrop" onclick="closeMobileActions()"></div>
 
                 <div class="mobile-action-panel" id="mobileActionPanel">
@@ -2015,18 +2015,32 @@ body.inventory-detail-open{
                         <button type="button" onclick="closeMobileActions()">✕</button>
                     </div>
 
-                    <a href="{% url 'inventory_control_center' %}" class="add-btn control-btn">⚙️ Control Center</a>
-                    <a href="{% url 'item_type_create' %}" class="add-btn type-btn">＋ Create Type</a>
-                    <a href="{% url 'item_create' %}" class="add-btn">＋ Add Item</a>
+                    {% if can_manage_inventory_settings %}
+                        <a href="{% url 'inventory_control_center' %}" class="add-btn control-btn">
+                            ⚙️ Control Center
+                        </a>
+                    {% endif %}
 
-                    {% if current_branch and request.user.is_superuser %}
-                        <a href="{% url 'stock_batch_in' %}?branch={{ current_branch.id }}" class="add-btn stock-batch-btn">
-                            ＋ Batch Stock In
+                    {% if can_create_inventory_type %}
+                        <a href="{% url 'item_type_create' %}" class="add-btn type-btn">
+                            ＋ Create Type
                         </a>
-                    {% else %}
-                        <a href="{% url 'stock_batch_in' %}" class="add-btn stock-batch-btn">
-                            ＋ Batch Stock In
+                    {% endif %}
+
+                    {% if can_manage_inventory %}
+                        <a href="{% url 'item_create' %}" class="add-btn">
+                            ＋ Add Item
                         </a>
+
+                        {% if current_branch and request.user.is_superuser %}
+                            <a href="{% url 'stock_batch_in' %}?branch={{ current_branch.id }}" class="add-btn stock-batch-btn">
+                                ＋ Batch Stock In
+                            </a>
+                        {% else %}
+                            <a href="{% url 'stock_batch_in' %}" class="add-btn stock-batch-btn">
+                                ＋ Batch Stock In
+                            </a>
+                        {% endif %}
                     {% endif %}
                 </div>
             {% endif %}

@@ -43,8 +43,60 @@ from .models import (
 # PERMISSION HELPERS
 # ==================================================
 
+def _is_staff_inventory_user(user):
+    """
+    BUBU has two working roles:
+    - Owner/Admin
+    - Staff
+
+    Staff must be able to add inventory records and create item types.
+    Cost visibility remains controlled separately by core.cost_access.
+    """
+    if not user or not user.is_authenticated:
+        return False
+
+    return user.groups.filter(name__iexact="Staff").exists()
+
+
 def can_manage_inventory(user):
-    return can_edit_cost(user)
+    """
+    Allow inventory work without connecting it to cost visibility.
+
+    This honors Django role permissions and also supports the BUBU Staff
+    group directly. Owner/Admin always has access.
+    """
+    if not user or not user.is_authenticated:
+        return False
+
+    if is_owner(user):
+        return True
+
+    if _is_staff_inventory_user(user):
+        return True
+
+    return any([
+        user.has_perm("inventory.add_item"),
+        user.has_perm("inventory.change_item"),
+        user.has_perm("inventory.add_itemvariant"),
+        user.has_perm("inventory.change_itemvariant"),
+        user.has_perm("inventory.add_stockmovement"),
+        user.has_perm("inventory.add_itemtype"),
+    ])
+
+
+def can_create_inventory_type(user):
+    """
+    Staff may create a new type, but deleting types, managing units and
+    opening Control Center remain Owner/Admin-only.
+    """
+    if not user or not user.is_authenticated:
+        return False
+
+    return (
+        is_owner(user)
+        or _is_staff_inventory_user(user)
+        or user.has_perm("inventory.add_itemtype")
+    )
 
 
 def can_manage_inventory_settings(user):
@@ -335,6 +387,8 @@ def item_list(request):
         "current_branch": current_branch,
         "branches": branches,
         "can_manage_inventory": can_manage_inventory(request.user),
+        "can_create_inventory_type": can_create_inventory_type(request.user),
+        "can_manage_inventory_settings": can_manage_inventory_settings(request.user),
         "can_view_cost_price": can_view_cost_price(request.user),
         "can_edit_cost_price": can_edit_cost_price(request.user),
     })
@@ -534,8 +588,8 @@ def inventory_control_center(request):
 
 @login_required
 def item_type_create(request):
-    if not can_manage_inventory_settings(request.user):
-        messages.error(request, "Only Owner/Admin can manage inventory settings.")
+    if not can_create_inventory_type(request.user):
+        messages.error(request, "You do not have permission to create an inventory type.")
         return redirect("item_list")
 
     form = ItemTypeForm(request.POST or None)
