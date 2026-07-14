@@ -224,7 +224,7 @@ PAYWAY_CHECK_URL = os.environ.get(
 # Used for BUBU pet sale / preorder notification
 # ============================================================
 
-TELEGRAM_BOT_TOKEN = "8846065896:AAEudLU50XNCzAnCp0DzOtLAq3Gl4F5yfqQ"
+TELEGRAM_BOT_TOKEN = "7979251304:AAFKygOLuJHd0J8Z9GE-Qtq6oKfOrCJN8uo"
 
 TELEGRAM_CHAT_ID = "-1003776345220"
 
