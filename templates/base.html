@@ -1459,6 +1459,15 @@ tbody tr:hover{background:#fffaf6}
         transform:scale(.96);
     }
 
+    .bubu-top-back:disabled,
+    .bubu-top-back[aria-disabled="true"]{
+        opacity:.38;
+        cursor:default;
+        pointer-events:none;
+        transform:none;
+        box-shadow:none;
+    }
+
     body.sidebar-open .bubu-top-back{
         visibility:hidden;
         pointer-events:none;
@@ -1986,6 +1995,22 @@ html.bubu-loading body{
                class="{% if request.resolver_match.url_name == 'branch_list' %}active{% endif %}">
                 <span class="bubu-nav-icon tone-green"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h12v6.5H6z" fill="currentColor" opacity=".10" stroke="none"/><path d="M4 9h16l-1-5H5L4 9Z"/><path d="M5 9v11h14V9"/><path d="M8 20v-6h4v6M15 12h2"/><path d="M4 9c0 1.5 1 2.5 2.5 2.5S9 10.5 9 9c0 1.5 1 2.5 2.5 2.5S14 10.5 14 9c0 1.5 1 2.5 2.5 2.5S19 10.5 19 9"/></svg></span><span>Shops</span>
             </a>
+
+            {% if request.user.is_superuser %}
+            <a href="{% url 'create_aba_qr_for_display' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'create_aba_qr_for_display' %}active{% endif %}">
+                <span class="bubu-nav-icon tone-gold">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="4" width="6" height="6" rx="1"/>
+                        <rect x="14" y="4" width="6" height="6" rx="1"/>
+                        <rect x="4" y="14" width="6" height="6" rx="1"/>
+                        <path d="M14 14h2v2h-2zM18 14h2v4h-2zM14 18h4v2h-4zM20 20h.01"/>
+                    </svg>
+                </span>
+                <span>Payment QR</span>
+            </a>
+            {% endif %}
         </div>
 
         <!-- STAFF -->
@@ -2229,10 +2254,12 @@ html.bubu-loading body{
         return !sameDocument;
     }
 
-    function goWithBubuLoader(url){
+    function goWithBubuLoader(url, options){
         if(!url){
             return;
         }
+
+        const shouldReplace = Boolean(options && options.replace === true);
 
         showBubuLoader();
 
@@ -2241,7 +2268,11 @@ html.bubu-loading body{
         }
 
         navigationTimer = window.setTimeout(function(){
-            window.location.assign(url);
+            if(shouldReplace){
+                window.location.replace(url);
+            }else{
+                window.location.assign(url);
+            }
         },110);
     }
 
@@ -2304,10 +2335,223 @@ html.bubu-loading body{
 <script>
 const BUBU_OPEN_MENU_KEY = "bubu_open_sidebar_menu";
 const BUBU_SCROLL_KEY = "bubu_sidebar_scroll_top";
+const BUBU_PHONE_NAV_KEY = "bubu_phone_navigation_stack_v3";
+const BUBU_POS_URL = "{% url 'pos' %}";
+const BUBU_PET_LIST_URL = "{% url 'pet_list' %}";
+
+function bubuNormalizeInternalUrl(url){
+    try{
+        const parsed = new URL(url, window.location.href);
+
+        if(parsed.origin !== window.location.origin){
+            return "";
+        }
+
+        return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    }catch(error){
+        return "";
+    }
+}
+
+function bubuReadNavStack(){
+    try{
+        const value = JSON.parse(
+            sessionStorage.getItem(BUBU_PHONE_NAV_KEY) || "[]"
+        );
+
+        if(!Array.isArray(value)){
+            return [];
+        }
+
+        return value
+            .filter(item => typeof item === "string" && item.length > 0)
+            .slice(-50);
+    }catch(error){
+        return [];
+    }
+}
+
+function bubuWriteNavStack(stack){
+    try{
+        sessionStorage.setItem(
+            BUBU_PHONE_NAV_KEY,
+            JSON.stringify(Array.isArray(stack) ? stack.slice(-50) : [])
+        );
+    }catch(error){
+        /* Ignore private-mode/session-storage errors. */
+    }
+}
+
+function bubuClearNavStack(){
+    try{
+        sessionStorage.removeItem(BUBU_PHONE_NAV_KEY);
+    }catch(error){
+        /* Ignore private-mode/session-storage errors. */
+    }
+}
+
+function bubuRememberCurrentPage(nextUrl, forceCurrent){
+    const currentUrl = bubuNormalizeInternalUrl(window.location.href);
+    const destinationUrl = bubuNormalizeInternalUrl(nextUrl);
+
+    if(
+        !currentUrl ||
+        !destinationUrl ||
+        (!forceCurrent && currentUrl === destinationUrl)
+    ){
+        return;
+    }
+
+    const posUrl = bubuNormalizeInternalUrl(BUBU_POS_URL);
+
+    if(currentUrl === posUrl){
+        bubuClearNavStack();
+    }
+
+    const stack = bubuReadNavStack();
+
+    if(stack[stack.length - 1] !== currentUrl){
+        stack.push(currentUrl);
+    }
+
+    bubuWriteNavStack(stack);
+}
+
+function bubuGetPetSectionPrefix(){
+    try{
+        const petListPath = new URL(
+            BUBU_PET_LIST_URL,
+            window.location.href
+        ).pathname;
+
+        if(/\/(list|pet-list|pets-list)\/?$/i.test(petListPath)){
+            return petListPath.replace(
+                /(list|pet-list|pets-list)\/?$/i,
+                ""
+            );
+        }
+
+        return petListPath.endsWith("/")
+            ? petListPath
+            : `${petListPath}/`;
+    }catch(error){
+        return "";
+    }
+}
+
+function bubuIsPetSection(url){
+    try{
+        const path = new URL(url, window.location.href).pathname;
+        const prefix = bubuGetPetSectionPrefix();
+
+        return Boolean(prefix && path.startsWith(prefix));
+    }catch(error){
+        return false;
+    }
+}
+
+function bubuTrackInternalLink(event){
+    const link = event.target.closest("a[href]");
+
+    if(!link || link.target === "_blank" || link.hasAttribute("download")){
+        return;
+    }
+
+    const rawHref = (link.getAttribute("href") || "").trim();
+
+    if(!rawHref || rawHref.startsWith("#") || /^(mailto:|tel:|javascript:)/i.test(rawHref)){
+        return;
+    }
+
+    const destinationUrl = bubuNormalizeInternalUrl(link.href);
+
+    if(destinationUrl){
+        bubuRememberCurrentPage(destinationUrl);
+    }
+}
+
+function bubuTrackInternalForm(event){
+    const form = event.target;
+
+    if(!(form instanceof HTMLFormElement) || form.target === "_blank"){
+        return;
+    }
+
+    const destinationUrl = bubuNormalizeInternalUrl(
+        form.action || window.location.href
+    );
+
+    if(destinationUrl){
+        bubuRememberCurrentPage(destinationUrl, true);
+    }
+}
+
+document.addEventListener("click", bubuTrackInternalLink, true);
+document.addEventListener("submit", bubuTrackInternalForm, true);
+
+function bubuSetBackButtonStopped(stopped){
+    const button = document.getElementById("bubuTopBack");
+
+    if(!button){
+        return;
+    }
+
+    button.disabled = Boolean(stopped);
+    button.setAttribute("aria-disabled", stopped ? "true" : "false");
+    button.title = stopped ? "You are already at POS" : "Go back one step";
+}
+
+function bubuInstallPosBackStop(){
+    const currentUrl = bubuNormalizeInternalUrl(window.location.href);
+    const posUrl = bubuNormalizeInternalUrl(BUBU_POS_URL);
+    const isPhone = window.matchMedia("(max-width: 767px)").matches;
+
+    if(!isPhone){
+        return;
+    }
+
+    if(currentUrl !== posUrl){
+        bubuSetBackButtonStopped(false);
+        return;
+    }
+
+    bubuClearNavStack();
+    bubuSetBackButtonStopped(true);
+
+    const currentState = history.state || {};
+
+    if(currentState.bubuPosTop !== true){
+        history.replaceState(
+            Object.assign({}, currentState, {bubuPosBase:true}),
+            "",
+            window.location.href
+        );
+        history.pushState(
+            {bubuPosTop:true},
+            "",
+            window.location.href
+        );
+    }
+
+    window.addEventListener("popstate", function(){
+        if(
+            bubuNormalizeInternalUrl(window.location.href) === posUrl
+        ){
+            history.pushState(
+                {bubuPosTop:true},
+                "",
+                window.location.href
+            );
+        }
+    });
+}
+
+bubuInstallPosBackStop();
 
 function clearBubuMenuState(){
     localStorage.removeItem(BUBU_OPEN_MENU_KEY);
     localStorage.removeItem(BUBU_SCROLL_KEY);
+    bubuClearNavStack();
 }
 
 function toggleSidebar(){
@@ -2477,18 +2721,42 @@ function openBreedMasterList(event, link){
 
 
 function bubuGoBack(){
-    /*
-     * Final Back behavior:
-     * Do not use browser history because it can go back many pages.
-     * Always send phone Back button to the POS final page.
-     */
-    const posUrl = "{% url 'pos' %}";
+    const currentUrl = bubuNormalizeInternalUrl(window.location.href);
+    const posUrl = bubuNormalizeInternalUrl(BUBU_POS_URL);
 
-    if(typeof window.goWithBubuLoader === "function"){
-        window.goWithBubuLoader(posUrl);
-    }else{
-        window.location.assign(posUrl);
+    /* POS is the final stop. Never go farther back than POS. */
+    if(!currentUrl || currentUrl === posUrl){
+        bubuClearNavStack();
+        bubuSetBackButtonStopped(true);
+        return false;
     }
+
+    /*
+       True one-step navigation:
+       1 -> 2 -> 3 -> 4 -> 5 -> 6
+       Back from 5 goes to 4, then 3, then 2, then 1, then POS.
+       No forced Pet List/Detail route and no skipped page.
+    */
+    if(window.history.length > 1){
+        if(typeof window.showBubuLoader === "function"){
+            window.showBubuLoader();
+        }
+
+        window.setTimeout(function(){
+            window.history.back();
+        }, 80);
+
+        return false;
+    }
+
+    /* Direct-open fallback: return to POS when there is no prior page. */
+    if(typeof window.goWithBubuLoader === "function"){
+        window.goWithBubuLoader(posUrl, {replace:true});
+    }else{
+        window.location.replace(posUrl);
+    }
+
+    return false;
 }
 
 </script>

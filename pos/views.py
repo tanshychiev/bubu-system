@@ -1,3 +1,4 @@
+import hashlib
 import json
 import requests
 from decimal import Decimal, InvalidOperation
@@ -32,10 +33,8 @@ from .models import (
     CashCount,
     BranchCashFloat,
     CombinedPaymentSession,
-    ABAPaymentSession,
 )
 
-from .services.aba_qr import create_real_aba_payment, check_real_aba_payment
 
 from pets.models import PetSale
 from staffs.models import (
@@ -213,6 +212,27 @@ def get_pos_branch(request):
         return user_branch
 
     return Branch.objects.filter(is_active=True).order_by("id").first()
+
+
+def _can_manage_branch_qr(user):
+    """
+    QR management is only for Owner/Admin.
+    Supports superusers and common Owner/Admin group names.
+    """
+    if not user or not user.is_authenticated:
+        return False
+
+    if user.is_superuser:
+        return True
+
+    return user.groups.filter(
+        name__in=[
+            "Owner",
+            "Admin",
+            "Owner/Admin",
+            "Owner Admin",
+        ]
+    ).exists()
 
 
 def _cart_key(item_id, variant_id=None):
@@ -1383,6 +1403,16 @@ def pos_checkout(request):
             note="POS ABA KHR",
         )
 
+    # Tell the customer display to show the payment received / thank-you
+    # screen. This is triggered by the POS checkout recorded by the cashier;
+    # it is not an automatic ABA bank confirmation.
+    if paid_amount > 0:
+        Branch.objects.filter(pk=branch.pk).update(
+            customer_display_payment_event_id=sale.id,
+            customer_display_payment_amount=paid_amount,
+            customer_display_payment_at=timezone.now(),
+        )
+
     # ==================================================
     # COMPLETE ATTACHED PET SALE FROM POS
     # ==================================================
@@ -2366,26 +2396,28 @@ def customer_display(request):
     total_khr = total * Decimal(str(khr_rate))
 
     # ==================================================
-    # ABA QR SESSION
+    # STATIC PAYMENT QR BY BRANCH
     # ==================================================
-    aba_session = None
-    aba_qr_image_url = ""
-    aba_qr_text = ""
+    branch_qr_image_url = ""
+    branch_qr_label = "Scan to pay"
+    payment_event_id = 0
+    payment_event_amount = Decimal("0.00")
 
     if current_branch:
-        aba_session = (
-            ABAPaymentSession.objects
-            .filter(
-                branch=current_branch,
-                status=ABAPaymentSession.STATUS_WAITING,
-            )
-            .order_by("-created_at")
-            .first()
+        branch_qr_label = current_branch.payment_qr_label or "Scan to pay"
+        payment_event_id = int(
+            current_branch.customer_display_payment_event_id or 0
+        )
+        payment_event_amount = (
+            current_branch.customer_display_payment_amount
+            or Decimal("0.00")
         )
 
-    if aba_session:
-        aba_qr_image_url = aba_session.qr_image_url or ""
-        aba_qr_text = aba_session.qr_text or ""
+        if current_branch.payment_qr_image:
+            try:
+                branch_qr_image_url = current_branch.payment_qr_image.url
+            except Exception:
+                branch_qr_image_url = ""
 
     # ==================================================
     # CUSTOMER POINTS
@@ -2418,6 +2450,45 @@ def customer_display(request):
 
     earn_points = int(total or 0)
 
+    display_state_payload = {
+        "branch_id": current_branch.id if current_branch else None,
+        "branch_qr": (
+            current_branch.payment_qr_image.name
+            if current_branch and current_branch.payment_qr_image
+            else ""
+        ),
+        "branch_qr_updated_at": (
+            current_branch.payment_qr_updated_at.isoformat()
+            if current_branch and current_branch.payment_qr_updated_at
+            else ""
+        ),
+        "payment_event_id": payment_event_id,
+        "payment_event_amount": str(payment_event_amount),
+        "cart": [
+            {
+                "key": row.get("cart_key"),
+                "quantity": int(row.get("quantity") or 0),
+                "total": str(row.get("total") or "0"),
+            }
+            for row in cart_items
+        ],
+        "pet_sale_id": selected_pet_sale.id if selected_pet_sale else None,
+        "pet_remaining": str(selected_pet_remaining),
+        "subtotal": str(subtotal),
+        "total": str(total),
+        "customer_points": customer_points,
+        "earn_points": earn_points,
+        "khr_rate": str(khr_rate),
+    }
+
+    display_state_key = hashlib.sha256(
+        json.dumps(
+            display_state_payload,
+            sort_keys=True,
+            ensure_ascii=True,
+        ).encode("utf-8")
+    ).hexdigest()[:24]
+
     return render(request, "pos/customer_display.html", {
         "cart_items": cart_items,
 
@@ -2429,10 +2500,12 @@ def customer_display(request):
         "current_branch": current_branch,
         "khr_rate": khr_rate,
 
-        # ABA QR
-        "aba_session": aba_session,
-        "aba_qr_image_url": aba_qr_image_url,
-        "aba_qr_text": aba_qr_text,
+        # Static branch QR + customer display payment event
+        "branch_qr_image_url": branch_qr_image_url,
+        "branch_qr_label": branch_qr_label,
+        "display_state_key": display_state_key,
+        "payment_event_id": payment_event_id,
+        "payment_event_amount": payment_event_amount,
 
         # Customer points
         "customer": customer,
@@ -2469,62 +2542,101 @@ def combined_payment_display(request):
 
 @login_required
 def create_aba_qr_for_display(request):
+    """
+    Easy payment QR settings page inside BUBU.
+
+    The old URL name is intentionally kept, so pos/urls.py does not need to
+    change and old links do not break.
+    """
     current_branch = get_pos_branch(request)
 
-    if not current_branch:
-        messages.error(request, "No branch selected.")
+    if not _can_manage_branch_qr(request.user):
+        if current_branch and current_branch.payment_qr_image:
+            messages.info(
+                request,
+                f"{current_branch.name} payment QR already shows "
+                "automatically on the customer display.",
+            )
+        else:
+            messages.warning(
+                request,
+                "No payment QR is configured for your branch. "
+                "Please ask Owner/Admin to upload it.",
+            )
+
         return redirect("pos")
 
-    cart = _get_cart(request)
-    cart_items, cart_subtotal = _build_cart_items(cart, current_branch)
+    branches = Branch.objects.all().order_by("name")
 
-    selected_pet_remaining = Decimal("0.00")
-    selected_pet_sale_id = request.session.get("selected_pet_sale_id")
+    if request.method == "POST":
+        branch_id = request.POST.get("branch_id", "").strip()
+        branch = Branch.objects.filter(id=branch_id).first()
 
-    if selected_pet_sale_id:
-        selected_pet_sale = PetSale.objects.filter(id=selected_pet_sale_id).first()
+        if not branch:
+            messages.error(request, "Invalid branch selected.")
+            return redirect("create_aba_qr_for_display")
 
-        if selected_pet_sale:
-            selected_pet_remaining = selected_pet_sale.remaining_amount or Decimal("0.00")
+        qr_label = request.POST.get(
+            "payment_qr_label",
+            "",
+        ).strip() or "Scan to pay"
 
-            if selected_pet_remaining <= 0:
-                selected_pet_remaining = (
-                    selected_pet_sale.sale_price or Decimal("0.00")
-                ) - (
-                    selected_pet_sale.paid_amount or Decimal("0.00")
+        uploaded_qr = request.FILES.get("payment_qr_image")
+        remove_qr = request.POST.get("remove_qr") == "1"
+
+        if uploaded_qr:
+            content_type = str(
+                getattr(uploaded_qr, "content_type", "") or ""
+            ).lower()
+
+            if content_type and not content_type.startswith("image/"):
+                messages.error(
+                    request,
+                    "Please upload an image file such as PNG, JPG or WEBP.",
                 )
+                return redirect("create_aba_qr_for_display")
 
-            if selected_pet_remaining < 0:
-                selected_pet_remaining = Decimal("0.00")
+            if uploaded_qr.size > 8 * 1024 * 1024:
+                messages.error(
+                    request,
+                    "QR image is too large. Maximum size is 8 MB.",
+                )
+                return redirect("create_aba_qr_for_display")
 
-    total = cart_subtotal + selected_pet_remaining
+            if branch.payment_qr_image:
+                branch.payment_qr_image.delete(save=False)
 
-    if total <= 0:
-        messages.error(request, "Total must be greater than 0 to create ABA QR.")
-        return redirect("pos")
+            branch.payment_qr_image = uploaded_qr
 
-    # Clear old waiting QR for this branch
-    ABAPaymentSession.objects.filter(
-        branch=current_branch,
-        status=ABAPaymentSession.STATUS_WAITING,
-    ).update(status=ABAPaymentSession.STATUS_CANCELLED)
+        elif remove_qr:
+            if branch.payment_qr_image:
+                branch.payment_qr_image.delete(save=False)
 
-    try:
-        aba_session = create_real_aba_payment(
-            branch=current_branch,
-            cashier=request.user,
-            amount=total,
-        )
+            branch.payment_qr_image = None
 
-        messages.success(
-            request,
-            f"ABA QR created for customer display: ${aba_session.amount:.2f}",
-        )
+        branch.payment_qr_label = qr_label
+        branch.payment_qr_updated_at = timezone.now()
+        branch.save(update_fields=[
+            "payment_qr_image",
+            "payment_qr_label",
+            "payment_qr_updated_at",
+        ])
 
-    except Exception as e:
-        messages.error(
-            request,
-            f"Cannot create ABA QR. Please check ABA setting. Error: {str(e)}",
-        )
+        if branch.payment_qr_image:
+            messages.success(
+                request,
+                f"{branch.name} payment QR updated successfully.",
+            )
+        else:
+            messages.success(
+                request,
+                f"{branch.name} payment QR removed.",
+            )
 
-    return redirect("pos")
+        return redirect("create_aba_qr_for_display")
+
+    return render(request, "pos/branch_qr_settings.html", {
+        "branches": branches,
+        "current_branch": current_branch,
+    })
+

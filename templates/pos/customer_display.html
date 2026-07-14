@@ -3,7 +3,6 @@
 <html>
 <head>
     <title>BUBU Customer Display</title>
-    <meta http-equiv="refresh" content="1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
@@ -632,7 +631,13 @@
 
 <body>
 
-<div class="display-page">
+<div
+    class="display-page"
+    data-state-key="{{ display_state_key }}"
+    data-branch-id="{{ current_branch.id|default:0 }}"
+    data-payment-event-id="{{ payment_event_id|default:0 }}"
+    data-payment-amount="{{ payment_event_amount|default:0|floatformat:2 }}"
+>
 
     <!-- TOP HERO -->
     <div class="hero-card">
@@ -760,26 +765,27 @@
 
             <div class="qr-card card">
                 <div class="qr-inner">
-                    {% if aba_qr_image_url %}
-                        <img src="{{ aba_qr_image_url }}" class="dynamic-qr" alt="ABA PayWay QR">
-                    {% elif aba_qr_text %}
+                    {% if branch_qr_image_url %}
                         <img
-                            src="https://api.qrserver.com/v1/create-qr-code/?size=230x230&data={{ aba_qr_text|urlencode }}"
+                            src="{{ branch_qr_image_url }}"
                             class="dynamic-qr"
-                            alt="ABA PayWay QR"
+                            alt="{{ current_branch.name|default:'BUBU' }} payment QR"
                         >
                     {% else %}
                         <div class="qr-placeholder">
                             <div class="qr-placeholder-icon">🐾</div>
                             <div class="qr-placeholder-text">
-                                ABA QR will show here<br>
-                                after cashier clicks<br>
-                                Pay by ABA
+                                No payment QR uploaded<br>
+                                for this branch.<br>
+                                Please ask Owner/Admin.
                             </div>
                         </div>
                     {% endif %}
 
-                    <div class="qr-note">Scan to pay</div>
+                    <div class="qr-note">
+                        {{ branch_qr_label|default:"Scan to pay" }}
+                        {% if current_branch %} · {{ current_branch.name }}{% endif %}
+                    </div>
                 </div>
             </div>
 
@@ -895,6 +901,142 @@
             overlay.style.display = "none";
         }, 9000);
     }
+
+    let bubuDisplayRefreshBusy = false;
+
+    function getDisplayPage() {
+        return document.querySelector(".display-page");
+    }
+
+    function paymentStorageKey(page) {
+        const branchId = page?.dataset?.branchId || "0";
+        return `bubu_customer_display_last_payment_${branchId}`;
+    }
+
+    function rememberInitialPaymentEvent() {
+        const page = getDisplayPage();
+
+        if (!page) {
+            return;
+        }
+
+        const storageKey = paymentStorageKey(page);
+        const currentEventId = page.dataset.paymentEventId || "0";
+        const rememberedEventId = sessionStorage.getItem(storageKey);
+
+        // Opening the display for the first time should not replay an old sale.
+        if (rememberedEventId === null) {
+            sessionStorage.setItem(storageKey, currentEventId);
+            return;
+        }
+
+        // If the display was briefly reloaded after a new checkout, still show
+        // the thank-you screen once.
+        if (
+            currentEventId !== "0"
+            && currentEventId !== rememberedEventId
+        ) {
+            sessionStorage.setItem(storageKey, currentEventId);
+            showPaymentComplete(
+                page.dataset.paymentAmount || "0.00"
+            );
+        }
+    }
+
+    async function refreshCustomerDisplaySilently() {
+        if (bubuDisplayRefreshBusy || document.hidden) {
+            return;
+        }
+
+        bubuDisplayRefreshBusy = true;
+
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.set("_display_refresh", Date.now().toString());
+
+            const response = await fetch(url.toString(), {
+                method: "GET",
+                credentials: "same-origin",
+                cache: "no-store",
+                headers: {
+                    "X-Requested-With": "BUBU-Customer-Display"
+                }
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const html = await response.text();
+            const parsed = new DOMParser().parseFromString(
+                html,
+                "text/html"
+            );
+
+            const nextPage = parsed.querySelector(".display-page");
+            const currentPage = getDisplayPage();
+
+            if (!nextPage || !currentPage) {
+                return;
+            }
+
+            const currentKey = currentPage.dataset.stateKey || "";
+            const nextKey = nextPage.dataset.stateKey || "";
+
+            if (currentKey === nextKey) {
+                return;
+            }
+
+            const storageKey = paymentStorageKey(nextPage);
+            const rememberedEventId = (
+                sessionStorage.getItem(storageKey)
+                ?? currentPage.dataset.paymentEventId
+                ?? "0"
+            );
+            const nextEventId = nextPage.dataset.paymentEventId || "0";
+            const nextPaymentAmount = (
+                nextPage.dataset.paymentAmount || "0.00"
+            );
+
+            const currentOrderList = currentPage.querySelector(".order-list");
+            const oldScrollTop = currentOrderList
+                ? currentOrderList.scrollTop
+                : 0;
+
+            currentPage.innerHTML = nextPage.innerHTML;
+            currentPage.dataset.stateKey = nextKey;
+            currentPage.dataset.branchId = (
+                nextPage.dataset.branchId || "0"
+            );
+            currentPage.dataset.paymentEventId = nextEventId;
+            currentPage.dataset.paymentAmount = nextPaymentAmount;
+
+            formatKHRNumbers();
+
+            const newOrderList = currentPage.querySelector(".order-list");
+
+            if (newOrderList) {
+                newOrderList.scrollTop = oldScrollTop;
+            }
+
+            if (
+                nextEventId !== "0"
+                && nextEventId !== rememberedEventId
+            ) {
+                sessionStorage.setItem(storageKey, nextEventId);
+                showPaymentComplete(nextPaymentAmount);
+            }
+        } catch (error) {
+            console.log("Customer display update skipped:", error);
+        } finally {
+            bubuDisplayRefreshBusy = false;
+        }
+    }
+
+    rememberInitialPaymentEvent();
+
+    // No visible full-page refresh. Only changed content updates silently.
+    window.setInterval(refreshCustomerDisplaySilently, 1100);
 </script>
 
 </body>

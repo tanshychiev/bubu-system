@@ -369,6 +369,44 @@ class Branch(models.Model):
     name = models.CharField(max_length=100, unique=True)
     is_active = models.BooleanField(default=True)
 
+    # Static QR shown on the customer-facing display for this branch.
+    # Owner/Admin can replace it from the normal BUBU interface.
+    payment_qr_image = models.ImageField(
+        upload_to="branch_payment_qr/",
+        blank=True,
+        null=True,
+        help_text="Upload the payment QR image used by this branch.",
+    )
+
+    payment_qr_label = models.CharField(
+        max_length=100,
+        blank=True,
+        default="Scan to pay",
+        help_text="Text shown below the QR on the customer display.",
+    )
+
+    payment_qr_updated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    # These fields tell the customer display that the cashier has recorded
+    # money for a completed/partial POS payment. They do not sync with ABA.
+    customer_display_payment_event_id = models.PositiveBigIntegerField(
+        default=0,
+    )
+
+    customer_display_payment_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+    )
+
+    customer_display_payment_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
     latitude = models.DecimalField(
         max_digits=10,
         decimal_places=7,
