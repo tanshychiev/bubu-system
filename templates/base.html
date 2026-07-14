@@ -1997,7 +1997,7 @@ html.bubu-loading body{
             </a>
 
             {% if request.user.is_superuser %}
-            <a href="{% url 'create_aba_qr_for_display' %}"
+            <a href="{% url 'pos:create_aba_qr_for_display' %}
                onclick="saveMenuStateAndClose()"
                class="{% if request.resolver_match.url_name == 'create_aba_qr_for_display' %}active{% endif %}">
                 <span class="bubu-nav-icon tone-gold">
