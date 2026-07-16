@@ -3,11 +3,11 @@
 {% block content %}
 <div class="count-page" data-session-status="{{ session.status }}">
     <header class="count-head">
-        <div>
+        <div class="count-title-block">
             <span class="count-kicker">STOCK COUNT #{{ session.id }}</span>
             <h1>{{ session.branch.name }}</h1>
             <p>
-                Started by {{ display_created_by }} · {{ session.created_at|date:"d M Y H:i" }}
+                {{ display_created_by }} · {{ session.created_at|date:"d M Y H:i" }}
                 {% if session.note %} · {{ session.note }}{% endif %}
             </p>
         </div>
@@ -22,14 +22,14 @@
         <div class="progress-top">
             <div>
                 <span>Counted</span>
-                <strong><b id="countedTotal">{{ stats.counted }}</b> / <b id="allTotal">{{ stats.total }}</b></strong>
+                <strong><b id="countedTotal">{{ stats.counted }}</b>/<b id="allTotal">{{ stats.total }}</b></strong>
             </div>
             <div>
-                <span>Remaining</span>
+                <span>Left</span>
                 <strong id="remainingTotal">{{ stats.remaining }}</strong>
             </div>
             <div>
-                <span>Differences</span>
+                <span>Different</span>
                 <strong id="differenceTotal">{{ stats.different }}</strong>
             </div>
             <div>
@@ -43,12 +43,12 @@
     {% if session.status == "confirmed" %}
     <section class="confirmed-box">
         <strong>✓ Confirmed by {{ display_confirmed_by }}</strong>
-        <span>{{ session.confirmed_at|date:"d M Y H:i" }} · Every changed quantity is recorded in Stock Movement history.</span>
+        <span>{{ session.confirmed_at|date:"d M Y H:i" }} · Stock Movement history recorded.</span>
     </section>
     {% elif session.status == "review" %}
     <section class="review-box">
-        <strong>Waiting for Owner/Admin confirmation</strong>
-        <span>Submitted by {{ display_submitted_by }} on {{ session.submitted_at|date:"d M Y H:i" }}.</span>
+        <strong>Waiting for confirmation</strong>
+        <span>{{ display_submitted_by }} · {{ session.submitted_at|date:"d M Y H:i" }}</span>
     </section>
     {% endif %}
 
@@ -65,22 +65,29 @@
             <button type="button" id="clearSearch" aria-label="Clear">×</button>
         </label>
 
-        <div class="filter-row" id="filterRow">
+        <div class="filter-row status-filter-row" id="filterRow">
             <button type="button" class="filter-btn active" data-filter="all">All</button>
             <button type="button" class="filter-btn" data-filter="uncounted">Not Counted</button>
             <button type="button" class="filter-btn" data-filter="correct">Correct</button>
             <button type="button" class="filter-btn" data-filter="difference">Difference</button>
         </div>
 
+        <div class="type-filter-wrap">
+            <span class="type-filter-label">Type</span>
+            <div class="type-filter-row" id="typeFilterRow">
+                <button type="button" class="type-filter-btn active" data-type="all">All Types</button>
+            </div>
+        </div>
+
         {% if not is_locked %}
-        <form method="post" action="{% url 'stock_count_fill_remaining' session.id %}" onsubmit="return confirm('Mark every remaining SKU the same as current system stock?');">
+        <form class="same-remaining-form" method="post" action="{% url 'stock_count_fill_remaining' session.id %}" onsubmit="return confirm('Mark every remaining SKU the same as current system stock?');">
             {% csrf_token %}
             <button type="submit" class="same-remaining-btn">✓ Same for Remaining</button>
         </form>
         {% endif %}
     </section>
 
-    <div class="save-banner" id="saveBanner">All entered quantities save automatically.</div>
+    <div class="save-banner" id="saveBanner">Entered quantities save automatically.</div>
 
     <section class="count-list" id="countList">
         {% for line in lines %}
@@ -89,10 +96,12 @@
             id="line-{{ line.id }}"
             data-line-id="{{ line.id }}"
             data-save-url="{% url 'stock_count_save_line' session.id line.id %}"
-            data-search="{{ line.variant.sku|default:''|lower }} {{ line.variant.item.name|lower }} {{ line.variant.item.brand|default:''|lower }} {{ line.variant.display_name|lower }}"
+            data-search="{{ line.variant.sku|default:''|lower }} {{ line.variant.item.name|lower }} {{ line.variant.item.brand|default:''|lower }} {{ line.variant.display_name|lower }} {{ line.variant.item.item_type.name|default:'other'|lower }}"
             data-sku="{{ line.variant.sku|default:''|lower }}"
             data-state="{% if line.actual_quantity is None %}uncounted{% elif line.difference == 0 %}correct{% else %}difference{% endif %}"
             data-system="{{ line.system_quantity }}"
+            data-type="{{ line.variant.item.item_type.name|default:'Other'|lower }}"
+            data-type-label="{{ line.variant.item.item_type.emoji|default:'📦' }} {{ line.variant.item.item_type.name|default:'Other' }}"
         >
             <div class="product-side">
                 <div class="product-photo">
@@ -104,7 +113,7 @@
                 </div>
 
                 <div class="product-info">
-                    <small>{{ line.variant.item.item_type|default:"Inventory" }}</small>
+                    <small>{{ line.variant.item.item_type.emoji|default:"📦" }} {{ line.variant.item.item_type.name|default:"Inventory" }}</small>
                     <h3>{{ line.variant.item.name }}</h3>
                     <p>{{ line.variant.display_name }}</p>
                     <code>{{ line.variant.sku|default:"No SKU" }}</code>
@@ -142,7 +151,7 @@
                 </div>
 
                 <div class="difference-box">
-                    <span>Difference</span>
+                    <span>Diff.</span>
                     <strong class="difference-value">
                         {% if line.actual_quantity is None %}—{% elif line.difference > 0 %}+{{ line.difference }}{% else %}{{ line.difference }}{% endif %}
                     </strong>
@@ -151,32 +160,44 @@
 
             {% if not is_locked %}
             <div class="quick-row">
-                <button type="button" class="same-btn">Same as System</button>
-                <button type="button" class="recount-btn">Refresh System & Recount</button>
+                <button type="button" class="same-btn">Same</button>
+                <button type="button" class="recount-btn">Refresh</button>
             </div>
             {% endif %}
 
             <div class="reason-area {% if line.actual_quantity is None or line.difference == 0 %}hidden{% endif %}">
-                <label>
-                    Difference reason
-                    <select class="reason-select" {% if is_locked %}disabled{% endif %}>
-                        <option value="">Choose reason</option>
-                        {% for value, label in reason_choices %}
-                            <option value="{{ value }}" {% if line.reason_code == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
+                <select class="reason-select" hidden {% if is_locked %}disabled{% endif %}>
+                    <option value="">Choose reason</option>
+                    {% for value, label in reason_choices %}
+                        <option value="{{ value }}" {% if line.reason_code == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
 
-                <label>
-                    Note <span>optional unless “Other”</span>
-                    <input
-                        type="text"
-                        class="reason-note"
-                        value="{{ line.reason_note }}"
-                        placeholder="Explain the difference"
-                        {% if is_locked %}readonly{% endif %}
-                    >
-                </label>
+                <input
+                    type="hidden"
+                    class="reason-note"
+                    value="{{ line.reason_note }}"
+                    {% if is_locked %}readonly{% endif %}
+                >
+
+                {% if not is_locked %}
+                <button type="button" class="reason-open-btn">
+                    <span class="reason-icon">!</span>
+                    <span class="reason-summary">
+                        {% if line.reason_code %}
+                            {{ line.get_reason_code_display }}{% if line.reason_note %} · {{ line.reason_note }}{% endif %}
+                        {% else %}
+                            Choose difference reason
+                        {% endif %}
+                    </span>
+                    <span class="reason-arrow">›</span>
+                </button>
+                {% else %}
+                <div class="reason-readonly">
+                    <strong>{{ line.get_reason_code_display|default:"No reason" }}</strong>
+                    {% if line.reason_note %}<span>{{ line.reason_note }}</span>{% endif %}
+                </div>
+                {% endif %}
             </div>
 
             <div class="line-foot">
@@ -192,7 +213,7 @@
 
                 <span class="counted-info">
                     {% if line.counted_by %}
-                        Counted by {{ line.counted_by.get_full_name|default:line.counted_by.username }}
+                        {{ line.counted_by.get_full_name|default:line.counted_by.username }}
                         {% if line.counted_at %} · {{ line.counted_at|date:"d M H:i" }}{% endif %}
                     {% endif %}
                 </span>
@@ -200,7 +221,7 @@
 
             {% if session.status == "confirmed" and line.difference != 0 %}
             <div class="applied-record">
-                <strong>Applied: {{ line.applied_before_quantity }} → {{ line.applied_after_quantity }}</strong>
+                <strong>{{ line.applied_before_quantity }} → {{ line.applied_after_quantity }}</strong>
                 <span>{{ line.get_reason_code_display|default:line.reason_note }}</span>
             </div>
             {% endif %}
@@ -216,7 +237,7 @@
         {% if session.status == "draft" %}
         <form method="post" action="{% url 'stock_count_submit' session.id %}">
             {% csrf_token %}
-            <button type="submit" class="review-btn">Finish Count & Send for Review</button>
+            <button type="submit" class="review-btn">Finish & Send for Review</button>
         </form>
         {% elif session.status == "review" and can_confirm %}
         <form method="post" action="{% url 'stock_count_confirm' session.id %}" onsubmit="return confirm('Confirm this stock count and update branch quantities?');">
@@ -228,29 +249,125 @@
         {% if session.status != "confirmed" and session.status != "cancelled" %}
         <form method="post" action="{% url 'stock_count_cancel' session.id %}" onsubmit="return confirm('Cancel this count? No stock will be changed.');">
             {% csrf_token %}
-            <button type="submit" class="cancel-btn">Cancel Count</button>
+            <button type="submit" class="cancel-btn">Cancel</button>
         </form>
         {% endif %}
     </section>
 </div>
 
+{% if not is_locked %}
+<div class="reason-popup-backdrop" id="reasonPopupBackdrop"></div>
+<div class="reason-popup" id="reasonPopup" role="dialog" aria-modal="true" aria-labelledby="reasonPopupTitle">
+    <div class="reason-popup-head">
+        <div>
+            <small>STOCK DIFFERENCE</small>
+            <h3 id="reasonPopupTitle">Choose reason</h3>
+            <p id="reasonPopupItem"></p>
+        </div>
+        <button type="button" class="reason-popup-close" id="reasonPopupClose">×</button>
+    </div>
+
+    <div class="reason-popup-list" id="reasonPopupList"></div>
+
+    <label class="reason-popup-note-label">
+        Note <span id="reasonNoteHint">optional</span>
+        <input type="text" id="reasonPopupNote" placeholder="Explain the difference">
+    </label>
+
+    <button type="button" class="reason-popup-save" id="reasonPopupSave">Save reason</button>
+</div>
+{% endif %}
+
 <style>
-*{box-sizing:border-box}.count-page{width:min(1080px,100%);margin:0 auto;padding:8px 0 110px;color:#17152f}.count-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:15px}.count-kicker{color:#8e63ff;font-size:10px;font-weight:1000;letter-spacing:.14em}.count-head h1{margin:4px 0 0;font-size:34px;line-height:1;font-weight:1000}.count-head p{margin:8px 0 0;color:#7e7389;font-size:13px;font-weight:800}.head-actions{display:flex;align-items:center;gap:8px}.soft-btn,.session-status{min-height:42px;padding:0 13px;border-radius:13px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:1000;white-space:nowrap}.soft-btn{background:#f2edff;color:#7047db}.session-status{background:#f2edff;color:#7047db}.status-review{background:#fff4d6;color:#a56a00}.status-confirmed{background:#e9fbf1;color:#16865d}.status-cancelled{background:#eeeef1;color:#777}.progress-card{padding:15px;border:1px solid #ecdfeb;border-radius:21px;background:#fff;box-shadow:0 10px 26px rgba(74,48,62,.05)}.progress-top{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.progress-top div{padding:10px 12px;border-radius:14px;background:#faf8fb}.progress-top span,.progress-top strong{display:block}.progress-top span{color:#918698;font-size:9px;font-weight:1000}.progress-top strong{margin-top:3px;font-size:18px;font-weight:1000}.progress-track{height:9px;margin-top:12px;border-radius:999px;background:#eee9f1;overflow:hidden}.progress-track div{height:100%;border-radius:999px;background:linear-gradient(90deg,#8e63ff,#ff8464);transition:width .2s ease}.confirmed-box,.review-box{margin-top:11px;padding:12px 14px;border-radius:16px;display:flex;gap:8px;align-items:center}.confirmed-box{background:#eafbf2;border:1px solid #cdebdc;color:#1a7858}.review-box{background:#fff7de;border:1px solid #f0dfad;color:#8d6300}.confirmed-box span,.review-box span{font-size:12px;font-weight:800}.count-tools{position:sticky;top:64px;z-index:70;margin-top:14px;padding:11px;border:1px solid #eadfea;border-radius:19px;background:rgba(255,255,255,.96);box-shadow:0 12px 28px rgba(69,43,56,.08);backdrop-filter:blur(14px);display:grid;grid-template-columns:minmax(240px,1fr) auto auto;gap:9px;align-items:center}.search-box{height:48px;padding:0 10px 0 14px;border:1px solid #dfd5e1;border-radius:15px;display:flex;align-items:center;gap:8px;background:#fff}.search-box span{font-size:20px;color:#877d90}.search-box input{min-width:0;flex:1;border:0;outline:0;background:transparent;color:#17152f;font-size:15px;font-weight:900}.search-box button{width:30px;height:30px;border:0;border-radius:50%;background:#f3eef5;color:#807485;font-size:20px;cursor:pointer}.filter-row{display:flex;gap:6px;overflow:auto}.filter-btn,.same-remaining-btn{min-height:44px;padding:0 12px;border:1px solid #e2d8e4;border-radius:13px;background:#fff;color:#655b6f;font-size:11px;font-weight:1000;cursor:pointer;white-space:nowrap}.filter-btn.active{border-color:transparent;background:linear-gradient(135deg,#8e63ff,#a97cff);color:#fff}.same-remaining-btn{border:0;background:#eafbf2;color:#17865e}.save-banner{min-height:28px;padding:7px 10px;color:#7c7186;font-size:11px;font-weight:900;text-align:center}.save-banner.saving{color:#a66b00}.save-banner.saved{color:#14815b}.save-banner.error{color:#d43d49}.count-list{display:grid;gap:10px}.count-row{padding:14px;border:1px solid #eadfea;border-radius:21px;background:#fff;box-shadow:0 8px 22px rgba(69,43,56,.045);transition:.18s}.count-row.state-correct{border-color:#cdebdc;background:linear-gradient(135deg,#f7fff9,#fff)}.count-row.state-difference{border-color:#f2c4c7;background:linear-gradient(135deg,#fff8f8,#fff)}.count-row.is-saving{opacity:.75}.product-side{display:flex;align-items:center;gap:11px}.product-photo{width:58px;height:58px;flex:0 0 58px;border-radius:16px;display:grid;place-items:center;overflow:hidden;background:#fff7ef;font-size:27px}.product-photo img{width:100%;height:100%;object-fit:contain}.product-info{min-width:0;flex:1}.product-info small{display:block;color:#a0919d;font-size:9px;font-weight:1000;text-transform:uppercase}.product-info h3{margin:2px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px;font-weight:1000}.product-info p{margin:2px 0 4px;color:#756a7e;font-size:11px;font-weight:900}.product-info code{display:inline-block;padding:4px 7px;border-radius:8px;background:#f2edff;color:#7047db;font-family:inherit;font-size:10px;font-weight:1000}.quantity-side{margin-top:12px;display:grid;grid-template-columns:.7fr 1.35fr .8fr;gap:8px;align-items:end}.system-box,.difference-box,.actual-wrap{min-width:0}.system-box,.difference-box{min-height:67px;padding:10px;border-radius:14px;background:#f8f6f9;text-align:center}.system-box span,.difference-box span,.actual-wrap>span{display:block;color:#918698;font-size:9px;font-weight:1000}.system-box strong,.difference-box strong{display:block;margin-top:5px;font-size:21px;font-weight:1000}.actual-control{margin-top:5px;display:grid;grid-template-columns:44px minmax(60px,1fr) 44px;gap:5px}.actual-control input{width:100%;height:48px;border:2px solid #dcd0e0;border-radius:13px;text-align:center;color:#17152f;background:#fff;font-size:21px;font-weight:1000;outline:none}.actual-control input:focus{border-color:#8e63ff;box-shadow:0 0 0 4px rgba(142,99,255,.10)}.qty-step{height:48px;border:0;border-radius:13px;background:#f2edff;color:#7047db;font-size:24px;font-weight:1000;cursor:pointer}.state-difference .difference-box{background:#fff0f1;color:#d43d49}.state-correct .difference-box{background:#eafbf2;color:#16865d}.quick-row{margin-top:8px;display:flex;gap:7px}.quick-row button{min-height:38px;padding:0 11px;border:0;border-radius:11px;font-size:10px;font-weight:1000;cursor:pointer}.same-btn{background:#eafbf2;color:#16865d}.recount-btn{background:#fff3df;color:#a46b00}.reason-area{margin-top:10px;padding:11px;border-radius:15px;background:#fff2f2;border:1px solid #f1c9cb;display:grid;grid-template-columns:1fr 1fr;gap:8px}.reason-area.hidden{display:none}.reason-area label{color:#7c6065;font-size:10px;font-weight:1000}.reason-area label span{font-weight:800}.reason-area select,.reason-area input{width:100%;height:43px;margin-top:5px;padding:0 11px;border:1px solid #e6bfc2;border-radius:11px;background:#fff;color:#17152f;font-size:12px;font-weight:900;outline:none}.line-foot{margin-top:9px;padding-top:8px;border-top:1px dashed #e5dae6;display:flex;justify-content:space-between;gap:8px;color:#8a7e91;font-size:10px;font-weight:900}.state-correct .line-status{color:#16865d}.state-difference .line-status{color:#d43d49}.applied-record{margin-top:9px;padding:9px 11px;border-radius:12px;background:#eafbf2;color:#176f51;display:flex;justify-content:space-between;gap:8px;font-size:11px;font-weight:900}.no-lines,.no-search-result{padding:38px 18px;border:1px dashed #ded2df;border-radius:20px;background:#fff;text-align:center;color:#817587;font-weight:900}.final-actions{position:fixed;left:calc(var(--sidebar-width,260px) + 20px);right:20px;bottom:14px;z-index:90;display:flex;justify-content:center;gap:9px;pointer-events:none}.final-actions form{pointer-events:auto}.final-actions button{min-height:54px;padding:0 22px;border:0;border-radius:999px;color:#fff;font-size:13px;font-weight:1000;box-shadow:0 12px 28px rgba(69,43,56,.18);cursor:pointer}.review-btn{background:linear-gradient(135deg,#8e63ff,#ff8464)}.confirm-btn{background:linear-gradient(135deg,#20a875,#68d7a8)}.cancel-btn{background:#fff;color:#d54853!important;border:1px solid #efc8ca!important}@media(max-width:900px){.count-tools{grid-template-columns:1fr}.filter-row{order:2}.count-tools form{order:3}.same-remaining-btn{width:100%}.final-actions{left:20px}}@media(max-width:600px){.count-page{padding-top:0}.count-head h1{font-size:28px}.count-head p{font-size:11px}.head-actions{display:grid}.soft-btn,.session-status{min-height:36px}.progress-card{padding:11px}.progress-top{grid-template-columns:1fr 1fr}.progress-top div{padding:8px}.count-tools{top:58px;padding:8px;border-radius:16px}.filter-row{margin:0 -2px}.filter-btn{flex:1;padding:0 9px}.count-row{padding:11px;border-radius:18px}.product-photo{width:52px;height:52px;flex-basis:52px}.quantity-side{grid-template-columns:.65fr 1.5fr .75fr}.system-box,.difference-box{padding:8px 4px}.actual-control{grid-template-columns:40px minmax(50px,1fr) 40px}.qty-step,.actual-control input{height:46px}.reason-area{grid-template-columns:1fr}.line-foot{display:block}.counted-info{display:block;margin-top:3px}.final-actions{left:10px;right:10px;bottom:8px;display:grid;grid-template-columns:1fr}.final-actions form,.final-actions button{width:100%}.confirmed-box,.review-box{display:block}.confirmed-box span,.review-box span{display:block;margin-top:3px}}
+*{box-sizing:border-box}
+body.stock-reason-open{overflow:hidden!important}
+.count-page{width:min(1060px,100%);margin:0 auto;padding:4px 0 92px;color:#17152f}
+.count-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:9px}
+.count-title-block{min-width:0}
+.count-kicker{color:#8e63ff;font-size:9px;font-weight:1000;letter-spacing:.12em}
+.count-head h1{margin:2px 0 0;font-size:28px;line-height:1;font-weight:1000}
+.count-head p{margin:5px 0 0;color:#7e7389;font-size:11px;font-weight:800}
+.head-actions{display:flex;align-items:center;gap:6px}
+.soft-btn,.session-status{min-height:36px;padding:0 11px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:1000;white-space:nowrap}
+.soft-btn,.session-status{background:#f2edff;color:#7047db}
+.status-review{background:#fff4d6;color:#a56a00}.status-confirmed{background:#e9fbf1;color:#16865d}.status-cancelled{background:#eeeef1;color:#777}
+.progress-card{padding:9px;border:1px solid #ecdfeb;border-radius:16px;background:#fff;box-shadow:0 7px 18px rgba(74,48,62,.04)}
+.progress-top{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.progress-top div{min-width:0;padding:7px 8px;border-radius:10px;background:#faf8fb}
+.progress-top span,.progress-top strong{display:block}
+.progress-top span{color:#918698;font-size:7px;font-weight:1000}
+.progress-top strong{margin-top:1px;font-size:14px;font-weight:1000;white-space:nowrap}
+.progress-track{height:5px;margin-top:7px;border-radius:999px;background:#eee9f1;overflow:hidden}
+.progress-track div{height:100%;border-radius:999px;background:linear-gradient(90deg,#8e63ff,#ff8464);transition:width .2s ease}
+.confirmed-box,.review-box{margin-top:7px;padding:8px 10px;border-radius:12px;display:flex;gap:6px;align-items:center;font-size:10px}
+.confirmed-box{background:#eafbf2;border:1px solid #cdebdc;color:#1a7858}.review-box{background:#fff7de;border:1px solid #f0dfad;color:#8d6300}
+.confirmed-box span,.review-box span{font-size:9px;font-weight:800}
+.count-tools{position:sticky;top:61px;z-index:70;margin-top:9px;padding:7px;border:1px solid #eadfea;border-radius:15px;background:rgba(255,255,255,.97);box-shadow:0 8px 20px rgba(69,43,56,.07);backdrop-filter:blur(12px);display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:6px;align-items:center}
+.search-box{height:41px;padding:0 8px 0 11px;border:1px solid #dfd5e1;border-radius:11px;display:flex;align-items:center;gap:6px;background:#fff}
+.search-box span{font-size:17px;color:#877d90}.search-box input{min-width:0;flex:1;border:0;outline:0;background:transparent;color:#17152f;font-size:13px;font-weight:900}.search-box button{width:26px;height:26px;border:0;border-radius:50%;background:#f3eef5;color:#807485;font-size:17px;cursor:pointer}
+.filter-row,.type-filter-row{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.filter-row::-webkit-scrollbar,.type-filter-row::-webkit-scrollbar{display:none}
+.status-filter-row{justify-content:flex-end}
+.filter-btn,.type-filter-btn,.same-remaining-btn{min-height:36px;padding:0 10px;border:1px solid #e2d8e4;border-radius:10px;background:#fff;color:#655b6f;font-size:9px;font-weight:1000;cursor:pointer;white-space:nowrap}
+.filter-btn.active,.type-filter-btn.active{border-color:transparent;background:linear-gradient(135deg,#8e63ff,#a97cff);color:#fff}
+.type-filter-wrap{grid-column:1/-1;min-width:0;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:6px;padding-top:1px}
+.type-filter-label{padding-left:3px;color:#8c8093;font-size:8px;font-weight:1000;text-transform:uppercase}
+.same-remaining-form{grid-column:1/-1}.same-remaining-btn{width:100%;border:0;background:#eafbf2;color:#17865e;min-height:34px}
+.save-banner{min-height:21px;padding:4px 7px;color:#7c7186;font-size:9px;font-weight:900;text-align:center}.save-banner.saving{color:#a66b00}.save-banner.saved{color:#14815b}.save-banner.error{color:#d43d49}
+.count-list{display:grid;gap:7px}.count-row{padding:8px;border:1px solid #eadfea;border-radius:15px;background:#fff;box-shadow:0 5px 15px rgba(69,43,56,.035);transition:.18s}.count-row.state-correct{border-color:#cdebdc;background:linear-gradient(135deg,#f8fffa,#fff)}.count-row.state-difference{border-color:#f2c4c7;background:linear-gradient(135deg,#fff9f9,#fff)}.count-row.is-saving{opacity:.72}
+.product-side{display:grid;grid-template-columns:76px minmax(0,1fr);align-items:center;gap:9px}.product-photo{width:76px;height:76px;border-radius:12px;display:grid;place-items:center;overflow:hidden;background:#fff7ef;font-size:30px;border:1px solid #f2e5dc}.product-photo img{width:100%;height:100%;object-fit:contain}.product-info{min-width:0}.product-info small{display:block;color:#9a8d98;font-size:8px;font-weight:1000;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.product-info h3{margin:1px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:1000}.product-info p{margin:1px 0 3px;color:#756a7e;font-size:9px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.product-info code{display:inline-block;max-width:100%;padding:3px 6px;border-radius:6px;background:#f2edff;color:#7047db;font-family:inherit;font-size:8px;font-weight:1000;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.quantity-side{margin-top:6px;display:grid;grid-template-columns:58px minmax(120px,1fr) 58px;gap:5px;align-items:end}.system-box,.difference-box,.actual-wrap{min-width:0}.system-box,.difference-box{height:48px;padding:5px 3px;border-radius:10px;background:#f8f6f9;text-align:center}.system-box span,.difference-box span,.actual-wrap>span{display:block;color:#918698;font-size:7px;font-weight:1000}.system-box strong,.difference-box strong{display:block;margin-top:2px;font-size:15px;font-weight:1000}.actual-control{margin-top:2px;display:grid;grid-template-columns:35px minmax(55px,1fr) 35px;gap:4px}.actual-control input{width:100%;height:39px;border:1.5px solid #dcd0e0;border-radius:10px;text-align:center;color:#17152f;background:#fff;font-size:16px;font-weight:1000;outline:none;-moz-appearance:textfield}.actual-control input::-webkit-inner-spin-button,.actual-control input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.actual-control input:focus{border-color:#8e63ff;box-shadow:0 0 0 3px rgba(142,99,255,.09)}.qty-step{height:39px;border:0;border-radius:10px;background:#f2edff;color:#7047db;font-size:19px;font-weight:1000;cursor:pointer}.state-difference .difference-box{background:#fff0f1;color:#d43d49}.state-correct .difference-box{background:#eafbf2;color:#16865d}
+.quick-row{margin-top:5px;display:flex;gap:5px}.quick-row button{min-height:29px;padding:0 9px;border:0;border-radius:8px;font-size:8px;font-weight:1000;cursor:pointer}.same-btn{background:#eafbf2;color:#16865d}.recount-btn{background:#fff3df;color:#a46b00}
+.reason-area{margin-top:5px}.reason-area.hidden{display:none}.reason-open-btn{width:100%;min-height:36px;padding:5px 8px;border:1px solid #f1c9cb;border-radius:10px;display:grid;grid-template-columns:23px minmax(0,1fr) 18px;align-items:center;gap:6px;color:#b13e47;background:#fff1f2;text-align:left;cursor:pointer}.reason-icon{width:23px;height:23px;border-radius:50%;display:grid;place-items:center;color:white;background:#ef6b75;font-size:12px;font-weight:1000}.reason-summary{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;font-weight:1000}.reason-arrow{font-size:20px;line-height:1;text-align:center}.reason-readonly{padding:7px 9px;border:1px solid #f1c9cb;border-radius:10px;color:#8d454b;background:#fff2f2;font-size:9px}.reason-readonly span{display:block;margin-top:2px;color:#8d7275}
+.line-foot{margin-top:5px;padding-top:5px;border-top:1px dashed #e5dae6;display:flex;justify-content:space-between;gap:5px;color:#8a7e91;font-size:8px;font-weight:900}.counted-info{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}.state-correct .line-status{color:#16865d}.state-difference .line-status{color:#d43d49}.applied-record{margin-top:5px;padding:6px 8px;border-radius:8px;background:#eafbf2;color:#176f51;display:flex;justify-content:space-between;gap:5px;font-size:8px;font-weight:900}.no-lines,.no-search-result{padding:28px 14px;border:1px dashed #ded2df;border-radius:15px;background:#fff;text-align:center;color:#817587;font-weight:900}
+.final-actions{position:fixed;left:calc(var(--sidebar-width,260px) + 12px);right:12px;bottom:8px;z-index:90;display:flex;justify-content:center;gap:7px;pointer-events:none}.final-actions form{pointer-events:auto}.final-actions button{min-height:45px;padding:0 17px;border:0;border-radius:999px;color:#fff;font-size:11px;font-weight:1000;box-shadow:0 8px 20px rgba(69,43,56,.16);cursor:pointer}.review-btn{background:linear-gradient(135deg,#8e63ff,#ff8464)}.confirm-btn{background:linear-gradient(135deg,#20a875,#68d7a8)}.cancel-btn{background:#fff;color:#d54853!important;border:1px solid #efc8ca!important}
+.reason-popup-backdrop{display:none;position:fixed;inset:0;z-index:12000;background:rgba(23,21,47,.45);backdrop-filter:blur(3px)}.reason-popup-backdrop.active{display:block}.reason-popup{display:none;position:fixed;left:50%;top:50%;z-index:12001;width:min(430px,calc(100% - 20px));max-height:82dvh;padding:12px;border-radius:20px;background:#fff;box-shadow:0 28px 80px rgba(23,21,47,.28);transform:translate(-50%,-50%);overflow:hidden}.reason-popup.active{display:block}.reason-popup-head{padding:11px;border-radius:14px;display:flex;justify-content:space-between;gap:10px;color:white;background:linear-gradient(135deg,#8e63ff,#ff8464)}.reason-popup-head small{font-size:8px;font-weight:1000;letter-spacing:.12em}.reason-popup-head h3{margin:2px 0 0;font-size:19px;font-weight:1000}.reason-popup-head p{margin:3px 0 0;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;font-weight:800}.reason-popup-close{width:34px;height:34px;flex:0 0 34px;border:0;border-radius:50%;color:#fff;background:rgba(255,255,255,.2);font-size:20px;font-weight:1000;cursor:pointer}.reason-popup-list{max-height:43dvh;margin-top:8px;display:grid;gap:5px;overflow-y:auto}.reason-option-btn{width:100%;min-height:44px;padding:0 11px;border:1px solid #eadfea;border-radius:11px;display:flex;align-items:center;justify-content:space-between;gap:8px;color:#4f4657;background:#fff;font-size:11px;font-weight:1000;text-align:left;cursor:pointer}.reason-option-btn::after{content:'✓';width:23px;height:23px;border-radius:50%;display:grid;place-items:center;color:transparent;background:#f3eef5}.reason-option-btn.selected{border-color:#9f7df5;color:#7047db;background:#f6f1ff}.reason-option-btn.selected::after{color:white;background:#8e63ff}.reason-popup-note-label{display:block;margin-top:8px;color:#6f6377;font-size:9px;font-weight:1000}.reason-popup-note-label span{font-weight:800}.reason-popup-note-label input{width:100%;height:42px;margin-top:4px;padding:0 11px;border:1px solid #ded3e1;border-radius:10px;outline:0;font-size:16px;font-weight:900}.reason-popup-note-label input:focus{border-color:#8e63ff;box-shadow:0 0 0 3px rgba(142,99,255,.1)}.reason-popup-save{width:100%;min-height:44px;margin-top:8px;border:0;border-radius:11px;color:white;background:linear-gradient(135deg,#8e63ff,#ff8464);font-size:11px;font-weight:1000;cursor:pointer}
+.count-row.scan-hit{outline:3px solid rgba(142,99,255,.25);transform:scale(1.005)}
+@media(max-width:900px){.count-tools{grid-template-columns:1fr}.status-filter-row{justify-content:flex-start}.type-filter-wrap,.same-remaining-form{grid-column:1}.final-actions{left:12px}}
+@media(max-width:600px){
+    .count-page{width:100%;padding:0 0 84px}
+    .count-head{align-items:center;margin-bottom:6px}.count-head h1{font-size:22px}.count-kicker{font-size:7px}.count-head p{font-size:8px;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .head-actions{gap:4px}.soft-btn,.session-status{min-height:30px;padding:0 8px;border-radius:8px;font-size:8px}
+    .progress-card{padding:6px;border-radius:12px}.progress-top{gap:3px}.progress-top div{padding:5px;border-radius:7px}.progress-top span{font-size:6px}.progress-top strong{font-size:11px}.progress-track{height:4px;margin-top:5px}
+    .confirmed-box,.review-box{display:block;margin-top:5px;padding:6px 8px;border-radius:9px}.confirmed-box span,.review-box span{display:block;margin-top:2px;font-size:7px}
+    .count-tools{top:55px;margin-top:6px;padding:5px;border-radius:11px;gap:4px}.search-box{height:37px;border-radius:9px}.search-box input{font-size:16px}.filter-btn,.type-filter-btn{min-height:31px;padding:0 8px;border-radius:8px;font-size:8px}.type-filter-wrap{gap:4px}.same-remaining-btn{min-height:31px;border-radius:8px;font-size:8px}
+    .save-banner{min-height:17px;padding:3px;font-size:7px}
+    .count-list{gap:5px}.count-row{padding:6px;border-radius:11px}.product-side{grid-template-columns:72px minmax(0,1fr);gap:7px}.product-photo{width:72px;height:72px;border-radius:9px}.product-info small{font-size:7px}.product-info h3{font-size:12px}.product-info p{font-size:8px}.product-info code{font-size:7px}
+    .quantity-side{margin-top:4px;grid-template-columns:49px minmax(110px,1fr) 49px;gap:3px}.system-box,.difference-box{height:42px;padding:4px 2px;border-radius:8px}.system-box span,.difference-box span,.actual-wrap>span{font-size:6px}.system-box strong,.difference-box strong{font-size:13px}.actual-control{grid-template-columns:31px minmax(45px,1fr) 31px;gap:3px}.actual-control input,.qty-step{height:35px;border-radius:8px}.actual-control input{font-size:16px}.qty-step{font-size:17px}
+    .quick-row{margin-top:4px}.quick-row button{min-height:26px;padding:0 7px;border-radius:7px;font-size:7px}.reason-area{margin-top:4px}.reason-open-btn{min-height:32px;padding:4px 6px;border-radius:8px;grid-template-columns:20px minmax(0,1fr) 14px}.reason-icon{width:20px;height:20px;font-size:10px}.reason-summary{font-size:8px}.reason-arrow{font-size:16px}
+    .line-foot{margin-top:4px;padding-top:4px;font-size:7px}.counted-info{max-width:58%}.applied-record{font-size:7px}
+    .final-actions{left:7px;right:7px;bottom:6px;display:grid;grid-template-columns:minmax(0,1fr) auto}.final-actions form:first-child{min-width:0}.final-actions button{min-height:40px;padding:0 12px;font-size:9px;box-shadow:0 6px 15px rgba(69,43,56,.14)}.final-actions form:first-child button{width:100%}
+    .reason-popup{left:6px;right:6px;top:auto;bottom:6px;width:auto;max-height:88dvh;padding:8px;border-radius:16px;transform:none}.reason-popup-head{padding:9px;border-radius:11px}.reason-popup-head h3{font-size:16px}.reason-popup-list{max-height:49dvh}.reason-option-btn{min-height:41px;border-radius:9px;font-size:10px}.reason-popup-note-label input{height:40px}.reason-popup-save{min-height:41px;border-radius:9px}
+}
+@media(max-width:370px){.product-side{grid-template-columns:66px minmax(0,1fr)}.product-photo{width:66px;height:66px}.quantity-side{grid-template-columns:45px minmax(100px,1fr) 45px}.actual-control{grid-template-columns:29px minmax(42px,1fr) 29px}.filter-btn,.type-filter-btn{padding:0 7px}}
 </style>
 
-{% if not is_locked %}
 <script>
 (function(){
+    const isLocked = {% if is_locked %}true{% else %}false{% endif %};
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
     const rows = Array.from(document.querySelectorAll('.count-row'));
     const searchInput = document.getElementById('countSearch');
     const clearSearch = document.getElementById('clearSearch');
     const noResult = document.getElementById('noSearchResult');
     const banner = document.getElementById('saveBanner');
+    const typeFilterRow = document.getElementById('typeFilterRow');
     let activeFilter = 'all';
+    let activeType = 'all';
     const timers = new Map();
 
+    let popupRow = null;
+    let popupSelectedReason = '';
+    const popup = document.getElementById('reasonPopup');
+    const popupBackdrop = document.getElementById('reasonPopupBackdrop');
+    const popupClose = document.getElementById('reasonPopupClose');
+    const popupList = document.getElementById('reasonPopupList');
+    const popupNote = document.getElementById('reasonPopupNote');
+    const popupSave = document.getElementById('reasonPopupSave');
+    const popupItem = document.getElementById('reasonPopupItem');
+    const reasonNoteHint = document.getElementById('reasonNoteHint');
+
     function setBanner(text, state=''){
+        if(!banner) return;
         banner.textContent = text;
         banner.className = 'save-banner' + (state ? ' ' + state : '');
     }
@@ -273,9 +390,24 @@
             reasonArea: row.querySelector('.reason-area'),
             reason: row.querySelector('.reason-select'),
             note: row.querySelector('.reason-note'),
+            reasonSummary: row.querySelector('.reason-summary'),
             status: row.querySelector('.line-status'),
             countedInfo: row.querySelector('.counted-info')
         };
+    }
+
+    function reasonLabel(select, value){
+        if(!select || !value) return '';
+        const option = Array.from(select.options).find(item => item.value === value);
+        return option ? option.textContent.trim() : '';
+    }
+
+    function refreshReasonSummary(row){
+        const el = rowElements(row);
+        if(!el.reasonSummary) return;
+        const label = reasonLabel(el.reason, el.reason?.value || '');
+        const note = el.note?.value.trim() || '';
+        el.reasonSummary.textContent = label ? (note ? label + ' · ' + note : label) : 'Choose difference reason';
     }
 
     function applyRowState(row, data){
@@ -291,8 +423,8 @@
             row.dataset.state = 'correct';
             el.status.textContent = '✓ Correct';
             el.reasonArea.classList.add('hidden');
-            el.reason.value = '';
-            el.note.value = '';
+            if(el.reason) el.reason.value = '';
+            if(el.note) el.note.value = '';
         }else{
             row.classList.add('state-difference');
             row.dataset.state = 'difference';
@@ -300,13 +432,15 @@
             el.reasonArea.classList.remove('hidden');
         }
 
+        refreshReasonSummary(row);
         if(data.counted_by){
-            el.countedInfo.textContent = 'Counted by ' + data.counted_by + ' · ' + data.counted_at;
+            el.countedInfo.textContent = data.counted_by + ' · ' + data.counted_at;
         }
         filterRows();
     }
 
     async function saveRow(row, options={}){
+        if(isLocked) return;
         const el = rowElements(row);
         const form = new URLSearchParams();
         form.set('actual_quantity', el.input.value.trim());
@@ -351,7 +485,8 @@
         }
     }
 
-    function queueSave(row, delay=450){
+    function queueSave(row, delay=400){
+        if(isLocked) return;
         clearTimeout(timers.get(row.dataset.lineId));
         timers.set(row.dataset.lineId, setTimeout(() => saveRow(row), delay));
     }
@@ -361,53 +496,132 @@
         let shown = 0;
         rows.forEach(row => {
             const matchesSearch = !query || row.dataset.search.includes(query);
-            const matchesFilter = activeFilter === 'all' || row.dataset.state === activeFilter;
-            const show = matchesSearch && matchesFilter;
+            const matchesStatus = activeFilter === 'all' || row.dataset.state === activeFilter;
+            const matchesType = activeType === 'all' || row.dataset.type === activeType;
+            const show = matchesSearch && matchesStatus && matchesType;
             row.hidden = !show;
             if(show) shown++;
         });
         noResult.hidden = shown !== 0;
     }
 
-    rows.forEach((row, index) => {
+    function buildTypeFilters(){
+        if(!typeFilterRow) return;
+        const types = new Map();
+        rows.forEach(row => {
+            const key = row.dataset.type || 'other';
+            const label = row.dataset.typeLabel || '📦 Other';
+            if(!types.has(key)) types.set(key, label);
+        });
+        Array.from(types.entries())
+            .sort((a,b) => a[1].localeCompare(b[1]))
+            .forEach(([key,label]) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'type-filter-btn';
+                button.dataset.type = key;
+                button.textContent = label;
+                button.addEventListener('click', () => {
+                    activeType = key;
+                    document.querySelectorAll('.type-filter-btn').forEach(btn => btn.classList.toggle('active', btn === button));
+                    filterRows();
+                });
+                typeFilterRow.appendChild(button);
+            });
+        typeFilterRow.querySelector('[data-type="all"]')?.addEventListener('click', event => {
+            activeType = 'all';
+            document.querySelectorAll('.type-filter-btn').forEach(btn => btn.classList.toggle('active', btn === event.currentTarget));
+            filterRows();
+        });
+    }
+
+    function closeReasonPopup(){
+        popup?.classList.remove('active');
+        popupBackdrop?.classList.remove('active');
+        document.body.classList.remove('stock-reason-open');
+        popupRow = null;
+        popupSelectedReason = '';
+    }
+
+    function updatePopupSelection(){
+        popupList?.querySelectorAll('.reason-option-btn').forEach(button => {
+            button.classList.toggle('selected', button.dataset.value === popupSelectedReason);
+        });
+        if(reasonNoteHint){
+            reasonNoteHint.textContent = popupSelectedReason === 'other' ? 'required for Other' : 'optional';
+        }
+    }
+
+    function openReasonPopup(row){
+        if(isLocked || !popup || !popupList) return;
+        popupRow = row;
+        const el = rowElements(row);
+        popupSelectedReason = el.reason?.value || '';
+        popupNote.value = el.note?.value || '';
+        popupItem.textContent = (row.querySelector('.product-info h3')?.textContent || '') + ' · ' + (row.querySelector('code')?.textContent || '');
+        popupList.innerHTML = '';
+
+        Array.from(el.reason?.options || []).filter(option => option.value).forEach(option => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'reason-option-btn';
+            button.dataset.value = option.value;
+            button.textContent = option.textContent.trim();
+            button.addEventListener('click', () => {
+                popupSelectedReason = option.value;
+                updatePopupSelection();
+            });
+            popupList.appendChild(button);
+        });
+
+        updatePopupSelection();
+        popup.classList.add('active');
+        popupBackdrop.classList.add('active');
+        document.body.classList.add('stock-reason-open');
+    }
+
+    buildTypeFilters();
+    rows.forEach(row => refreshReasonSummary(row));
+
+    rows.forEach(row => {
         const el = rowElements(row);
 
-        el.input.addEventListener('input', () => queueSave(row));
-        el.input.addEventListener('blur', () => queueSave(row, 50));
-        el.input.addEventListener('keydown', event => {
-            if(event.key === 'Enter'){
-                event.preventDefault();
-                saveRow(row).then(() => {
-                    const visibleRows = rows.filter(item => !item.hidden);
-                    const currentIndex = visibleRows.indexOf(row);
-                    const next = visibleRows[currentIndex + 1];
-                    next?.querySelector('.actual-input')?.focus();
-                    next?.scrollIntoView({behavior:'smooth',block:'center'});
-                });
-            }
-        });
+        if(!isLocked){
+            el.input.addEventListener('input', () => queueSave(row));
+            el.input.addEventListener('blur', () => queueSave(row, 50));
+            el.input.addEventListener('keydown', event => {
+                if(event.key === 'Enter'){
+                    event.preventDefault();
+                    saveRow(row).then(() => {
+                        const visibleRows = rows.filter(item => !item.hidden);
+                        const currentIndex = visibleRows.indexOf(row);
+                        const next = visibleRows[currentIndex + 1];
+                        next?.querySelector('.actual-input')?.focus();
+                        next?.scrollIntoView({behavior:'smooth',block:'center'});
+                    });
+                }
+            });
 
-        row.querySelectorAll('.qty-step').forEach(button => {
-            button.addEventListener('click', () => {
-                const current = parseInt(el.input.value || el.system.textContent || '0', 10);
-                const next = Math.max(0, current + parseInt(button.dataset.step,10));
-                el.input.value = next;
+            row.querySelectorAll('.qty-step').forEach(button => {
+                button.addEventListener('click', () => {
+                    const current = parseInt(el.input.value || el.system.textContent || '0', 10);
+                    el.input.value = Math.max(0, current + parseInt(button.dataset.step,10));
+                    saveRow(row);
+                });
+            });
+
+            row.querySelector('.same-btn')?.addEventListener('click', () => {
+                el.input.value = el.system.textContent.trim();
                 saveRow(row);
             });
-        });
 
-        row.querySelector('.same-btn')?.addEventListener('click', () => {
-            el.input.value = el.system.textContent.trim();
-            saveRow(row);
-        });
+            row.querySelector('.recount-btn')?.addEventListener('click', () => {
+                if(!confirm('Refresh this SKU system quantity and save the actual count again?')) return;
+                saveRow(row,{recount:true});
+            });
 
-        row.querySelector('.recount-btn')?.addEventListener('click', () => {
-            if(!confirm('Refresh this SKU system quantity and save the actual count again?')) return;
-            saveRow(row,{recount:true});
-        });
-
-        el.reason?.addEventListener('change', () => saveRow(row));
-        el.note?.addEventListener('input', () => queueSave(row));
+            row.querySelector('.reason-open-btn')?.addEventListener('click', () => openReasonPopup(row));
+        }
     });
 
     searchInput.addEventListener('input', filterRows);
@@ -419,13 +633,15 @@
         const exact = rows.find(row => row.dataset.sku === code);
         if(exact){
             activeFilter = 'all';
+            activeType = 'all';
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.filter === 'all'));
+            document.querySelectorAll('.type-filter-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.type === 'all'));
             filterRows();
             exact.hidden = false;
             exact.scrollIntoView({behavior:'smooth',block:'center'});
-            exact.querySelector('.actual-input')?.focus();
+            if(!isLocked) exact.querySelector('.actual-input')?.focus();
             exact.classList.add('scan-hit');
-            setTimeout(() => exact.classList.remove('scan-hit'), 1200);
+            setTimeout(() => exact.classList.remove('scan-hit'), 1000);
         }
     });
 
@@ -442,35 +658,35 @@
             filterRows();
         });
     });
+
+    popupClose?.addEventListener('click', closeReasonPopup);
+    popupBackdrop?.addEventListener('click', closeReasonPopup);
+    document.addEventListener('keydown', event => {
+        if(event.key === 'Escape' && popup?.classList.contains('active')) closeReasonPopup();
+    });
+
+    popupSave?.addEventListener('click', async () => {
+        if(!popupRow) return;
+        if(!popupSelectedReason){
+            setBanner('Please choose a difference reason.', 'error');
+            return;
+        }
+        if(popupSelectedReason === 'other' && !popupNote.value.trim()){
+            popupNote.focus();
+            popupNote.setCustomValidity('Please explain Other reason.');
+            popupNote.reportValidity();
+            popupNote.setCustomValidity('');
+            return;
+        }
+
+        const row = popupRow;
+        const el = rowElements(row);
+        el.reason.value = popupSelectedReason;
+        el.note.value = popupNote.value.trim();
+        refreshReasonSummary(row);
+        closeReasonPopup();
+        await saveRow(row);
+    });
 })();
 </script>
-<style>.count-row.scan-hit{outline:4px solid rgba(142,99,255,.25);transform:scale(1.01)}</style>
-{% else %}
-<script>
-(function(){
-    const rows = Array.from(document.querySelectorAll('.count-row'));
-    const searchInput = document.getElementById('countSearch');
-    const clearSearch = document.getElementById('clearSearch');
-    const noResult = document.getElementById('noSearchResult');
-    let activeFilter = 'all';
-    function filterRows(){
-        const query = searchInput.value.trim().toLowerCase();
-        let shown = 0;
-        rows.forEach(row => {
-            const show = (!query || row.dataset.search.includes(query)) && (activeFilter === 'all' || row.dataset.state === activeFilter);
-            row.hidden = !show;
-            if(show) shown++;
-        });
-        noResult.hidden = shown !== 0;
-    }
-    searchInput.addEventListener('input',filterRows);
-    clearSearch.addEventListener('click',()=>{searchInput.value='';filterRows();});
-    document.querySelectorAll('.filter-btn').forEach(button=>button.addEventListener('click',()=>{
-        activeFilter=button.dataset.filter;
-        document.querySelectorAll('.filter-btn').forEach(btn=>btn.classList.toggle('active',btn===button));
-        filterRows();
-    }));
-})();
-</script>
-{% endif %}
 {% endblock %}
