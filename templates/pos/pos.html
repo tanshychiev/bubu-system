@@ -828,7 +828,9 @@
                 <div class="change-record-head">
                     <div>
                         <strong>Record Actual Change Given</strong>
-                        <small>This is required so Cash Count matches the drawer.</small>
+                        <small>
+                            Customer pays KHR at 4,100៛/$ · Change returned in KHR uses 4,000៛/$.
+                        </small>
                     </div>
                     <span id="systemChangeBadge">System: $0.00</span>
                 </div>
@@ -838,28 +840,104 @@
                         ⚡ Use System Change
                     </button>
                     <button type="button" class="change-mode-btn" data-mode="manual" onclick="setChangeMode('manual')">
-                        ✍️ Type Actual Change
+                        ✍️ Mixed / Actual Change
                     </button>
                 </div>
 
-                <div class="change-entry-row">
-                    <div class="change-currency-row">
-                        <button type="button" class="change-currency-btn active" data-currency="usd" onclick="setChangeCurrency('usd')">USD</button>
-                        <button type="button" class="change-currency-btn" data-currency="khr" onclick="setChangeCurrency('khr')">KHR</button>
+                <div class="change-auto-panel" id="changeAutoPanel">
+                    <div class="change-entry-row">
+                        <div class="change-currency-row">
+                            <button
+                                type="button"
+                                class="change-currency-btn active"
+                                data-currency="usd"
+                                onclick="setChangeCurrency('usd')"
+                            >
+                                Cash USD
+                            </button>
+                            <button
+                                type="button"
+                                class="change-currency-btn"
+                                data-currency="khr"
+                                onclick="setChangeCurrency('khr')"
+                            >
+                                Cash KHR
+                            </button>
+                        </div>
+
+                        <label class="change-given-field">
+                            <span id="changeGivenLabel">Change Given — Cash USD</span>
+                            <input
+                                type="text"
+                                inputmode="decimal"
+                                name="change_given"
+                                id="changeGiven"
+                                value="0.00"
+                                readonly
+                                oninput="validateChangeRecord(false)"
+                            >
+                        </label>
+                    </div>
+                </div>
+
+                <div class="change-manual-panel" id="changeManualPanel" hidden>
+                    <div class="change-manual-grid">
+                        <label class="change-manual-field cash-change-field">
+                            <span>Cash USD</span>
+                            <input
+                                type="text"
+                                inputmode="decimal"
+                                name="change_cash_usd"
+                                id="changeCashUsd"
+                                value="0"
+                                oninput="updateManualChangeSummary(); validateChangeRecord(false);"
+                            >
+                        </label>
+
+                        <label class="change-manual-field cash-change-field">
+                            <span>Cash KHR</span>
+                            <input
+                                type="text"
+                                inputmode="numeric"
+                                name="change_cash_khr"
+                                id="changeCashKhr"
+                                value="0"
+                                oninput="updateManualChangeSummary(); validateChangeRecord(false);"
+                            >
+                        </label>
+
+                        <label class="change-manual-field aba-change-field">
+                            <span>ABA USD</span>
+                            <input
+                                type="text"
+                                inputmode="decimal"
+                                name="change_aba_usd"
+                                id="changeAbaUsd"
+                                value="0"
+                                oninput="updateManualChangeSummary(); validateChangeRecord(false);"
+                            >
+                        </label>
+
+                        <label class="change-manual-field aba-change-field">
+                            <span>ABA KHR</span>
+                            <input
+                                type="text"
+                                inputmode="numeric"
+                                name="change_aba_khr"
+                                id="changeAbaKhr"
+                                value="0"
+                                oninput="updateManualChangeSummary(); validateChangeRecord(false);"
+                            >
+                        </label>
                     </div>
 
-                    <label class="change-given-field">
-                        <span id="changeGivenLabel">Change Given (USD)</span>
-                        <input
-                            type="text"
-                            inputmode="decimal"
-                            name="change_given"
-                            id="changeGiven"
-                            value="0.00"
-                            readonly
-                            oninput="validateChangeRecord(false)"
-                        >
-                    </label>
+                    <div class="manual-change-summary">
+                        <div>
+                            <span>Actual change recorded</span>
+                            <strong id="manualChangeTotal">$0.00</strong>
+                        </div>
+                        <small id="manualChangeBreakdown">Enter one or more methods.</small>
+                    </div>
                 </div>
 
                 <div class="change-record-help" id="changeRecordHelp">
@@ -5989,8 +6067,11 @@ a{
 .change-record-box[hidden]{display:none!important}.change-record-box.pos-field-error{border-color:#ef4444!important;background:#fff1f2!important}
 .change-record-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}.change-record-head strong,.change-record-head small{display:block}.change-record-head strong{color:#2c2340;font-size:13px;font-weight:1000}.change-record-head small{margin-top:3px;color:#84778e;font-size:9px;font-weight:850}.change-record-head>span{padding:6px 9px;border-radius:999px;color:#6b46d9;background:#eee7ff;font-size:9px;font-weight:1000;white-space:nowrap}
 .change-mode-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.change-mode-btn,.change-currency-btn{border:1px solid #dfd3e8;border-radius:12px;color:#5c5067;background:#fff;font-weight:1000;cursor:pointer}.change-mode-btn{min-height:42px;padding:8px}.change-mode-btn.active,.change-currency-btn.active{border-color:#7959e8;color:#6848df;background:#f1ecff}
-.change-entry-row{margin-top:10px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px;align-items:end}.change-currency-row{display:flex;gap:6px}.change-currency-btn{min-width:58px;min-height:42px}.change-given-field{display:grid;gap:5px}.change-given-field span{color:#5d5168;font-size:10px;font-weight:1000}.change-given-field input{width:100%;min-height:42px;padding:0 12px;border:1px solid #dfd3e8;border-radius:12px;color:#1f1730;background:#fff;font-size:16px;font-weight:1000}.change-given-field input[readonly]{background:#f7f4fa;color:#6e6378}.change-record-help{margin-top:9px;color:#74687e;font-size:9px;font-weight:850;line-height:1.4}
-@media(max-width:650px){.change-record-head{display:block}.change-record-head>span{display:inline-flex;margin-top:7px}.change-entry-row{grid-template-columns:1fr}.change-mode-row{grid-template-columns:1fr}.change-currency-row{width:100%}.change-currency-btn{flex:1}}
+.change-entry-row{margin-top:10px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px;align-items:end}.change-currency-row{display:flex;gap:6px}.change-currency-btn{min-width:82px;min-height:42px;padding:0 10px}.change-given-field{display:grid;gap:5px}.change-given-field span{color:#5d5168;font-size:10px;font-weight:1000}.change-given-field input{width:100%;min-height:42px;padding:0 12px;border:1px solid #dfd3e8;border-radius:12px;color:#1f1730;background:#fff;font-size:16px;font-weight:1000}.change-given-field input[readonly]{background:#f7f4fa;color:#6e6378}
+.change-manual-panel[hidden],.change-auto-panel[hidden]{display:none!important}.change-manual-grid{margin-top:10px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.change-manual-field{min-width:0;padding:9px;border:1px solid #e6dbea;border-radius:13px;display:grid;gap:5px;background:#fff}.change-manual-field span{color:#5d5168;font-size:9px;font-weight:1000}.change-manual-field input{width:100%;height:40px;padding:0 10px;border:1px solid #ded2e4;border-radius:10px;outline:0;color:#211832;background:#fff;font-size:16px;font-weight:1000}.change-manual-field input:focus{border-color:#8e63ff;box-shadow:0 0 0 3px rgba(142,99,255,.10)}.cash-change-field{background:#fffdf9}.aba-change-field{background:#f6fffb}.manual-change-summary{margin-top:8px;padding:9px 11px;border:1px solid #d9cfee;border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f8f4ff}.manual-change-summary span,.manual-change-summary strong{display:block}.manual-change-summary span{color:#756a80;font-size:8px;font-weight:900}.manual-change-summary strong{margin-top:2px;color:#7047db;font-size:16px;font-weight:1000}.manual-change-summary small{max-width:62%;color:#786d80;font-size:8px;line-height:1.35;font-weight:850;text-align:right}
+.change-record-help{margin-top:9px;color:#74687e;font-size:9px;font-weight:850;line-height:1.4}
+@media(max-width:650px){.change-record-head{display:block}.change-record-head>span{display:inline-flex;margin-top:7px}.change-entry-row{grid-template-columns:1fr}.change-mode-row{grid-template-columns:1fr}.change-currency-row{width:100%}.change-currency-btn{flex:1}.change-manual-grid{grid-template-columns:1fr 1fr}.manual-change-summary{display:block}.manual-change-summary small{display:block;max-width:none;margin-top:5px;text-align:left}}
+@media(max-width:390px){.change-manual-grid{grid-template-columns:1fr}.change-currency-row{display:grid;grid-template-columns:1fr 1fr}}
 </style>
 
 <script>
@@ -6001,6 +6082,7 @@ let groomingTotalBase = parseFloat("{{ grooming_total|default:'0.00' }}");
 let total = baseTotal;
 
 const payRate = parseFloat("{{ khr_rate|default:'4100' }}") || 4100;
+const changeRate = 4000;
 
 const searchInput = document.getElementById("posSearch");
 const searchForm = document.getElementById("posSearchForm");
@@ -7636,20 +7718,70 @@ function getCalculatedChangeUSD(){
     return Math.max(paid - total, 0);
 }
 
+function getManualChangeParts(){
+    return {
+        cashUsd: Math.max(num("changeCashUsd"), 0),
+        cashKhr: Math.max(num("changeCashKhr"), 0),
+        abaUsd: Math.max(num("changeAbaUsd"), 0),
+        abaKhr: Math.max(num("changeAbaKhr"), 0)
+    };
+}
+
+function getManualChangeUSD(){
+    const parts = getManualChangeParts();
+
+    return (
+        parts.cashUsd
+        + parts.abaUsd
+        + (parts.cashKhr / changeRate)
+        + (parts.abaKhr / changeRate)
+    );
+}
+
+function updateManualChangeSummary(){
+    const totalEl = document.getElementById("manualChangeTotal");
+    const breakdownEl = document.getElementById("manualChangeBreakdown");
+    const parts = getManualChangeParts();
+    const recordedUsd = getManualChangeUSD();
+    const pieces = [];
+
+    if(parts.cashUsd > 0){ pieces.push("Cash " + moneyUSD(parts.cashUsd)); }
+    if(parts.cashKhr > 0){ pieces.push("Cash " + moneyKHR(parts.cashKhr)); }
+    if(parts.abaUsd > 0){ pieces.push("ABA " + moneyUSD(parts.abaUsd)); }
+    if(parts.abaKhr > 0){ pieces.push("ABA " + moneyKHR(parts.abaKhr)); }
+
+    if(totalEl){ totalEl.textContent = moneyUSD(recordedUsd); }
+    if(breakdownEl){
+        breakdownEl.textContent = pieces.length
+            ? pieces.join(" + ")
+            : "Enter one or more methods.";
+    }
+}
+
 function setChangeMode(mode){
     const modeInput = document.getElementById("changeMode");
-    if(modeInput){ modeInput.value = mode === "manual" ? "manual" : "auto"; }
+    const autoPanel = document.getElementById("changeAutoPanel");
+    const manualPanel = document.getElementById("changeManualPanel");
+
+    if(modeInput){
+        modeInput.value = mode === "manual" ? "manual" : "auto";
+    }
+
+    const selectedMode = modeInput ? modeInput.value : "auto";
 
     document.querySelectorAll(".change-mode-btn").forEach(function(btn){
-        btn.classList.toggle("active", btn.dataset.mode === modeInput.value);
+        btn.classList.toggle("active", btn.dataset.mode === selectedMode);
     });
 
-    const input = document.getElementById("changeGiven");
-    if(input){
-        input.readOnly = modeInput.value !== "manual";
-        if(modeInput.value === "manual"){
-            input.focus();
-            input.select();
+    if(autoPanel){ autoPanel.hidden = selectedMode !== "auto"; }
+    if(manualPanel){ manualPanel.hidden = selectedMode !== "manual"; }
+
+    if(selectedMode === "manual"){
+        updateManualChangeSummary();
+        const firstManual = document.getElementById("changeCashUsd");
+        if(firstManual){
+            firstManual.focus();
+            firstManual.select();
         }
     }
 
@@ -7658,24 +7790,16 @@ function setChangeMode(mode){
 
 function setChangeCurrency(currency){
     const input = document.getElementById("changeCurrency");
-    const oldCurrency = input ? input.value : "usd";
-    const changeGiven = document.getElementById("changeGiven");
-    const mode = valueOf("changeMode") || "auto";
 
-    if(input){ input.value = currency === "khr" ? "khr" : "usd"; }
+    if(input){
+        input.value = currency === "khr" ? "khr" : "usd";
+    }
+
+    const selectedCurrency = input ? input.value : "usd";
 
     document.querySelectorAll(".change-currency-btn").forEach(function(btn){
-        btn.classList.toggle("active", btn.dataset.currency === input.value);
+        btn.classList.toggle("active", btn.dataset.currency === selectedCurrency);
     });
-
-    if(mode === "manual" && changeGiven){
-        const current = parseFloat(changeGiven.value || 0);
-        if(current > 0 && oldCurrency !== input.value){
-            changeGiven.value = input.value === "khr"
-                ? Math.round(current * payRate).toString()
-                : (current / payRate).toFixed(2);
-        }
-    }
 
     updateChangeRecord(getCalculatedChangeUSD(), true);
 }
@@ -7686,71 +7810,142 @@ function updateChangeRecord(changeUsd, force){
     const label = document.getElementById("changeGivenLabel");
     const help = document.getElementById("changeRecordHelp");
     const badge = document.getElementById("systemChangeBadge");
+    const autoPanel = document.getElementById("changeAutoPanel");
+    const manualPanel = document.getElementById("changeManualPanel");
     const mode = valueOf("changeMode") || "auto";
     const currency = valueOf("changeCurrency") || "usd";
 
     if(!box || !input){ return; }
 
     box.hidden = !(changeUsd > 0);
+
     if(!(changeUsd > 0)){
         input.value = currency === "khr" ? "0" : "0.00";
         box.classList.remove("pos-field-error");
+        document.querySelectorAll(
+            "#changeCashUsd,#changeCashKhr,#changeAbaUsd,#changeAbaKhr"
+        ).forEach(function(field){
+            field.classList.remove("pos-field-error");
+        });
         return;
     }
 
-    if(badge){ badge.textContent = "System: " + moneyUSD(changeUsd); }
-    if(label){ label.textContent = currency === "khr" ? "Change Given (KHR)" : "Change Given (USD)"; }
-
-    input.inputMode = currency === "khr" ? "numeric" : "decimal";
-    input.readOnly = mode !== "manual";
-
-    if(mode === "auto" || force && !input.value){
-        input.value = currency === "khr"
-            ? Math.round(changeUsd * payRate).toString()
-            : changeUsd.toFixed(2);
+    if(badge){
+        badge.textContent = (
+            "System: "
+            + moneyUSD(changeUsd)
+            + " / "
+            + moneyKHR(changeUsd * changeRate)
+        );
     }
 
-    if(help){
-        help.textContent = mode === "auto"
-            ? "The exact system change is filled automatically."
-            : "Type the real amount staff gave to the customer. It cannot be more than the system change.";
+    if(autoPanel){ autoPanel.hidden = mode !== "auto"; }
+    if(manualPanel){ manualPanel.hidden = mode !== "manual"; }
+
+    if(mode === "auto"){
+        if(label){
+            label.textContent = currency === "khr"
+                ? "Change Given — Cash KHR"
+                : "Change Given — Cash USD";
+        }
+
+        input.inputMode = currency === "khr" ? "numeric" : "decimal";
+        input.readOnly = true;
+        input.value = currency === "khr"
+            ? Math.round(changeUsd * changeRate).toString()
+            : changeUsd.toFixed(2);
+
+        if(help){
+            help.textContent = currency === "khr"
+                ? "Automatic cash change uses 1 USD = 4,000៛."
+                : "The exact system change is recorded as Cash USD.";
+        }
+    }else{
+        updateManualChangeSummary();
+
+        if(help){
+            help.textContent = (
+                "Record the real combination returned to the customer. "
+                + "Example: Cash $2 + Cash 1,000៛ + ABA $2."
+            );
+        }
     }
 
     validateChangeRecord(false);
 }
 
 function validateChangeRecord(showMessage){
-    const changeUsd = getCalculatedChangeUSD();
+    const systemChangeUsd = getCalculatedChangeUSD();
     const box = document.getElementById("changeRecordBox");
     const input = document.getElementById("changeGiven");
-    const currency = valueOf("changeCurrency") || "usd";
     const mode = valueOf("changeMode") || "auto";
+    const currency = valueOf("changeCurrency") || "usd";
 
-    if(!(changeUsd > 0) || !box || !input){ return true; }
+    if(!(systemChangeUsd > 0) || !box || !input){ return true; }
 
-    const givenRaw = parseFloat(input.value || 0);
-    const givenUsd = currency === "khr" ? givenRaw / payRate : givenRaw;
-    const valid = givenRaw > 0 && givenUsd <= changeUsd + (1 / payRate);
+    let recordedUsd = 0;
+    let target = input;
 
-    box.classList.toggle("pos-field-error", !valid);
-    input.classList.toggle("pos-field-error", !valid);
-
-    if(!valid && showMessage){
-        const message = givenRaw <= 0
-            ? "Enter the actual change given to the customer."
-            : "Actual change cannot be more than system change " + moneyUSD(changeUsd) + ".";
-
-        const errorBox = document.getElementById("posCheckoutError");
-        if(errorBox){
-            errorBox.querySelector("span").textContent = message;
-        }else{
-            showPOSCheckoutError(message, input);
-        }
-
-        input.focus();
+    if(mode === "manual"){
+        recordedUsd = getManualChangeUSD();
+        target = (
+            document.getElementById("changeCashUsd")
+            || document.getElementById("changeCashKhr")
+            || input
+        );
+    }else{
+        const givenRaw = parseFloat(input.value || 0);
+        recordedUsd = currency === "khr"
+            ? givenRaw / changeRate
+            : givenRaw;
     }
 
-    if(mode === "auto" && valid){ input.readOnly = true; }
+    const tolerance = 1 / changeRate;
+    const hasAmount = recordedUsd > 0;
+    const notTooHigh = recordedUsd <= systemChangeUsd + tolerance;
+    const valid = hasAmount && notTooHigh;
+    const showErrorStyle = !valid && (
+        showMessage
+        || recordedUsd > systemChangeUsd + tolerance
+    );
+
+    box.classList.toggle("pos-field-error", showErrorStyle);
+
+    document.querySelectorAll(
+        "#changeGiven,#changeCashUsd,#changeCashKhr,#changeAbaUsd,#changeAbaKhr"
+    ).forEach(function(field){
+        field.classList.remove("pos-field-error");
+    });
+
+    if(showErrorStyle && target){
+        target.classList.add("pos-field-error");
+    }
+
+    if(!valid && showMessage){
+        const message = !hasAmount
+            ? "Enter the actual change given to the customer."
+            : (
+                "Actual change cannot be more than system change "
+                + moneyUSD(systemChangeUsd)
+                + " / "
+                + moneyKHR(systemChangeUsd * changeRate)
+                + "."
+            );
+
+        const errorBox = document.getElementById("posCheckoutError");
+
+        if(errorBox){
+            const errorText = errorBox.querySelector("span");
+            if(errorText){ errorText.textContent = message; }
+        }else{
+            showPOSCheckoutError(message, target);
+        }
+
+        if(target && typeof target.focus === "function"){
+            target.focus();
+        }
+    }
+
     return valid;
 }
 
@@ -7794,7 +7989,7 @@ function calcChange(){
     if(changeCard){ changeCard.classList.remove("change-ok", "change-lack"); }
 
     if(diff >= 0){
-        const changeKhr = diff * payRate;
+        const changeKhr = diff * changeRate;
 
         text("changeTitle", "Change");
         text("changeKhrShow", moneyKHR(changeKhr));
@@ -8225,13 +8420,10 @@ function restorePOSCheckoutDraft(){
     filterDeliveryCompanies();
     calcChange();
 
-    // Restore manual change after calcChange so automatic calculation does not overwrite it.
-    if(restoredMode === "manual" && draft.change_given !== undefined){
-        const changeInput = document.getElementById("changeGiven");
-        if(changeInput){
-            changeInput.readOnly = false;
-            changeInput.value = draft.change_given;
-        }
+    // Recalculate the manual mixed-change total after restoring all saved fields.
+    if(restoredMode === "manual"){
+        updateManualChangeSummary();
+        updateChangeRecord(getCalculatedChangeUSD(), false);
     }
 
     openPaymentModal();

@@ -1194,59 +1194,107 @@ def pos_checkout(request):
     if paid_raw > final_total:
         calculated_change_usd = paid_raw - final_total
 
+    # Customer KHR payments use the configured sale rate (normally 4,100).
+    # KHR returned to the customer as change always uses 4,000.
+    change_rate = Decimal("4000")
+
     change_mode = (request.POST.get("change_mode") or "auto").strip().lower()
     change_currency = (request.POST.get("change_currency") or "usd").strip().lower()
-    change_given = Decimal("0.00")
+
+    change_cash_usd = Decimal("0.00")
+    change_cash_khr = Decimal("0")
+    change_aba_usd = Decimal("0.00")
+    change_aba_khr = Decimal("0")
     change_amount = Decimal("0.00")
 
     if calculated_change_usd > 0:
         if change_mode not in ["auto", "manual"]:
             return _remember_pos_checkout_error(
                 request,
-                "Choose Automatic Change or Manual Change.",
-                "changeRecordBox",
-            )
-
-        if change_currency not in ["usd", "khr"]:
-            return _remember_pos_checkout_error(
-                request,
-                "Choose whether change was given in USD or KHR.",
+                "Choose System Change or Mixed / Actual Change.",
                 "changeRecordBox",
             )
 
         if change_mode == "auto":
-            if change_currency == "khr":
-                change_given = (
-                    calculated_change_usd * exchange_rate
-                ).quantize(Decimal("1"))
-            else:
-                change_given = calculated_change_usd.quantize(Decimal("0.01"))
-        else:
-            change_given = to_decimal(request.POST.get("change_given"), "0")
-
-            if change_given <= 0:
+            if change_currency not in ["usd", "khr"]:
                 return _remember_pos_checkout_error(
                     request,
-                    "Enter the actual change given to the customer.",
-                    "changeGiven",
+                    "Choose Cash USD or Cash KHR for the system change.",
+                    "changeRecordBox",
                 )
 
-        if change_currency == "khr":
-            change_amount = change_given / exchange_rate
-        else:
-            change_amount = change_given
+            if change_currency == "khr":
+                change_cash_khr = (
+                    calculated_change_usd * change_rate
+                ).quantize(Decimal("1"))
+            else:
+                change_cash_usd = calculated_change_usd.quantize(
+                    Decimal("0.01")
+                )
 
-        # Staff may round down the change, but cannot record more than the
-        # calculated overpayment. Small tolerance supports KHR rounding.
-        tolerance = Decimal("1.00") / exchange_rate
+        else:
+            change_cash_usd = to_decimal(
+                request.POST.get("change_cash_usd"),
+                "0",
+            )
+            change_cash_khr = to_decimal(
+                request.POST.get("change_cash_khr"),
+                "0",
+            )
+            change_aba_usd = to_decimal(
+                request.POST.get("change_aba_usd"),
+                "0",
+            )
+            change_aba_khr = to_decimal(
+                request.POST.get("change_aba_khr"),
+                "0",
+            )
+
+            change_parts = [
+                change_cash_usd,
+                change_cash_khr,
+                change_aba_usd,
+                change_aba_khr,
+            ]
+
+            if any(amount < 0 for amount in change_parts):
+                return _remember_pos_checkout_error(
+                    request,
+                    "Change amounts cannot be negative.",
+                    "changeRecordBox",
+                )
+
+        change_amount = (
+            change_cash_usd
+            + change_aba_usd
+            + (change_cash_khr / change_rate)
+            + (change_aba_khr / change_rate)
+        )
+
+        if change_amount <= 0:
+            return _remember_pos_checkout_error(
+                request,
+                "Enter the actual change given to the customer.",
+                "changeRecordBox",
+            )
+
+        # Allow small KHR rounding, but never allow staff to record more
+        # change than the customer's calculated overpayment.
+        tolerance = Decimal("1.00") / change_rate
+
         if change_amount > calculated_change_usd + tolerance:
+            system_change_khr = (
+                calculated_change_usd * change_rate
+            ).quantize(Decimal("1"))
+
             return _remember_pos_checkout_error(
                 request,
                 (
                     f"Change is too high. System change is "
-                    f"${calculated_change_usd:.2f}."
+                    f"${calculated_change_usd:.2f} / "
+                    f"{system_change_khr:.0f}៛."
                 ),
-                "changeGiven",
+                "changeRecordBox",
             )
 
     balance_amount = final_total - paid_amount
@@ -1551,16 +1599,38 @@ def pos_checkout(request):
             note="POS ABA KHR",
         )
 
-    if change_amount > 0 and change_given > 0:
+    # Record every actual change method separately.
+    # Cash methods reduce the physical drawer; ABA methods reduce ABA totals.
+    if change_cash_usd > 0:
         SalePayment.objects.create(
             sale=sale,
-            method=("change_khr" if change_currency == "khr" else "change_usd"),
-            amount=change_given,
-            note=(
-                "POS actual change given in KHR"
-                if change_currency == "khr"
-                else "POS actual change given in USD"
-            ),
+            method="change_usd",
+            amount=change_cash_usd,
+            note="POS change returned as Cash USD",
+        )
+
+    if change_cash_khr > 0:
+        SalePayment.objects.create(
+            sale=sale,
+            method="change_khr",
+            amount=change_cash_khr,
+            note="POS change returned as Cash KHR at 4,000៛ per USD",
+        )
+
+    if change_aba_usd > 0:
+        SalePayment.objects.create(
+            sale=sale,
+            method="change_aba_usd",
+            amount=change_aba_usd,
+            note="POS change returned by ABA USD",
+        )
+
+    if change_aba_khr > 0:
+        SalePayment.objects.create(
+            sale=sale,
+            method="change_aba_khr",
+            amount=change_aba_khr,
+            note="POS change returned by ABA KHR at 4,000៛ per USD",
         )
 
     # Tell the customer display to show the payment received / thank-you
@@ -2154,6 +2224,8 @@ def cash_count_dashboard(request):
     if not khr_rate or khr_rate <= 0:
         khr_rate = Decimal("4100")
 
+    change_rate = Decimal("4000")
+
     gross_cash_usd = (
         payments
         .filter(method="cash_usd")
@@ -2168,14 +2240,14 @@ def cash_count_dashboard(request):
         or Decimal("0")
     )
 
-    system_aba_usd = (
+    gross_aba_usd = (
         payments
         .filter(method="aba_usd")
         .aggregate(total=Sum("amount"))["total"]
         or Decimal("0")
     )
 
-    system_aba_khr = (
+    gross_aba_khr = (
         payments
         .filter(method="aba_khr")
         .aggregate(total=Sum("amount"))["total"]
@@ -2196,8 +2268,27 @@ def cash_count_dashboard(request):
         or Decimal("0")
     )
 
+    recorded_change_aba_usd = (
+        payments
+        .filter(method="change_aba_usd")
+        .aggregate(total=Sum("amount"))["total"]
+        or Decimal("0")
+    )
+
+    recorded_change_aba_khr = (
+        payments
+        .filter(method="change_aba_khr")
+        .aggregate(total=Sum("amount"))["total"]
+        or Decimal("0")
+    )
+
     sales_with_change_records = payments.filter(
-        method__in=["change_usd", "change_khr"]
+        method__in=[
+            "change_usd",
+            "change_khr",
+            "change_aba_usd",
+            "change_aba_khr",
+        ]
     ).values_list("sale_id", flat=True)
 
     # Older receipts only stored Sale.change_amount. Treat that legacy value
@@ -2214,10 +2305,11 @@ def cash_count_dashboard(request):
 
     system_cash_usd = gross_cash_usd - change_given_usd
     system_cash_khr = gross_cash_khr - change_given_khr
+    system_aba_usd = gross_aba_usd - recorded_change_aba_usd
+    system_aba_khr = gross_aba_khr - recorded_change_aba_khr
 
-    # Net cash can be negative when staff gives change from the opening drawer
-    # for a mixed-currency or ABA-heavy payment. Keep the real value so the
-    # expected physical drawer amount remains correct.
+    # Net cash or ABA can be negative when a refund/change comes from opening
+    # money or from a different payment channel. Keep the real value.
 
     total_sales = (
         sales.aggregate(total=Sum("total_amount"))["total"]
@@ -2229,7 +2321,12 @@ def cash_count_dashboard(request):
         or Decimal("0")
     )
 
-    total_change = change_given_usd + (change_given_khr / khr_rate)
+    total_change = (
+        change_given_usd
+        + recorded_change_aba_usd
+        + (change_given_khr / change_rate)
+        + (recorded_change_aba_khr / change_rate)
+    )
 
     cash_received_usd_equivalent = (
         system_cash_usd
