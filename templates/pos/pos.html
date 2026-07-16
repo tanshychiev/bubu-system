@@ -938,6 +938,16 @@
                         </div>
                         <small id="manualChangeBreakdown">Enter one or more methods.</small>
                     </div>
+
+                    <div class="manual-change-balance balance-remaining" id="manualChangeBalanceBox">
+                        <div class="manual-change-balance-icon" id="manualChangeBalanceIcon">!</div>
+
+                        <div class="manual-change-balance-copy">
+                            <span id="manualChangeBalanceLabel">Remaining to give</span>
+                            <strong id="manualChangeBalance">$0.00 / 0៛</strong>
+                            <small id="manualChangeBalanceMeta">System $0.00 · Recorded $0.00</small>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="change-record-help" id="changeRecordHelp">
@@ -6069,8 +6079,10 @@ a{
 .change-mode-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.change-mode-btn,.change-currency-btn{border:1px solid #dfd3e8;border-radius:12px;color:#5c5067;background:#fff;font-weight:1000;cursor:pointer}.change-mode-btn{min-height:42px;padding:8px}.change-mode-btn.active,.change-currency-btn.active{border-color:#7959e8;color:#6848df;background:#f1ecff}
 .change-entry-row{margin-top:10px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px;align-items:end}.change-currency-row{display:flex;gap:6px}.change-currency-btn{min-width:82px;min-height:42px;padding:0 10px}.change-given-field{display:grid;gap:5px}.change-given-field span{color:#5d5168;font-size:10px;font-weight:1000}.change-given-field input{width:100%;min-height:42px;padding:0 12px;border:1px solid #dfd3e8;border-radius:12px;color:#1f1730;background:#fff;font-size:16px;font-weight:1000}.change-given-field input[readonly]{background:#f7f4fa;color:#6e6378}
 .change-manual-panel[hidden],.change-auto-panel[hidden]{display:none!important}.change-manual-grid{margin-top:10px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.change-manual-field{min-width:0;padding:9px;border:1px solid #e6dbea;border-radius:13px;display:grid;gap:5px;background:#fff}.change-manual-field span{color:#5d5168;font-size:9px;font-weight:1000}.change-manual-field input{width:100%;height:40px;padding:0 10px;border:1px solid #ded2e4;border-radius:10px;outline:0;color:#211832;background:#fff;font-size:16px;font-weight:1000}.change-manual-field input:focus{border-color:#8e63ff;box-shadow:0 0 0 3px rgba(142,99,255,.10)}.cash-change-field{background:#fffdf9}.aba-change-field{background:#f6fffb}.manual-change-summary{margin-top:8px;padding:9px 11px;border:1px solid #d9cfee;border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f8f4ff}.manual-change-summary span,.manual-change-summary strong{display:block}.manual-change-summary span{color:#756a80;font-size:8px;font-weight:900}.manual-change-summary strong{margin-top:2px;color:#7047db;font-size:16px;font-weight:1000}.manual-change-summary small{max-width:62%;color:#786d80;font-size:8px;line-height:1.35;font-weight:850;text-align:right}
+.change-mode-btn[data-mode="manual"].active{border-color:transparent;color:#fff;background:linear-gradient(135deg,#8e63ff,#7254ea);box-shadow:0 7px 16px rgba(112,71,219,.22)}
+.manual-change-balance{margin-top:8px;padding:11px 12px;border:2px solid;border-radius:14px;display:flex;align-items:center;gap:10px;transition:.18s ease}.manual-change-balance-icon{width:36px;height:36px;flex:0 0 36px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:18px;font-weight:1000}.manual-change-balance-copy{min-width:0;flex:1}.manual-change-balance-copy span,.manual-change-balance-copy strong,.manual-change-balance-copy small{display:block}.manual-change-balance-copy span{font-size:9px;font-weight:1000;text-transform:uppercase;letter-spacing:.05em}.manual-change-balance-copy strong{margin-top:2px;font-size:20px;line-height:1.1;font-weight:1000}.manual-change-balance-copy small{margin-top:3px;font-size:8px;font-weight:900}.manual-change-balance.balance-remaining{border-color:#ffc86d;background:linear-gradient(135deg,#fff8e8,#fffdf8);box-shadow:0 7px 18px rgba(224,151,34,.12)}.balance-remaining .manual-change-balance-icon{background:#f3a51f}.balance-remaining .manual-change-balance-copy span,.balance-remaining .manual-change-balance-copy strong{color:#ad6900}.balance-remaining .manual-change-balance-copy small{color:#8c7350}.manual-change-balance.balance-complete{border-color:#78d7ac;background:linear-gradient(135deg,#eafff4,#f8fffb);box-shadow:0 7px 18px rgba(25,163,108,.13)}.balance-complete .manual-change-balance-icon{background:#18a66f}.balance-complete .manual-change-balance-copy span,.balance-complete .manual-change-balance-copy strong{color:#0b8658}.balance-complete .manual-change-balance-copy small{color:#56806f}.manual-change-balance.balance-over{border-color:#ff9298;background:linear-gradient(135deg,#fff0f1,#fffafa);box-shadow:0 7px 18px rgba(218,61,72,.13)}.balance-over .manual-change-balance-icon{background:#e74f59}.balance-over .manual-change-balance-copy span,.balance-over .manual-change-balance-copy strong{color:#c52d38}.balance-over .manual-change-balance-copy small{color:#94666a}
 .change-record-help{margin-top:9px;color:#74687e;font-size:9px;font-weight:850;line-height:1.4}
-@media(max-width:650px){.change-record-head{display:block}.change-record-head>span{display:inline-flex;margin-top:7px}.change-entry-row{grid-template-columns:1fr}.change-mode-row{grid-template-columns:1fr}.change-currency-row{width:100%}.change-currency-btn{flex:1}.change-manual-grid{grid-template-columns:1fr 1fr}.manual-change-summary{display:block}.manual-change-summary small{display:block;max-width:none;margin-top:5px;text-align:left}}
+@media(max-width:650px){.change-record-head{display:block}.change-record-head>span{display:inline-flex;margin-top:7px}.change-entry-row{grid-template-columns:1fr}.change-mode-row{grid-template-columns:1fr}.change-currency-row{width:100%}.change-currency-btn{flex:1}.change-manual-grid{grid-template-columns:1fr 1fr}.manual-change-summary{display:block}.manual-change-summary small{display:block;max-width:none;margin-top:5px;text-align:left}.manual-change-balance-copy strong{font-size:18px}}
 @media(max-width:390px){.change-manual-grid{grid-template-columns:1fr}.change-currency-row{display:grid;grid-template-columns:1fr 1fr}}
 </style>
 
@@ -7741,8 +7753,17 @@ function getManualChangeUSD(){
 function updateManualChangeSummary(){
     const totalEl = document.getElementById("manualChangeTotal");
     const breakdownEl = document.getElementById("manualChangeBreakdown");
+    const balanceBox = document.getElementById("manualChangeBalanceBox");
+    const balanceIcon = document.getElementById("manualChangeBalanceIcon");
+    const balanceLabel = document.getElementById("manualChangeBalanceLabel");
+    const balanceEl = document.getElementById("manualChangeBalance");
+    const balanceMeta = document.getElementById("manualChangeBalanceMeta");
+
     const parts = getManualChangeParts();
     const recordedUsd = getManualChangeUSD();
+    const systemUsd = Math.max(getCalculatedChangeUSD(), 0);
+    const rawBalanceUsd = systemUsd - recordedUsd;
+    const tolerance = 1 / changeRate;
     const pieces = [];
 
     if(parts.cashUsd > 0){ pieces.push("Cash " + moneyUSD(parts.cashUsd)); }
@@ -7751,11 +7772,68 @@ function updateManualChangeSummary(){
     if(parts.abaKhr > 0){ pieces.push("ABA " + moneyKHR(parts.abaKhr)); }
 
     if(totalEl){ totalEl.textContent = moneyUSD(recordedUsd); }
+
     if(breakdownEl){
         breakdownEl.textContent = pieces.length
             ? pieces.join(" + ")
             : "Enter one or more methods.";
     }
+
+    if(!balanceBox || !balanceLabel || !balanceEl || !balanceMeta){
+        return;
+    }
+
+    balanceBox.classList.remove(
+        "balance-remaining",
+        "balance-complete",
+        "balance-over"
+    );
+
+    if(Math.abs(rawBalanceUsd) <= tolerance){
+        balanceBox.classList.add("balance-complete");
+        balanceLabel.textContent = "Change complete";
+        balanceEl.textContent = "$0.00 / 0៛";
+        balanceMeta.textContent = (
+            "System " + moneyUSD(systemUsd)
+            + " · Recorded " + moneyUSD(recordedUsd)
+        );
+        if(balanceIcon){ balanceIcon.textContent = "✓"; }
+        return;
+    }
+
+    if(rawBalanceUsd > 0){
+        const remainingKhr = Math.round(rawBalanceUsd * changeRate);
+
+        balanceBox.classList.add("balance-remaining");
+        balanceLabel.textContent = "Remaining to give";
+        balanceEl.textContent = (
+            moneyUSD(rawBalanceUsd)
+            + " / "
+            + moneyKHR(remainingKhr)
+        );
+        balanceMeta.textContent = (
+            "System " + moneyUSD(systemUsd)
+            + " · Recorded " + moneyUSD(recordedUsd)
+        );
+        if(balanceIcon){ balanceIcon.textContent = "!"; }
+        return;
+    }
+
+    const overUsd = Math.abs(rawBalanceUsd);
+    const overKhr = Math.round(overUsd * changeRate);
+
+    balanceBox.classList.add("balance-over");
+    balanceLabel.textContent = "Over by";
+    balanceEl.textContent = (
+        moneyUSD(overUsd)
+        + " / "
+        + moneyKHR(overKhr)
+    );
+    balanceMeta.textContent = (
+        "System " + moneyUSD(systemUsd)
+        + " · Recorded " + moneyUSD(recordedUsd)
+    );
+    if(balanceIcon){ balanceIcon.textContent = "×"; }
 }
 
 function setChangeMode(mode){
