@@ -97,15 +97,7 @@
                 class="item-count-group"
                 data-group-type="{{ first_line.variant.item.item_type.name|default:'Other'|lower }}"
             >
-                <header class="item-group-head">
-                    <div class="item-group-photo">
-                        {% if first_line.variant.display_image %}
-                            <img src="{{ first_line.variant.display_image.url }}" alt="{{ first_line.variant.item.name }}" loading="lazy">
-                        {% else %}
-                            <span>📦</span>
-                        {% endif %}
-                    </div>
-
+                <header class="item-group-head compact-item-group-head">
                     <div class="item-group-info">
                         <small>
                             {{ first_line.variant.item.item_type.emoji|default:"📦" }}
@@ -115,10 +107,11 @@
                         {% if first_line.variant.item.brand %}
                             <p>{{ first_line.variant.item.brand }}</p>
                         {% endif %}
-                        <span class="variant-count-badge">
-                            {{ item_group.list|length }} variant{{ item_group.list|length|pluralize }}
-                        </span>
                     </div>
+
+                    <span class="variant-count-badge">
+                        {{ item_group.list|length }} variant{{ item_group.list|length|pluralize }}
+                    </span>
                 </header>
 
                 <div class="item-variant-grid">
@@ -137,11 +130,25 @@
                         data-item-name="{{ line.variant.item.name }}"
                         data-variant-name="{{ line.variant.display_name }}"
                     >
-                        <div class="variant-card-head">
+                        <div class="variant-card-head variant-product-side">
+                            <div class="variant-row-photo">
+                                {% if line.variant.display_image %}
+                                    <img
+                                        src="{{ line.variant.display_image.url }}"
+                                        alt="{{ line.variant.item.name }}"
+                                        loading="lazy"
+                                    >
+                                {% else %}
+                                    <span>📦</span>
+                                {% endif %}
+                            </div>
+
                             <div class="variant-card-title">
-                                <strong>{{ line.variant.display_name }}</strong>
+                                <strong>{{ line.variant.item.name }}</strong>
+                                <p>{{ line.variant.display_name }}</p>
                                 <code>{{ line.variant.sku|default:"No SKU" }}</code>
                             </div>
+
                             <span class="variant-state-mark" aria-hidden="true"></span>
                         </div>
 
@@ -732,6 +739,241 @@ body.stock-reason-open{overflow:hidden!important}
     }
     .variant-card-title code{
         max-width:82px!important;
+    }
+}
+</style>
+
+
+<style id="stock-count-left-product-right-stock-v6">
+.compact-item-group-head{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:12px!important;
+    padding:2px 2px 10px!important;
+}
+.compact-item-group-head .item-group-info{
+    min-width:0!important;
+}
+.compact-item-group-head .item-group-info h2{
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+}
+.compact-item-group-head .variant-count-badge{
+    flex:0 0 auto!important;
+    margin:0!important;
+}
+
+.item-variant-grid{
+    grid-template-columns:1fr!important;
+}
+
+.variant-count-card{
+    display:grid!important;
+    grid-template-columns:minmax(250px,1fr) auto!important;
+    align-items:center!important;
+    column-gap:14px!important;
+    row-gap:6px!important;
+    width:100%!important;
+    padding:10px!important;
+}
+
+.variant-count-card .variant-product-side{
+    grid-column:1!important;
+    grid-row:1!important;
+    min-width:0!important;
+    min-height:0!important;
+    display:grid!important;
+    grid-template-columns:72px minmax(0,1fr) 11px!important;
+    align-items:center!important;
+    gap:10px!important;
+}
+
+.variant-row-photo{
+    width:72px!important;
+    height:72px!important;
+    overflow:hidden!important;
+    border:1px solid #eadfea!important;
+    border-radius:14px!important;
+    display:grid!important;
+    place-items:center!important;
+    color:#8e63ff!important;
+    background:linear-gradient(145deg,#fff8f1,#fff)!important;
+    font-size:28px!important;
+}
+.variant-row-photo img{
+    width:100%!important;
+    height:100%!important;
+    object-fit:contain!important;
+    background:#fff!important;
+}
+
+.variant-card-title{
+    min-width:0!important;
+}
+.variant-card-title strong{
+    display:block!important;
+    overflow:hidden!important;
+    color:#17152f!important;
+    font-size:17px!important;
+    line-height:1.15!important;
+    font-weight:1000!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+}
+.variant-card-title p{
+    margin:3px 0 4px!important;
+    overflow:hidden!important;
+    color:#756a7e!important;
+    font-size:12px!important;
+    line-height:1.2!important;
+    font-weight:900!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+}
+.variant-card-title code{
+    max-width:100%!important;
+    margin-top:0!important;
+}
+
+.variant-count-card .compact-quantity-side{
+    grid-column:2!important;
+    grid-row:1!important;
+    width:auto!important;
+    margin:0!important;
+    grid-template-columns:48px 184px 48px!important;
+    justify-content:end!important;
+    gap:5px!important;
+}
+
+.variant-count-card .quick-row,
+.variant-count-card .reason-trigger,
+.variant-count-card .line-foot,
+.variant-count-card .applied-record{
+    grid-column:1 / -1!important;
+}
+
+@media(max-width:760px){
+    .item-count-group{
+        padding:7px!important;
+    }
+
+    .compact-item-group-head{
+        padding:1px 1px 7px!important;
+    }
+    .compact-item-group-head .item-group-info h2{
+        font-size:15px!important;
+    }
+
+    .variant-count-card{
+        grid-template-columns:minmax(118px,1fr) auto!important;
+        column-gap:6px!important;
+        row-gap:4px!important;
+        padding:6px!important;
+    }
+
+    .variant-count-card .variant-product-side{
+        grid-template-columns:54px minmax(0,1fr) 8px!important;
+        gap:6px!important;
+    }
+
+    .variant-row-photo{
+        width:54px!important;
+        height:54px!important;
+        border-radius:10px!important;
+        font-size:22px!important;
+    }
+
+    .variant-card-title strong{
+        font-size:13px!important;
+    }
+    .variant-card-title p{
+        margin:2px 0 3px!important;
+        font-size:9px!important;
+    }
+    .variant-card-title code{
+        padding:3px 5px!important;
+        font-size:7px!important;
+    }
+
+    .variant-state-mark{
+        width:8px!important;
+        height:8px!important;
+        flex-basis:8px!important;
+    }
+
+    .variant-count-card .compact-quantity-side{
+        grid-template-columns:35px 142px 35px!important;
+        gap:3px!important;
+    }
+
+    .compact-quantity-side .system-box,
+    .compact-quantity-side .difference-box{
+        width:35px!important;
+        height:38px!important;
+        padding:3px 1px!important;
+    }
+    .compact-quantity-side .system-box span,
+    .compact-quantity-side .difference-box span,
+    .compact-quantity-side .actual-wrap > span{
+        font-size:6px!important;
+    }
+    .compact-quantity-side .system-box strong,
+    .compact-quantity-side .difference-box strong{
+        font-size:12px!important;
+    }
+
+    .compact-quantity-side .actual-wrap{
+        width:142px!important;
+        max-width:142px!important;
+    }
+    .compact-quantity-side .actual-control{
+        grid-template-columns:25px 86px 25px!important;
+        gap:3px!important;
+    }
+    .compact-quantity-side .actual-control input,
+    .compact-quantity-side .qty-step{
+        height:31px!important;
+    }
+}
+
+@media(max-width:390px){
+    .variant-count-card{
+        grid-template-columns:minmax(104px,1fr) auto!important;
+        column-gap:4px!important;
+    }
+
+    .variant-count-card .variant-product-side{
+        grid-template-columns:47px minmax(0,1fr) 7px!important;
+        gap:4px!important;
+    }
+
+    .variant-row-photo{
+        width:47px!important;
+        height:47px!important;
+    }
+
+    .variant-card-title strong{
+        font-size:11px!important;
+    }
+    .variant-card-title p{
+        font-size:8px!important;
+    }
+    .variant-card-title code{
+        max-width:76px!important;
+        font-size:6px!important;
+    }
+
+    .variant-count-card .compact-quantity-side{
+        grid-template-columns:31px 126px 31px!important;
+    }
+    .compact-quantity-side .actual-wrap{
+        width:126px!important;
+        max-width:126px!important;
+    }
+    .compact-quantity-side .actual-control{
+        grid-template-columns:23px 74px 23px!important;
     }
 }
 </style>
