@@ -191,9 +191,16 @@
                         </div>
 
                         {% if not is_locked %}
-                        <div class="quick-row">
-                            <button type="button" class="same-btn">Same</button>
-                            <button type="button" class="recount-btn">Refresh</button>
+                        <div class="quick-row correct-action-row">
+                            <button
+                                type="button"
+                                class="same-btn correct-tick-btn"
+                                title="Mark actual stock the same as system stock"
+                                aria-label="Mark this stock count correct"
+                            >
+                                <span aria-hidden="true">✓</span>
+                                <span class="sr-only">Correct</span>
+                            </button>
                         </div>
                         {% endif %}
 
@@ -974,6 +981,115 @@ body.stock-reason-open{overflow:hidden!important}
     }
     .compact-quantity-side .actual-control{
         grid-template-columns:23px 74px 23px!important;
+    }
+}
+</style>
+
+
+<style id="stock-count-big-picture-tick-v7">
+/* Bigger product photo */
+.variant-count-card .variant-product-side{
+    grid-template-columns:96px minmax(0,1fr) 11px!important;
+}
+.variant-row-photo{
+    width:96px!important;
+    height:96px!important;
+    border-radius:17px!important;
+}
+.variant-card-title strong{
+    font-size:19px!important;
+}
+.variant-card-title p{
+    font-size:13px!important;
+}
+
+/* One correct tick button on the right */
+.variant-count-card .correct-action-row{
+    grid-column:2!important;
+    grid-row:2!important;
+    justify-content:flex-end!important;
+    align-items:center!important;
+    margin:0!important;
+    padding:0 1px 0 0!important;
+}
+.correct-tick-btn{
+    width:42px!important;
+    height:42px!important;
+    min-width:42px!important;
+    min-height:42px!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:50%!important;
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    color:#fff!important;
+    background:linear-gradient(135deg,#18a66f,#65d6a5)!important;
+    box-shadow:0 8px 18px rgba(24,166,111,.22)!important;
+    font-size:23px!important;
+    line-height:1!important;
+    cursor:pointer!important;
+}
+.correct-tick-btn:active{
+    transform:scale(.94)!important;
+}
+.sr-only{
+    position:absolute!important;
+    width:1px!important;
+    height:1px!important;
+    padding:0!important;
+    margin:-1px!important;
+    overflow:hidden!important;
+    clip:rect(0,0,0,0)!important;
+    white-space:nowrap!important;
+    border:0!important;
+}
+
+@media(max-width:760px){
+    .variant-count-card .variant-product-side{
+        grid-template-columns:68px minmax(0,1fr) 8px!important;
+    }
+    .variant-row-photo{
+        width:68px!important;
+        height:68px!important;
+        border-radius:12px!important;
+    }
+    .variant-card-title strong{
+        font-size:14px!important;
+    }
+    .variant-card-title p{
+        font-size:10px!important;
+    }
+    .correct-tick-btn{
+        width:36px!important;
+        height:36px!important;
+        min-width:36px!important;
+        min-height:36px!important;
+        font-size:20px!important;
+    }
+}
+
+@media(max-width:390px){
+    .variant-count-card .variant-product-side{
+        grid-template-columns:56px minmax(0,1fr) 7px!important;
+    }
+    .variant-row-photo{
+        width:56px!important;
+        height:56px!important;
+        border-radius:10px!important;
+    }
+    .variant-card-title strong{
+        font-size:12px!important;
+    }
+    .variant-card-title p{
+        font-size:8px!important;
+    }
+    .correct-tick-btn{
+        width:32px!important;
+        height:32px!important;
+        min-width:32px!important;
+        min-height:32px!important;
+        font-size:18px!important;
     }
 }
 </style>
