@@ -89,145 +89,174 @@
 
     <div class="save-banner" id="saveBanner">Entered quantities save automatically.</div>
 
-    <section class="count-list" id="countList">
-        {% for line in lines %}
-        <article
-            class="count-row {% if line.actual_quantity is None %}state-uncounted{% elif line.difference == 0 %}state-correct{% else %}state-difference{% endif %}"
-            id="line-{{ line.id }}"
-            data-line-id="{{ line.id }}"
-            data-save-url="{% url 'stock_count_save_line' session.id line.id %}"
-            data-search="{{ line.variant.sku|default:''|lower }} {{ line.variant.item.name|lower }} {{ line.variant.item.brand|default:''|lower }} {{ line.variant.display_name|lower }} {{ line.variant.item.item_type.name|default:'other'|lower }}"
-            data-sku="{{ line.variant.sku|default:''|lower }}"
-            data-state="{% if line.actual_quantity is None %}uncounted{% elif line.difference == 0 %}correct{% else %}difference{% endif %}"
-            data-system="{{ line.system_quantity }}"
-            data-type="{{ line.variant.item.item_type.name|default:'Other'|lower }}"
-            data-type-label="{{ line.variant.item.item_type.emoji|default:'📦' }} {{ line.variant.item.item_type.name|default:'Other' }}"
-        >
-            <div class="product-side">
-                <div class="product-photo">
-                    {% if line.variant.display_image %}
-                        <img src="{{ line.variant.display_image.url }}" alt="{{ line.variant.item.name }}" loading="lazy">
-                    {% else %}
-                        <span>📦</span>
-                    {% endif %}
-                </div>
-
-                <div class="product-info">
-                    <small>{{ line.variant.item.item_type.emoji|default:"📦" }} {{ line.variant.item.item_type.name|default:"Inventory" }}</small>
-                    <h3>{{ line.variant.item.name }}</h3>
-                    <p>{{ line.variant.display_name }}</p>
-                    <code>{{ line.variant.sku|default:"No SKU" }}</code>
-                </div>
-            </div>
-
-            <div class="quantity-side">
-                <div class="system-box">
-                    <span>System</span>
-                    <strong class="system-qty">{{ line.system_quantity }}</strong>
-                </div>
-
-                <div class="actual-wrap">
-                    <span>Actual</span>
-                    <div class="actual-control">
-                        {% if not is_locked %}
-                        <button type="button" class="qty-step" data-step="-1" aria-label="Minus one">−</button>
-                        {% endif %}
-
-                        <input
-                            type="number"
-                            min="0"
-                            step="1"
-                            inputmode="numeric"
-                            class="actual-input"
-                            value="{% if line.actual_quantity is not None %}{{ line.actual_quantity }}{% endif %}"
-                            placeholder="—"
-                            {% if is_locked %}readonly{% endif %}
-                        >
-
-                        {% if not is_locked %}
-                        <button type="button" class="qty-step" data-step="1" aria-label="Plus one">＋</button>
+    {% regroup lines by variant.item as item_groups %}
+    <section class="count-list item-count-groups" id="countList">
+        {% for item_group in item_groups %}
+            {% with first_line=item_group.list.0 %}
+            <article
+                class="item-count-group"
+                data-group-type="{{ first_line.variant.item.item_type.name|default:'Other'|lower }}"
+            >
+                <header class="item-group-head">
+                    <div class="item-group-photo">
+                        {% if first_line.variant.display_image %}
+                            <img src="{{ first_line.variant.display_image.url }}" alt="{{ first_line.variant.item.name }}" loading="lazy">
+                        {% else %}
+                            <span>📦</span>
                         {% endif %}
                     </div>
-                </div>
 
-                <div class="difference-box">
-                    <span>Diff.</span>
-                    <strong class="difference-value">
-                        {% if line.actual_quantity is None %}—{% elif line.difference > 0 %}+{{ line.difference }}{% else %}{{ line.difference }}{% endif %}
-                    </strong>
-                </div>
-            </div>
-
-            {% if not is_locked %}
-            <div class="quick-row">
-                <button type="button" class="same-btn">Same</button>
-                <button type="button" class="recount-btn">Refresh</button>
-            </div>
-            {% endif %}
-
-            <div class="reason-area {% if line.actual_quantity is None or line.difference == 0 %}hidden{% endif %}">
-                <select class="reason-select" hidden {% if is_locked %}disabled{% endif %}>
-                    <option value="">Choose reason</option>
-                    {% for value, label in reason_choices %}
-                        <option value="{{ value }}" {% if line.reason_code == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-
-                <input
-                    type="hidden"
-                    class="reason-note"
-                    value="{{ line.reason_note }}"
-                    {% if is_locked %}readonly{% endif %}
-                >
-
-                {% if not is_locked %}
-                <button type="button" class="reason-open-btn">
-                    <span class="reason-icon">!</span>
-                    <span class="reason-summary">
-                        {% if line.reason_code %}
-                            {{ line.get_reason_code_display }}{% if line.reason_note %} · {{ line.reason_note }}{% endif %}
-                        {% else %}
-                            Choose difference reason
+                    <div class="item-group-info">
+                        <small>
+                            {{ first_line.variant.item.item_type.emoji|default:"📦" }}
+                            {{ first_line.variant.item.item_type.name|default:"Inventory" }}
+                        </small>
+                        <h2>{{ first_line.variant.item.name }}</h2>
+                        {% if first_line.variant.item.brand %}
+                            <p>{{ first_line.variant.item.brand }}</p>
                         {% endif %}
-                    </span>
-                    <span class="reason-arrow">›</span>
-                </button>
-                {% else %}
-                <div class="reason-readonly">
-                    <strong>{{ line.get_reason_code_display|default:"No reason" }}</strong>
-                    {% if line.reason_note %}<span>{{ line.reason_note }}</span>{% endif %}
+                        <span class="variant-count-badge">
+                            {{ item_group.list|length }} variant{{ item_group.list|length|pluralize }}
+                        </span>
+                    </div>
+                </header>
+
+                <div class="item-variant-grid">
+                    {% for line in item_group.list %}
+                    <div
+                        class="count-row variant-count-card {% if line.actual_quantity is None %}state-uncounted{% elif line.difference == 0 %}state-correct{% else %}state-difference{% endif %}"
+                        id="line-{{ line.id }}"
+                        data-line-id="{{ line.id }}"
+                        data-save-url="{% url 'stock_count_save_line' session.id line.id %}"
+                        data-search="{{ line.variant.sku|default:''|lower }} {{ line.variant.item.name|lower }} {{ line.variant.item.brand|default:''|lower }} {{ line.variant.display_name|lower }} {{ line.variant.item.item_type.name|default:'other'|lower }}"
+                        data-sku="{{ line.variant.sku|default:''|lower }}"
+                        data-state="{% if line.actual_quantity is None %}uncounted{% elif line.difference == 0 %}correct{% else %}difference{% endif %}"
+                        data-system="{{ line.system_quantity }}"
+                        data-type="{{ line.variant.item.item_type.name|default:'Other'|lower }}"
+                        data-type-label="{{ line.variant.item.item_type.emoji|default:'📦' }} {{ line.variant.item.item_type.name|default:'Other' }}"
+                        data-item-name="{{ line.variant.item.name }}"
+                        data-variant-name="{{ line.variant.display_name }}"
+                    >
+                        <div class="variant-card-head">
+                            <div class="variant-card-title">
+                                <strong>{{ line.variant.display_name }}</strong>
+                                <code>{{ line.variant.sku|default:"No SKU" }}</code>
+                            </div>
+                            <span class="variant-state-mark" aria-hidden="true"></span>
+                        </div>
+
+                        <div class="quantity-side compact-quantity-side">
+                            <div class="system-box">
+                                <span>System</span>
+                                <strong class="system-qty">{{ line.system_quantity }}</strong>
+                            </div>
+
+                            <div class="actual-wrap">
+                                <span>Actual</span>
+                                <div class="actual-control">
+                                    {% if not is_locked %}
+                                    <button type="button" class="qty-step" data-step="-1" aria-label="Minus one">−</button>
+                                    {% endif %}
+
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        inputmode="numeric"
+                                        class="actual-input"
+                                        value="{% if line.actual_quantity is not None %}{{ line.actual_quantity }}{% endif %}"
+                                        placeholder="—"
+                                        {% if is_locked %}readonly{% endif %}
+                                    >
+
+                                    {% if not is_locked %}
+                                    <button type="button" class="qty-step" data-step="1" aria-label="Plus one">＋</button>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="difference-box">
+                                <span>Diff.</span>
+                                <strong class="difference-value">
+                                    {% if line.actual_quantity is None %}—{% elif line.difference > 0 %}+{{ line.difference }}{% else %}{{ line.difference }}{% endif %}
+                                </strong>
+                            </div>
+                        </div>
+
+                        {% if not is_locked %}
+                        <div class="quick-row">
+                            <button type="button" class="same-btn">Same</button>
+                            <button type="button" class="recount-btn">Refresh</button>
+                        </div>
+                        {% endif %}
+
+                        <div class="reason-area {% if line.actual_quantity is None or line.difference == 0 %}hidden{% endif %}">
+                            <select class="reason-select" hidden {% if is_locked %}disabled{% endif %}>
+                                <option value="">Choose reason</option>
+                                {% for value, label in reason_choices %}
+                                    <option value="{{ value }}" {% if line.reason_code == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+
+                            <input
+                                type="hidden"
+                                class="reason-note"
+                                value="{{ line.reason_note }}"
+                                {% if is_locked %}readonly{% endif %}
+                            >
+
+                            {% if not is_locked %}
+                            <button type="button" class="reason-open-btn">
+                                <span class="reason-icon">!</span>
+                                <span class="reason-summary">
+                                    {% if line.reason_code %}
+                                        {{ line.get_reason_code_display }}{% if line.reason_note %} · {{ line.reason_note }}{% endif %}
+                                    {% else %}
+                                        Choose difference reason
+                                    {% endif %}
+                                </span>
+                                <span class="reason-arrow">›</span>
+                            </button>
+                            {% else %}
+                            <div class="reason-readonly">
+                                <strong>{{ line.get_reason_code_display|default:"No reason" }}</strong>
+                                {% if line.reason_note %}<span>{{ line.reason_note }}</span>{% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="line-foot">
+                            <span class="line-status">
+                                {% if line.actual_quantity is None %}
+                                    Not counted
+                                {% elif line.difference == 0 %}
+                                    ✓ Correct
+                                {% else %}
+                                    Difference found
+                                {% endif %}
+                            </span>
+
+                            <span class="counted-info">
+                                {% if line.counted_by %}
+                                    {{ line.counted_by.get_full_name|default:line.counted_by.username }}
+                                    {% if line.counted_at %} · {{ line.counted_at|date:"d M H:i" }}{% endif %}
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        {% if session.status == "confirmed" and line.difference != 0 %}
+                        <div class="applied-record">
+                            <strong>{{ line.applied_before_quantity }} → {{ line.applied_after_quantity }}</strong>
+                            <span>{{ line.get_reason_code_display|default:line.reason_note }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endif %}
-            </div>
-
-            <div class="line-foot">
-                <span class="line-status">
-                    {% if line.actual_quantity is None %}
-                        Not counted
-                    {% elif line.difference == 0 %}
-                        ✓ Correct
-                    {% else %}
-                        Difference found
-                    {% endif %}
-                </span>
-
-                <span class="counted-info">
-                    {% if line.counted_by %}
-                        {{ line.counted_by.get_full_name|default:line.counted_by.username }}
-                        {% if line.counted_at %} · {{ line.counted_at|date:"d M H:i" }}{% endif %}
-                    {% endif %}
-                </span>
-            </div>
-
-            {% if session.status == "confirmed" and line.difference != 0 %}
-            <div class="applied-record">
-                <strong>{{ line.applied_before_quantity }} → {{ line.applied_after_quantity }}</strong>
-                <span>{{ line.get_reason_code_display|default:line.reason_note }}</span>
-            </div>
-            {% endif %}
-        </article>
+            </article>
+            {% endwith %}
         {% empty %}
-        <div class="no-lines">No active physical inventory SKU found.</div>
+            <div class="no-lines">No active physical inventory SKU found.</div>
         {% endfor %}
     </section>
 
@@ -341,11 +370,308 @@ body.stock-reason-open{overflow:hidden!important}
 @media(max-width:370px){.product-side{grid-template-columns:66px minmax(0,1fr)}.product-photo{width:66px;height:66px}.quantity-side{grid-template-columns:45px minmax(100px,1fr) 45px}.actual-control{grid-template-columns:29px minmax(42px,1fr) 29px}.filter-btn,.type-filter-btn{padding:0 7px}}
 </style>
 
+<style id="bubu-stock-count-grouped-v3">
+/* Keep filters visible without covering the item list. */
+.count-tools{
+    position:relative!important;
+    top:auto!important;
+}
+.type-filter-wrap{
+    align-items:flex-start!important;
+}
+.type-filter-row{
+    display:flex!important;
+    flex-wrap:wrap!important;
+    overflow:visible!important;
+    gap:7px!important;
+}
+.type-filter-btn{
+    min-height:38px!important;
+    padding:0 13px!important;
+    border-radius:999px!important;
+    font-size:10px!important;
+}
+
+.item-count-groups{
+    display:grid!important;
+    gap:12px!important;
+}
+.item-count-group{
+    padding:12px;
+    border:1px solid #eadfea;
+    border-radius:20px;
+    background:#fff;
+    box-shadow:0 8px 24px rgba(69,43,56,.05);
+}
+.item-group-head{
+    display:grid;
+    grid-template-columns:104px minmax(0,1fr);
+    gap:14px;
+    align-items:center;
+    padding-bottom:11px;
+    border-bottom:1px solid #eee5ef;
+}
+.item-group-photo{
+    width:104px;
+    height:104px;
+    overflow:hidden;
+    border:1px solid #f0e1d7;
+    border-radius:18px;
+    display:grid;
+    place-items:center;
+    color:#8e63ff;
+    background:linear-gradient(145deg,#fff8f1,#fff);
+    font-size:42px;
+}
+.item-group-photo img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    background:#fff;
+}
+.item-group-info{
+    min-width:0;
+}
+.item-group-info small{
+    display:block;
+    color:#917f91;
+    font-size:10px;
+    line-height:1.2;
+    font-weight:1000;
+    text-transform:uppercase;
+}
+.item-group-info h2{
+    margin:4px 0 0;
+    color:#17152f;
+    font-size:22px;
+    line-height:1.15;
+    font-weight:1000;
+}
+.item-group-info p{
+    margin:4px 0 0;
+    color:#756a7e;
+    font-size:13px;
+    font-weight:900;
+}
+.variant-count-badge{
+    display:inline-flex;
+    align-items:center;
+    min-height:28px;
+    margin-top:7px;
+    padding:0 10px;
+    border-radius:999px;
+    color:#7047db;
+    background:#f2edff;
+    font-size:10px;
+    font-weight:1000;
+}
+.item-variant-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+    margin-top:10px;
+}
+.variant-count-card{
+    min-width:0;
+    padding:9px!important;
+    border-radius:14px!important;
+    box-shadow:none!important;
+    background:#fff!important;
+}
+.variant-card-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:8px;
+    min-height:47px;
+}
+.variant-card-title{
+    min-width:0;
+}
+.variant-card-title strong{
+    display:block;
+    color:#17152f;
+    font-size:15px;
+    line-height:1.2;
+    font-weight:1000;
+}
+.variant-card-title code{
+    display:inline-block;
+    max-width:100%;
+    margin-top:4px;
+    padding:4px 7px;
+    overflow:hidden;
+    border-radius:7px;
+    color:#7047db;
+    background:#f2edff;
+    font-family:inherit;
+    font-size:9px;
+    line-height:1;
+    font-weight:1000;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+.variant-state-mark{
+    width:11px;
+    height:11px;
+    flex:0 0 11px;
+    margin-top:4px;
+    border-radius:50%;
+    background:#d9d1dc;
+}
+.state-correct .variant-state-mark{background:#25b982}
+.state-difference .variant-state-mark{background:#ef6671}
+.compact-quantity-side{
+    grid-template-columns:47px minmax(105px,1fr) 47px!important;
+    gap:4px!important;
+    margin-top:6px!important;
+}
+.compact-quantity-side .system-box,
+.compact-quantity-side .difference-box{
+    height:43px!important;
+    padding:4px 2px!important;
+}
+.compact-quantity-side .system-box strong,
+.compact-quantity-side .difference-box strong{
+    font-size:14px!important;
+}
+.compact-quantity-side .actual-control{
+    grid-template-columns:30px minmax(44px,1fr) 30px!important;
+    gap:3px!important;
+}
+.compact-quantity-side .actual-control input,
+.compact-quantity-side .qty-step{
+    height:35px!important;
+    border-radius:8px!important;
+}
+.compact-quantity-side .actual-control input{
+    font-size:16px!important;
+}
+.compact-quantity-side .qty-step{
+    font-size:16px!important;
+}
+
+@media(max-width:760px){
+    .count-tools{
+        padding:6px!important;
+    }
+    .type-filter-wrap{
+        display:block!important;
+    }
+    .type-filter-label{
+        display:block;
+        margin:0 0 5px 2px;
+    }
+    .type-filter-row{
+        display:grid!important;
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        gap:5px!important;
+    }
+    .type-filter-btn{
+        width:100%;
+        min-height:34px!important;
+        padding:0 6px!important;
+        overflow:hidden;
+        border-radius:10px!important;
+        font-size:8px!important;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    .item-count-group{
+        padding:8px;
+        border-radius:15px;
+    }
+    .item-group-head{
+        grid-template-columns:88px minmax(0,1fr);
+        gap:10px;
+        padding-bottom:8px;
+    }
+    .item-group-photo{
+        width:88px;
+        height:88px;
+        border-radius:13px;
+        font-size:34px;
+    }
+    .item-group-info small{
+        font-size:8px;
+    }
+    .item-group-info h2{
+        font-size:18px;
+    }
+    .item-group-info p{
+        font-size:10px;
+    }
+    .variant-count-badge{
+        min-height:24px;
+        margin-top:5px;
+        padding:0 8px;
+        font-size:8px;
+    }
+    .item-variant-grid{
+        grid-template-columns:1fr;
+        gap:6px;
+        margin-top:7px;
+    }
+    .variant-count-card{
+        padding:7px!important;
+        border-radius:11px!important;
+    }
+    .variant-card-head{
+        min-height:39px;
+    }
+    .variant-card-title strong{
+        font-size:14px;
+    }
+    .variant-card-title code{
+        margin-top:3px;
+        padding:3px 6px;
+        font-size:8px;
+    }
+    .compact-quantity-side{
+        grid-template-columns:42px minmax(96px,1fr) 42px!important;
+        gap:3px!important;
+        margin-top:4px!important;
+    }
+    .compact-quantity-side .system-box,
+    .compact-quantity-side .difference-box{
+        height:39px!important;
+    }
+    .compact-quantity-side .actual-control{
+        grid-template-columns:27px minmax(42px,1fr) 27px!important;
+    }
+    .compact-quantity-side .actual-control input,
+    .compact-quantity-side .qty-step{
+        height:32px!important;
+    }
+    .compact-quantity-side .actual-control input{
+        font-size:16px!important;
+    }
+    .quick-row button{
+        min-height:25px!important;
+        font-size:7px!important;
+    }
+}
+
+@media(max-width:390px){
+    .type-filter-row{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+    .item-group-head{
+        grid-template-columns:80px minmax(0,1fr);
+    }
+    .item-group-photo{
+        width:80px;
+        height:80px;
+    }
+}
+</style>
+
 <script>
 (function(){
     const isLocked = {% if is_locked %}true{% else %}false{% endif %};
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
     const rows = Array.from(document.querySelectorAll('.count-row'));
+    const groups = Array.from(document.querySelectorAll('.item-count-group'));
     const searchInput = document.getElementById('countSearch');
     const clearSearch = document.getElementById('clearSearch');
     const noResult = document.getElementById('noSearchResult');
@@ -494,6 +820,7 @@ body.stock-reason-open{overflow:hidden!important}
     function filterRows(){
         const query = searchInput.value.trim().toLowerCase();
         let shown = 0;
+
         rows.forEach(row => {
             const matchesSearch = !query || row.dataset.search.includes(query);
             const matchesStatus = activeFilter === 'all' || row.dataset.state === activeFilter;
@@ -502,6 +829,12 @@ body.stock-reason-open{overflow:hidden!important}
             row.hidden = !show;
             if(show) shown++;
         });
+
+        groups.forEach(group => {
+            const hasVisibleVariant = Array.from(group.querySelectorAll('.count-row')).some(row => !row.hidden);
+            group.hidden = !hasVisibleVariant;
+        });
+
         noResult.hidden = shown !== 0;
     }
 
@@ -558,7 +891,7 @@ body.stock-reason-open{overflow:hidden!important}
         const el = rowElements(row);
         popupSelectedReason = el.reason?.value || '';
         popupNote.value = el.note?.value || '';
-        popupItem.textContent = (row.querySelector('.product-info h3')?.textContent || '') + ' · ' + (row.querySelector('code')?.textContent || '');
+        popupItem.textContent = (row.dataset.itemName || '') + ' · ' + (row.dataset.variantName || '') + ' · ' + (row.querySelector('code')?.textContent || '');
         popupList.innerHTML = '';
 
         Array.from(el.reason?.options || []).filter(option => option.value).forEach(option => {
@@ -638,6 +971,8 @@ body.stock-reason-open{overflow:hidden!important}
             document.querySelectorAll('.type-filter-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.type === 'all'));
             filterRows();
             exact.hidden = false;
+            const exactGroup = exact.closest('.item-count-group');
+            if(exactGroup) exactGroup.hidden = false;
             exact.scrollIntoView({behavior:'smooth',block:'center'});
             if(!isLocked) exact.querySelector('.actual-input')?.focus();
             exact.classList.add('scan-hit');
