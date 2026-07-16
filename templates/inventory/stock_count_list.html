@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="sc-page">
+    <header class="sc-head">
+        <div>
+            <span class="sc-kicker">INVENTORY CONTROL</span>
+            <h1>Stock Count</h1>
+            <p>Count real stock by branch, save progress, and keep a permanent history of who counted and confirmed it.</p>
+        </div>
+
+        <a href="{% url 'item_list' %}{% if current_branch %}?branch={{ current_branch.id }}{% endif %}" class="sc-back">← Inventory</a>
+    </header>
+
+    <section class="sc-card start-card">
+        <div class="branch-title">
+            <span class="branch-icon">🏪</span>
+            <div>
+                <small>Counting branch</small>
+                <strong>{% if current_branch %}{{ current_branch.name }}{% else %}No branch assigned{% endif %}</strong>
+            </div>
+        </div>
+
+        {% if can_choose_branch %}
+        <form method="get" class="branch-form">
+            <label for="branchSelect">Switch branch</label>
+            <select id="branchSelect" name="branch" onchange="this.form.submit()">
+                {% for branch in branches %}
+                    <option value="{{ branch.id }}" {% if current_branch and current_branch.id == branch.id %}selected{% endif %}>
+                        {{ branch.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+        {% endif %}
+
+        {% if current_branch %}
+        <form method="post" action="{% url 'stock_count_start' %}" class="start-form">
+            {% csrf_token %}
+            <input type="hidden" name="branch" value="{{ current_branch.id }}">
+            <label>
+                Count note <span>optional</span>
+                <input type="text" name="note" placeholder="Example: July monthly count">
+            </label>
+            <button type="submit">＋ Start New Count</button>
+        </form>
+        {% endif %}
+
+        <div class="global-note">
+            <strong>One shared item list</strong>
+            <span>Items and SKUs are global. STM and Sensok use the same products, but each branch keeps its own quantity and count history.</span>
+        </div>
+    </section>
+
+    <section class="history-section">
+        <div class="section-head">
+            <div>
+                <h2>Count History</h2>
+                <p>Open any draft to continue or any confirmed count to review its records.</p>
+            </div>
+        </div>
+
+        <div class="session-list">
+            {% for session in sessions %}
+            <a href="{% url 'stock_count_detail' session.id %}" class="session-card status-{{ session.status }}">
+                <div class="session-top">
+                    <div>
+                        <small>COUNT #{{ session.id }}</small>
+                        <h3>{{ session.branch.name }}</h3>
+                    </div>
+                    <span class="status-pill">{{ session.get_status_display }}</span>
+                </div>
+
+                <div class="session-grid">
+                    <div>
+                        <span>Progress</span>
+                        <strong>{{ session.counted_lines }} / {{ session.total_lines }}</strong>
+                    </div>
+                    <div>
+                        <span>Differences</span>
+                        <strong>{{ session.difference_lines }}</strong>
+                    </div>
+                    <div>
+                        <span>Started by</span>
+                        <strong>{{ session.created_by.get_full_name|default:session.created_by.username|default:"-" }}</strong>
+                    </div>
+                    <div>
+                        <span>Date</span>
+                        <strong>{{ session.created_at|date:"d M Y H:i" }}</strong>
+                    </div>
+                </div>
+
+                {% if session.note %}<p class="session-note">{{ session.note }}</p>{% endif %}
+                <span class="open-text">Open →</span>
+            </a>
+            {% empty %}
+            <div class="empty-card">
+                <span>📦</span>
+                <h3>No stock count yet</h3>
+                <p>Start the first count for this branch.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<style>
+*{box-sizing:border-box}
+.sc-page{width:min(1050px,100%);margin:0 auto;padding:12px 0 34px;color:#17152f}
+.sc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}
+.sc-kicker{display:block;margin-bottom:5px;color:#8e63ff;font-size:11px;font-weight:1000;letter-spacing:.14em}
+.sc-head h1{margin:0;font-size:36px;line-height:1.05;font-weight:1000}
+.sc-head p{max-width:680px;margin:8px 0 0;color:#7b7288;font-weight:800}
+.sc-back{min-height:44px;padding:0 16px;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;background:#f3edff;color:#7047db;font-weight:1000;white-space:nowrap}
+.sc-card{background:#fff;border:1px solid #f0e1d8;border-radius:24px;box-shadow:0 14px 34px rgba(76,52,42,.07)}
+.start-card{padding:18px;display:grid;grid-template-columns:minmax(180px,.8fr) minmax(180px,.7fr) minmax(260px,1.2fr);gap:14px;align-items:end}
+.branch-title{min-height:72px;padding:13px;border-radius:18px;display:flex;align-items:center;gap:11px;background:linear-gradient(135deg,#fff7f1,#fbf6ff)}
+.branch-icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:#fff;font-size:22px}
+.branch-title small,.branch-title strong{display:block}
+.branch-title small{color:#8a7f91;font-size:10px;font-weight:1000;text-transform:uppercase}
+.branch-title strong{margin-top:3px;font-size:18px;font-weight:1000}
+.branch-form label,.start-form label{display:block;color:#5f566b;font-size:11px;font-weight:1000}
+.branch-form select,.start-form input{width:100%;height:50px;margin-top:7px;padding:0 14px;border:1px solid #e4d9e6;border-radius:15px;background:#fff;color:#17152f;font-size:15px;font-weight:900;outline:none}
+.start-form{display:grid;grid-template-columns:1fr auto;gap:9px;align-items:end}
+.start-form label span{color:#a298aa;font-weight:800}
+.start-form button{height:50px;padding:0 20px;border:0;border-radius:15px;background:linear-gradient(135deg,#8e63ff,#ff8464);color:#fff;font-weight:1000;cursor:pointer;white-space:nowrap}
+.global-note{grid-column:1/-1;padding:12px 14px;border-radius:16px;background:#effcf6;border:1px solid #cdebdc;display:flex;gap:9px;align-items:flex-start}
+.global-note strong{color:#16885e;white-space:nowrap}.global-note span{color:#527364;font-size:12px;font-weight:800}
+.history-section{margin-top:22px}.section-head h2{margin:0;font-size:23px;font-weight:1000}.section-head p{margin:5px 0 12px;color:#82778d;font-weight:800}
+.session-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.session-card{position:relative;padding:17px;border:1px solid #eadfea;border-radius:22px;background:#fff;box-shadow:0 10px 26px rgba(67,45,55,.05);color:inherit}
+.session-card:hover{transform:translateY(-2px)}
+.session-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.session-top small{color:#9b8da3;font-size:10px;font-weight:1000}.session-top h3{margin:3px 0 0;font-size:20px;font-weight:1000}
+.status-pill{padding:7px 10px;border-radius:999px;background:#f2edff;color:#7047db;font-size:10px;font-weight:1000}
+.status-review .status-pill{background:#fff5d8;color:#aa6a00}.status-confirmed .status-pill{background:#eafbf2;color:#17885d}.status-cancelled .status-pill{background:#f1f1f3;color:#777}
+.session-grid{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.session-grid div{padding:10px;border-radius:14px;background:#faf8fb}.session-grid span,.session-grid strong{display:block}.session-grid span{color:#918698;font-size:9px;font-weight:1000}.session-grid strong{margin-top:3px;font-size:13px;font-weight:1000}
+.session-note{margin:10px 0 0;padding:9px 10px;border-radius:12px;background:#fff9f3;color:#78675d;font-size:12px;font-weight:800}
+.open-text{display:block;margin-top:10px;text-align:right;color:#8e63ff;font-size:12px;font-weight:1000}
+.empty-card{grid-column:1/-1;padding:40px 20px;border:1px dashed #dfd4df;border-radius:22px;text-align:center;background:#fff}.empty-card span{font-size:40px}.empty-card h3{margin:8px 0 4px}.empty-card p{margin:0;color:#81768a;font-weight:800}
+@media(max-width:800px){.sc-head h1{font-size:30px}.start-card{grid-template-columns:1fr 1fr}.start-form{grid-column:1/-1}.session-list{grid-template-columns:1fr}}
+@media(max-width:560px){.sc-page{padding-top:2px}.sc-head{align-items:center}.sc-head p{font-size:12px}.sc-back{min-height:40px;padding:0 12px;font-size:12px}.start-card{grid-template-columns:1fr;padding:13px;border-radius:20px}.start-form{grid-column:auto;grid-template-columns:1fr}.global-note{grid-column:auto;display:block}.global-note strong{display:block;margin-bottom:4px}.session-card{padding:14px}.session-grid{grid-template-columns:1fr 1fr}}
+</style>
+{% endblock %}

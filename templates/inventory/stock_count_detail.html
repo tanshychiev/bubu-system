@@ -1,0 +1,476 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="count-page" data-session-status="{{ session.status }}">
+    <header class="count-head">
+        <div>
+            <span class="count-kicker">STOCK COUNT #{{ session.id }}</span>
+            <h1>{{ session.branch.name }}</h1>
+            <p>
+                Started by {{ display_created_by }} · {{ session.created_at|date:"d M Y H:i" }}
+                {% if session.note %} · {{ session.note }}{% endif %}
+            </p>
+        </div>
+
+        <div class="head-actions">
+            <a href="{% url 'stock_count_list' %}?branch={{ session.branch.id }}" class="soft-btn">← Counts</a>
+            <span class="session-status status-{{ session.status }}">{{ session.get_status_display }}</span>
+        </div>
+    </header>
+
+    <section class="progress-card">
+        <div class="progress-top">
+            <div>
+                <span>Counted</span>
+                <strong><b id="countedTotal">{{ stats.counted }}</b> / <b id="allTotal">{{ stats.total }}</b></strong>
+            </div>
+            <div>
+                <span>Remaining</span>
+                <strong id="remainingTotal">{{ stats.remaining }}</strong>
+            </div>
+            <div>
+                <span>Differences</span>
+                <strong id="differenceTotal">{{ stats.different }}</strong>
+            </div>
+            <div>
+                <span>Progress</span>
+                <strong id="percentTotal">{{ stats.percent }}%</strong>
+            </div>
+        </div>
+        <div class="progress-track"><div id="progressFill" style="width:{{ stats.percent }}%"></div></div>
+    </section>
+
+    {% if session.status == "confirmed" %}
+    <section class="confirmed-box">
+        <strong>✓ Confirmed by {{ display_confirmed_by }}</strong>
+        <span>{{ session.confirmed_at|date:"d M Y H:i" }} · Every changed quantity is recorded in Stock Movement history.</span>
+    </section>
+    {% elif session.status == "review" %}
+    <section class="review-box">
+        <strong>Waiting for Owner/Admin confirmation</strong>
+        <span>Submitted by {{ display_submitted_by }} on {{ session.submitted_at|date:"d M Y H:i" }}.</span>
+    </section>
+    {% endif %}
+
+    <section class="count-tools">
+        <label class="search-box">
+            <span>⌕</span>
+            <input
+                type="text"
+                id="countSearch"
+                placeholder="Scan barcode or search SKU / item..."
+                autocomplete="off"
+                enterkeyhint="search"
+            >
+            <button type="button" id="clearSearch" aria-label="Clear">×</button>
+        </label>
+
+        <div class="filter-row" id="filterRow">
+            <button type="button" class="filter-btn active" data-filter="all">All</button>
+            <button type="button" class="filter-btn" data-filter="uncounted">Not Counted</button>
+            <button type="button" class="filter-btn" data-filter="correct">Correct</button>
+            <button type="button" class="filter-btn" data-filter="difference">Difference</button>
+        </div>
+
+        {% if not is_locked %}
+        <form method="post" action="{% url 'stock_count_fill_remaining' session.id %}" onsubmit="return confirm('Mark every remaining SKU the same as current system stock?');">
+            {% csrf_token %}
+            <button type="submit" class="same-remaining-btn">✓ Same for Remaining</button>
+        </form>
+        {% endif %}
+    </section>
+
+    <div class="save-banner" id="saveBanner">All entered quantities save automatically.</div>
+
+    <section class="count-list" id="countList">
+        {% for line in lines %}
+        <article
+            class="count-row {% if line.actual_quantity is None %}state-uncounted{% elif line.difference == 0 %}state-correct{% else %}state-difference{% endif %}"
+            id="line-{{ line.id }}"
+            data-line-id="{{ line.id }}"
+            data-save-url="{% url 'stock_count_save_line' session.id line.id %}"
+            data-search="{{ line.variant.sku|default:''|lower }} {{ line.variant.item.name|lower }} {{ line.variant.item.brand|default:''|lower }} {{ line.variant.display_name|lower }}"
+            data-sku="{{ line.variant.sku|default:''|lower }}"
+            data-state="{% if line.actual_quantity is None %}uncounted{% elif line.difference == 0 %}correct{% else %}difference{% endif %}"
+            data-system="{{ line.system_quantity }}"
+        >
+            <div class="product-side">
+                <div class="product-photo">
+                    {% if line.variant.display_image %}
+                        <img src="{{ line.variant.display_image.url }}" alt="{{ line.variant.item.name }}" loading="lazy">
+                    {% else %}
+                        <span>📦</span>
+                    {% endif %}
+                </div>
+
+                <div class="product-info">
+                    <small>{{ line.variant.item.item_type|default:"Inventory" }}</small>
+                    <h3>{{ line.variant.item.name }}</h3>
+                    <p>{{ line.variant.display_name }}</p>
+                    <code>{{ line.variant.sku|default:"No SKU" }}</code>
+                </div>
+            </div>
+
+            <div class="quantity-side">
+                <div class="system-box">
+                    <span>System</span>
+                    <strong class="system-qty">{{ line.system_quantity }}</strong>
+                </div>
+
+                <div class="actual-wrap">
+                    <span>Actual</span>
+                    <div class="actual-control">
+                        {% if not is_locked %}
+                        <button type="button" class="qty-step" data-step="-1" aria-label="Minus one">−</button>
+                        {% endif %}
+
+                        <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            inputmode="numeric"
+                            class="actual-input"
+                            value="{% if line.actual_quantity is not None %}{{ line.actual_quantity }}{% endif %}"
+                            placeholder="—"
+                            {% if is_locked %}readonly{% endif %}
+                        >
+
+                        {% if not is_locked %}
+                        <button type="button" class="qty-step" data-step="1" aria-label="Plus one">＋</button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="difference-box">
+                    <span>Difference</span>
+                    <strong class="difference-value">
+                        {% if line.actual_quantity is None %}—{% elif line.difference > 0 %}+{{ line.difference }}{% else %}{{ line.difference }}{% endif %}
+                    </strong>
+                </div>
+            </div>
+
+            {% if not is_locked %}
+            <div class="quick-row">
+                <button type="button" class="same-btn">Same as System</button>
+                <button type="button" class="recount-btn">Refresh System & Recount</button>
+            </div>
+            {% endif %}
+
+            <div class="reason-area {% if line.actual_quantity is None or line.difference == 0 %}hidden{% endif %}">
+                <label>
+                    Difference reason
+                    <select class="reason-select" {% if is_locked %}disabled{% endif %}>
+                        <option value="">Choose reason</option>
+                        {% for value, label in reason_choices %}
+                            <option value="{{ value }}" {% if line.reason_code == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <label>
+                    Note <span>optional unless “Other”</span>
+                    <input
+                        type="text"
+                        class="reason-note"
+                        value="{{ line.reason_note }}"
+                        placeholder="Explain the difference"
+                        {% if is_locked %}readonly{% endif %}
+                    >
+                </label>
+            </div>
+
+            <div class="line-foot">
+                <span class="line-status">
+                    {% if line.actual_quantity is None %}
+                        Not counted
+                    {% elif line.difference == 0 %}
+                        ✓ Correct
+                    {% else %}
+                        Difference found
+                    {% endif %}
+                </span>
+
+                <span class="counted-info">
+                    {% if line.counted_by %}
+                        Counted by {{ line.counted_by.get_full_name|default:line.counted_by.username }}
+                        {% if line.counted_at %} · {{ line.counted_at|date:"d M H:i" }}{% endif %}
+                    {% endif %}
+                </span>
+            </div>
+
+            {% if session.status == "confirmed" and line.difference != 0 %}
+            <div class="applied-record">
+                <strong>Applied: {{ line.applied_before_quantity }} → {{ line.applied_after_quantity }}</strong>
+                <span>{{ line.get_reason_code_display|default:line.reason_note }}</span>
+            </div>
+            {% endif %}
+        </article>
+        {% empty %}
+        <div class="no-lines">No active physical inventory SKU found.</div>
+        {% endfor %}
+    </section>
+
+    <div class="no-search-result" id="noSearchResult" hidden>No matching SKU or item.</div>
+
+    <section class="final-actions">
+        {% if session.status == "draft" %}
+        <form method="post" action="{% url 'stock_count_submit' session.id %}">
+            {% csrf_token %}
+            <button type="submit" class="review-btn">Finish Count & Send for Review</button>
+        </form>
+        {% elif session.status == "review" and can_confirm %}
+        <form method="post" action="{% url 'stock_count_confirm' session.id %}" onsubmit="return confirm('Confirm this stock count and update branch quantities?');">
+            {% csrf_token %}
+            <button type="submit" class="confirm-btn">Confirm & Update Stock</button>
+        </form>
+        {% endif %}
+
+        {% if session.status != "confirmed" and session.status != "cancelled" %}
+        <form method="post" action="{% url 'stock_count_cancel' session.id %}" onsubmit="return confirm('Cancel this count? No stock will be changed.');">
+            {% csrf_token %}
+            <button type="submit" class="cancel-btn">Cancel Count</button>
+        </form>
+        {% endif %}
+    </section>
+</div>
+
+<style>
+*{box-sizing:border-box}.count-page{width:min(1080px,100%);margin:0 auto;padding:8px 0 110px;color:#17152f}.count-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:15px}.count-kicker{color:#8e63ff;font-size:10px;font-weight:1000;letter-spacing:.14em}.count-head h1{margin:4px 0 0;font-size:34px;line-height:1;font-weight:1000}.count-head p{margin:8px 0 0;color:#7e7389;font-size:13px;font-weight:800}.head-actions{display:flex;align-items:center;gap:8px}.soft-btn,.session-status{min-height:42px;padding:0 13px;border-radius:13px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:1000;white-space:nowrap}.soft-btn{background:#f2edff;color:#7047db}.session-status{background:#f2edff;color:#7047db}.status-review{background:#fff4d6;color:#a56a00}.status-confirmed{background:#e9fbf1;color:#16865d}.status-cancelled{background:#eeeef1;color:#777}.progress-card{padding:15px;border:1px solid #ecdfeb;border-radius:21px;background:#fff;box-shadow:0 10px 26px rgba(74,48,62,.05)}.progress-top{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.progress-top div{padding:10px 12px;border-radius:14px;background:#faf8fb}.progress-top span,.progress-top strong{display:block}.progress-top span{color:#918698;font-size:9px;font-weight:1000}.progress-top strong{margin-top:3px;font-size:18px;font-weight:1000}.progress-track{height:9px;margin-top:12px;border-radius:999px;background:#eee9f1;overflow:hidden}.progress-track div{height:100%;border-radius:999px;background:linear-gradient(90deg,#8e63ff,#ff8464);transition:width .2s ease}.confirmed-box,.review-box{margin-top:11px;padding:12px 14px;border-radius:16px;display:flex;gap:8px;align-items:center}.confirmed-box{background:#eafbf2;border:1px solid #cdebdc;color:#1a7858}.review-box{background:#fff7de;border:1px solid #f0dfad;color:#8d6300}.confirmed-box span,.review-box span{font-size:12px;font-weight:800}.count-tools{position:sticky;top:64px;z-index:70;margin-top:14px;padding:11px;border:1px solid #eadfea;border-radius:19px;background:rgba(255,255,255,.96);box-shadow:0 12px 28px rgba(69,43,56,.08);backdrop-filter:blur(14px);display:grid;grid-template-columns:minmax(240px,1fr) auto auto;gap:9px;align-items:center}.search-box{height:48px;padding:0 10px 0 14px;border:1px solid #dfd5e1;border-radius:15px;display:flex;align-items:center;gap:8px;background:#fff}.search-box span{font-size:20px;color:#877d90}.search-box input{min-width:0;flex:1;border:0;outline:0;background:transparent;color:#17152f;font-size:15px;font-weight:900}.search-box button{width:30px;height:30px;border:0;border-radius:50%;background:#f3eef5;color:#807485;font-size:20px;cursor:pointer}.filter-row{display:flex;gap:6px;overflow:auto}.filter-btn,.same-remaining-btn{min-height:44px;padding:0 12px;border:1px solid #e2d8e4;border-radius:13px;background:#fff;color:#655b6f;font-size:11px;font-weight:1000;cursor:pointer;white-space:nowrap}.filter-btn.active{border-color:transparent;background:linear-gradient(135deg,#8e63ff,#a97cff);color:#fff}.same-remaining-btn{border:0;background:#eafbf2;color:#17865e}.save-banner{min-height:28px;padding:7px 10px;color:#7c7186;font-size:11px;font-weight:900;text-align:center}.save-banner.saving{color:#a66b00}.save-banner.saved{color:#14815b}.save-banner.error{color:#d43d49}.count-list{display:grid;gap:10px}.count-row{padding:14px;border:1px solid #eadfea;border-radius:21px;background:#fff;box-shadow:0 8px 22px rgba(69,43,56,.045);transition:.18s}.count-row.state-correct{border-color:#cdebdc;background:linear-gradient(135deg,#f7fff9,#fff)}.count-row.state-difference{border-color:#f2c4c7;background:linear-gradient(135deg,#fff8f8,#fff)}.count-row.is-saving{opacity:.75}.product-side{display:flex;align-items:center;gap:11px}.product-photo{width:58px;height:58px;flex:0 0 58px;border-radius:16px;display:grid;place-items:center;overflow:hidden;background:#fff7ef;font-size:27px}.product-photo img{width:100%;height:100%;object-fit:contain}.product-info{min-width:0;flex:1}.product-info small{display:block;color:#a0919d;font-size:9px;font-weight:1000;text-transform:uppercase}.product-info h3{margin:2px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px;font-weight:1000}.product-info p{margin:2px 0 4px;color:#756a7e;font-size:11px;font-weight:900}.product-info code{display:inline-block;padding:4px 7px;border-radius:8px;background:#f2edff;color:#7047db;font-family:inherit;font-size:10px;font-weight:1000}.quantity-side{margin-top:12px;display:grid;grid-template-columns:.7fr 1.35fr .8fr;gap:8px;align-items:end}.system-box,.difference-box,.actual-wrap{min-width:0}.system-box,.difference-box{min-height:67px;padding:10px;border-radius:14px;background:#f8f6f9;text-align:center}.system-box span,.difference-box span,.actual-wrap>span{display:block;color:#918698;font-size:9px;font-weight:1000}.system-box strong,.difference-box strong{display:block;margin-top:5px;font-size:21px;font-weight:1000}.actual-control{margin-top:5px;display:grid;grid-template-columns:44px minmax(60px,1fr) 44px;gap:5px}.actual-control input{width:100%;height:48px;border:2px solid #dcd0e0;border-radius:13px;text-align:center;color:#17152f;background:#fff;font-size:21px;font-weight:1000;outline:none}.actual-control input:focus{border-color:#8e63ff;box-shadow:0 0 0 4px rgba(142,99,255,.10)}.qty-step{height:48px;border:0;border-radius:13px;background:#f2edff;color:#7047db;font-size:24px;font-weight:1000;cursor:pointer}.state-difference .difference-box{background:#fff0f1;color:#d43d49}.state-correct .difference-box{background:#eafbf2;color:#16865d}.quick-row{margin-top:8px;display:flex;gap:7px}.quick-row button{min-height:38px;padding:0 11px;border:0;border-radius:11px;font-size:10px;font-weight:1000;cursor:pointer}.same-btn{background:#eafbf2;color:#16865d}.recount-btn{background:#fff3df;color:#a46b00}.reason-area{margin-top:10px;padding:11px;border-radius:15px;background:#fff2f2;border:1px solid #f1c9cb;display:grid;grid-template-columns:1fr 1fr;gap:8px}.reason-area.hidden{display:none}.reason-area label{color:#7c6065;font-size:10px;font-weight:1000}.reason-area label span{font-weight:800}.reason-area select,.reason-area input{width:100%;height:43px;margin-top:5px;padding:0 11px;border:1px solid #e6bfc2;border-radius:11px;background:#fff;color:#17152f;font-size:12px;font-weight:900;outline:none}.line-foot{margin-top:9px;padding-top:8px;border-top:1px dashed #e5dae6;display:flex;justify-content:space-between;gap:8px;color:#8a7e91;font-size:10px;font-weight:900}.state-correct .line-status{color:#16865d}.state-difference .line-status{color:#d43d49}.applied-record{margin-top:9px;padding:9px 11px;border-radius:12px;background:#eafbf2;color:#176f51;display:flex;justify-content:space-between;gap:8px;font-size:11px;font-weight:900}.no-lines,.no-search-result{padding:38px 18px;border:1px dashed #ded2df;border-radius:20px;background:#fff;text-align:center;color:#817587;font-weight:900}.final-actions{position:fixed;left:calc(var(--sidebar-width,260px) + 20px);right:20px;bottom:14px;z-index:90;display:flex;justify-content:center;gap:9px;pointer-events:none}.final-actions form{pointer-events:auto}.final-actions button{min-height:54px;padding:0 22px;border:0;border-radius:999px;color:#fff;font-size:13px;font-weight:1000;box-shadow:0 12px 28px rgba(69,43,56,.18);cursor:pointer}.review-btn{background:linear-gradient(135deg,#8e63ff,#ff8464)}.confirm-btn{background:linear-gradient(135deg,#20a875,#68d7a8)}.cancel-btn{background:#fff;color:#d54853!important;border:1px solid #efc8ca!important}@media(max-width:900px){.count-tools{grid-template-columns:1fr}.filter-row{order:2}.count-tools form{order:3}.same-remaining-btn{width:100%}.final-actions{left:20px}}@media(max-width:600px){.count-page{padding-top:0}.count-head h1{font-size:28px}.count-head p{font-size:11px}.head-actions{display:grid}.soft-btn,.session-status{min-height:36px}.progress-card{padding:11px}.progress-top{grid-template-columns:1fr 1fr}.progress-top div{padding:8px}.count-tools{top:58px;padding:8px;border-radius:16px}.filter-row{margin:0 -2px}.filter-btn{flex:1;padding:0 9px}.count-row{padding:11px;border-radius:18px}.product-photo{width:52px;height:52px;flex-basis:52px}.quantity-side{grid-template-columns:.65fr 1.5fr .75fr}.system-box,.difference-box{padding:8px 4px}.actual-control{grid-template-columns:40px minmax(50px,1fr) 40px}.qty-step,.actual-control input{height:46px}.reason-area{grid-template-columns:1fr}.line-foot{display:block}.counted-info{display:block;margin-top:3px}.final-actions{left:10px;right:10px;bottom:8px;display:grid;grid-template-columns:1fr}.final-actions form,.final-actions button{width:100%}.confirmed-box,.review-box{display:block}.confirmed-box span,.review-box span{display:block;margin-top:3px}}
+</style>
+
+{% if not is_locked %}
+<script>
+(function(){
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+    const rows = Array.from(document.querySelectorAll('.count-row'));
+    const searchInput = document.getElementById('countSearch');
+    const clearSearch = document.getElementById('clearSearch');
+    const noResult = document.getElementById('noSearchResult');
+    const banner = document.getElementById('saveBanner');
+    let activeFilter = 'all';
+    const timers = new Map();
+
+    function setBanner(text, state=''){
+        banner.textContent = text;
+        banner.className = 'save-banner' + (state ? ' ' + state : '');
+    }
+
+    function updateStats(stats){
+        if(!stats) return;
+        document.getElementById('countedTotal').textContent = stats.counted;
+        document.getElementById('allTotal').textContent = stats.total;
+        document.getElementById('remainingTotal').textContent = stats.remaining;
+        document.getElementById('differenceTotal').textContent = stats.different;
+        document.getElementById('percentTotal').textContent = stats.percent + '%';
+        document.getElementById('progressFill').style.width = stats.percent + '%';
+    }
+
+    function rowElements(row){
+        return {
+            input: row.querySelector('.actual-input'),
+            system: row.querySelector('.system-qty'),
+            difference: row.querySelector('.difference-value'),
+            reasonArea: row.querySelector('.reason-area'),
+            reason: row.querySelector('.reason-select'),
+            note: row.querySelector('.reason-note'),
+            status: row.querySelector('.line-status'),
+            countedInfo: row.querySelector('.counted-info')
+        };
+    }
+
+    function applyRowState(row, data){
+        const el = rowElements(row);
+        const diff = Number(data.difference || 0);
+        row.dataset.system = data.system_quantity;
+        el.system.textContent = data.system_quantity;
+        el.difference.textContent = diff > 0 ? '+' + diff : String(diff);
+        row.classList.remove('state-uncounted','state-correct','state-difference');
+
+        if(diff === 0){
+            row.classList.add('state-correct');
+            row.dataset.state = 'correct';
+            el.status.textContent = '✓ Correct';
+            el.reasonArea.classList.add('hidden');
+            el.reason.value = '';
+            el.note.value = '';
+        }else{
+            row.classList.add('state-difference');
+            row.dataset.state = 'difference';
+            el.status.textContent = 'Difference found';
+            el.reasonArea.classList.remove('hidden');
+        }
+
+        if(data.counted_by){
+            el.countedInfo.textContent = 'Counted by ' + data.counted_by + ' · ' + data.counted_at;
+        }
+        filterRows();
+    }
+
+    async function saveRow(row, options={}){
+        const el = rowElements(row);
+        const form = new URLSearchParams();
+        form.set('actual_quantity', el.input.value.trim());
+        form.set('reason_code', el.reason?.value || '');
+        form.set('reason_note', el.note?.value.trim() || '');
+        if(options.recount) form.set('recount','1');
+
+        row.classList.add('is-saving');
+        setBanner('Saving ' + (row.querySelector('code')?.textContent || 'item') + '...', 'saving');
+
+        try{
+            const response = await fetch(row.dataset.saveUrl, {
+                method:'POST',
+                headers:{
+                    'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8',
+                    'X-CSRFToken':csrfToken,
+                    'X-Requested-With':'XMLHttpRequest'
+                },
+                body:form.toString()
+            });
+            const data = await response.json();
+            if(!response.ok || !data.ok) throw new Error(data.error || 'Cannot save count.');
+
+            if(data.cleared){
+                row.classList.remove('state-correct','state-difference');
+                row.classList.add('state-uncounted');
+                row.dataset.state = 'uncounted';
+                el.difference.textContent = '—';
+                el.status.textContent = 'Not counted';
+                el.countedInfo.textContent = '';
+                el.reasonArea.classList.add('hidden');
+            }else{
+                applyRowState(row, data);
+            }
+            updateStats(data.stats);
+            setBanner('Saved automatically.', 'saved');
+        }catch(error){
+            setBanner(error.message, 'error');
+            row.scrollIntoView({behavior:'smooth',block:'center'});
+        }finally{
+            row.classList.remove('is-saving');
+        }
+    }
+
+    function queueSave(row, delay=450){
+        clearTimeout(timers.get(row.dataset.lineId));
+        timers.set(row.dataset.lineId, setTimeout(() => saveRow(row), delay));
+    }
+
+    function filterRows(){
+        const query = searchInput.value.trim().toLowerCase();
+        let shown = 0;
+        rows.forEach(row => {
+            const matchesSearch = !query || row.dataset.search.includes(query);
+            const matchesFilter = activeFilter === 'all' || row.dataset.state === activeFilter;
+            const show = matchesSearch && matchesFilter;
+            row.hidden = !show;
+            if(show) shown++;
+        });
+        noResult.hidden = shown !== 0;
+    }
+
+    rows.forEach((row, index) => {
+        const el = rowElements(row);
+
+        el.input.addEventListener('input', () => queueSave(row));
+        el.input.addEventListener('blur', () => queueSave(row, 50));
+        el.input.addEventListener('keydown', event => {
+            if(event.key === 'Enter'){
+                event.preventDefault();
+                saveRow(row).then(() => {
+                    const visibleRows = rows.filter(item => !item.hidden);
+                    const currentIndex = visibleRows.indexOf(row);
+                    const next = visibleRows[currentIndex + 1];
+                    next?.querySelector('.actual-input')?.focus();
+                    next?.scrollIntoView({behavior:'smooth',block:'center'});
+                });
+            }
+        });
+
+        row.querySelectorAll('.qty-step').forEach(button => {
+            button.addEventListener('click', () => {
+                const current = parseInt(el.input.value || el.system.textContent || '0', 10);
+                const next = Math.max(0, current + parseInt(button.dataset.step,10));
+                el.input.value = next;
+                saveRow(row);
+            });
+        });
+
+        row.querySelector('.same-btn')?.addEventListener('click', () => {
+            el.input.value = el.system.textContent.trim();
+            saveRow(row);
+        });
+
+        row.querySelector('.recount-btn')?.addEventListener('click', () => {
+            if(!confirm('Refresh this SKU system quantity and save the actual count again?')) return;
+            saveRow(row,{recount:true});
+        });
+
+        el.reason?.addEventListener('change', () => saveRow(row));
+        el.note?.addEventListener('input', () => queueSave(row));
+    });
+
+    searchInput.addEventListener('input', filterRows);
+    searchInput.addEventListener('keydown', event => {
+        if(event.key !== 'Enter') return;
+        event.preventDefault();
+        const code = searchInput.value.trim().toLowerCase();
+        if(!code) return;
+        const exact = rows.find(row => row.dataset.sku === code);
+        if(exact){
+            activeFilter = 'all';
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.filter === 'all'));
+            filterRows();
+            exact.hidden = false;
+            exact.scrollIntoView({behavior:'smooth',block:'center'});
+            exact.querySelector('.actual-input')?.focus();
+            exact.classList.add('scan-hit');
+            setTimeout(() => exact.classList.remove('scan-hit'), 1200);
+        }
+    });
+
+    clearSearch.addEventListener('click', () => {
+        searchInput.value = '';
+        filterRows();
+        searchInput.focus();
+    });
+
+    document.querySelectorAll('.filter-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            activeFilter = button.dataset.filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.toggle('active', btn === button));
+            filterRows();
+        });
+    });
+})();
+</script>
+<style>.count-row.scan-hit{outline:4px solid rgba(142,99,255,.25);transform:scale(1.01)}</style>
+{% else %}
+<script>
+(function(){
+    const rows = Array.from(document.querySelectorAll('.count-row'));
+    const searchInput = document.getElementById('countSearch');
+    const clearSearch = document.getElementById('clearSearch');
+    const noResult = document.getElementById('noSearchResult');
+    let activeFilter = 'all';
+    function filterRows(){
+        const query = searchInput.value.trim().toLowerCase();
+        let shown = 0;
+        rows.forEach(row => {
+            const show = (!query || row.dataset.search.includes(query)) && (activeFilter === 'all' || row.dataset.state === activeFilter);
+            row.hidden = !show;
+            if(show) shown++;
+        });
+        noResult.hidden = shown !== 0;
+    }
+    searchInput.addEventListener('input',filterRows);
+    clearSearch.addEventListener('click',()=>{searchInput.value='';filterRows();});
+    document.querySelectorAll('.filter-btn').forEach(button=>button.addEventListener('click',()=>{
+        activeFilter=button.dataset.filter;
+        document.querySelectorAll('.filter-btn').forEach(btn=>btn.classList.toggle('active',btn===button));
+        filterRows();
+    }));
+})();
+</script>
+{% endif %}
+{% endblock %}

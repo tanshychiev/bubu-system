@@ -450,3 +450,150 @@ class BranchStock(models.Model):
 
     def __str__(self):
         return f"{self.branch} - {self.variant} - {self.quantity}"
+
+# =========================================================
+# MOBILE STOCK COUNT
+# =========================================================
+
+class StockCountSession(models.Model):
+    STATUS_CHOICES = [
+        ("draft", "Counting / Draft"),
+        ("review", "Waiting Confirmation"),
+        ("confirmed", "Confirmed"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.PROTECT,
+        related_name="stock_count_sessions",
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="draft",
+        db_index=True,
+    )
+
+    note = models.CharField(max_length=255, blank=True, default="")
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_stock_counts",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    submitted_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="submitted_stock_counts",
+    )
+    submitted_at = models.DateTimeField(null=True, blank=True)
+
+    confirmed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="confirmed_stock_counts",
+    )
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=["branch", "status"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    def __str__(self):
+        return f"Stock Count #{self.id} - {self.branch} - {self.get_status_display()}"
+
+
+class StockCountLine(models.Model):
+    REASON_CHOICES = [
+        ("missing", "Missing item"),
+        ("damaged", "Damaged"),
+        ("expired", "Expired"),
+        ("found_extra", "Found extra stock"),
+        ("previous_wrong", "Previous count was wrong"),
+        ("transfer_unrecorded", "Transfer was not recorded"),
+        ("other", "Other"),
+    ]
+
+    session = models.ForeignKey(
+        StockCountSession,
+        on_delete=models.CASCADE,
+        related_name="lines",
+    )
+
+    variant = models.ForeignKey(
+        ItemVariant,
+        on_delete=models.PROTECT,
+        related_name="stock_count_lines",
+    )
+
+    # Quantity shown by the system when this SKU was first physically counted.
+    system_quantity = models.IntegerField(default=0)
+    actual_quantity = models.IntegerField(null=True, blank=True)
+
+    reason_code = models.CharField(
+        max_length=30,
+        choices=REASON_CHOICES,
+        blank=True,
+        default="",
+    )
+    reason_note = models.CharField(max_length=255, blank=True, default="")
+
+    counted_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="counted_stock_lines",
+    )
+    counted_at = models.DateTimeField(null=True, blank=True)
+
+    # Final live stock change at Owner/Admin confirmation time.
+    applied_before_quantity = models.IntegerField(null=True, blank=True)
+    applied_after_quantity = models.IntegerField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["variant_id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["session", "variant"],
+                name="unique_stock_count_session_variant",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["session", "actual_quantity"]),
+            models.Index(fields=["variant"]),
+        ]
+
+    @property
+    def difference(self):
+        if self.actual_quantity is None:
+            return 0
+        return int(self.actual_quantity) - int(self.system_quantity or 0)
+
+    @property
+    def is_counted(self):
+        return self.actual_quantity is not None
+
+    @property
+    def is_correct(self):
+        return self.is_counted and self.difference == 0
+
+    def __str__(self):
+        return f"{self.session} - {self.variant}"

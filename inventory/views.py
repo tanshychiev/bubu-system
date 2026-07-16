@@ -665,14 +665,16 @@ def unit_option_delete(request, pk):
 
 
 def _posted_variant_rows(request):
-    """Return inline variant rows in the same order shown in the create form."""
+    """Return inline variant rows in the same order shown in the item form."""
     keys = request.POST.getlist("variant_key[]")
+    variant_ids = request.POST.getlist("variant_id[]")
     labels = request.POST.getlist("variant_label[]")
     sizes = request.POST.getlist("variant_size[]")
     colors = request.POST.getlist("variant_color[]")
     skus = request.POST.getlist("variant_sku[]")
     cost_prices = request.POST.getlist("variant_cost_price[]")
     sale_prices = request.POST.getlist("variant_sale_price[]")
+    active_values = request.POST.getlist("variant_active[]")
 
     rows = []
 
@@ -680,67 +682,203 @@ def _posted_variant_rows(request):
         def value(values):
             return values[index].strip() if index < len(values) else ""
 
+        row_key = str(key or "").strip()
         rows.append({
-            "key": str(key).strip(),
+            "key": row_key,
+            "variant_id": value(variant_ids),
             "label": value(labels),
             "size": value(sizes),
             "color": value(colors),
             "sku": value(skus),
             "cost_price": value(cost_prices),
             "sale_price": value(sale_prices),
-            "image": request.FILES.get(f"variant_image_{key}"),
+            "is_active": value(active_values) != "0",
+            "remove_image": request.POST.get(f"variant_remove_image_{row_key}") == "1",
+            "image": request.FILES.get(f"variant_image_{row_key}"),
         })
 
     return rows
 
 
-def _create_inline_variants(request, item, can_price):
-    """
-    Save variants created under the new item form.
+def _variant_rows_for_template(request, item=None, can_view_cost=False):
+    """Build JSON-safe rows for create/edit and preserve submitted values on errors."""
+    existing_variants = list(
+        item.variants.all().order_by("sort_order", "id")
+    ) if item and item.pk else []
+    existing_map = {str(variant.id): variant for variant in existing_variants}
 
-    If staff creates no rows, create one Default variant so the item can be
-    stocked immediately.
-    """
-    rows = _posted_variant_rows(request)
-    created = []
+    if request.method == "POST":
+        rows = _posted_variant_rows(request)
+        for row in rows:
+            existing = existing_map.get(str(row.get("variant_id") or ""))
+            row["image_url"] = ""
+            row["cost_status"] = "No Cost"
+
+            if existing:
+                row["cost_status"] = existing.cost_status
+                if existing.image and not row.get("remove_image"):
+                    try:
+                        row["image_url"] = existing.image.url
+                    except Exception:
+                        row["image_url"] = ""
+
+            row["cost_price"] = str(row.get("cost_price") or "")
+            row["sale_price"] = str(row.get("sale_price") or "")
+            row["is_active"] = bool(row.get("is_active", True))
+            row.pop("image", None)
+            row.pop("remove_image", None)
+
+        return rows
+
+    rows = []
+    for index, variant in enumerate(existing_variants, start=1):
+        image_url = ""
+        if variant.image:
+            try:
+                image_url = variant.image.url
+            except Exception:
+                image_url = ""
+
+        rows.append({
+            "key": f"existing-{variant.id}",
+            "variant_id": str(variant.id),
+            "label": variant.label or "",
+            "size": variant.size or "",
+            "color": variant.color or "",
+            "sku": variant.sku or "",
+            "cost_price": str(variant.cost_price or "") if can_view_cost else "",
+            "sale_price": str(variant.sale_price or ""),
+            "is_active": bool(variant.is_active),
+            "image_url": image_url,
+            "cost_status": variant.cost_status,
+        })
+
+    return rows
+
+
+def _validate_inline_variant_rows(item, rows):
+    """Validate ownership and prevent duplicate SKUs before saving any row."""
+    errors = []
+    seen_skus = {}
+    allowed_ids = set()
+
+    if item and item.pk:
+        allowed_ids = set(
+            item.variants.values_list("id", flat=True)
+        )
 
     for position, row in enumerate(rows, start=1):
-        has_value = any([
-            row["label"],
-            row["size"],
-            row["color"],
-            row["sku"],
-            row["cost_price"],
-            row["sale_price"],
-            row["image"],
-        ])
+        raw_id = str(row.get("variant_id") or "").strip()
+        if raw_id:
+            try:
+                variant_id = int(raw_id)
+            except (TypeError, ValueError):
+                errors.append(f"Variant {position}: invalid variant record.")
+                continue
 
-        if not has_value:
+            if not item or variant_id not in allowed_ids:
+                errors.append(f"Variant {position}: this variant does not belong to the item.")
+
+        sku = str(row.get("sku") or "").strip()
+        if not sku:
             continue
 
-        if can_price:
-            cost_price = money(row["cost_price"], item.cost_price)
-            sale_price = money(row["sale_price"], item.sale_price)
-        else:
-            cost_price = item.cost_price
-            sale_price = item.sale_price
+        normalized = sku.casefold()
+        if normalized in seen_skus:
+            errors.append(
+                f"SKU {sku} is repeated in variant {seen_skus[normalized]} and variant {position}."
+            )
+            continue
+        seen_skus[normalized] = position
 
-        variant = ItemVariant.objects.create(
-            item=item,
-            sku=row["sku"],
-            image=row["image"],
-            size=row["size"],
-            color=row["color"],
-            label=row["label"],
-            cost_price=cost_price,
-            sale_price=sale_price,
-            sort_order=position,
-            is_active=True,
-        )
-        created.append(variant)
+        duplicate_qs = ItemVariant.objects.filter(sku__iexact=sku)
+        if raw_id.isdigit():
+            duplicate_qs = duplicate_qs.exclude(pk=int(raw_id))
 
-    if not created:
-        created.append(
+        if duplicate_qs.exists():
+            errors.append(f"SKU {sku} is already used by another inventory variant.")
+
+    return errors
+
+
+def _save_inline_variants(request, item, can_edit_cost, user):
+    """Create and update all item variants in one transaction without changing stock."""
+    rows = _posted_variant_rows(request)
+    existing_map = {
+        str(variant.id): variant
+        for variant in item.variants.select_for_update().all()
+    }
+    saved = []
+
+    for position, row in enumerate(rows, start=1):
+        existing = existing_map.get(str(row.get("variant_id") or ""))
+        has_value = any([
+            row.get("label"),
+            row.get("size"),
+            row.get("color"),
+            row.get("sku"),
+            row.get("cost_price"),
+            row.get("sale_price"),
+            row.get("image"),
+        ])
+
+        if not existing and not has_value:
+            continue
+
+        variant = existing or ItemVariant(item=item)
+        before = snapshot_variant(variant) if existing else None
+
+        variant.label = row.get("label", "")
+        variant.size = row.get("size", "")
+        variant.color = row.get("color", "")
+        variant.sku = row.get("sku", "")
+        variant.sort_order = position
+        variant.is_active = bool(row.get("is_active", True))
+
+        if can_edit_cost:
+            entered_cost = str(row.get("cost_price") or "").strip()
+            if entered_cost:
+                variant.cost_price = money(
+                    entered_cost,
+                    variant.cost_price if existing else item.cost_price,
+                )
+            elif not existing:
+                variant.cost_price = item.cost_price
+        elif not existing:
+            variant.cost_price = item.cost_price
+
+        entered_sale = str(row.get("sale_price") or "").strip()
+        if entered_sale:
+            variant.sale_price = money(
+                entered_sale,
+                variant.sale_price if existing else item.sale_price,
+            )
+        elif not existing:
+            variant.sale_price = item.sale_price
+
+        if existing and row.get("remove_image"):
+            delete_model_image(variant, "image")
+
+        uploaded_image = row.get("image")
+        if uploaded_image:
+            if existing and variant.image:
+                delete_model_image(variant, "image")
+            variant.image = uploaded_image
+
+        variant.save()
+
+        if before is not None:
+            record_variant_edit_history(
+                variant,
+                user,
+                before,
+                snapshot_variant(variant),
+            )
+
+        saved.append(variant)
+
+    if not saved and not item.variants.exists():
+        saved.append(
             ItemVariant.objects.create(
                 item=item,
                 label="Default",
@@ -751,7 +889,12 @@ def _create_inline_variants(request, item, can_price):
             )
         )
 
-    return created
+    return saved
+
+
+def _create_inline_variants(request, item, can_price):
+    """Backward-compatible wrapper used by item creation."""
+    return _save_inline_variants(request, item, can_price, request.user)
 
 
 # ==================================================
@@ -777,29 +920,46 @@ def item_create(request):
         can_edit_sale_price=True,
     )
 
-    if request.method == "POST" and form.is_valid():
-        item = form.save(commit=False)
+    variant_rows = _variant_rows_for_template(
+        request,
+        item=None,
+        can_view_cost=can_view_cost,
+    )
+    variant_errors = []
 
-        if not can_price:
-            item.cost_price = Decimal("0.00")
-            item.sale_price = Decimal("0.00")
+    if request.method == "POST":
+        posted_rows = _posted_variant_rows(request)
+        variant_errors = _validate_inline_variant_rows(None, posted_rows)
 
-        if request.POST.get("remove_image") == "1":
-            item.image = None
+        if form.is_valid() and not variant_errors:
+            item = form.save(commit=False)
 
-        item.save()
-        created_variants = _create_inline_variants(request, item, can_price)
+            if not can_price:
+                item.cost_price = Decimal("0.00")
 
-        messages.success(
-            request,
-            f"Item created with {len(created_variants)} variant(s).",
-        )
-        return redirect("item_detail", pk=item.pk)
+            if request.POST.get("remove_image") == "1":
+                item.image = None
+
+            item.save()
+            created_variants = _save_inline_variants(
+                request,
+                item,
+                can_price,
+                request.user,
+            )
+
+            messages.success(
+                request,
+                f"Item created with {len(created_variants)} variant(s).",
+            )
+            return redirect("item_edit", pk=item.pk)
 
     return render(request, "inventory/item_form.html", {
         "form": form,
         "title": "Create Item",
         "is_create": True,
+        "variant_rows": variant_rows,
+        "variant_errors": variant_errors,
         "can_edit_cost_price": can_price,
         "can_view_cost_price": can_view_cost,
     })
@@ -839,6 +999,7 @@ def item_detail(request, pk):
 
 
 @login_required
+@transaction.atomic
 def item_edit(request, pk):
     if not can_manage_inventory(request.user):
         messages.error(request, "You do not have permission.")
@@ -846,14 +1007,20 @@ def item_edit(request, pk):
 
     seed_default_units()
 
-    item = get_object_or_404(Item.objects.prefetch_related("variants"), pk=pk)
+    item = get_object_or_404(
+        Item.objects.prefetch_related(
+            Prefetch(
+                "variants",
+                queryset=ItemVariant.objects.order_by("sort_order", "id"),
+            )
+        ),
+        pk=pk,
+    )
     can_price = can_edit_cost_price(request.user)
     can_view_cost = can_view_cost_price(request.user)
 
     before = snapshot_item(item)
-
     old_cost_price = item.cost_price
-    old_sale_price = item.sale_price
 
     form = ItemForm(
         request.POST or None,
@@ -864,44 +1031,50 @@ def item_edit(request, pk):
         can_edit_sale_price=True,
     )
 
-    if request.method == "POST" and form.is_valid():
-        item = form.save(commit=False)
+    variant_rows = _variant_rows_for_template(
+        request,
+        item=item,
+        can_view_cost=can_view_cost,
+    )
+    variant_errors = []
 
-        if not can_price:
-            item.cost_price = old_cost_price
-            item.sale_price = old_sale_price
+    if request.method == "POST":
+        posted_rows = _posted_variant_rows(request)
+        variant_errors = _validate_inline_variant_rows(item, posted_rows)
 
-        if request.POST.get("remove_image") == "1":
-            delete_model_image(item, "image")
+        if form.is_valid() and not variant_errors:
+            item = form.save(commit=False)
 
-        item.save()
+            if not can_price:
+                item.cost_price = old_cost_price
 
-        after = snapshot_item(item)
-        record_item_edit_history(item, request.user, before, after)
+            if request.POST.get("remove_image") == "1":
+                delete_model_image(item, "image")
 
-        default_variant = item.variants.filter(label="Default").first()
+            item.save()
 
-        if default_variant:
-            changed_fields = []
+            after = snapshot_item(item)
+            record_item_edit_history(item, request.user, before, after)
 
-            if default_variant.cost_price <= 0 and item.cost_price > 0:
-                default_variant.cost_price = item.cost_price
-                changed_fields.append("cost_price")
+            saved_variants = _save_inline_variants(
+                request,
+                item,
+                can_price,
+                request.user,
+            )
 
-            if default_variant.sale_price <= 0 and item.sale_price > 0:
-                default_variant.sale_price = item.sale_price
-                changed_fields.append("sale_price")
-
-            if changed_fields:
-                default_variant.save(update_fields=changed_fields)
-
-        messages.success(request, "Item updated successfully.")
-        return redirect("item_detail", pk=item.pk)
+            messages.success(
+                request,
+                f"Item and {len(saved_variants)} variant(s) saved successfully.",
+            )
+            return redirect("item_edit", pk=item.pk)
 
     return render(request, "inventory/item_form.html", {
         "form": form,
         "title": "Edit Item",
         "is_create": False,
+        "variant_rows": variant_rows,
+        "variant_errors": variant_errors,
         "can_edit_cost_price": can_price,
         "can_view_cost_price": can_view_cost,
     })

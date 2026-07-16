@@ -96,6 +96,10 @@ a { text-decoration:none !important; }
     background:linear-gradient(135deg,#19a974,#7be0b2);
 }
 
+.stock-count-btn {
+    background:linear-gradient(135deg,#2f80ed,#63b3ff);
+}
+
 .control-btn {
     background:linear-gradient(135deg,#ff8c6b,#ffbd73);
 }
@@ -2041,6 +2045,11 @@ body.inventory-detail-open{
                                 ＋ Batch Stock In
                             </a>
                         {% endif %}
+
+
+                        <a href="{% url 'stock_count_list' %}{% if current_branch %}?branch={{ current_branch.id }}{% endif %}" class="add-btn stock-count-btn">
+                            ✓ Stock Count
+                        </a>
                     {% endif %}
                 </div>
             {% endif %}

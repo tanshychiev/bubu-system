@@ -1829,6 +1829,19 @@ html.bubu-loading body{
                 <span class="bubu-nav-icon tone-brown"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="13" height="13" rx="2" fill="currentColor" opacity=".10" stroke="none"/><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/><path d="M6.5 9h.01M6.5 13h.01M6.5 17h.01"/></svg></span><span>Inventory List</span>
             </a>
 
+
+            <a href="{% url 'stock_count_list' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'stock_count_list' or request.resolver_match.url_name == 'stock_count_detail' %}active{% endif %}">
+                <span class="bubu-nav-icon tone-green">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="4" width="16" height="16" rx="3"/>
+                        <path d="m7.5 10.5 2 2 4-4M7.5 16h9"/>
+                    </svg>
+                </span>
+                <span>Stock Count</span>
+            </a>
+
             <a href="{% url 'purchase_list' %}"
                onclick="saveMenuStateAndClose()"
                class="{% if request.resolver_match.url_name == 'purchase_list' or request.resolver_match.url_name == 'purchase_create' or request.resolver_match.url_name == 'purchase_update' or request.resolver_match.url_name == 'purchase_detail' %}active{% endif %}">
