@@ -9,7 +9,7 @@
         <div>
             <div class="hello-badge">🐾 BUBU Pet Store POS</div>
             <h1>Dashboard</h1>
-            <p>Welcome back. Here is today and this month business summary. 💜</p>
+            <p>Welcome back. Choose Today, Yesterday, or any month. 💜</p>
         </div>
 
         <div class="head-actions">
@@ -22,7 +22,7 @@
     <div class="today-strip">
         <div>
             <span>Today Sales</span>
-            <strong>${{ today_sales|default:"0.00" }}</strong>
+            <strong>${{ today_sales|default_if_none:"0"|floatformat:2 }}</strong>
         </div>
 
         <div>
@@ -36,15 +36,81 @@
         </div>
 
         <div>
-            <span>This Month Sales</span>
-            <strong>
-                {% if this_month_sales %}
-                    ${{ this_month_sales }}
-                {% else %}
-                    ${{ total_sales|default:"0.00" }}
-                {% endif %}
-            </strong>
+            <span>{{ selected_period_label }} Sales</span>
+            <strong>${{ selected_total_sales|default_if_none:"0"|floatformat:2 }}</strong>
         </div>
+    </div>
+
+
+    <div class="sales-period-filter">
+        <div class="sales-period-copy">
+            <strong>Sales Period</strong>
+            <span>{{ selected_period_label }}</span>
+        </div>
+
+        <div class="period-button-grid">
+            <a
+                href="?period=today"
+                class="period-btn {% if selected_period == 'today' %}active{% endif %}"
+            >
+                <span class="period-btn-icon">☀️</span>
+                <span class="period-btn-text">Today</span>
+            </a>
+
+            <a
+                href="?period=yesterday"
+                class="period-btn {% if selected_period == 'yesterday' %}active{% endif %}"
+            >
+                <span class="period-btn-icon">🌙</span>
+                <span class="period-btn-text">Yesterday</span>
+            </a>
+
+            <button
+                type="button"
+                class="period-btn month-trigger {% if selected_period == 'month' %}active{% endif %}"
+                onclick="openMonthPopup()"
+            >
+                <span class="period-btn-icon">🗓️</span>
+                <span class="period-btn-text" id="monthTriggerText">
+                    {% if selected_period == 'month' %}
+                        {{ selected_period_label }}
+                    {% else %}
+                        Choose Month
+                    {% endif %}
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <div class="branch-sales-grid">
+
+        <a href="{% url 'sale_list' %}" class="branch-sale-card stm">
+            <div class="branch-sale-copy">
+                <span>BUBU Sales — STM</span>
+                <strong>${{ stm_selected_sales|default_if_none:"0"|floatformat:2 }}</strong>
+                <em>{{ selected_period_label }} sales at BUBU STM</em>
+            </div>
+            <div class="branch-sale-icon">🏪</div>
+        </a>
+
+        <a href="{% url 'sale_list' %}" class="branch-sale-card sensok">
+            <div class="branch-sale-copy">
+                <span>BUBU Sales — Sensok</span>
+                <strong>${{ sensok_selected_sales|default_if_none:"0"|floatformat:2 }}</strong>
+                <em>{{ selected_period_label }} sales at BUBU Sensok</em>
+            </div>
+            <div class="branch-sale-icon">🛍️</div>
+        </a>
+
+        <a href="{% url 'sale_list' %}" class="branch-sale-card total">
+            <div class="branch-sale-copy">
+                <span>BUBU Total</span>
+                <strong>${{ selected_total_sales|default_if_none:"0"|floatformat:2 }}</strong>
+                <em>{{ selected_period_label }} sales from all branches</em>
+            </div>
+            <div class="branch-sale-icon">💳</div>
+        </a>
+
     </div>
 
     <div class="grid-cards">
@@ -56,15 +122,6 @@
                 <span>Inventory items ↗</span>
             </div>
             <div class="icon">🛍️</div>
-        </a>
-
-        <a href="{% url 'sale_list' %}" class="card stat orange">
-            <div>
-                <small>Total POS Sales</small>
-                <h2>${{ total_sales|default:"0.00" }}</h2>
-                <span>All POS sales total ↗</span>
-            </div>
-            <div class="icon">💳</div>
         </a>
 
         <a href="{% url 'pet_list' %}" class="card stat blue">
@@ -145,17 +202,17 @@
             <div class="chart-footer">
                 <div>
                     <span>This Week</span>
-                    <b>${{ this_week_sales|default:"0.00" }}</b>
+                    <b>${{ this_week_sales|default_if_none:"0"|floatformat:2 }}</b>
                 </div>
 
                 <div>
                     <span>Last Week</span>
-                    <b>${{ last_week_sales|default:"0.00" }}</b>
+                    <b>${{ last_week_sales|default_if_none:"0"|floatformat:2 }}</b>
                 </div>
 
                 <div>
                     <span>Balance / Unpaid</span>
-                    <b>${{ total_balance|default:"0.00" }}</b>
+                    <b>${{ total_balance|default_if_none:"0"|floatformat:2 }}</b>
                 </div>
             </div>
         </div>
@@ -175,7 +232,7 @@
                         <strong>#{{ order.id }}</strong>
                         <span>{{ order.customer.name|default:"Walk-in customer" }}</span>
                     </div>
-                    <b>${{ order.total|default:"0.00" }}</b>
+                    <b>${{ order.total|default_if_none:"0"|floatformat:2 }}</b>
                 </div>
             {% empty %}
                 <div class="empty-box">
@@ -354,9 +411,395 @@ a{
     font-weight:1000;
 }
 
+
+
+.sales-period-filter{
+    display:grid;
+    grid-template-columns:minmax(150px,auto) minmax(0,1fr);
+    align-items:center;
+    gap:12px;
+    margin-bottom:14px;
+    padding:12px;
+    border:2px solid #eaddec;
+    border-radius:22px;
+    background:linear-gradient(135deg,#fff,#fbf8ff);
+    box-shadow:0 10px 24px rgba(130,91,60,.05);
+}
+
+.sales-period-copy{
+    padding:0 5px;
+}
+
+.sales-period-copy strong{
+    display:block;
+    color:#080634;
+    font-size:15px;
+    font-weight:1000;
+}
+
+.sales-period-copy span{
+    display:block;
+    max-width:155px;
+    margin-top:3px;
+    overflow:hidden;
+    color:#81758f;
+    font-size:11px;
+    font-weight:900;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.period-button-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:8px;
+}
+
+.period-btn{
+    width:100%;
+    min-width:0;
+    min-height:48px;
+    padding:5px 10px;
+    border:1px solid #eaddec;
+    border-radius:15px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    color:#655b70;
+    background:white;
+    font-family:inherit;
+    font-size:12px;
+    font-weight:1000;
+    cursor:pointer;
+    overflow:hidden;
+}
+
+.period-btn:hover{
+    border-color:#cdb9f5;
+    background:#faf7ff;
+}
+
+.period-btn.active{
+    color:white;
+    border-color:transparent;
+    background:linear-gradient(135deg,#7b5cff,#9b7cf6);
+    box-shadow:0 8px 18px rgba(123,92,255,.20);
+}
+
+.period-btn-icon{
+    flex:0 0 auto;
+    font-size:16px;
+}
+
+.period-btn-text{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+/* Cute custom month popup */
+.month-popup-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:19990;
+    background:rgba(20,15,45,.50);
+    backdrop-filter:blur(4px);
+}
+
+.month-popup-backdrop.active{
+    display:block;
+}
+
+.month-popup{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    z-index:20000;
+    width:390px;
+    max-width:calc(100% - 24px);
+    max-height:82dvh;
+    padding:16px;
+    overflow-y:auto;
+    border:1px solid #eaddec;
+    border-radius:28px;
+    background:white;
+    box-shadow:0 30px 80px rgba(31,20,56,.28);
+    transform:translate(-50%,-50%);
+}
+
+.month-popup.active{
+    display:block;
+    animation:monthPopupIn .18s ease-out;
+}
+
+@keyframes monthPopupIn{
+    from{
+        opacity:0;
+        transform:translate(-50%,-47%) scale(.97);
+    }
+    to{
+        opacity:1;
+        transform:translate(-50%,-50%) scale(1);
+    }
+}
+
+.month-popup-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:12px;
+    padding:12px;
+    border-radius:20px;
+    color:white;
+    background:linear-gradient(135deg,#8e63ff,#ff8c6b);
+}
+
+.month-popup-head > div{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.month-popup-paw{
+    width:42px;
+    height:42px;
+    flex:0 0 42px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.20);
+    font-size:21px;
+}
+
+.month-popup-head h3{
+    margin:0;
+    color:white;
+    font-size:18px;
+    line-height:1.15;
+    font-weight:1000;
+}
+
+.month-popup-head p{
+    margin:3px 0 0;
+    color:rgba(255,255,255,.88);
+    font-size:10px;
+    line-height:1.3;
+    font-weight:850;
+}
+
+.month-popup-close{
+    width:36px;
+    height:36px;
+    flex:0 0 36px;
+    border:0;
+    border-radius:12px;
+    color:white;
+    background:rgba(255,255,255,.20);
+    font-size:14px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.month-year-row{
+    display:grid;
+    grid-template-columns:42px 1fr 42px;
+    align-items:center;
+    gap:8px;
+    margin-bottom:10px;
+}
+
+.month-year-row strong{
+    min-height:42px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#080634;
+    background:#f7f3ff;
+    font-size:17px;
+    font-weight:1000;
+}
+
+.year-arrow{
+    width:42px;
+    height:42px;
+    border:1px solid #eaddec;
+    border-radius:14px;
+    color:#7b5cff;
+    background:white;
+    font-size:26px;
+    line-height:1;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.month-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:7px;
+}
+
+.month-option{
+    min-width:0;
+    min-height:46px;
+    border:1px solid #eaddec;
+    border-radius:14px;
+    color:#655b70;
+    background:#fffafc;
+    font-family:inherit;
+    font-size:12px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.month-option:hover{
+    border-color:#bca3f4;
+    background:#f7f2ff;
+}
+
+.month-option.selected{
+    color:white;
+    border-color:transparent;
+    background:linear-gradient(135deg,#7b5cff,#ff8c6b);
+    box-shadow:0 7px 16px rgba(123,92,255,.18);
+}
+
+.month-option.current::after{
+    content:" •";
+    color:#19a974;
+}
+
+.month-option.selected.current::after{
+    color:white;
+}
+
+.month-popup-actions{
+    display:grid;
+    grid-template-columns:1fr 1.3fr;
+    gap:8px;
+    margin-top:12px;
+}
+
+.month-cancel-btn,
+.month-search-btn{
+    min-height:48px;
+    border:0;
+    border-radius:15px;
+    font-family:inherit;
+    font-size:12px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+.month-cancel-btn{
+    color:#655b70;
+    background:#f6f2f8;
+}
+
+.month-search-btn{
+    color:white;
+    background:linear-gradient(135deg,#13a85f,#7b5cff);
+    box-shadow:0 8px 18px rgba(68,163,122,.20);
+}
+
+body.month-popup-open{
+    overflow:hidden!important;
+}
+
+.branch-sales-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:14px;
+    margin-bottom:22px;
+}
+
+.branch-sale-card{
+    min-width:0;
+    min-height:132px;
+    padding:20px;
+    border:2px solid #f5e0d8;
+    border-radius:26px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    color:#080634;
+    box-shadow:0 14px 30px rgba(130,91,60,.06);
+    transition:.15s ease;
+}
+
+.branch-sale-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 22px 42px rgba(130,91,60,.11);
+}
+
+.branch-sale-card.stm{
+    background:linear-gradient(135deg,#fff8ed,#fff);
+}
+
+.branch-sale-card.sensok{
+    background:linear-gradient(135deg,#f5f0ff,#fff);
+}
+
+.branch-sale-card.total{
+    background:linear-gradient(135deg,#edfff7,#fff);
+}
+
+.branch-sale-copy{
+    min-width:0;
+}
+
+.branch-sale-copy span{
+    display:block;
+    color:#81758f;
+    font-size:14px;
+    font-weight:1000;
+}
+
+.branch-sale-copy strong{
+    display:block;
+    margin-top:8px;
+    color:#080634;
+    font-size:30px;
+    line-height:1.05;
+    font-weight:1000;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.branch-sale-copy em{
+    display:block;
+    margin-top:8px;
+    color:#81758f;
+    font-size:12px;
+    line-height:1.3;
+    font-style:normal;
+    font-weight:900;
+}
+
+.branch-sale-icon{
+    width:58px;
+    height:58px;
+    flex:0 0 58px;
+    border-radius:19px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.82);
+    font-size:28px;
+    box-shadow:0 8px 18px rgba(63,42,84,.08);
+}
+
 .grid-cards{
     display:grid;
-    grid-template-columns:repeat(4,1fr);
+    grid-template-columns:repeat(3,1fr);
     gap:20px;
     margin-bottom:22px;
 }
@@ -707,6 +1150,20 @@ a{
         grid-template-columns:repeat(2,1fr);
     }
 
+    .branch-sales-grid{
+        grid-template-columns:repeat(3,minmax(0,1fr));
+    }
+
+
+
+    .branch-sale-card{
+        padding:16px;
+    }
+
+    .branch-sale-copy strong{
+        font-size:24px;
+    }
+
     .pet-summary-grid{
         grid-template-columns:repeat(3,1fr);
     }
@@ -737,6 +1194,7 @@ a{
 
     .head-actions,
     .today-strip,
+    .branch-sales-grid,
     .grid-cards,
     .pet-summary-grid,
     .grid-main,
@@ -872,6 +1330,186 @@ a{
     .today-strip strong{
         margin-top:4px!important;
         font-size:19px!important;
+    }
+
+
+
+    .sales-period-filter{
+        display:block!important;
+        margin-bottom:8px!important;
+        padding:7px!important;
+        border-width:1px!important;
+        border-radius:14px!important;
+        box-shadow:0 6px 16px rgba(130,91,60,.05)!important;
+    }
+
+    .sales-period-copy{
+        display:flex!important;
+        align-items:center!important;
+        justify-content:space-between!important;
+        gap:7px!important;
+        padding:0 2px 6px!important;
+    }
+
+    .sales-period-copy strong{
+        font-size:10px!important;
+    }
+
+    .sales-period-copy span{
+        max-width:150px!important;
+        margin-top:0!important;
+        font-size:8px!important;
+    }
+
+    .period-button-grid{
+        display:grid!important;
+        grid-template-columns:repeat(3,minmax(0,1fr))!important;
+        gap:5px!important;
+    }
+
+    .period-btn{
+        min-height:42px!important;
+        padding:4px 3px!important;
+        border-radius:11px!important;
+        flex-direction:column!important;
+        gap:1px!important;
+        font-size:8px!important;
+        line-height:1.1!important;
+    }
+
+    .period-btn-icon{
+        font-size:14px!important;
+    }
+
+    .period-btn-text{
+        max-width:100%!important;
+    }
+
+    .month-popup{
+        width:calc(100% - 16px)!important;
+        max-width:360px!important;
+        max-height:78dvh!important;
+        padding:9px!important;
+        border-radius:20px!important;
+    }
+
+    .month-popup-head{
+        margin-bottom:8px!important;
+        padding:9px!important;
+        border-radius:15px!important;
+    }
+
+    .month-popup-paw{
+        width:34px!important;
+        height:34px!important;
+        flex-basis:34px!important;
+        border-radius:10px!important;
+        font-size:17px!important;
+    }
+
+    .month-popup-head h3{
+        font-size:14px!important;
+    }
+
+    .month-popup-head p{
+        font-size:8px!important;
+    }
+
+    .month-popup-close{
+        width:32px!important;
+        height:32px!important;
+        flex-basis:32px!important;
+        border-radius:10px!important;
+        font-size:11px!important;
+    }
+
+    .month-year-row{
+        grid-template-columns:38px 1fr 38px!important;
+        gap:5px!important;
+        margin-bottom:7px!important;
+    }
+
+    .year-arrow{
+        width:38px!important;
+        height:38px!important;
+        border-radius:11px!important;
+        font-size:23px!important;
+    }
+
+    .month-year-row strong{
+        min-height:38px!important;
+        border-radius:11px!important;
+        font-size:14px!important;
+    }
+
+    .month-grid{
+        grid-template-columns:repeat(4,minmax(0,1fr))!important;
+        gap:5px!important;
+    }
+
+    .month-option{
+        min-height:40px!important;
+        padding:0 2px!important;
+        border-radius:10px!important;
+        font-size:9px!important;
+    }
+
+    .month-popup-actions{
+        gap:5px!important;
+        margin-top:8px!important;
+    }
+
+    .month-cancel-btn,
+    .month-search-btn{
+        min-height:42px!important;
+        border-radius:11px!important;
+        font-size:10px!important;
+    }
+
+    .branch-sales-grid{
+        display:grid!important;
+        grid-template-columns:repeat(3,minmax(0,1fr))!important;
+        gap:5px!important;
+        margin:0 0 9px!important;
+        padding:0!important;
+        overflow:visible!important;
+    }
+
+    .branch-sale-card{
+        min-width:0!important;
+        min-height:82px!important;
+        padding:7px!important;
+        border-width:1px!important;
+        border-radius:12px!important;
+        display:block!important;
+        box-shadow:0 6px 16px rgba(130,91,60,.05)!important;
+    }
+
+    .branch-sale-card:hover{
+        transform:none!important;
+    }
+
+    .branch-sale-copy span{
+        font-size:9px!important;
+    }
+
+    .branch-sale-copy strong{
+        margin-top:4px!important;
+        max-width:100%!important;
+        font-size:15px!important;
+    }
+
+    .branch-sale-copy em{
+        display:none!important;
+    }
+
+    .branch-sale-icon{
+        width:28px!important;
+        height:28px!important;
+        margin-top:6px!important;
+        border-radius:9px!important;
+        font-size:14px!important;
+        box-shadow:none!important;
     }
 
     .grid-cards{
@@ -1195,6 +1833,205 @@ a{
 
 </style>
 
+
+
+<!-- CUTE MONTH SELECTOR -->
+<div
+    class="month-popup-backdrop"
+    id="monthPopupBackdrop"
+    onclick="closeMonthPopup()"
+></div>
+
+<div
+    class="month-popup"
+    id="monthPopup"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="monthPopupTitle"
+>
+    <div class="month-popup-head">
+        <div>
+            <span class="month-popup-paw">🐾</span>
+            <div>
+                <h3 id="monthPopupTitle">Choose Month</h3>
+                <p>Select a month, then tap Search.</p>
+            </div>
+        </div>
+
+        <button
+            type="button"
+            class="month-popup-close"
+            onclick="closeMonthPopup()"
+            aria-label="Close"
+        >✕</button>
+    </div>
+
+    <form method="get" id="monthSearchForm">
+        <input type="hidden" name="period" value="month">
+        <input
+            type="hidden"
+            name="month"
+            id="selectedMonthInput"
+            value="{{ selected_month_value }}"
+        >
+
+        <div class="month-year-row">
+            <button
+                type="button"
+                class="year-arrow"
+                onclick="changeMonthYear(-1)"
+                aria-label="Previous year"
+            >‹</button>
+
+            <strong id="monthPopupYear">2026</strong>
+
+            <button
+                type="button"
+                class="year-arrow"
+                onclick="changeMonthYear(1)"
+                aria-label="Next year"
+            >›</button>
+        </div>
+
+        <div class="month-grid" id="monthGrid"></div>
+
+        <div class="month-popup-actions">
+            <button
+                type="button"
+                class="month-cancel-btn"
+                onclick="closeMonthPopup()"
+            >
+                Cancel
+            </button>
+
+            <button type="submit" class="month-search-btn">
+                🔍 Search
+            </button>
+        </div>
+    </form>
+</div>
+
+
+<script>
+(function(){
+    const monthNames = [
+        "Jan","Feb","Mar","Apr","May","Jun",
+        "Jul","Aug","Sep","Oct","Nov","Dec"
+    ];
+
+    const popup = document.getElementById("monthPopup");
+    const backdrop = document.getElementById("monthPopupBackdrop");
+    const yearLabel = document.getElementById("monthPopupYear");
+    const monthGrid = document.getElementById("monthGrid");
+    const selectedInput = document.getElementById("selectedMonthInput");
+    const triggerText = document.getElementById("monthTriggerText");
+
+    const now = new Date();
+    const initialValue = (selectedInput && selectedInput.value)
+        ? selectedInput.value
+        : `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+    let parts = initialValue.split("-");
+    let displayYear = Number(parts[0]) || now.getFullYear();
+    let selectedYear = displayYear;
+    let selectedMonth = Number(parts[1]) || (now.getMonth() + 1);
+
+    function monthValue(year, month){
+        return `${year}-${String(month).padStart(2, "0")}`;
+    }
+
+    function renderMonths(){
+        if(!monthGrid || !yearLabel){
+            return;
+        }
+
+        yearLabel.textContent = displayYear;
+        monthGrid.innerHTML = "";
+
+        monthNames.forEach(function(name, index){
+            const monthNumber = index + 1;
+            const button = document.createElement("button");
+
+            button.type = "button";
+            button.className = "month-option";
+            button.textContent = name;
+
+            if(
+                displayYear === selectedYear &&
+                monthNumber === selectedMonth
+            ){
+                button.classList.add("selected");
+            }
+
+            if(
+                displayYear === now.getFullYear() &&
+                monthNumber === now.getMonth() + 1
+            ){
+                button.classList.add("current");
+            }
+
+            button.addEventListener("click", function(){
+                selectedYear = displayYear;
+                selectedMonth = monthNumber;
+
+                if(selectedInput){
+                    selectedInput.value = monthValue(
+                        selectedYear,
+                        selectedMonth
+                    );
+                }
+
+                if(triggerText){
+                    triggerText.textContent =
+                        `${monthNames[selectedMonth - 1]} ${selectedYear}`;
+                }
+
+                renderMonths();
+            });
+
+            monthGrid.appendChild(button);
+        });
+    }
+
+    window.openMonthPopup = function(){
+        if(!popup || !backdrop){
+            return;
+        }
+
+        displayYear = selectedYear;
+        renderMonths();
+
+        popup.classList.add("active");
+        backdrop.classList.add("active");
+        document.body.classList.add("month-popup-open");
+    };
+
+    window.closeMonthPopup = function(){
+        if(popup){
+            popup.classList.remove("active");
+        }
+
+        if(backdrop){
+            backdrop.classList.remove("active");
+        }
+
+        document.body.classList.remove("month-popup-open");
+    };
+
+    window.changeMonthYear = function(change){
+        displayYear += Number(change || 0);
+        renderMonths();
+    };
+
+    document.addEventListener("keydown", function(event){
+        if(event.key === "Escape"){
+            window.closeMonthPopup();
+        }
+    });
+
+    renderMonths();
+})();
+</script>
 
 <!-- MOBILE DASHBOARD QUICK ACTIONS -->
 <nav class="mobile-dashboard-dock" aria-label="Dashboard quick actions">

@@ -82,22 +82,50 @@
             color: var(--black);
         }
 
-        .print-btn {
+        .page-actions {
             position: fixed;
             top: 12px;
-            right: 12px;
+            left: 50%;
+            right: auto;
+            transform: translateX(-50%);
             z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px;
+            border: 1px solid #ead8ca;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, .96);
+            box-shadow: 0 10px 28px rgba(59, 35, 23, .14);
         }
 
-        .print-btn button {
+        .page-actions a,
+        .page-actions button {
+            min-height: 40px;
             border: 0;
-            border-radius: 999px;
-            background: var(--brown);
-            color: #ffffff;
-            padding: 10px 20px;
+            border-radius: 11px;
+            padding: 0 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
             font-family: Arial, sans-serif;
+            font-size: 13px;
             font-weight: 900;
+            text-decoration: none;
             cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .back-system-btn {
+            color: var(--brown);
+            background: var(--light);
+            border: 1px solid #e7cdbb !important;
+        }
+
+        .print-action-btn {
+            color: #ffffff;
+            background: var(--brown);
         }
 
         .invoice-page {
@@ -590,7 +618,7 @@
                 background: #ffffff !important;
             }
 
-            .print-btn {
+            .page-actions {
                 display: none !important;
             }
 
@@ -605,16 +633,194 @@
                 overflow: hidden !important;
             }
         }
+    
+        /* =========================================================
+           A5 CENTERED PREVIEW + A5 PRINT
+           Keeps the original design proportions and scales it safely
+           from A4 artwork to an A5 sheet.
+        ========================================================= */
+
+        @page {
+            size: A5 portrait;
+            margin: 0;
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
+            height: auto;
+            overflow: auto;
+            background:
+                radial-gradient(circle at top left, #f0e9ff 0, transparent 34%),
+                linear-gradient(135deg, #f8f3ff, #fff7fb);
+        }
+
+        body {
+            padding: 12px 10px 28px;
+        }
+
+        .page-actions {
+            position: relative;
+            top: auto;
+            left: auto;
+            right: auto;
+            width: min(148mm, calc(100vw - 20px));
+            margin: 0 auto 10px;
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 7px;
+            background: transparent;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .page-actions a,
+        .page-actions button {
+            width: 100%;
+            min-width: 0;
+            min-height: 42px;
+            padding: 0 12px;
+            border-radius: 13px;
+            font-size: 12px;
+        }
+
+        .back-system-btn {
+            color: #6f50d8;
+            background: #ffffff;
+            border: 1px solid #dfd3f4 !important;
+            box-shadow: 0 7px 18px rgba(84, 55, 120, .08);
+        }
+
+        .print-action-btn {
+            color: #ffffff;
+            background: linear-gradient(135deg, #8e63ff, #ef739c);
+            box-shadow: 0 8px 20px rgba(142, 99, 255, .22);
+        }
+
+        .a5-stage {
+            position: relative;
+            width: min(148mm, calc(100vw - 20px));
+            aspect-ratio: 148 / 210;
+            margin: 0 auto;
+            overflow: hidden;
+            background: #ffffff;
+            box-shadow: 0 18px 55px rgba(43, 27, 67, .16);
+        }
+
+        .a5-stage .invoice-page {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 210mm;
+            height: 297mm;
+            margin: 0;
+            transform: scale(var(--a5-preview-scale, .7047619048));
+            transform-origin: top left;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 8px 6px 20px;
+            }
+
+            .page-actions,
+            .a5-stage {
+                width: calc(100vw - 12px);
+            }
+
+            .page-actions {
+                gap: 5px;
+                margin-bottom: 7px;
+            }
+
+            .page-actions a,
+            .page-actions button {
+                min-height: 40px;
+                padding: 0 7px;
+                border-radius: 11px;
+                font-size: 10px;
+            }
+        }
+
+        @media print {
+            @page {
+                size: A5 portrait;
+                margin: 0;
+            }
+
+            html,
+            body {
+                width: 148mm !important;
+                height: 210mm !important;
+                min-height: 210mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+                background: #ffffff !important;
+            }
+
+            .page-actions {
+                display: none !important;
+            }
+
+            .a5-stage {
+                width: 148mm !important;
+                height: 210mm !important;
+                margin: 0 !important;
+                aspect-ratio: auto !important;
+                overflow: hidden !important;
+                background: #ffffff !important;
+                box-shadow: none !important;
+                page-break-before: avoid !important;
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            .a5-stage .invoice-page {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                margin: 0 !important;
+                padding: 8mm 14mm 10mm !important;
+                transform: scale(.7047619048) !important;
+                transform-origin: top left !important;
+                overflow: hidden !important;
+                page-break-before: avoid !important;
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+            }
+        }
+
     </style>
 </head>
 
 <body>
 
-<div class="print-btn">
-    <button onclick="window.print()">🖨 Print</button>
+<div class="page-actions">
+    <a
+        href="{% url 'pet_sale_detail' sale.id %}"
+        class="back-system-btn"
+    >
+        ← Back to Sale
+    </a>
+
+    <button
+        type="button"
+        class="print-action-btn"
+        onclick="window.print()"
+    >
+        🖨 Print A5
+    </button>
 </div>
 
-<div class="invoice-page">
+<div class="a5-stage" id="a5Stage">
+<div class="invoice-page" id="a5InvoicePage">
 
     <div class="header">
         <div class="logo">
@@ -933,6 +1139,7 @@
     </div>
 
 </div>
+</div>
 
 <script>
     function parseReceiptDate(value) {
@@ -986,12 +1193,28 @@
         }
     }
 
+    function updateA5PreviewScale() {
+        var stage = document.getElementById("a5Stage");
+        var page = document.getElementById("a5InvoicePage");
+
+        if (!stage || !page) return;
+
+        var pageWidth = page.offsetWidth;
+        if (!pageWidth) return;
+
+        var scale = stage.clientWidth / pageWidth;
+        stage.style.setProperty("--a5-preview-scale", String(scale));
+    }
+
     window.addEventListener("load", function () {
         updateReceiptWarrantyRow();
+        updateA5PreviewScale();
+    });
 
-        setTimeout(function () {
-            window.print();
-        }, 300);
+    window.addEventListener("resize", updateA5PreviewScale);
+
+    window.addEventListener("beforeprint", function () {
+        updateReceiptWarrantyRow();
     });
 </script>
 

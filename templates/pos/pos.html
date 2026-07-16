@@ -297,6 +297,19 @@
         <form method="post" action="{% url 'pos_checkout' %}" id="paymentForm">
             {% csrf_token %}
 
+            {% if pos_checkout_error %}
+            <div
+                class="pos-checkout-error"
+                id="posCheckoutError"
+                data-field="{{ pos_checkout_error_field|default:'' }}"
+            >
+                <strong>Cannot complete sale</strong>
+                <span>{{ pos_checkout_error }}</span>
+            </div>
+            {% endif %}
+
+            {{ pos_checkout_draft|json_script:"posCheckoutDraftData" }}
+
             <input type="hidden" name="discount_type" id="discount_type_hidden" value="percent">
             <input type="hidden" name="discount_value" id="discount_value_hidden" value="0">
             <input type="hidden" name="tax_type" id="tax_type_hidden" value="percent">
@@ -805,6 +818,52 @@
                     <span id="changeTitle">Change</span>
                     <strong id="changeKhrShow">៛0</strong>
                     <small id="changeShow">$0.00</small>
+                </div>
+            </div>
+
+            <div class="change-record-box" id="changeRecordBox" hidden>
+                <input type="hidden" name="change_mode" id="changeMode" value="auto">
+                <input type="hidden" name="change_currency" id="changeCurrency" value="usd">
+
+                <div class="change-record-head">
+                    <div>
+                        <strong>Record Actual Change Given</strong>
+                        <small>This is required so Cash Count matches the drawer.</small>
+                    </div>
+                    <span id="systemChangeBadge">System: $0.00</span>
+                </div>
+
+                <div class="change-mode-row">
+                    <button type="button" class="change-mode-btn active" data-mode="auto" onclick="setChangeMode('auto')">
+                        ⚡ Use System Change
+                    </button>
+                    <button type="button" class="change-mode-btn" data-mode="manual" onclick="setChangeMode('manual')">
+                        ✍️ Type Actual Change
+                    </button>
+                </div>
+
+                <div class="change-entry-row">
+                    <div class="change-currency-row">
+                        <button type="button" class="change-currency-btn active" data-currency="usd" onclick="setChangeCurrency('usd')">USD</button>
+                        <button type="button" class="change-currency-btn" data-currency="khr" onclick="setChangeCurrency('khr')">KHR</button>
+                    </div>
+
+                    <label class="change-given-field">
+                        <span id="changeGivenLabel">Change Given (USD)</span>
+                        <input
+                            type="text"
+                            inputmode="decimal"
+                            name="change_given"
+                            id="changeGiven"
+                            value="0.00"
+                            readonly
+                            oninput="validateChangeRecord(false)"
+                        >
+                    </label>
+                </div>
+
+                <div class="change-record-help" id="changeRecordHelp">
+                    The exact system change is filled automatically.
                 </div>
             </div>
 
@@ -5922,6 +5981,16 @@ a{
     }
 }
 
+
+.pos-checkout-error{margin:0 0 14px;padding:13px 15px;border:2px solid #ef4444;border-radius:16px;display:grid;gap:4px;color:#b91c1c;background:#fff1f2;box-shadow:0 0 0 4px rgba(239,68,68,.08)}
+.pos-checkout-error strong{font-size:13px;font-weight:1000}.pos-checkout-error span{font-size:11px;font-weight:850;line-height:1.45}
+.pos-field-error{border-color:#ef4444!important;box-shadow:0 0 0 4px rgba(239,68,68,.12)!important;background:#fff7f7!important}
+.change-record-box{margin:12px 0 4px;padding:14px;border:2px solid #e8dcf3;border-radius:18px;background:#fffafe}
+.change-record-box[hidden]{display:none!important}.change-record-box.pos-field-error{border-color:#ef4444!important;background:#fff1f2!important}
+.change-record-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}.change-record-head strong,.change-record-head small{display:block}.change-record-head strong{color:#2c2340;font-size:13px;font-weight:1000}.change-record-head small{margin-top:3px;color:#84778e;font-size:9px;font-weight:850}.change-record-head>span{padding:6px 9px;border-radius:999px;color:#6b46d9;background:#eee7ff;font-size:9px;font-weight:1000;white-space:nowrap}
+.change-mode-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.change-mode-btn,.change-currency-btn{border:1px solid #dfd3e8;border-radius:12px;color:#5c5067;background:#fff;font-weight:1000;cursor:pointer}.change-mode-btn{min-height:42px;padding:8px}.change-mode-btn.active,.change-currency-btn.active{border-color:#7959e8;color:#6848df;background:#f1ecff}
+.change-entry-row{margin-top:10px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px;align-items:end}.change-currency-row{display:flex;gap:6px}.change-currency-btn{min-width:58px;min-height:42px}.change-given-field{display:grid;gap:5px}.change-given-field span{color:#5d5168;font-size:10px;font-weight:1000}.change-given-field input{width:100%;min-height:42px;padding:0 12px;border:1px solid #dfd3e8;border-radius:12px;color:#1f1730;background:#fff;font-size:16px;font-weight:1000}.change-given-field input[readonly]{background:#f7f4fa;color:#6e6378}.change-record-help{margin-top:9px;color:#74687e;font-size:9px;font-weight:850;line-height:1.4}
+@media(max-width:650px){.change-record-head{display:block}.change-record-head>span{display:inline-flex;margin-top:7px}.change-entry-row{grid-template-columns:1fr}.change-mode-row{grid-template-columns:1fr}.change-currency-row{width:100%}.change-currency-btn{flex:1}}
 </style>
 
 <script>
@@ -5931,8 +6000,7 @@ let petRemainingBase = parseFloat("{{ selected_pet_remaining|default:'0.00' }}")
 let groomingTotalBase = parseFloat("{{ grooming_total|default:'0.00' }}");
 let total = baseTotal;
 
-const payRate = 4100;
-const changeRate = 4000;
+const payRate = parseFloat("{{ khr_rate|default:'4100' }}") || 4100;
 
 const searchInput = document.getElementById("posSearch");
 const searchForm = document.getElementById("posSearchForm");
@@ -6274,33 +6342,69 @@ function toggleGroomerCommissionBox(){
     }
 }
 
+function showPOSCheckoutError(message, target){
+    const form = document.getElementById("paymentForm");
+    if(!form){ return false; }
+
+    document.querySelectorAll(".pos-field-error").forEach(function(el){
+        el.classList.remove("pos-field-error");
+    });
+
+    let box = document.getElementById("posCheckoutError");
+    if(!box){
+        box = document.createElement("div");
+        box.className = "pos-checkout-error";
+        box.id = "posCheckoutError";
+        box.innerHTML = "<strong>Cannot complete sale</strong><span></span>";
+        form.insertBefore(box, form.firstChild.nextSibling);
+    }
+
+    const span = box.querySelector("span");
+    if(span){ span.textContent = message; }
+    box.hidden = false;
+
+    if(target){
+        target.classList.add("pos-field-error");
+        target.closest("label, .change-record-box, .groomer-commission-box, .sale-type-box, .delivery-setup-box")?.classList.add("pos-field-error");
+        setTimeout(function(){
+            if(typeof target.focus === "function"){ target.focus(); }
+            target.scrollIntoView({behavior:"smooth", block:"center"});
+        }, 100);
+    }else{
+        box.scrollIntoView({behavior:"smooth", block:"center"});
+    }
+
+    return false;
+}
+
 function validateGroomerCommission(){
     if(groomingTotalBase <= 0.009){
         return true;
     }
 
     if(getSelectedSaleType() === "prepare_delivery"){
-        alert("Grooming service must be checked out as Walk-in, not Prepare for Delivery.");
-        return false;
+        return showPOSCheckoutError(
+            "Grooming service must be checked out as Walk-in, not Prepare for Delivery.",
+            document.getElementById("sale_type_hidden")
+        );
     }
 
     const input = document.getElementById("groomerPin");
 
     if(!input || !input.value.trim()){
-        alert("Please enter groomer PIN / band code before checkout.");
-
-        if(input){
-            input.focus();
-        }
-
-        return false;
+        return showPOSCheckoutError(
+            "Please enter groomer PIN / band code before checkout.",
+            input
+        );
     }
 
     const payInfo = getPOSPaymentInfo();
 
     if(payInfo.paidUsd < payInfo.totalUsd){
-        alert("Grooming checkout must be fully paid before commission can count.");
-        return false;
+        return showPOSCheckoutError(
+            "Grooming checkout must be fully paid before commission can count.",
+            document.getElementById("cash_usd")
+        );
     }
 
     return true;
@@ -7509,6 +7613,147 @@ function setSaleTypeCard(card){
     calcChange();
 }
 
+function getCalculatedChangeUSD(){
+    const saleType = getSelectedSaleType();
+    const deliveryPaymentType = getSelectedDeliveryPaymentType();
+
+    let cashUsd = num("cash_usd");
+    let cashKhrRaw = num("cash_khr");
+    let abaUsd = num("aba_usd");
+    let abaKhrRaw = num("aba_khr");
+
+    if(saleType === "prepare_delivery"){
+        cashUsd = 0;
+        cashKhrRaw = 0;
+    }
+
+    if(saleType === "prepare_delivery" && deliveryPaymentType === "cod"){
+        abaUsd = 0;
+        abaKhrRaw = 0;
+    }
+
+    const paid = cashUsd + abaUsd + (cashKhrRaw / payRate) + (abaKhrRaw / payRate);
+    return Math.max(paid - total, 0);
+}
+
+function setChangeMode(mode){
+    const modeInput = document.getElementById("changeMode");
+    if(modeInput){ modeInput.value = mode === "manual" ? "manual" : "auto"; }
+
+    document.querySelectorAll(".change-mode-btn").forEach(function(btn){
+        btn.classList.toggle("active", btn.dataset.mode === modeInput.value);
+    });
+
+    const input = document.getElementById("changeGiven");
+    if(input){
+        input.readOnly = modeInput.value !== "manual";
+        if(modeInput.value === "manual"){
+            input.focus();
+            input.select();
+        }
+    }
+
+    updateChangeRecord(getCalculatedChangeUSD(), true);
+}
+
+function setChangeCurrency(currency){
+    const input = document.getElementById("changeCurrency");
+    const oldCurrency = input ? input.value : "usd";
+    const changeGiven = document.getElementById("changeGiven");
+    const mode = valueOf("changeMode") || "auto";
+
+    if(input){ input.value = currency === "khr" ? "khr" : "usd"; }
+
+    document.querySelectorAll(".change-currency-btn").forEach(function(btn){
+        btn.classList.toggle("active", btn.dataset.currency === input.value);
+    });
+
+    if(mode === "manual" && changeGiven){
+        const current = parseFloat(changeGiven.value || 0);
+        if(current > 0 && oldCurrency !== input.value){
+            changeGiven.value = input.value === "khr"
+                ? Math.round(current * payRate).toString()
+                : (current / payRate).toFixed(2);
+        }
+    }
+
+    updateChangeRecord(getCalculatedChangeUSD(), true);
+}
+
+function updateChangeRecord(changeUsd, force){
+    const box = document.getElementById("changeRecordBox");
+    const input = document.getElementById("changeGiven");
+    const label = document.getElementById("changeGivenLabel");
+    const help = document.getElementById("changeRecordHelp");
+    const badge = document.getElementById("systemChangeBadge");
+    const mode = valueOf("changeMode") || "auto";
+    const currency = valueOf("changeCurrency") || "usd";
+
+    if(!box || !input){ return; }
+
+    box.hidden = !(changeUsd > 0);
+    if(!(changeUsd > 0)){
+        input.value = currency === "khr" ? "0" : "0.00";
+        box.classList.remove("pos-field-error");
+        return;
+    }
+
+    if(badge){ badge.textContent = "System: " + moneyUSD(changeUsd); }
+    if(label){ label.textContent = currency === "khr" ? "Change Given (KHR)" : "Change Given (USD)"; }
+
+    input.inputMode = currency === "khr" ? "numeric" : "decimal";
+    input.readOnly = mode !== "manual";
+
+    if(mode === "auto" || force && !input.value){
+        input.value = currency === "khr"
+            ? Math.round(changeUsd * payRate).toString()
+            : changeUsd.toFixed(2);
+    }
+
+    if(help){
+        help.textContent = mode === "auto"
+            ? "The exact system change is filled automatically."
+            : "Type the real amount staff gave to the customer. It cannot be more than the system change.";
+    }
+
+    validateChangeRecord(false);
+}
+
+function validateChangeRecord(showMessage){
+    const changeUsd = getCalculatedChangeUSD();
+    const box = document.getElementById("changeRecordBox");
+    const input = document.getElementById("changeGiven");
+    const currency = valueOf("changeCurrency") || "usd";
+    const mode = valueOf("changeMode") || "auto";
+
+    if(!(changeUsd > 0) || !box || !input){ return true; }
+
+    const givenRaw = parseFloat(input.value || 0);
+    const givenUsd = currency === "khr" ? givenRaw / payRate : givenRaw;
+    const valid = givenRaw > 0 && givenUsd <= changeUsd + (1 / payRate);
+
+    box.classList.toggle("pos-field-error", !valid);
+    input.classList.toggle("pos-field-error", !valid);
+
+    if(!valid && showMessage){
+        const message = givenRaw <= 0
+            ? "Enter the actual change given to the customer."
+            : "Actual change cannot be more than system change " + moneyUSD(changeUsd) + ".";
+
+        const errorBox = document.getElementById("posCheckoutError");
+        if(errorBox){
+            errorBox.querySelector("span").textContent = message;
+        }else{
+            showPOSCheckoutError(message, input);
+        }
+
+        input.focus();
+    }
+
+    if(mode === "auto" && valid){ input.readOnly = true; }
+    return valid;
+}
+
 function calcChange(){
     calcFinalTotal();
     setCurrentSaleType();
@@ -7535,7 +7780,6 @@ function calcChange(){
     }
 
     const abaKhr = abaKhrRaw / payRate;
-
     const paid = cashUsd + cashKhr + abaUsd + abaKhr;
     const diff = paid - total;
 
@@ -7544,25 +7788,22 @@ function calcChange(){
 
     text("paidTotalShow", moneyUSD(paid));
     html("paidBreakdownShow", breakdown);
-
     html("receiptPaidBreakdown", breakdown);
     text("receiptPaid", moneyUSD(paid));
 
-    if(changeCard){
-        changeCard.classList.remove("change-ok", "change-lack");
-    }
+    if(changeCard){ changeCard.classList.remove("change-ok", "change-lack"); }
 
     if(diff >= 0){
-        const changeKhr = diff * changeRate;
+        const changeKhr = diff * payRate;
 
         text("changeTitle", "Change");
         text("changeKhrShow", moneyKHR(changeKhr));
         text("changeShow", moneyUSD(diff));
-
         text("receiptChangeTitle", "Change");
         text("receiptChange", moneyUSD(diff));
 
         if(changeCard) changeCard.classList.add("change-ok");
+        updateChangeRecord(diff, false);
     }else{
         const lackUsd = Math.abs(diff);
         const lackKhr = lackUsd * payRate;
@@ -7570,13 +7811,14 @@ function calcChange(){
         text("changeTitle", "Lack");
         text("changeKhrShow", moneyKHR(lackKhr));
         text("changeShow", moneyUSD(lackUsd));
-
         text("receiptChangeTitle", "Lack");
         text("receiptChange", moneyUSD(lackUsd));
 
         if(changeCard) changeCard.classList.add("change-lack");
+        updateChangeRecord(0, false);
     }
 }
+
 
 function prepareReceipt(){
     calcChange();
@@ -7618,55 +7860,38 @@ function validatePrepareDelivery(){
     const deliveryArea = valueOf("deliveryArea").trim() || "pp";
 
     if(!deliveryCompanyId){
-        alert("Please choose a delivery company.");
-        return false;
+        return showPOSCheckoutError(
+            "Please choose a delivery company.",
+            document.getElementById("deliveryCompanyGrid")
+        );
     }
 
     if(!name){
-        alert("Please fill Customer Name.");
-        const input = document.getElementById(
-            "deliveryReceiverName"
-        );
-
-        if(input){
-            input.focus();
-        }
-
-        return false;
+        const input = document.getElementById("deliveryReceiverName");
+        return showPOSCheckoutError("Please fill Customer Name.", input);
     }
 
     if(!phone){
-        alert("Please fill customer phone number.");
-        const input = document.getElementById(
-            "deliveryPhone"
-        );
-
-        if(input){
-            input.focus();
-        }
-
-        return false;
+        const input = document.getElementById("deliveryPhone");
+        return showPOSCheckoutError("Please fill customer phone number.", input);
     }
 
     if(!address){
-        alert("Please choose or enter customer location.");
-        const input = document.getElementById(
-            "deliveryAddress"
+        const input = document.getElementById("deliveryAddress");
+        return showPOSCheckoutError(
+            "Please choose or enter customer location.",
+            input
         );
-
-        if(input){
-            input.focus();
-        }
-
-        return false;
     }
 
     if(
         deliveryArea === "province"
         && deliveryPaymentType !== "paid"
     ){
-        alert("Province delivery must be paid first.");
-        return false;
+        return showPOSCheckoutError(
+            "Province delivery must be paid first.",
+            document.getElementById("deliverySetupBox")
+        );
     }
 
     if(deliveryPaymentType === "paid"){
@@ -7674,17 +7899,11 @@ function validatePrepareDelivery(){
         const abaKhr = num("aba_khr");
 
         if(abaUsd <= 0 && abaKhr <= 0){
-            alert(
-                "Already Paid delivery must use ABA USD or ABA KHR. No cash."
-            );
-
             const input = document.getElementById("aba_usd");
-
-            if(input){
-                input.focus();
-            }
-
-            return false;
+            return showPOSCheckoutError(
+                "Already Paid delivery must use ABA USD or ABA KHR. No cash.",
+                input
+            );
         }
     }
 
@@ -7745,6 +7964,10 @@ function submitPOSCheckout(e, action){
         return false;
     }
 
+    if(!validateChangeRecord(true)){
+        return false;
+    }
+
     const payInfo = getPOSPaymentInfo();
 
     if(
@@ -7783,13 +8006,8 @@ function submitPOSCheckout(e, action){
         }
     }
 
-    if(payInfo.paidUsd > payInfo.totalUsd){
-        alert(
-            "Customer paid over total.\n\n"
-            + "Total: $" + payInfo.totalUsd.toFixed(2) + "\n"
-            + "Paid: $" + payInfo.paidUsd.toFixed(2) + "\n"
-            + "Change: $" + payInfo.changeUsd.toFixed(2)
-        );
+    if(payInfo.paidUsd > payInfo.totalUsd && !validateChangeRecord(true)){
+        return false;
     }
 
     const form = document.getElementById("paymentForm");
@@ -7945,6 +8163,96 @@ document.addEventListener("click", function(e){
     e.stopPropagation();
     posCartAction(actionLink.href);
 }, true);
+
+
+function restorePOSCheckoutDraft(){
+    const script = document.getElementById("posCheckoutDraftData");
+    const errorBox = document.getElementById("posCheckoutError");
+    if(!script || !errorBox){ return; }
+
+    let draft = {};
+    try{ draft = JSON.parse(script.textContent || "{}"); }catch(error){ draft = {}; }
+
+    const form = document.getElementById("paymentForm");
+    if(!form){ return; }
+
+    Object.keys(draft).forEach(function(name){
+        const value = draft[name];
+        const fields = form.querySelectorAll('[name="' + name.replace(/"/g, '\\"') + '"]');
+
+        fields.forEach(function(field){
+            if(field.type === "radio" || field.type === "checkbox"){
+                field.checked = String(field.value) === String(value);
+            }else{
+                field.value = value;
+            }
+        });
+    });
+
+    const saleTypeRadio = form.querySelector('input[name="sale_type"]:checked');
+    if(saleTypeRadio){
+        document.querySelectorAll(".sale-type-card").forEach(function(card){ card.classList.remove("active"); });
+        saleTypeRadio.closest(".sale-type-card")?.classList.add("active");
+    }
+
+    const deliveryPaymentRadio = form.querySelector('input[name="delivery_payment_type"]:checked');
+    if(deliveryPaymentRadio){
+        document.querySelectorAll(".delivery-pay-card").forEach(function(card){ card.classList.remove("active"); });
+        deliveryPaymentRadio.closest(".delivery-pay-card")?.classList.add("active");
+    }
+
+    const area = valueOf("deliveryArea") || "pp";
+    document.querySelectorAll(".delivery-choice-card").forEach(function(card){
+        card.classList.toggle("active", card.dataset.area === area);
+    });
+
+    const companyId = valueOf("deliveryCompanyId");
+    document.querySelectorAll(".delivery-company-card").forEach(function(card){
+        card.classList.toggle("active", card.dataset.companyId === companyId);
+    });
+
+    const restoredMode = valueOf("changeMode") || "auto";
+    const restoredCurrency = valueOf("changeCurrency") || "usd";
+    document.querySelectorAll(".change-mode-btn").forEach(function(btn){
+        btn.classList.toggle("active", btn.dataset.mode === restoredMode);
+    });
+    document.querySelectorAll(".change-currency-btn").forEach(function(btn){
+        btn.classList.toggle("active", btn.dataset.currency === restoredCurrency);
+    });
+
+    setCurrentSaleType();
+    updatePaymentFieldVisibility();
+    filterDeliveryCompanies();
+    calcChange();
+
+    // Restore manual change after calcChange so automatic calculation does not overwrite it.
+    if(restoredMode === "manual" && draft.change_given !== undefined){
+        const changeInput = document.getElementById("changeGiven");
+        if(changeInput){
+            changeInput.readOnly = false;
+            changeInput.value = draft.change_given;
+        }
+    }
+
+    openPaymentModal();
+
+    const fieldId = errorBox.dataset.field || "";
+    const target = fieldId ? document.getElementById(fieldId) : null;
+    if(target){
+        target.classList.add("pos-field-error");
+        target.closest("label, .change-record-box, .groomer-commission-box, .sale-type-box")?.classList.add("pos-field-error");
+        setTimeout(function(){
+            if(typeof target.focus === "function"){ target.focus(); }
+            target.scrollIntoView({behavior:"smooth", block:"center"});
+        }, 250);
+    }else{
+        errorBox.scrollIntoView({behavior:"smooth", block:"center"});
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+    setTimeout(restorePOSCheckoutDraft, 0);
+});
 
 </script>
 

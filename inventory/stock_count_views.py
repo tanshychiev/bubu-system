@@ -5,7 +5,7 @@ from django.db.models import Count, F, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from core.cost_access import is_owner
 
@@ -42,10 +42,6 @@ def _can_count_stock(user):
         return True
 
     return user.has_perm("inventory.add_stockmovement")
-
-
-def _can_confirm_stock_count(user):
-    return bool(user and user.is_authenticated and is_owner(user))
 
 
 def _allowed_sessions(user):
@@ -105,28 +101,47 @@ def _session_stats(session):
     lines = session.lines.all()
     total = lines.count()
     counted = lines.filter(actual_quantity__isnull=False).count()
-    different = lines.filter(actual_quantity__isnull=False).exclude(
-        actual_quantity=F("system_quantity")
-    ).count()
+
+    pending = (
+        lines.filter(actual_quantity__isnull=False)
+        .exclude(actual_quantity=F("system_quantity"))
+        .count()
+    )
+
+    changed = (
+        lines.filter(
+            actual_quantity=F("system_quantity"),
+            applied_before_quantity__isnull=False,
+            applied_after_quantity__isnull=False,
+        )
+        .exclude(applied_before_quantity=F("applied_after_quantity"))
+        .count()
+    )
+
+    correct = (
+        lines.filter(actual_quantity=F("system_quantity"))
+        .filter(
+            Q(applied_before_quantity__isnull=True)
+            | Q(applied_before_quantity=F("applied_after_quantity"))
+        )
+        .count()
+    )
 
     return {
         "total": total,
         "counted": counted,
         "remaining": max(total - counted, 0),
-        "different": different,
+        "pending": pending,
+        "changed": changed,
+        "correct": correct,
+        # Backward-compatible name used by older templates/list code.
+        "different": pending,
         "percent": round((counted / total) * 100) if total else 0,
     }
 
 
 def _json_stats(session):
-    stats = _session_stats(session)
-    return {
-        "total": stats["total"],
-        "counted": stats["counted"],
-        "remaining": stats["remaining"],
-        "different": stats["different"],
-        "percent": stats["percent"],
-    }
+    return _session_stats(session)
 
 
 def _variant_queryset():
@@ -164,6 +179,51 @@ def _reason_text(line):
     if reason and note:
         return f"{reason}: {note}"
     return reason or note or "Stock count adjustment"
+
+
+def _line_history_rows(session, line, limit=20):
+    return (
+        StockMovement.objects
+        .filter(
+            branch=session.branch,
+            variant=line.variant,
+            movement_type="adjust",
+            note__icontains="Stock Count #",
+        )
+        .select_related("created_by")
+        .order_by("-created_at", "-id")[:limit]
+    )
+
+
+def _attach_last_confirmation(session, lines):
+    """Attach the last completed count information without one query per line."""
+    variant_ids = [line.variant_id for line in lines]
+    if not variant_ids:
+        return
+
+    previous = (
+        StockCountLine.objects
+        .filter(
+            session__branch=session.branch,
+            session__status="confirmed",
+            session__confirmed_at__isnull=False,
+            variant_id__in=variant_ids,
+        )
+        .exclude(session=session)
+        .select_related("session", "session__confirmed_by")
+        .order_by("variant_id", "-session__confirmed_at", "-id")
+    )
+
+    latest_by_variant = {}
+    for old_line in previous:
+        latest_by_variant.setdefault(old_line.variant_id, old_line)
+
+    for line in lines:
+        old_line = latest_by_variant.get(line.variant_id)
+        line.last_confirmed_at = old_line.session.confirmed_at if old_line else None
+        line.last_confirmed_by = old_line.session.confirmed_by if old_line else None
+        line.last_confirmed_before = old_line.applied_before_quantity if old_line else None
+        line.last_confirmed_after = old_line.applied_after_quantity if old_line else None
 
 
 # =========================================================
@@ -213,7 +273,7 @@ def stock_count_list(request):
             "current_branch": current_branch,
             "branches": branches,
             "can_choose_branch": is_owner(request.user),
-            "can_confirm": _can_confirm_stock_count(request.user),
+            "can_confirm": _can_count_stock(request.user),
         },
     )
 
@@ -289,7 +349,7 @@ def stock_count_detail(request, pk):
 
     session = _get_session_for_user(request, pk)
 
-    lines = (
+    lines = list(
         session.lines
         .select_related(
             "variant",
@@ -305,7 +365,32 @@ def stock_count_detail(request, pk):
         )
     )
 
+    _attach_last_confirmation(session, lines)
+
+    for line in lines:
+        if line.actual_quantity is None:
+            line.display_state = "uncounted"
+        elif int(line.actual_quantity) != int(line.system_quantity or 0):
+            line.display_state = "pending"
+        elif (
+            line.applied_before_quantity is not None
+            and line.applied_after_quantity is not None
+            and line.applied_before_quantity != line.applied_after_quantity
+        ):
+            line.display_state = "changed"
+        else:
+            line.display_state = "correct"
+
     stats = _session_stats(session)
+
+    changed_lines = [
+        line for line in lines
+        if (
+            line.applied_before_quantity is not None
+            and line.applied_after_quantity is not None
+            and line.applied_before_quantity != line.applied_after_quantity
+        )
+    ]
 
     return render(
         request,
@@ -314,8 +399,9 @@ def stock_count_detail(request, pk):
             "session": session,
             "lines": lines,
             "stats": stats,
+            "changed_lines": changed_lines,
             "reason_choices": StockCountLine.REASON_CHOICES,
-            "can_confirm": _can_confirm_stock_count(request.user),
+            "can_confirm": _can_count_stock(request.user),
             "is_locked": session.status in ["confirmed", "cancelled"],
             "display_created_by": _display_user(session.created_by),
             "display_submitted_by": _display_user(session.submitted_by),
@@ -345,8 +431,6 @@ def stock_count_save_line(request, pk, line_id):
     )
 
     raw_actual = (request.POST.get("actual_quantity") or "").strip()
-    reason_code = (request.POST.get("reason_code") or "").strip()
-    reason_note = (request.POST.get("reason_note") or "").strip()
     force_recount = request.POST.get("recount") == "1"
 
     if raw_actual == "":
@@ -379,8 +463,6 @@ def stock_count_save_line(request, pk, line_id):
             status=400,
         )
 
-    # Snapshot the live branch quantity when this SKU is first counted.
-    # This keeps the difference tied to the count time, not session creation.
     if line.actual_quantity is None or force_recount:
         line.system_quantity = _get_current_quantity(session.branch, line.variant)
 
@@ -390,12 +472,9 @@ def stock_count_save_line(request, pk, line_id):
 
     difference = actual - int(line.system_quantity or 0)
     if difference == 0:
+        # Correct items need no reason.
         line.reason_code = ""
         line.reason_note = ""
-    else:
-        valid_reason_codes = {value for value, _label in StockCountLine.REASON_CHOICES}
-        line.reason_code = reason_code if reason_code in valid_reason_codes else ""
-        line.reason_note = reason_note
 
     line.save(update_fields=[
         "system_quantity",
@@ -414,9 +493,135 @@ def stock_count_save_line(request, pk, line_id):
         "difference": difference,
         "counted_by": _display_user(line.counted_by),
         "counted_at": timezone.localtime(line.counted_at).strftime("%d %b %Y, %H:%M"),
-        "needs_reason": difference != 0,
+        "needs_change": difference != 0,
         "stats": _json_stats(session),
     })
+
+
+@login_required
+@require_POST
+@transaction.atomic
+def stock_count_apply_line(request, pk, line_id):
+    """Apply one counted difference immediately and record permanent history."""
+    if not _can_count_stock(request.user):
+        return JsonResponse({"ok": False, "error": "Permission denied."}, status=403)
+
+    session = _get_session_for_user(request, pk, for_update=True)
+    if session.status not in ["draft", "review"]:
+        return JsonResponse({"ok": False, "error": "This stock count is locked."}, status=400)
+
+    line = get_object_or_404(
+        StockCountLine.objects
+        .select_for_update()
+        .select_related("variant", "variant__item"),
+        pk=line_id,
+        session=session,
+    )
+
+    if line.actual_quantity is None:
+        return JsonResponse({"ok": False, "error": "Enter the actual stock first."}, status=400)
+
+    reason_code = (request.POST.get("reason_code") or "").strip()
+    reason_note = (request.POST.get("reason_note") or "").strip()
+    valid_reason_codes = {value for value, _label in StockCountLine.REASON_CHOICES}
+
+    current_qty = _get_current_quantity(session.branch, line.variant)
+    actual_qty = int(line.actual_quantity)
+
+    if actual_qty != current_qty:
+        if reason_code not in valid_reason_codes:
+            return JsonResponse({"ok": False, "error": "Choose a reason for this change."}, status=400)
+        if reason_code == "other" and not reason_note:
+            return JsonResponse({"ok": False, "error": "Please explain the Other reason."}, status=400)
+
+        line.reason_code = reason_code
+        line.reason_note = reason_note
+
+        movement = StockMovement.objects.create(
+            branch=session.branch,
+            item=line.variant.item,
+            variant=line.variant,
+            movement_type="adjust",
+            quantity=actual_qty,
+            note=(
+                f"Stock Count #{session.id} | {_reason_text(line)} | "
+                f"Changed by {_display_user(request.user)} | "
+                f"System {current_qty} → actual {actual_qty}"
+            )[:255],
+            created_by=request.user,
+        )
+
+        before_qty = int(movement.before_quantity)
+        after_qty = int(movement.after_quantity)
+        changed = before_qty != after_qty
+    else:
+        before_qty = current_qty
+        after_qty = current_qty
+        changed = False
+        line.reason_code = ""
+        line.reason_note = ""
+
+    # After applying, the system quantity becomes the new live stock. The line
+    # therefore displays Correct, while applied_before/after preserve the change.
+    line.applied_before_quantity = before_qty
+    line.applied_after_quantity = after_qty
+    line.system_quantity = after_qty
+    line.actual_quantity = after_qty
+    line.counted_by = request.user
+    line.counted_at = timezone.now()
+    line.save(update_fields=[
+        "applied_before_quantity",
+        "applied_after_quantity",
+        "system_quantity",
+        "actual_quantity",
+        "reason_code",
+        "reason_note",
+        "counted_by",
+        "counted_at",
+        "updated_at",
+    ])
+
+    return JsonResponse({
+        "ok": True,
+        "changed": changed,
+        "before_quantity": before_qty,
+        "after_quantity": after_qty,
+        "system_quantity": line.system_quantity,
+        "actual_quantity": line.actual_quantity,
+        "difference": 0,
+        "reason_label": line.get_reason_code_display() if line.reason_code else "",
+        "reason_note": line.reason_note,
+        "changed_by": _display_user(request.user),
+        "changed_at": timezone.localtime(line.counted_at).strftime("%d %b %Y, %H:%M"),
+        "stats": _json_stats(session),
+    })
+
+
+@login_required
+@require_GET
+def stock_count_line_history(request, pk, line_id):
+    if not _can_count_stock(request.user):
+        return JsonResponse({"ok": False, "error": "Permission denied."}, status=403)
+
+    session = _get_session_for_user(request, pk)
+    line = get_object_or_404(
+        StockCountLine.objects.select_related("variant", "variant__item"),
+        pk=line_id,
+        session=session,
+    )
+
+    rows = []
+    for movement in _line_history_rows(session, line):
+        rows.append({
+            "before": int(movement.before_quantity or 0),
+            "after": int(movement.after_quantity or 0),
+            "difference": int(movement.after_quantity or 0) - int(movement.before_quantity or 0),
+            "by": _display_user(movement.created_by),
+            "at": timezone.localtime(movement.created_at).strftime("%d %b %Y, %H:%M"),
+            "note": movement.note or "",
+        })
+
+    return JsonResponse({"ok": True, "history": rows})
 
 
 @login_required
@@ -464,133 +669,92 @@ def stock_count_fill_remaining(request, pk):
             ],
         )
 
-    messages.success(request, f"{len(lines)} remaining SKU(s) marked the same as system stock.")
+    messages.success(request, f"{len(lines)} remaining SKU(s) marked correct.")
     return redirect("stock_count_detail", pk=session.pk)
 
 
 # =========================================================
-# REVIEW / CONFIRM / CANCEL
+# DIRECT FINISH / CANCEL
 # =========================================================
+
+
+def _finish_count(request, session):
+    lines = list(
+        session.lines
+        .select_for_update()
+        .select_related("variant")
+        .order_by("id")
+    )
+
+    uncounted = [line for line in lines if line.actual_quantity is None]
+    if uncounted:
+        messages.error(request, f"{len(uncounted)} SKU(s) are still not counted.")
+        return redirect("stock_count_detail", pk=session.pk)
+
+    pending = []
+    for line in lines:
+        live_qty = _get_current_quantity(session.branch, line.variant)
+        if int(line.actual_quantity) != live_qty:
+            pending.append(line)
+
+    if pending:
+        messages.error(
+            request,
+            f"{len(pending)} SKU(s) still need Change Stock before finishing.",
+        )
+        return redirect("stock_count_detail", pk=session.pk)
+
+    now = timezone.now()
+    session.status = "confirmed"
+    session.submitted_by = request.user
+    session.submitted_at = now
+    session.confirmed_by = request.user
+    session.confirmed_at = now
+    session.save(update_fields=[
+        "status",
+        "submitted_by",
+        "submitted_at",
+        "confirmed_by",
+        "confirmed_at",
+        "updated_at",
+    ])
+
+    messages.success(request, "Stock count finished and locked. The summary and history are saved.")
+    return redirect("stock_count_detail", pk=session.pk)
 
 
 @login_required
 @require_POST
 @transaction.atomic
 def stock_count_submit(request, pk):
+    """Backward-compatible URL: finish directly without a review stage."""
     if not _can_count_stock(request.user):
         messages.error(request, "Permission denied.")
         return redirect("item_list")
 
     session = _get_session_for_user(request, pk, for_update=True)
-    if session.status != "draft":
-        messages.error(request, "Only a draft count can be sent for review.")
+    if session.status not in ["draft", "review"]:
+        messages.error(request, "This stock count is already locked.")
         return redirect("stock_count_detail", pk=session.pk)
 
-    uncounted = session.lines.filter(actual_quantity__isnull=True).count()
-    if uncounted:
-        messages.error(request, f"{uncounted} SKU(s) are still not counted.")
-        return redirect("stock_count_detail", pk=session.pk)
-
-    missing_reasons = (
-        session.lines
-        .filter(actual_quantity__isnull=False)
-        .exclude(actual_quantity=F("system_quantity"))
-        .filter(reason_code="", reason_note="")
-        .count()
-    )
-
-    if missing_reasons:
-        messages.error(
-            request,
-            f"Add a reason to {missing_reasons} different SKU(s) before review.",
-        )
-        return redirect("stock_count_detail", pk=session.pk)
-
-    session.status = "review"
-    session.submitted_by = request.user
-    session.submitted_at = timezone.now()
-    session.save(update_fields=["status", "submitted_by", "submitted_at", "updated_at"])
-
-    messages.success(request, "Stock count sent for Owner/Admin confirmation.")
-    return redirect("stock_count_detail", pk=session.pk)
+    return _finish_count(request, session)
 
 
 @login_required
 @require_POST
 @transaction.atomic
 def stock_count_confirm(request, pk):
-    if not _can_confirm_stock_count(request.user):
-        messages.error(request, "Only Owner/Admin can confirm stock adjustments.")
-        return redirect("stock_count_detail", pk=pk)
+    """Finish directly. Kept under the old URL for existing links."""
+    if not _can_count_stock(request.user):
+        messages.error(request, "Permission denied.")
+        return redirect("item_list")
 
     session = _get_session_for_user(request, pk, for_update=True)
-    if session.status != "review":
-        messages.error(request, "This stock count is not waiting for confirmation.")
+    if session.status not in ["draft", "review"]:
+        messages.error(request, "This stock count is already locked.")
         return redirect("stock_count_detail", pk=session.pk)
 
-    lines = list(
-        session.lines
-        .select_for_update()
-        .select_related("variant", "variant__item")
-        .order_by("id")
-    )
-
-    if any(line.actual_quantity is None for line in lines):
-        messages.error(request, "Some SKU(s) are still not counted.")
-        return redirect("stock_count_detail", pk=session.pk)
-
-    missing_reasons = [
-        line for line in lines
-        if line.difference != 0 and not line.reason_code and not (line.reason_note or "").strip()
-    ]
-    if missing_reasons:
-        messages.error(request, "Every stock difference requires a reason.")
-        return redirect("stock_count_detail", pk=session.pk)
-
-    # Difference is applied to the current live stock. This preserves stock
-    # movements that happened after the individual SKU was physically counted.
-    for line in lines:
-        difference = line.difference
-        if difference == 0:
-            continue
-
-        stock, _created = BranchStock.objects.select_for_update().get_or_create(
-            branch=session.branch,
-            variant=line.variant,
-            defaults={"quantity": 0},
-        )
-        current_qty = int(stock.quantity or 0)
-        new_qty = current_qty + difference
-
-        StockMovement.objects.create(
-            branch=session.branch,
-            item=line.variant.item,
-            variant=line.variant,
-            movement_type="adjust",
-            quantity=new_qty,
-            note=(
-                f"Stock Count #{session.id} | {_reason_text(line)} | "
-                f"Counted by {_display_user(line.counted_by)} | "
-                f"Count snapshot {line.system_quantity} → actual {line.actual_quantity}"
-            )[:255],
-            created_by=request.user,
-        )
-
-        line.applied_before_quantity = current_qty
-        line.applied_after_quantity = new_qty
-        line.save(update_fields=[
-            "applied_before_quantity",
-            "applied_after_quantity",
-            "updated_at",
-        ])
-
-    session.status = "confirmed"
-    session.confirmed_by = request.user
-    session.confirmed_at = timezone.now()
-    session.save(update_fields=["status", "confirmed_by", "confirmed_at", "updated_at"])
-
-    messages.success(request, "Stock count confirmed. Differences were added to stock history.")
-    return redirect("stock_count_detail", pk=session.pk)
+    return _finish_count(request, session)
 
 
 @login_required
@@ -603,12 +767,12 @@ def stock_count_cancel(request, pk):
         messages.error(request, "A confirmed stock count cannot be cancelled.")
         return redirect("stock_count_detail", pk=session.pk)
 
-    if not (_can_confirm_stock_count(request.user) or session.created_by_id == request.user.id):
+    if not (_can_count_stock(request.user) and (is_owner(request.user) or session.created_by_id == request.user.id)):
         messages.error(request, "You cannot cancel this stock count.")
         return redirect("stock_count_detail", pk=session.pk)
 
     session.status = "cancelled"
     session.save(update_fields=["status", "updated_at"])
 
-    messages.warning(request, "Stock count cancelled. No stock quantity was changed.")
+    messages.warning(request, "Stock count cancelled. Applied stock changes remain in permanent history.")
     return redirect("stock_count_detail", pk=session.pk)

@@ -23,8 +23,8 @@
         {% csrf_token %}
 
         {% if form.errors %}
-            <div class="error-box">
-                <strong>Cannot save. Please check:</strong>
+            <div class="error-box" id="serverFormError">
+                <strong>Cannot save. Please check the red field:</strong>
                 <ul>
                     {% for field in form %}
                         {% for error in field.errors %}
@@ -38,6 +38,13 @@
                 </ul>
             </div>
         {% endif %}
+
+        <div class="error-box client-error-box" id="clientFormError" hidden>
+            <strong id="clientFormErrorText">Please check this field.</strong>
+        </div>
+
+        {{ posted_form_data|json_script:"postedPetSaleFormData" }}
+        {{ form_error_fields|json_script:"petSaleErrorFields" }}
 
         <input type="hidden" name="submit_action" id="submitAction" value="save">
 
@@ -467,6 +474,45 @@
                         </label>
                     </div>
 
+                    <div class="preorder-payment-method" id="preorderPaymentMethodBox">
+                        <div class="preorder-payment-title">
+                            <strong>Pre-order Deposit Method</strong>
+                            <small>Required only when Paid / Deposit is more than $0.</small>
+                        </div>
+
+                        <div class="preorder-payment-options">
+                            <label class="preorder-payment-card">
+                                <input
+                                    type="radio"
+                                    name="preorder_payment_method"
+                                    value="cash"
+                                    {% if preorder_payment_method == "cash" %}checked{% endif %}
+                                    onchange="updatePreorderPaymentMethod()"
+                                >
+                                <span>💵</span>
+                                <strong>Cash</strong>
+                                <small>Count in physical cash</small>
+                            </label>
+
+                            <label class="preorder-payment-card">
+                                <input
+                                    type="radio"
+                                    name="preorder_payment_method"
+                                    value="aba"
+                                    {% if preorder_payment_method == "aba" %}checked{% endif %}
+                                    onchange="updatePreorderPaymentMethod()"
+                                >
+                                <span>🏦</span>
+                                <strong>ABA</strong>
+                                <small>Count in ABA total</small>
+                            </label>
+                        </div>
+
+                        <div class="preorder-payment-note" id="preorderPaymentNote">
+                            The deposit will be recorded immediately. The remaining balance must be paid using Add to POS.
+                        </div>
+                    </div>
+
                     <div class="result">
                         <div>
                             <span>Full Price</span>
@@ -541,20 +587,12 @@
                     </a>
                     {% else %}
                     <div class="add-pos-help">
-                        🛒 Save this pet sale first, then open it and click Add to POS.
+                        🛒 Save first. For an in-stock pet or the remaining pre-order balance, open the sale and click Add to POS.
                     </div>
                     {% endif %}
 
                     <button type="submit" class="save-btn" onclick="return submitAction('save')">
-                        💾 Save
-                    </button>
-
-                    <button type="submit" class="complete-btn" onclick="return submitAction('save_complete')">
-                        ✅ Save & Complete
-                    </button>
-
-                    <button type="submit" class="print-btn" onclick="return submitAction('save_complete_print')">
-                        🖨️ Save & Complete + Print
+                        💾 Save Pet Sale
                     </button>
                 </div>
             </div>
@@ -564,26 +602,12 @@
 
 
 <!-- MOBILE SALE ACTIONS -->
-<div class="mobile-sale-actions" aria-label="Pet sale actions">
+<div class="mobile-sale-actions one-action" aria-label="Pet sale actions">
     <button type="submit"
             form="petSaleForm"
             class="mobile-save"
             onclick="return submitAction('save')">
-        💾 Save
-    </button>
-
-    <button type="submit"
-            form="petSaleForm"
-            class="mobile-complete"
-            onclick="return submitAction('save_complete')">
-        ✅ Complete
-    </button>
-
-    <button type="submit"
-            form="petSaleForm"
-            class="mobile-print"
-            onclick="return submitAction('save_complete_print')">
-        🖨️ Print
+        💾 Save Pet Sale
     </button>
 </div>
 
@@ -951,6 +975,78 @@ a{text-decoration:none}
 .error-box ul{
     margin:8px 0 0;
     padding-left:18px;
+}
+
+.client-error-box[hidden]{display:none!important}
+
+.field-error,
+.field-error input,
+.field-error textarea,
+.field-error select,
+input.field-error,
+textarea.field-error,
+select.field-error,
+.touch-btn.field-error,
+.pet-popup-btn.field-error{
+    border-color:#ef4444!important;
+    box-shadow:0 0 0 4px rgba(239,68,68,.12)!important;
+    background:#fff7f7!important;
+}
+
+.preorder-payment-method{
+    margin:12px 0;
+    padding:14px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    background:#fffafe;
+}
+
+.preorder-payment-method.field-error{
+    border-color:#ef4444!important;
+    background:#fff1f2!important;
+}
+
+.preorder-payment-title{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:10px;
+}
+
+.preorder-payment-title strong{color:#2f2440;font-weight:1000}
+.preorder-payment-title small{color:#887c91;font-size:10px;font-weight:800;text-align:right}
+
+.preorder-payment-options{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+.preorder-payment-card{
+    min-height:82px;
+    padding:12px;
+    border:2px solid #eaddec;
+    border-radius:16px;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    align-items:center;
+    gap:4px 9px;
+    background:#fff;
+    cursor:pointer;
+}
+
+.preorder-payment-card input{grid-row:1 / span 3}
+.preorder-payment-card:has(input:checked){border-color:#7c5ce5;background:#f5f0ff}
+.preorder-payment-card strong{color:#2f2440;font-weight:1000}
+.preorder-payment-card small{grid-column:2;color:#887c91;font-size:9px;font-weight:800}
+.preorder-payment-note{margin-top:10px;color:#6f6479;font-size:10px;font-weight:800;line-height:1.4}
+
+@media(max-width:650px){
+    .preorder-payment-title{display:block}
+    .preorder-payment-title small{display:block;margin-top:4px;text-align:left}
+    .preorder-payment-options{grid-template-columns:1fr 1fr}
+    .preorder-payment-card{min-height:72px;padding:10px}
 }
 
 .mode-tabs{
@@ -2822,6 +2918,7 @@ function switchSaleMode(){
     const modeInStock = document.getElementById("modeInStock");
     const modePreorder = document.getElementById("modePreorder");
     const petSelect = document.getElementById("petSelect");
+    const paymentMethodBox = document.getElementById("preorderPaymentMethodBox");
 
     if(mode === "preorder"){
         inStockBox.style.display = "none";
@@ -2830,6 +2927,7 @@ function switchSaleMode(){
         modeInStock.classList.remove("active");
 
         if(petSelect){ petSelect.required = false; }
+        if(paymentMethodBox){ paymentMethodBox.style.display = "block"; }
 
         const deadlineInputAuto = document.getElementById("deadlineInput");
         if(deadlineInputAuto && !deadlineInputAuto.value){ setDeadlineDays(5); }
@@ -2840,8 +2938,10 @@ function switchSaleMode(){
         modePreorder.classList.remove("active");
 
         if(petSelect){ petSelect.required = false; }
+        if(paymentMethodBox){ paymentMethodBox.style.display = "none"; }
     }
 
+    updatePreorderPaymentMethod();
     updateCopyBox();
 }
 
@@ -2887,6 +2987,8 @@ function calcSale(){
         setText("remainShow", money(0));
         if(remainCard){ remainCard.classList.add("paid-ok"); }
     }
+
+    updatePreorderPaymentMethod();
 }
 
 function openPetPopup(){
@@ -3116,42 +3218,101 @@ function copyPreorderInfo(){
     });
 }
 
+function clearPetSaleErrors(){
+    document.querySelectorAll(".field-error").forEach(function(el){
+        el.classList.remove("field-error");
+    });
+
+    const box = document.getElementById("clientFormError");
+    if(box){ box.hidden = true; }
+}
+
+function showPetSaleError(message, target){
+    clearPetSaleErrors();
+
+    const box = document.getElementById("clientFormError");
+    const textBox = document.getElementById("clientFormErrorText");
+
+    if(textBox){ textBox.textContent = message; }
+    if(box){
+        box.hidden = false;
+        box.scrollIntoView({behavior:"smooth", block:"center"});
+    }
+
+    if(target){
+        target.classList.add("field-error");
+        const label = target.closest("label, .touch-field, .preorder-payment-method");
+        if(label){ label.classList.add("field-error"); }
+
+        setTimeout(function(){
+            if(typeof target.focus === "function"){ target.focus(); }
+        }, 250);
+    }
+
+    return false;
+}
+
+function updatePreorderPaymentMethod(){
+    const box = document.getElementById("preorderPaymentMethodBox");
+    if(!box){ return; }
+
+    const isPreorder = activeSaleMode() === "preorder";
+    const paid = num("paidAmount");
+    const note = document.getElementById("preorderPaymentNote");
+
+    box.classList.toggle("payment-required", isPreorder && paid > 0);
+
+    if(note){
+        note.textContent = paid > 0
+            ? "This deposit will be recorded now. Choose Cash or ABA."
+            : "No deposit entered. Payment method is not required yet.";
+    }
+}
+
 function submitAction(action){
+    clearPetSaleErrors();
+
     const input = document.getElementById("submitAction");
-    if(input){ input.value = action; }
+    if(input){ input.value = "save"; }
 
     const mode = activeSaleMode();
     const petInput = document.getElementById("petSelect");
+    const customerNameInput = document.getElementById("customerName");
     const customerName = val("customerName").trim();
     const source = val("customerSourceInput");
     const leadOwner = val("leadOwnerInput");
 
     if(!customerName){
-        alert("Please fill customer name.");
-        document.getElementById("customerName").focus();
-        return false;
+        return showPetSaleError("Please fill customer name.", customerNameInput);
     }
 
     if(mode === "in_stock" && petInput && !petInput.value){
-        alert("Please choose pet.");
+        showPetSaleError("Please choose an in-stock pet.", document.querySelector(".pet-popup-btn"));
         openPetPopup();
         return false;
     }
 
     if(mode === "preorder" && !val("preorderBreed").trim()){
-        alert("Please fill preorder breed.");
-        document.getElementById("preorderBreed").focus();
-        return false;
+        return showPetSaleError(
+            "Please fill the pre-order breed.",
+            document.getElementById("preorderBreed")
+        );
     }
 
     if(mode === "preorder" && !val("deadlineInput")){
-        alert("Please choose waiting deadline.");
+        showPetSaleError(
+            "Please choose the waiting deadline.",
+            document.querySelector(".date-open-btn")
+        );
         openCalendarPicker("deadline");
         return false;
     }
 
     if(source === "staff_chat" && !leadOwner){
-        alert("Please choose Lead / Chat Owner for this customer source.");
+        showPetSaleError(
+            "Please choose the Lead / Chat Owner.",
+            document.querySelector("button[onclick=\"openLeadOwnerPopup()\"]")
+        );
         openLeadOwnerPopup();
         return false;
     }
@@ -3162,19 +3323,42 @@ function submitAction(action){
     const finalPrice = Math.max(salePrice - discount, 0);
 
     if(discount > salePrice){
-        alert("Discount cannot be bigger than full price.");
-        document.getElementById("discountAmount").focus();
-        return false;
+        return showPetSaleError(
+            "Discount cannot be bigger than the full price.",
+            document.getElementById("discountAmount")
+        );
     }
 
     if(paid > finalPrice){
-        alert("Paid amount cannot be bigger than final price after discount.");
-        document.getElementById("paidAmount").focus();
-        return false;
+        return showPetSaleError(
+            "Paid amount cannot be bigger than the final price.",
+            document.getElementById("paidAmount")
+        );
+    }
+
+    if(mode === "in_stock" && paid > 0){
+        return showPetSaleError(
+            "For an in-stock pet, leave Paid / Deposit at $0 and receive payment through Add to POS.",
+            document.getElementById("paidAmount")
+        );
+    }
+
+    if(mode === "preorder" && paid > 0){
+        const method = document.querySelector(
+            "input[name='preorder_payment_method']:checked"
+        );
+
+        if(!method){
+            return showPetSaleError(
+                "Choose Cash or ABA for the pre-order deposit.",
+                document.getElementById("preorderPaymentMethodBox")
+            );
+        }
     }
 
     return true;
 }
+
 
 let selectedSaleFiles = [];
 
@@ -3596,6 +3780,86 @@ document.addEventListener("keydown", function(e){
         });
     }
 });
+
+function restorePetSalePostedValues(){
+    const dataScript = document.getElementById("postedPetSaleFormData");
+    if(!dataScript){ return; }
+
+    let data = {};
+    try{ data = JSON.parse(dataScript.textContent || "{}"); }catch(error){ data = {}; }
+
+    Object.keys(data).forEach(function(name){
+        const value = data[name];
+        const fields = document.getElementsByName(name);
+
+        Array.from(fields).forEach(function(field){
+            if(field.type === "file"){ return; }
+
+            if(field.type === "radio" || field.type === "checkbox"){
+                field.checked = String(field.value) === String(value);
+            }else{
+                field.value = value;
+            }
+        });
+    });
+
+    const sellerId = data.seller || "";
+    if(sellerId){
+        const sellerBtn = Array.from(document.querySelectorAll("#sellerPopup button")).find(function(btn){
+            return (btn.getAttribute("onclick") || "").startsWith("selectSeller('" + sellerId + "'");
+        });
+        if(sellerBtn && document.getElementById("sellerLabel")){
+            document.getElementById("sellerLabel").textContent = sellerBtn.textContent.trim();
+        }
+    }
+
+    const leadId = data.lead_owner || "";
+    const leadBtn = Array.from(document.querySelectorAll("#leadOwnerPopup button")).find(function(btn){
+        return (btn.getAttribute("onclick") || "").startsWith("selectLeadOwner('" + leadId + "'");
+    });
+    if(leadBtn && document.getElementById("leadOwnerLabel")){
+        document.getElementById("leadOwnerLabel").textContent = leadBtn.textContent.trim();
+    }
+
+    const sourceLabels = {walk_in:"🚶 Walk-in", staff_chat:"💬 Staff Chat"};
+    if(data.customer_source && document.getElementById("customerSourceLabel")){
+        document.getElementById("customerSourceLabel").textContent = sourceLabels[data.customer_source] || data.customer_source;
+    }
+
+    const commissionLabels = {auto:"⚡ Auto", shared:"👥 Shared", seller:"👤 Seller / Staff"};
+    if(data.commission_mode && document.getElementById("commissionModeLabel")){
+        document.getElementById("commissionModeLabel").textContent = commissionLabels[data.commission_mode] || data.commission_mode;
+    }
+
+    const typeLabels = {dog:"Dog", cat:"Cat", other:"Other"};
+    if(data.preorder_pet_type && document.getElementById("preorderPetTypeLabel")){
+        document.getElementById("preorderPetTypeLabel").textContent = typeLabels[data.preorder_pet_type] || data.preorder_pet_type;
+    }
+
+    if(data.preorder_gender && document.getElementById("preorderGenderLabel")){
+        document.getElementById("preorderGenderLabel").textContent = data.preorder_gender;
+    }
+
+    let errorFields = [];
+    const errorScript = document.getElementById("petSaleErrorFields");
+    try{ errorFields = JSON.parse(errorScript?.textContent || "[]"); }catch(error){ errorFields = []; }
+
+    errorFields.forEach(function(name){
+        if(name === "__all__"){ return; }
+        const field = document.getElementsByName(name)[0];
+        if(field){
+            field.classList.add("field-error");
+            const wrap = field.closest("label, .touch-field");
+            if(wrap){ wrap.classList.add("field-error"); }
+        }
+    });
+
+    if(errorFields.includes("__all__") && Number(data.paid_amount || 0) > 0){
+        document.getElementById("preorderPaymentMethodBox")?.classList.add("field-error");
+    }
+}
+
+document.addEventListener("DOMContentLoaded", restorePetSalePostedValues);
 
 window.addEventListener("load", function(){
     switchSaleMode();

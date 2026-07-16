@@ -17,21 +17,36 @@
         </div>
 
         <div class="top-actions">
-            <a href="{% url 'pet_sale_list' %}" class="action-btn neutral">← Sale List</a>
+            <div class="action-group navigation-group">
+                <a href="{% url 'pet_sale_list' %}" class="action-btn neutral">
+                    ← Sale List
+                </a>
+
+                <a href="{% url 'pet_sale_edit' sale.id %}" class="action-btn edit">
+                    ✏️ Edit
+                </a>
+            </div>
 
             {% if sale.status != "completed" and sale.status != "cancelled" and sale.status != "refunded" %}
-                <a href="{% url 'pet_sale_add_to_pos' sale.id %}" class="action-btn pos-top">
-                    <span class="pos-icon">🛒</span>
-                    <span>
-                        <strong>Add to POS</strong>
-                        <small>Pet + products</small>
-                    </span>
-                </a>
+                <div class="action-group sale-group">
+                    <a href="{% url 'pet_sale_add_to_pos' sale.id %}" class="action-btn pos-top">
+                        <span class="pos-icon">🛒</span>
+                        <span>
+                            <strong>Add to POS</strong>
+                            <small>Pet + products</small>
+                        </span>
+                    </a>
+                </div>
             {% endif %}
 
-            <a href="{% url 'pet_sale_edit' sale.id %}" class="action-btn edit">✏️ Edit</a>
-            <a href="{% url 'pet_sale_receipt_print' sale.id %}" target="_blank" class="action-btn receipt">🖨️ Receipt</a>
-            <a href="{% url 'pet_warranty_print' sale.id %}" target="_blank" class="action-btn warranty">🛡️ Warranty</a>
+            <div class="action-group document-group">
+                <a
+                    href="{% url 'pet_sale_receipt_print' sale.id %}"
+                    class="action-btn warranty"
+                >
+                    🛡️ Warranty
+                </a>
+            </div>
         </div>
     </header>
 
@@ -200,6 +215,16 @@
                         <span>Paid / Deposit</span>
                         <strong>${{ sale.paid_amount|floatformat:2 }}</strong>
                     </div>
+
+                    {% if sale.sale_kind == "preorder" and preorder_payment_method %}
+                    <div class="money-box">
+                        <span>Deposit Method</span>
+                        <strong>
+                            {% if preorder_payment_method == "cash" %}💵 Cash{% else %}🏦 ABA{% endif %}
+                        </strong>
+                    </div>
+                    {% endif %}
+
                     <div class="money-box">
                         <span>{% if can_view_cost_price %}Cost{% else %}Cost Status{% endif %}</span>
                         <strong class="{% if not can_view_cost_price %}cost-status-pill{% if not sale.has_cost %} no-cost{% endif %}{% endif %}">{% cost_display sale.linked_cost_price %}</strong>
@@ -261,9 +286,13 @@
                     {% endif %}
 
                     <div class="normal-actions">
-                        <a href="{% url 'pet_sale_edit' sale.id %}" class="edit-btn">✏️ Edit Sale</a>
-                        <a href="{% url 'pet_sale_receipt_print' sale.id %}" target="_blank" class="receipt-btn">🖨️ Receipt</a>
-                        <a href="{% url 'pet_warranty_print' sale.id %}" target="_blank" class="warranty-btn-side">🛡️ Warranty</a>
+                        <a href="{% url 'pet_sale_edit' sale.id %}" class="edit-btn">
+                            ✏️ Edit Sale
+                        </a>
+
+                        <a href="{% url 'pet_sale_receipt_print' sale.id %}" class="warranty-btn-side">
+                            🛡️ Warranty
+                        </a>
                     </div>
 
                     {% if sale.sale_kind == "preorder" and sale.status == "deposit" %}
@@ -274,35 +303,9 @@
                     {% endif %}
 
                     {% if sale.status != "completed" and sale.status != "cancelled" and sale.status != "refunded" %}
-                        <form method="post" action="{% url 'pet_sale_complete' sale.id %}" class="complete-form" onsubmit="return confirmCompleteSale()">
-                            {% csrf_token %}
-
-                            <div class="complete-grid">
-                                <label>
-                                    Extra Paid
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        name="extra_paid"
-                                        value="{{ sale.remaining_amount }}"
-                                        inputmode="decimal"
-                                    >
-                                </label>
-
-                                <label>
-                                    Warranty Days
-                                    <input
-                                        type="text"
-                                        name="warranty_days"
-                                        value="{{ sale.warranty_days|default:'3' }}"
-                                        inputmode="numeric"
-                                        pattern="[0-9]*"
-                                    >
-                                </label>
-                            </div>
-
-                            <button class="complete-btn" type="submit">✅ Complete Sale</button>
-                        </form>
+                        <div class="pos-required-note">
+                            💳 Final payment must be completed through <strong>Add Sale to POS</strong> so Cash/ABA and change are counted correctly.
+                        </div>
                     {% endif %}
 
                     <a href="{% url 'pet_warranty_claim_create' sale.id %}" class="claim-btn">⚕️ Warranty Claim</a>
@@ -402,7 +405,35 @@ input[type="number"]::-webkit-outer-spin-button{
     display:flex;
     flex-wrap:wrap;
     justify-content:flex-end;
+    align-items:center;
+    gap:8px;
+}
+
+.action-group{
+    display:flex;
+    align-items:center;
     gap:6px;
+}
+
+.navigation-group{
+    padding:5px;
+    border:1px solid #e9e2ec;
+    border-radius:14px;
+    background:#fbfafc;
+}
+
+.sale-group{
+    padding:5px;
+    border:1px solid #ddd8f7;
+    border-radius:14px;
+    background:#f7f5ff;
+}
+
+.document-group{
+    padding:5px;
+    border:1px solid #d9e8f7;
+    border-radius:14px;
+    background:#f5fbff;
 }
 
 .action-btn{
@@ -935,8 +966,8 @@ input[type="number"]::-webkit-outer-spin-button{
 
 .normal-actions{
     display:grid;
-    grid-template-columns:1fr 1fr 1fr;
-    gap:5px;
+    grid-template-columns:1fr 1fr;
+    gap:6px;
     margin-top:7px;
 }
 
@@ -1077,6 +1108,10 @@ input[type="number"]::-webkit-outer-spin-button{
         margin-top:8px;
     }
 
+    .action-group{
+        flex-wrap:wrap;
+    }
+
     .status-strip{
         grid-template-columns:repeat(2,minmax(0,1fr));
     }
@@ -1105,14 +1140,23 @@ input[type="number"]::-webkit-outer-spin-button{
     }
 
     .top-actions{
-        flex-wrap:nowrap;
-        gap:5px;
-        overflow-x:auto;
-        scrollbar-width:none;
+        display:grid;
+        grid-template-columns:1fr;
+        gap:6px;
+        overflow:visible;
     }
 
-    .top-actions::-webkit-scrollbar{
-        display:none;
+    .action-group{
+        width:100%;
+        flex-wrap:nowrap;
+    }
+
+    .action-group .action-btn{
+        flex:1;
+    }
+
+    .sale-group .action-btn{
+        width:100%;
     }
 
     .action-btn{
@@ -1430,4 +1474,7 @@ document.addEventListener("DOMContentLoaded", renderWarrantyRange);
 @media(max-width:650px){.cost-write-note{padding:7px 8px;border-radius:10px;font-size:9px}}
 </style>
 
+<style>
+.pos-required-note{margin-top:12px;padding:12px 14px;border:1px solid #f0d29b;border-radius:14px;color:#9a5b00;background:#fff8e8;font-size:11px;font-weight:900;line-height:1.45}
+</style>
 {% endblock %}

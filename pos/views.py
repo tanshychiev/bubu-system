@@ -163,6 +163,23 @@ def to_decimal(value, default="0"):
         return Decimal(default)
 
 
+def _remember_pos_checkout_error(request, message, field_id=""):
+    """Keep the checkout form values when validation sends staff back to POS."""
+    draft = request.POST.dict()
+    draft.pop("csrfmiddlewaretoken", None)
+
+    # Do not keep a staff PIN in the session. Staff only re-enters this one field.
+    draft.pop("groomer_pin", None)
+
+    request.session["pos_checkout_draft"] = draft
+    request.session["pos_checkout_error"] = message
+    request.session["pos_checkout_error_field"] = field_id
+    request.session.modified = True
+
+    messages.error(request, message)
+    return redirect("pos")
+
+
 def get_khr_rate():
     setting = POSSetting.objects.first()
     if setting:
@@ -863,6 +880,10 @@ def pos(request):
 
     final_total = subtotal + selected_pet_remaining
 
+    pos_checkout_draft = request.session.pop("pos_checkout_draft", {})
+    pos_checkout_error = request.session.pop("pos_checkout_error", "")
+    pos_checkout_error_field = request.session.pop("pos_checkout_error_field", "")
+
     return render(request, "pos/pos.html", {
         "items": items,
         "item_types": item_types,
@@ -891,6 +912,9 @@ def pos(request):
         "delivery_companies": delivery_companies,
         "current_branch": current_branch,
         "branches": branches,
+        "pos_checkout_draft": pos_checkout_draft,
+        "pos_checkout_error": pos_checkout_error,
+        "pos_checkout_error_field": pos_checkout_error_field,
     })
 
 # ==================================================
@@ -1108,8 +1132,11 @@ def pos_checkout(request):
                 selected_pet_remaining = Decimal("0.00")
 
     if not cart_items and not selected_pet_sale:
-        messages.error(request, "Cart is empty.")
-        return redirect("pos")
+        return _remember_pos_checkout_error(
+            request,
+            "Cart is empty.",
+            "paymentModal",
+        )
 
     subtotal = cart_subtotal + selected_pet_remaining
 
@@ -1163,9 +1190,64 @@ def pos_checkout(request):
 
     paid_amount = min(paid_raw, final_total)
 
-    change_amount = Decimal("0.00")
+    calculated_change_usd = Decimal("0.00")
     if paid_raw > final_total:
-        change_amount = paid_raw - final_total
+        calculated_change_usd = paid_raw - final_total
+
+    change_mode = (request.POST.get("change_mode") or "auto").strip().lower()
+    change_currency = (request.POST.get("change_currency") or "usd").strip().lower()
+    change_given = Decimal("0.00")
+    change_amount = Decimal("0.00")
+
+    if calculated_change_usd > 0:
+        if change_mode not in ["auto", "manual"]:
+            return _remember_pos_checkout_error(
+                request,
+                "Choose Automatic Change or Manual Change.",
+                "changeRecordBox",
+            )
+
+        if change_currency not in ["usd", "khr"]:
+            return _remember_pos_checkout_error(
+                request,
+                "Choose whether change was given in USD or KHR.",
+                "changeRecordBox",
+            )
+
+        if change_mode == "auto":
+            if change_currency == "khr":
+                change_given = (
+                    calculated_change_usd * exchange_rate
+                ).quantize(Decimal("1"))
+            else:
+                change_given = calculated_change_usd.quantize(Decimal("0.01"))
+        else:
+            change_given = to_decimal(request.POST.get("change_given"), "0")
+
+            if change_given <= 0:
+                return _remember_pos_checkout_error(
+                    request,
+                    "Enter the actual change given to the customer.",
+                    "changeGiven",
+                )
+
+        if change_currency == "khr":
+            change_amount = change_given / exchange_rate
+        else:
+            change_amount = change_given
+
+        # Staff may round down the change, but cannot record more than the
+        # calculated overpayment. Small tolerance supports KHR rounding.
+        tolerance = Decimal("1.00") / exchange_rate
+        if change_amount > calculated_change_usd + tolerance:
+            return _remember_pos_checkout_error(
+                request,
+                (
+                    f"Change is too high. System change is "
+                    f"${calculated_change_usd:.2f}."
+                ),
+                "changeGiven",
+            )
 
     balance_amount = final_total - paid_amount
 
@@ -1178,12 +1260,18 @@ def pos_checkout(request):
 
     if has_grooming_items:
         if sale_type == "prepare_delivery":
-            messages.error(request, "Grooming service must be checked out as Walk-in, not Prepare for Delivery.")
-            return redirect("pos")
+            return _remember_pos_checkout_error(
+                request,
+                "Grooming service must be checked out as Walk-in, not Prepare for Delivery.",
+                "sale_type_hidden",
+            )
 
         if paid_raw < final_total:
-            messages.error(request, "Grooming checkout must be fully paid before commission can count.")
-            return redirect("pos")
+            return _remember_pos_checkout_error(
+                request,
+                "Grooming checkout must be fully paid before commission can count.",
+                "cash_usd",
+            )
 
         groomer_pin = request.POST.get("groomer_pin", "").strip()
         groomer_setting, groomer_error = _find_checked_in_groomer_by_pin(
@@ -1192,8 +1280,11 @@ def pos_checkout(request):
         )
 
         if groomer_error:
-            messages.error(request, groomer_error)
-            return redirect("pos")
+            return _remember_pos_checkout_error(
+                request,
+                groomer_error,
+                "groomerPin",
+            )
 
     # ==================================================
     # CUSTOMER RECORD
@@ -1220,11 +1311,38 @@ def pos_checkout(request):
     if not customer_phone and delivery_phone_for_customer:
         customer_phone = delivery_phone_for_customer
 
+    # When a Pet Sale is attached, its customer details are the source of
+    # truth for the combined POS receipt. This is a server-side fallback, so
+    # the correct name and phone are still saved even if JavaScript is blocked
+    # or the cashier does not touch the POS customer search field.
+    if selected_pet_sale:
+        pet_customer_name = (
+            getattr(selected_pet_sale, "customer_name", "") or ""
+        ).strip()
+        pet_customer_phone = (
+            getattr(selected_pet_sale, "phone", "") or ""
+        ).strip()
+
+        if not customer_name and pet_customer_name:
+            customer_name = pet_customer_name
+
+        if not customer_phone and pet_customer_phone:
+            customer_phone = pet_customer_phone
+
     if not customer_name and customer_search:
         customer_name = customer_search
 
     if not customer_phone and customer_search:
-        customer_phone = customer_search
+        # Do not save a pet customer name inside the phone field when the
+        # original pet sale has no phone number.
+        is_pet_customer_name = bool(
+            selected_pet_sale
+            and customer_name
+            and customer_search.casefold() == customer_name.casefold()
+        )
+
+        if not is_pet_customer_name:
+            customer_phone = customer_search
 
     if customer_phone:
         customer = Customer.objects.filter(phone=customer_phone).first()
@@ -1255,6 +1373,36 @@ def pos_checkout(request):
             created_by=request.user,
             updated_by=request.user,
         )
+
+    # ==================================================
+    # FINAL PET CUSTOMER / OWNER FROM POS
+    # ==================================================
+    # The customer selected in POS is the final customer for the attached
+    # pet sale. This is especially important for pre-orders where the
+    # original deposit used one phone number, but the customer later changes
+    # to another existing/new phone number at final payment.
+    #
+    # By updating the PetSale before it is completed, the existing pet-sale
+    # completion logic will:
+    # - add the pet-sale points to this final POS customer
+    # - create/update CustomerPet under this final POS customer (pet owner)
+    # - keep the POS receipt linked to the same customer
+    if selected_pet_sale and customer:
+        pet_customer_update_fields = []
+
+        final_customer_name = (customer.name or customer_name or "").strip()
+        final_customer_phone = (customer.phone or customer_phone or "").strip()
+
+        if (selected_pet_sale.customer_name or "").strip() != final_customer_name:
+            selected_pet_sale.customer_name = final_customer_name
+            pet_customer_update_fields.append("customer_name")
+
+        if (selected_pet_sale.phone or "").strip() != final_customer_phone:
+            selected_pet_sale.phone = final_customer_phone
+            pet_customer_update_fields.append("phone")
+
+        if pet_customer_update_fields:
+            selected_pet_sale.save(update_fields=pet_customer_update_fields)
 
     # ==================================================
     # CREATE POS SALE
@@ -1401,6 +1549,18 @@ def pos_checkout(request):
             method="aba_khr",
             amount=aba_khr,
             note="POS ABA KHR",
+        )
+
+    if change_amount > 0 and change_given > 0:
+        SalePayment.objects.create(
+            sale=sale,
+            method=("change_khr" if change_currency == "khr" else "change_usd"),
+            amount=change_given,
+            note=(
+                "POS actual change given in KHR"
+                if change_currency == "khr"
+                else "POS actual change given in USD"
+            ),
         )
 
     # Tell the customer display to show the payment received / thank-you
@@ -1989,14 +2149,19 @@ def cash_count_dashboard(request):
         sale__created_at__date=count_date,
     )
 
-    system_cash_usd = (
+    khr_rate = get_khr_rate()
+
+    if not khr_rate or khr_rate <= 0:
+        khr_rate = Decimal("4100")
+
+    gross_cash_usd = (
         payments
         .filter(method="cash_usd")
         .aggregate(total=Sum("amount"))["total"]
         or Decimal("0")
     )
 
-    system_cash_khr = (
+    gross_cash_khr = (
         payments
         .filter(method="cash_khr")
         .aggregate(total=Sum("amount"))["total"]
@@ -2017,6 +2182,43 @@ def cash_count_dashboard(request):
         or Decimal("0")
     )
 
+    recorded_change_usd = (
+        payments
+        .filter(method="change_usd")
+        .aggregate(total=Sum("amount"))["total"]
+        or Decimal("0")
+    )
+
+    recorded_change_khr = (
+        payments
+        .filter(method="change_khr")
+        .aggregate(total=Sum("amount"))["total"]
+        or Decimal("0")
+    )
+
+    sales_with_change_records = payments.filter(
+        method__in=["change_usd", "change_khr"]
+    ).values_list("sale_id", flat=True)
+
+    # Older receipts only stored Sale.change_amount. Treat that legacy value
+    # as USD change so old cash counts remain correct after this update.
+    legacy_change_usd = (
+        sales
+        .exclude(id__in=sales_with_change_records)
+        .aggregate(total=Sum("change_amount"))["total"]
+        or Decimal("0")
+    )
+
+    change_given_usd = recorded_change_usd + legacy_change_usd
+    change_given_khr = recorded_change_khr
+
+    system_cash_usd = gross_cash_usd - change_given_usd
+    system_cash_khr = gross_cash_khr - change_given_khr
+
+    # Net cash can be negative when staff gives change from the opening drawer
+    # for a mixed-currency or ABA-heavy payment. Keep the real value so the
+    # expected physical drawer amount remains correct.
+
     total_sales = (
         sales.aggregate(total=Sum("total_amount"))["total"]
         or Decimal("0")
@@ -2027,15 +2229,7 @@ def cash_count_dashboard(request):
         or Decimal("0")
     )
 
-    total_change = (
-        sales.aggregate(total=Sum("change_amount"))["total"]
-        or Decimal("0")
-    )
-
-    khr_rate = get_khr_rate()
-
-    if not khr_rate or khr_rate <= 0:
-        khr_rate = Decimal("4100")
+    total_change = change_given_usd + (change_given_khr / khr_rate)
 
     cash_received_usd_equivalent = (
         system_cash_usd
@@ -2052,13 +2246,8 @@ def cash_count_dashboard(request):
         + aba_received_usd_equivalent
     )
 
-    net_received_after_change = (
-        total_received_usd_equivalent
-        - total_change
-    )
-
-    if net_received_after_change < Decimal("0"):
-        net_received_after_change = Decimal("0")
+    # Cash values above are already net of the actual change given.
+    net_received_after_change = total_received_usd_equivalent
 
     branch_float, _ = BranchCashFloat.objects.get_or_create(
         branch=current_branch,
@@ -2159,6 +2348,10 @@ def cash_count_dashboard(request):
 
             "system_cash_usd": system_cash_usd,
             "system_cash_khr": system_cash_khr,
+            "gross_cash_usd": gross_cash_usd,
+            "gross_cash_khr": gross_cash_khr,
+            "change_given_usd": change_given_usd,
+            "change_given_khr": change_given_khr,
             "system_aba_usd": system_aba_usd,
             "system_aba_khr": system_aba_khr,
 

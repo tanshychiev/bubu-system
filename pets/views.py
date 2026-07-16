@@ -165,6 +165,180 @@ def _set_optional_sale_tracking(sale, request):
     return sale
 
 
+def _get_pet_sale_branch(request, sale):
+    """Return the branch that should own a pet-sale payment record."""
+    if sale.pet and sale.pet.branch_id:
+        return sale.pet.branch
+
+    seller = getattr(sale, "seller", None)
+    seller_profile = getattr(seller, "staff_profile", None) if seller else None
+    if seller_profile and seller_profile.branch_id:
+        return seller_profile.branch
+
+    user_profile = getattr(request.user, "staff_profile", None)
+    if user_profile and user_profile.branch_id:
+        return user_profile.branch
+
+    return Branch.objects.filter(is_active=True).order_by("id").first()
+
+
+def _preorder_deposit_session_key(sale):
+    return f"pet-preorder-deposit-{sale.id}"
+
+
+def _get_preorder_deposit_payment_method(sale):
+    """Read the already-recorded deposit method without adding a pets migration."""
+    if not sale or not sale.pk:
+        return ""
+
+    try:
+        from pos.models import CombinedPaymentSession, SalePayment
+
+        link = (
+            CombinedPaymentSession.objects
+            .select_related("pos_sale")
+            .filter(session_key=_preorder_deposit_session_key(sale))
+            .first()
+        )
+
+        if not link or not link.pos_sale_id:
+            return ""
+
+        payment = (
+            SalePayment.objects
+            .filter(sale=link.pos_sale)
+            .order_by("id")
+            .first()
+        )
+
+        if not payment:
+            return ""
+
+        return "aba" if payment.method.startswith("aba") else "cash"
+    except Exception:
+        return ""
+
+
+def _delete_preorder_deposit_pos_record(sale):
+    if not sale or not sale.pk:
+        return
+
+    from pos.models import CombinedPaymentSession
+
+    link = (
+        CombinedPaymentSession.objects
+        .select_related("pos_sale")
+        .filter(session_key=_preorder_deposit_session_key(sale))
+        .first()
+    )
+
+    if not link:
+        return
+
+    pos_sale = link.pos_sale
+    link.delete()
+
+    if pos_sale:
+        pos_sale.delete()
+
+
+def _sync_preorder_deposit_to_pos(request, sale, payment_method):
+    """
+    Record the pre-order deposit as a real POS payment so Cash Count and ABA
+    totals include it immediately. The final balance is still paid later by
+    using Add to POS.
+    """
+    from pos.models import Sale, SalePayment, CombinedPaymentSession
+
+    if sale.sale_kind != "preorder":
+        _delete_preorder_deposit_pos_record(sale)
+        return None
+
+    amount = _to_decimal(sale.paid_amount, "0.00")
+
+    if amount <= 0:
+        _delete_preorder_deposit_pos_record(sale)
+        return None
+
+    branch = _get_pet_sale_branch(request, sale)
+    if not branch:
+        raise ValueError("No active branch is available for this pre-order payment.")
+
+    payment_method = (payment_method or "").strip().lower()
+    if payment_method not in ["cash", "aba"]:
+        raise ValueError("Choose Cash or ABA for the pre-order deposit.")
+
+    customer = getattr(sale, "_customer_obj", None) or _find_customer_from_sale(sale)
+    session_key = _preorder_deposit_session_key(sale)
+
+    link = (
+        CombinedPaymentSession.objects
+        .select_for_update()
+        .select_related("pos_sale")
+        .filter(session_key=session_key)
+        .first()
+    )
+
+    pos_sale = link.pos_sale if link and link.pos_sale_id else None
+
+    if not pos_sale:
+        pos_sale = Sale.objects.create(
+            branch=branch,
+            customer=customer,
+            sale_type="walk_in",
+            total_amount=amount,
+            paid_amount=amount,
+            change_amount=Decimal("0.00"),
+        )
+    else:
+        pos_sale.branch = branch
+        pos_sale.customer = customer
+        pos_sale.sale_type = "walk_in"
+        pos_sale.total_amount = amount
+        pos_sale.paid_amount = amount
+        pos_sale.change_amount = Decimal("0.00")
+        pos_sale.save(update_fields=[
+            "branch",
+            "customer",
+            "sale_type",
+            "total_amount",
+            "paid_amount",
+            "change_amount",
+        ])
+
+    SalePayment.objects.filter(sale=pos_sale).delete()
+    payment_code = "cash_usd" if payment_method == "cash" else "aba_usd"
+
+    SalePayment.objects.create(
+        sale=pos_sale,
+        method=payment_code,
+        amount=amount,
+        note=f"Pet pre-order deposit #{sale.id}",
+    )
+
+    CombinedPaymentSession.objects.update_or_create(
+        session_key=session_key,
+        defaults={
+            "branch": branch,
+            "cashier": request.user,
+            "pos_sale": pos_sale,
+            "pet_sale_id": sale.id,
+            "total_amount": amount,
+            "pos_amount": Decimal("0.00"),
+            "pet_amount": amount,
+            "status": CombinedPaymentSession.STATUS_PAID,
+            "paid_at": timezone.now(),
+        },
+    )
+
+    return {
+        "amount": amount,
+        "method": payment_method,
+        "method_label": "Cash" if payment_method == "cash" else "ABA",
+        "pos_sale": pos_sale,
+    }
+
+
 # =========================================================
 # CUSTOMER AUTO CREATE / OLD-NEW CUSTOMER / POINTS
 # =========================================================
@@ -1233,9 +1407,13 @@ def pet_sale_list(request):
 
 
 @login_required
+@transaction.atomic
 def pet_sale_create(request):
     selected_pet = None
     pet_id = request.GET.get("pet")
+
+    if request.method == "POST":
+        pet_id = request.POST.get("pet") or pet_id
 
     if pet_id:
         selected_pet = (
@@ -1245,10 +1423,18 @@ def pet_sale_create(request):
             .first()
         )
 
-    if request.method == "POST":
-        form = PetSaleForm(request.POST, request.FILES)
+    preorder_payment_method = ""
 
-        if form.is_valid():
+    if request.method == "POST":
+        preorder_payment_method = (
+            request.POST.get("preorder_payment_method") or ""
+        ).strip().lower()
+
+        form = PetSaleForm(request.POST, request.FILES)
+        form_is_valid = form.is_valid()
+        sale = None
+
+        if form_is_valid:
             sale = form.save(commit=False)
             sale.created_by = request.user
 
@@ -1260,40 +1446,67 @@ def pet_sale_create(request):
             if sale.sale_kind == "preorder":
                 sale.pet = None
 
+            paid_amount = _to_decimal(sale.paid_amount, "0.00")
+
+            if sale.sale_kind == "in_stock" and paid_amount > 0:
+                form.add_error(
+                    "paid_amount",
+                    "Do not receive in-stock pet payment here. Save the sale, then use Add to POS.",
+                )
+                form_is_valid = False
+
+            if (
+                sale.sale_kind == "preorder"
+                and paid_amount > 0
+                and preorder_payment_method not in ["cash", "aba"]
+            ):
+                form.add_error(
+                    None,
+                    "Choose Cash or ABA for the pre-order deposit.",
+                )
+                form_is_valid = False
+
+            if (
+                sale.sale_kind == "preorder"
+                and paid_amount > 0
+                and not _get_pet_sale_branch(request, sale)
+            ):
+                form.add_error(
+                    None,
+                    "No active branch is available. Assign this staff to a branch first.",
+                )
+                form_is_valid = False
+
+        if form_is_valid and sale is not None:
             sale.save()
             sync_sale_customer_only(request, sale)
             _save_pet_sale_photos(request, sale)
 
-            submit_action = request.POST.get("submit_action", "save")
+            deposit_record = _sync_preorder_deposit_to_pos(
+                request,
+                sale,
+                preorder_payment_method,
+            )
 
-            if submit_action in ["save_complete", "save_complete_print"]:
-                first_paid_before_complete = sale.paid_amount or Decimal("0.00")
-                final_price = getattr(sale, "final_price", sale.sale_price or Decimal("0.00"))
-                final_paid = final_price - first_paid_before_complete
+            send_pet_sale_telegram_alert(sale)
 
-                if final_paid < 0:
-                    final_paid = Decimal("0.00")
-
-                complete_pet_sale(request, sale)
-
-                send_pet_sale_telegram_alert(
-                    sale,
-                    complete_only=True,
-                    first_paid_amount=first_paid_before_complete,
-                    final_paid_amount=final_paid,
+            if deposit_record:
+                messages.success(
+                    request,
+                    (
+                        f"Pre-order saved. ${deposit_record['amount']:.2f} "
+                        f"{deposit_record['method_label']} was recorded in Cash Count."
+                    ),
                 )
-
-                messages.success(request, "Pet sale saved and completed. Customer profile updated.")
             else:
-                send_pet_sale_telegram_alert(sale)
-                messages.success(request, "Pet sale saved successfully.")
-
-            if submit_action == "save_complete_print":
-                return redirect("pet_sale_receipt_print", sale.id)
+                messages.success(
+                    request,
+                    "Pet sale saved. Use Add to POS to receive the final payment.",
+                )
 
             return redirect("pet_sale_detail", sale.id)
 
-        messages.error(request, "Please check the sale form and try again.")
+        messages.error(request, "Please check the red error and try again.")
 
     else:
         initial = {
@@ -1333,10 +1546,14 @@ def pet_sale_create(request):
         "sellers": _get_active_sellers(),
         "selected_pet": selected_pet,
         "sale": None,
+        "preorder_payment_method": preorder_payment_method,
+        "posted_form_data": request.POST.dict() if request.method == "POST" else {},
+        "form_error_fields": list(form.errors.keys()),
     })
 
 
 @login_required
+@transaction.atomic
 def pet_sale_edit(request, pk):
     sale = get_object_or_404(
         PetSale.objects
@@ -1345,54 +1562,102 @@ def pet_sale_edit(request, pk):
         pk=pk,
     )
 
+    was_completed = sale.status == "completed"
+    old_sale_kind = sale.sale_kind
+    preorder_payment_method = _get_preorder_deposit_payment_method(sale)
+
     if request.method == "POST":
+        preorder_payment_method = (
+            request.POST.get("preorder_payment_method")
+            or preorder_payment_method
+            or ""
+        ).strip().lower()
+
         form = PetSaleForm(request.POST, request.FILES, instance=sale)
+        form_is_valid = form.is_valid()
+        updated_sale = None
 
-        if form.is_valid():
-            sale = form.save(commit=False)
+        if form_is_valid:
+            updated_sale = form.save(commit=False)
 
-            if not getattr(sale, "seller", None):
-                sale.seller = request.user
+            if not getattr(updated_sale, "seller", None):
+                updated_sale.seller = request.user
 
-            _set_optional_sale_tracking(sale, request)
+            _set_optional_sale_tracking(updated_sale, request)
 
-            if sale.sale_kind == "preorder":
-                sale.pet = None
+            if updated_sale.sale_kind == "preorder":
+                updated_sale.pet = None
 
-            sale.save()
-            sync_sale_customer_only(request, sale)
-            _save_pet_sale_photos(request, sale)
+            paid_amount = _to_decimal(updated_sale.paid_amount, "0.00")
 
-            submit_action = request.POST.get("submit_action", "save")
-
-            if submit_action in ["save_complete", "save_complete_print"]:
-                first_paid_before_complete = sale.paid_amount or Decimal("0.00")
-                final_price = getattr(sale, "final_price", sale.sale_price or Decimal("0.00"))
-                final_paid = final_price - first_paid_before_complete
-
-                if final_paid < 0:
-                    final_paid = Decimal("0.00")
-
-                complete_pet_sale(request, sale)
-
-                send_pet_sale_telegram_alert(
-                    sale,
-                    complete_only=True,
-                    first_paid_amount=first_paid_before_complete,
-                    final_paid_amount=final_paid,
+            if (
+                not was_completed
+                and updated_sale.sale_kind == "in_stock"
+                and paid_amount > 0
+            ):
+                form.add_error(
+                    "paid_amount",
+                    "Do not receive in-stock pet payment here. Save the sale, then use Add to POS.",
                 )
+                form_is_valid = False
 
-                messages.success(request, "Pet sale updated and completed. Customer profile updated.")
+            if (
+                not was_completed
+                and updated_sale.sale_kind == "preorder"
+                and paid_amount > 0
+                and preorder_payment_method not in ["cash", "aba"]
+            ):
+                form.add_error(
+                    None,
+                    "Choose Cash or ABA for the pre-order deposit.",
+                )
+                form_is_valid = False
+
+            if (
+                not was_completed
+                and updated_sale.sale_kind == "preorder"
+                and paid_amount > 0
+                and not _get_pet_sale_branch(request, updated_sale)
+            ):
+                form.add_error(
+                    None,
+                    "No active branch is available. Assign this staff to a branch first.",
+                )
+                form_is_valid = False
+
+        if form_is_valid and updated_sale is not None:
+            updated_sale.save()
+            sync_sale_customer_only(request, updated_sale)
+            _save_pet_sale_photos(request, updated_sale)
+
+            deposit_record = None
+
+            if not was_completed:
+                if old_sale_kind == "preorder" and updated_sale.sale_kind != "preorder":
+                    _delete_preorder_deposit_pos_record(updated_sale)
+                else:
+                    deposit_record = _sync_preorder_deposit_to_pos(
+                        request,
+                        updated_sale,
+                        preorder_payment_method,
+                    )
+
+            send_pet_sale_telegram_alert(updated_sale)
+
+            if deposit_record:
+                messages.success(
+                    request,
+                    (
+                        f"Pet sale updated. ${deposit_record['amount']:.2f} "
+                        f"{deposit_record['method_label']} is recorded in Cash Count."
+                    ),
+                )
             else:
-                send_pet_sale_telegram_alert(sale)
                 messages.success(request, "Pet sale updated successfully.")
 
-            if submit_action == "save_complete_print":
-                return redirect("pet_sale_receipt_print", sale.id)
+            return redirect("pet_sale_detail", updated_sale.id)
 
-            return redirect("pet_sale_detail", sale.id)
-
-        messages.error(request, "Please check the sale form and try again.")
+        messages.error(request, "Please check the red error and try again.")
 
     else:
         form = PetSaleForm(instance=sale)
@@ -1410,6 +1675,9 @@ def pet_sale_edit(request, pk):
         "sellers": _get_active_sellers(),
         "selected_pet": sale.pet,
         "sale": sale,
+        "preorder_payment_method": preorder_payment_method,
+        "posted_form_data": request.POST.dict() if request.method == "POST" else {},
+        "form_error_fields": list(form.errors.keys()),
     })
 
 
@@ -1425,6 +1693,7 @@ def pet_sale_detail(request, pk):
     return render(request, "pets/pet_sale_detail.html", {
         "sale": sale,
         "copy_text": sale.build_copy_text(),
+        "preorder_payment_method": _get_preorder_deposit_payment_method(sale),
         "can_view_cost_price": can_view_cost(request.user),
         "can_edit_cost_price": can_edit_cost(request.user),
     })
@@ -1444,36 +1713,12 @@ def pet_sale_mark_arrived(request, pk):
 
 @login_required
 def pet_sale_complete(request, pk):
-    sale = get_object_or_404(
-        PetSale.objects
-        .select_related("pet", "pet__breed_profile", "created_by", "seller")
-        .prefetch_related("photos"),
-        pk=pk,
+    sale = get_object_or_404(PetSale, pk=pk)
+
+    messages.error(
+        request,
+        "Direct completion is disabled. Click Add to POS so Cash or ABA is recorded correctly.",
     )
-
-    if request.method == "POST":
-        extra_paid = _to_decimal(request.POST.get("extra_paid"), "0.00")
-        warranty_days = request.POST.get("warranty_days") or sale.warranty_days or 3
-        first_paid_before_complete = sale.paid_amount or Decimal("0.00")
-
-        complete_pet_sale(
-            request=request,
-            sale=sale,
-            extra_paid=extra_paid,
-            warranty_days=warranty_days,
-        )
-
-        send_pet_sale_telegram_alert(
-            sale,
-            complete_only=True,
-            first_paid_amount=first_paid_before_complete,
-            final_paid_amount=extra_paid,
-        )
-
-        messages.success(request, "Pet sale completed. Customer profile updated.")
-    else:
-        messages.error(request, "Invalid request. Please use the Complete Sale button.")
-
     return redirect("pet_sale_detail", sale.id)
 
 
@@ -1576,6 +1821,10 @@ def pet_warranty_claim_create(request, sale_id):
 @login_required
 def pet_sale_add_to_pos(request, pk):
     sale = get_object_or_404(PetSale, pk=pk)
+
+    if sale.status in ["completed", "cancelled", "refunded"]:
+        messages.error(request, "This pet sale cannot be added to POS.")
+        return redirect("pet_sale_detail", sale.id)
 
     request.session["selected_pet_sale_id"] = sale.id
     request.session.modified = True
