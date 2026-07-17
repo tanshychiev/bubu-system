@@ -1,892 +1,1003 @@
-{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>BUBU Customer Display</title>
+
+    {% if aba_qr_image_url or aba_qr_text %}
+        <meta http-equiv="refresh" content="5">
+    {% else %}
+        <meta http-equiv="refresh" content="1">
+    {% endif %}
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
-        * { box-sizing: border-box; }
-
-        html, body {
-            margin: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #fffaf7;
-            font-family: Arial, sans-serif;
-            color: #070b35;
+        :root{
+            --ink:#20213a;
+            --muted:#716b86;
+            --blue:#1769e0;
+            --pink:#f24891;
+            --purple:#8064e9;
+            --line:#e6e7f4;
+            --soft:#f5f7ff;
+            --white:#ffffff;
         }
 
-        body {
-            padding: 14px;
+        *{
+            box-sizing:border-box;
         }
 
-        .display-page {
-            width: 100%;
-            height: calc(100vh - 28px);
-            display: grid;
-            grid-template-rows: 150px 1fr 78px;
-            gap: 10px;
+        html,
+        body{
+            width:100%;
+            height:100%;
+            margin:0;
+            overflow:hidden;
         }
 
-        .card {
-            background: rgba(255,255,255,0.97);
-            border: 1.5px solid #f2e3e8;
-            border-radius: 24px;
-            box-shadow: 0 10px 26px rgba(120,80,120,0.08);
-        }
-
-        /* =========================
-           TOP HERO
-        ========================= */
-        .hero-card {
-            position: relative;
-            overflow: hidden;
-            border-radius: 24px;
+        body{
+            color:var(--ink);
             background:
-                radial-gradient(circle at 78% 50%, rgba(243,225,255,.85), transparent 38%),
-                linear-gradient(90deg, #fffafc 0%, #fff7fb 100%);
-            border: 1.5px solid #f2e3e8;
-            box-shadow: 0 10px 26px rgba(120,80,120,0.08);
-            display: grid;
-            grid-template-columns: 1fr 570px;
-            align-items: center;
-            padding: 8px 24px 12px 44px;
+                radial-gradient(circle at 10% 5%,rgba(255,226,238,.95),transparent 28%),
+                radial-gradient(circle at 92% 8%,rgba(220,229,255,.92),transparent 30%),
+                linear-gradient(135deg,#fff9fb,#f5f7ff);
+            font-family:Arial,Helvetica,sans-serif;
         }
 
-        .hero-text {
-            transform: translateY(-4px);
-        }
-
-        .hero-text h1 {
-            margin: 0;
-            font-size: 40px;
-            line-height: 1;
-            font-weight: 900;
-            letter-spacing: -1px;
-            color: #070b35;
-        }
-
-        .hero-text h1 span {
-            color: #7c4dff;
-        }
-
-        .hero-text p {
-            margin: 8px 0 0;
-            font-size: 17px;
-            line-height: 1.22;
-            font-weight: 800;
-            color: #74758d;
-        }
-
-        .hero-art {
-            width: 100%;
-            height: 180px;
-            object-fit: contain;
-            object-position: right center;
-            display: block;
-            transform: translateY(-8px);
-        }
-
-        .soft-paw {
-            position: absolute;
-            color: rgba(124,77,255,.16);
-            font-size: 28px;
-            font-weight: 900;
-            pointer-events: none;
-        }
-
-        .soft-paw.p1 { right: 420px; top: 62px; }
-        .soft-paw.p2 { right: 82px; top: 34px; }
-
-        /* =========================
-           MAIN
-        ========================= */
-        .main-grid {
-            min-height: 0;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) 560px;
-            gap: 10px;
-        }
-
-        .order-card {
-            padding: 16px 24px;
-            overflow: hidden;
-            min-height: 0;
-        }
-
-        .order-title {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 12px;
-        }
-
-        .order-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #f6e9ff, #eee1ff);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            flex-shrink: 0;
-        }
-
-        .order-title h2 {
-            margin: 0;
-            font-size: 28px;
-            line-height: 1;
-            font-weight: 900;
-        }
-
-        .order-head {
-            display: grid;
-            grid-template-columns: 1fr 80px 118px;
-            gap: 10px;
-            padding: 0 8px 9px;
-            border-bottom: 1.5px solid #efe6e9;
-            font-size: 16px;
-            font-weight: 900;
-            color: #777891;
-        }
-
-        .order-list {
-            height: calc(100% - 76px);
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding-right: 8px;
-        }
-
-        .order-list::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .order-list::-webkit-scrollbar-track {
-            background: #fff3f7;
-            border-radius: 999px;
-        }
-
-        .order-list::-webkit-scrollbar-thumb {
-            background: #d9c2ff;
-            border-radius: 999px;
-        }
-
-        .order-row {
-            display: grid;
-            grid-template-columns: 74px 1fr 80px 118px;
-            gap: 10px;
-            align-items: center;
-            padding: 8px 8px;
-            border-bottom: 1.5px solid #f4edf0;
-            min-height: 76px;
-        }
-
-        .order-row:last-child {
-            border-bottom: none;
-        }
-
-        .product-img,
-        .no-img {
-            width: 58px;
-            height: 58px;
-            border-radius: 12px;
-            object-fit: cover;
-            background: #fff3f6;
-            border: 1px solid #f1e4e8;
-        }
-
-        .no-img {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 26px;
-        }
-
-        .item-name {
-            font-size: 16px;
-            font-weight: 900;
-            line-height: 1.18;
-        }
-
-        .variant {
-            margin-top: 3px;
-            font-size: 11px;
-            font-weight: 800;
-            color: #777891;
-        }
-
-        .qty-pill {
-            width: 44px;
-            height: 34px;
-            margin: auto;
-            border-radius: 13px;
-            background: linear-gradient(135deg, #f5e9ff, #eedfff);
-            color: #8b5cf6;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 21px;
-            font-weight: 900;
-        }
-
-        .line-total {
-            font-size: 17px;
-            font-weight: 900;
-            text-align: right;
-            white-space: nowrap;
+        .display-page{
+            width:100%;
+            height:100vh;
+            padding:10px;
+            display:grid;
+            grid-template-rows:54px minmax(0,1fr) 34px;
+            gap:8px;
         }
 
         /* =========================
-           RIGHT SIDE
+           COMPACT TOP BAR
         ========================= */
-        .right-side {
-            min-height: 0;
-            display: grid;
-            grid-template-rows: 190px minmax(0, 1fr);
-            gap: 10px;
+        .topbar{
+            min-width:0;
+            padding:0 14px;
+            border:1px solid rgba(218,220,239,.92);
+            border-radius:17px;
+            display:flex;
+            align-items:center;
+            gap:12px;
+            background:rgba(255,255,255,.90);
+            box-shadow:0 6px 18px rgba(56,50,98,.07);
         }
 
-        .summary-card {
-            padding: 12px 16px;
-            overflow: hidden;
+        .brand-logo{
+            width:42px;
+            height:42px;
+            flex:0 0 42px;
+            border-radius:13px;
+            object-fit:contain;
+            background:#fff;
         }
 
-        .summary-title {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            margin-bottom: 7px;
+        .brand-copy{
+            min-width:0;
         }
 
-        .summary-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 10px;
-            background: #fff1df;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            flex-shrink: 0;
+        .brand-title{
+            overflow:hidden;
+            color:#24233d;
+            font-size:20px;
+            line-height:1;
+            font-weight:1000;
+            text-overflow:ellipsis;
+            white-space:nowrap;
         }
 
-        .summary-title h3 {
-            margin: 0;
-            font-size: 17px;
-            font-weight: 900;
+        .brand-title strong{
+            color:var(--blue);
         }
 
-        .summary-line {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-            font-weight: 900;
-            color: #777891;
-            margin: 4px 0;
+        .brand-sub{
+            margin-top:4px;
+            overflow:hidden;
+            color:var(--muted);
+            font-size:10px;
+            font-weight:800;
+            text-overflow:ellipsis;
+            white-space:nowrap;
         }
 
-        .summary-line strong {
-            color: #070b35;
+        .top-spacer{
+            flex:1 1 auto;
         }
 
-        .summary-line.discount,
-        .summary-line.discount strong {
-            color: #ef4f76;
+        .branch-pill,
+        .rate-pill{
+            min-height:34px;
+            padding:0 13px;
+            border-radius:12px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:5px;
+            color:#4d4967;
+            background:#f7f6ff;
+            font-size:11px;
+            font-weight:1000;
+            white-space:nowrap;
         }
 
-        .summary-divider {
-            border-top: 1.5px dashed #f1dfe5;
-            margin: 7px 0;
-        }
-
-        .final-label {
-            font-size: 13px;
-            font-weight: 900;
-            margin-bottom: 2px;
-        }
-
-        .final-total {
-            text-align: center;
-            font-size: 34px;
-            line-height: 1;
-            font-weight: 900;
-            color: #ef4f76;
-            letter-spacing: -1px;
-            white-space: nowrap;
-        }
-
-        .final-khr {
-            margin-top: 4px;
-            text-align: center;
-            font-size: 14px;
-            font-weight: 900;
-            color: #7c4dff;
-            white-space: nowrap;
-        }
-
-        /* ✅ customer point visible, but not too big */
-        .point-box {
-            margin-top: 8px;
-            background: linear-gradient(135deg, #fff8f1, #fff4fb);
-            border: 1px solid #f3dfd5;
-            border-radius: 12px;
-            padding: 7px 8px;
-            font-size: 11px;
-            line-height: 1.35;
-            font-weight: 900;
-            text-align: center;
-        }
-
-        .point-box span {
-            display: block;
-            white-space: nowrap;
-        }
-
-        .point-current {
-            color: #7c4dff;
-        }
-
-        .point-earn {
-            color: #ef4f76;
-            margin-top: 2px;
-        }
-
-        .qr-card {
-            padding: 6px;
-            overflow: hidden;
-        }
-
-        .qr-inner {
-            width: 100%;
-            height: 100%;
-            min-height: 0;
-            border-radius: 20px;
-            border: 2px solid #eadbfb;
-            background: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            padding: 8px 10px 12px;
-            overflow: hidden;
-        }
-
-        .dynamic-qr {
-            width: 500px;
-            height: 500px;
-            max-width: 98%;
-            max-height: calc(100% - 34px);
-            object-fit: contain;
-            border-radius: 12px;
-            background: #ffffff;
-            display: block;
-            flex: 1 1 auto;
-            min-height: 0;
-        }
-
-        .qr-placeholder {
-            width: 470px;
-            height: 470px;
-            max-width: 96%;
-            max-height: calc(100% - 40px);
-            border-radius: 18px;
-            border: 2px dashed #dac3f0;
-            background: linear-gradient(135deg, #faf4ff, #ffffff);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            color: #8b5cf6;
-            font-weight: 900;
-            text-align: center;
-        }
-
-        .qr-placeholder-icon {
-            font-size: 46px;
-            margin-bottom: 8px;
-        }
-
-        .qr-placeholder-text {
-            font-size: 12px;
-            line-height: 1.35;
-        }
-
-        .qr-note {
-            margin-top: 4px;
-            font-size: 16px;
-            line-height: 1.2;
-            font-weight: 900;
-            color: #6e7088;
-            text-align: center;
-            flex: 0 0 auto;
+        .rate-pill strong{
+            color:var(--purple);
         }
 
         /* =========================
-           BOTTOM
+           MAIN LAYOUT
         ========================= */
-        .bottom-card {
-            position: relative;
-            overflow: hidden;
-            border-radius: 24px;
+        .main-layout{
+            min-height:0;
+            display:grid;
+            grid-template-columns:minmax(280px,35%) minmax(0,65%);
+            gap:8px;
+        }
+
+        .order-panel,
+        .payment-panel{
+            min-width:0;
+            min-height:0;
+            border:1px solid rgba(218,220,239,.95);
+            border-radius:20px;
+            background:rgba(255,255,255,.94);
+            box-shadow:0 10px 28px rgba(56,50,98,.08);
+            overflow:hidden;
+        }
+
+        /* =========================
+           ORDER PANEL
+        ========================= */
+        .order-panel{
+            display:grid;
+            grid-template-rows:48px minmax(0,1fr);
+        }
+
+        .panel-head{
+            padding:0 14px;
+            border-bottom:1px solid var(--line);
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:10px;
+        }
+
+        .panel-title{
+            display:flex;
+            align-items:center;
+            gap:8px;
+            font-size:17px;
+            font-weight:1000;
+        }
+
+        .item-count{
+            min-width:30px;
+            height:26px;
+            padding:0 8px;
+            border-radius:999px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#5a4fc4;
+            background:#eeebff;
+            font-size:11px;
+            font-weight:1000;
+        }
+
+        .order-list{
+            min-height:0;
+            padding:8px;
+            overflow-y:auto;
+            scrollbar-width:thin;
+            scrollbar-color:#cbc8ea transparent;
+        }
+
+        .order-list::-webkit-scrollbar{
+            width:5px;
+        }
+
+        .order-list::-webkit-scrollbar-thumb{
+            border-radius:999px;
+            background:#cbc8ea;
+        }
+
+        .order-row{
+            min-width:0;
+            margin-bottom:7px;
+            padding:8px;
+            border:1px solid #ececf6;
+            border-radius:14px;
+            display:grid;
+            grid-template-columns:48px minmax(0,1fr) auto;
+            align-items:center;
+            gap:9px;
+            background:#fff;
+        }
+
+        .order-row.pet-row{
+            border-color:#f4d8e5;
+            background:linear-gradient(135deg,#fff5f9,#fff);
+        }
+
+        .item-image,
+        .item-no-image{
+            width:48px;
+            height:48px;
+            border-radius:11px;
+            object-fit:cover;
+            background:#f5f4ff;
+        }
+
+        .item-image.pet-image{
+            object-fit:contain;
+            padding:2px;
+        }
+
+        .item-no-image{
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:23px;
+        }
+
+        .item-copy{
+            min-width:0;
+        }
+
+        .item-name{
+            overflow:hidden;
+            color:#29283f;
+            font-size:13px;
+            line-height:1.15;
+            font-weight:1000;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+        }
+
+        .item-meta{
+            margin-top:3px;
+            overflow:hidden;
+            color:#807b91;
+            font-size:9px;
+            line-height:1.2;
+            font-weight:800;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+        }
+
+        .item-price{
+            text-align:right;
+        }
+
+        .item-price strong{
+            display:block;
+            color:#27263e;
+            font-size:15px;
+            font-weight:1000;
+            white-space:nowrap;
+        }
+
+        .item-price span{
+            display:block;
+            margin-top:2px;
+            color:var(--pink);
+            font-size:9px;
+            font-weight:1000;
+        }
+
+        /* =========================
+           LARGE PAYMENT / QR PANEL
+        ========================= */
+        .payment-panel{
+            padding:8px;
+            display:grid;
+            grid-template-rows:72px minmax(0,1fr);
+            gap:7px;
             background:
-                radial-gradient(circle at 85% 50%, rgba(243,225,255,.85), transparent 25%),
-                linear-gradient(90deg, #fffafc 0%, #fff7fb 100%);
-            border: 1.5px solid #f2e3e8;
-            box-shadow: 0 10px 26px rgba(120,80,120,0.08);
-            display: grid;
-            grid-template-columns: 1fr 400px;
-            align-items: start;
-            padding: 4px 22px 8px 34px;
+                radial-gradient(circle at 90% 10%,rgba(222,230,255,.75),transparent 35%),
+                linear-gradient(145deg,#fff,#f8f9ff);
         }
 
-        .bottom-left {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            min-width: 0;
-            transform: translateY(-2px);
+        .amount-bar{
+            min-width:0;
+            padding:7px 16px;
+            border-radius:16px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:22px;
+            color:#fff;
+            background:linear-gradient(135deg,#2c2b52,#50518b);
+            box-shadow:0 8px 18px rgba(43,42,82,.18);
         }
 
-        .bottom-paw {
-            width: 50px;
-            height: 50px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #f5e9ff, #eedfff);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 27px;
-            flex-shrink: 0;
+        .amount-label{
+            font-size:14px;
+            font-weight:1000;
+            letter-spacing:.6px;
         }
 
-        .thanks-title {
-            font-size: 17px;
-            font-weight: 900;
-            white-space: nowrap;
+        .amount-usd{
+            color:#ffd770;
+            font-size:clamp(38px,5.2vw,68px);
+            line-height:1;
+            font-weight:1000;
+            letter-spacing:-2px;
+            white-space:nowrap;
         }
 
-        .thanks-sub {
-            margin-top: 4px;
-            font-size: 14px;
-            font-weight: 800;
-            color: #777891;
-            white-space: nowrap;
+        .amount-khr{
+            padding-left:20px;
+            border-left:1px solid rgba(255,255,255,.24);
+            color:#f2efff;
+            font-size:clamp(15px,2vw,25px);
+            font-weight:1000;
+            white-space:nowrap;
         }
 
-        .rate-box {
-            position: absolute;
-            left: 61%;
-            top: 38%;
-            transform: translate(-50%, -50%);
-            min-width: 190px;
-            height: 40px;
-            border-radius: 15px;
-            border: 1.5px solid #e7d8f4;
-            background: rgba(255,255,255,0.92);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 0 14px;
-            font-size: 13px;
-            font-weight: 900;
-            color: #6f38ff;
-            box-shadow: 0 6px 18px rgba(130,100,150,0.08);
-            white-space: nowrap;
-            z-index: 3;
+        .qr-stage{
+            min-width:0;
+            min-height:0;
+            padding:7px;
+            border:2px solid #dfe5ff;
+            border-radius:18px;
+            display:grid;
+            grid-template-columns:minmax(0,1fr) 116px;
+            align-items:center;
+            gap:8px;
+            background:#fff;
+            overflow:hidden;
         }
 
-        .bottom-art {
-            width: 100%;
-            height: 105px;
-            object-fit: contain;
-            object-position: right center;
-            display: block;
-            transform: translateY(-18px);
+        .qr-main{
+            min-width:0;
+            min-height:0;
+            width:100%;
+            height:100%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+        }
+
+        .qr-frame{
+            width:min(51vw,calc(100vh - 190px),570px);
+            height:min(51vw,calc(100vh - 190px),570px);
+            max-width:100%;
+            max-height:100%;
+            aspect-ratio:1/1;
+            padding:5px;
+            border-radius:13px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:#fff;
+            box-shadow:0 5px 18px rgba(32,56,120,.08);
+            overflow:hidden;
+        }
+
+        .dynamic-qr{
+            width:100%;
+            height:100%;
+            display:block;
+            object-fit:contain;
+            background:#fff;
+            image-rendering:auto;
+        }
+
+        .qr-placeholder{
+            width:100%;
+            height:100%;
+            border:3px dashed #9fb8f5;
+            border-radius:13px;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            color:#4870cb;
+            background:linear-gradient(135deg,#f2f6ff,#fff);
+            text-align:center;
+        }
+
+        .qr-placeholder-icon{
+            font-size:52px;
+        }
+
+        .qr-placeholder-title{
+            margin-top:8px;
+            font-size:20px;
+            font-weight:1000;
+        }
+
+        .qr-placeholder-text{
+            margin-top:5px;
+            color:#7886aa;
+            font-size:11px;
+            line-height:1.35;
+            font-weight:800;
+        }
+
+        .scan-side{
+            height:100%;
+            min-height:0;
+            padding:10px 7px;
+            border-radius:14px;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+            color:#3657aa;
+            background:linear-gradient(180deg,#eef3ff,#f9faff);
+            text-align:center;
+        }
+
+        .scan-icon{
+            font-size:32px;
+        }
+
+        .scan-title{
+            font-size:16px;
+            line-height:1.05;
+            font-weight:1000;
+        }
+
+        .scan-note{
+            color:#7684a9;
+            font-size:9px;
+            line-height:1.35;
+            font-weight:800;
+        }
+
+        .exact-amount{
+            width:100%;
+            padding:8px 4px;
+            border-radius:10px;
+            color:#fff;
+            background:linear-gradient(135deg,var(--blue),var(--purple));
+        }
+
+        .exact-amount span{
+            display:block;
+            font-size:8px;
+            font-weight:900;
+        }
+
+        .exact-amount strong{
+            display:block;
+            margin-top:3px;
+            font-size:15px;
+            font-weight:1000;
         }
 
         /* =========================
-           EMPTY
+           FOOTER
         ========================= */
-        .empty-state {
-            grid-column: 1 / -1;
-            height: 100%;
-            border-radius: 24px;
-            background: rgba(255,255,255,0.96);
-            border: 1.5px solid #f2e3e8;
-            box-shadow: 0 10px 26px rgba(120,80,120,0.08);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            text-align: center;
+        .footer{
+            min-width:0;
+            padding:0 13px;
+            border:1px solid rgba(218,220,239,.90);
+            border-radius:13px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:10px;
+            color:#6e6981;
+            background:rgba(255,255,255,.88);
+            font-size:10px;
+            font-weight:900;
         }
 
-        .empty-icon {
-            font-size: 68px;
-            margin-bottom: 10px;
-        }
-
-        .empty-title {
-            font-size: 32px;
-            font-weight: 900;
-        }
-
-        .empty-sub {
-            margin-top: 8px;
-            font-size: 19px;
-            font-weight: 900;
-            color: #8b5cf6;
+        .footer strong{
+            color:var(--pink);
         }
 
         /* =========================
-           PAID OVERLAY
+           WAITING SCREEN
         ========================= */
-        .paid-overlay {
-            position: fixed;
-            inset: 0;
+        .waiting-wrap{
+            grid-column:1/-1;
+            width:100%;
+            height:100%;
+            border:1px solid rgba(218,220,239,.95);
+            border-radius:20px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:rgba(255,255,255,.92);
+            box-shadow:0 10px 28px rgba(56,50,98,.08);
+        }
+
+        .waiting-card{
+            text-align:center;
+        }
+
+        .waiting-card img{
+            width:min(430px,60vw);
+            height:150px;
+            object-fit:contain;
+        }
+
+        .waiting-title{
+            margin-top:8px;
+            color:#3c3a58;
+            font-size:35px;
+            font-weight:1000;
+        }
+
+        .waiting-text{
+            margin-top:7px;
+            color:#858097;
+            font-size:16px;
+            font-weight:900;
+        }
+
+        /* =========================
+           PAYMENT RECEIVED OVERLAY
+        ========================= */
+        .paid-overlay{
+            position:fixed;
+            inset:0;
+            z-index:9999;
+            padding:24px;
+            display:none;
+            align-items:center;
+            justify-content:center;
             background:
-                radial-gradient(circle at 20% 20%, rgba(245,220,255,.8), transparent 30%),
-                radial-gradient(circle at 80% 30%, rgba(255,210,225,.75), transparent 32%),
-                linear-gradient(135deg, #fff8fb, #f5ecff);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            text-align: center;
-            padding: 30px;
+                radial-gradient(circle at 20% 20%,rgba(255,214,112,.50),transparent 30%),
+                radial-gradient(circle at 80% 30%,rgba(244,72,145,.26),transparent 32%),
+                linear-gradient(135deg,#fff8f1,#f4f5ff);
+            text-align:center;
         }
 
-        .paid-card {
-            width: min(820px, 92vw);
-            background: white;
-            border-radius: 40px;
-            padding: 44px;
-            box-shadow: 0 30px 90px rgba(65,45,80,0.22);
-            border: 3px solid #f0ddff;
-            animation: popIn .45s ease;
+        .paid-card{
+            width:min(760px,90vw);
+            padding:34px;
+            border-radius:36px;
+            background:#fff;
+            box-shadow:0 26px 75px rgba(37,33,70,.22);
+            animation:popIn .45s ease;
         }
 
-        .paid-icon {
-            font-size: 90px;
-            animation: bounce 1s infinite;
+        .paid-icon{
+            font-size:76px;
         }
 
-        .paid-title {
-            margin-top: 12px;
-            font-size: 54px;
-            font-weight: 900;
-            color: #16a34a;
+        .paid-title{
+            margin-top:8px;
+            color:#1ca467;
+            font-size:clamp(38px,5vw,66px);
+            font-weight:1000;
         }
 
-        .paid-amount {
-            margin-top: 8px;
-            font-size: 76px;
-            line-height: 1;
-            font-weight: 900;
-            color: #ef4f76;
+        .paid-amount{
+            margin-top:4px;
+            color:var(--pink);
+            font-size:clamp(48px,7vw,88px);
+            font-weight:1000;
         }
 
-        .paid-kh,
-        .paid-en {
-            margin-top: 16px;
-            font-size: 30px;
-            font-weight: 900;
-            line-height: 1.45;
-            color: #68647c;
+        .paid-kh{
+            margin-top:12px;
+            color:#302f47;
+            font-size:clamp(22px,2.5vw,34px);
+            line-height:1.4;
+            font-weight:1000;
         }
 
-        .hearts {
-            margin-top: 18px;
-            font-size: 40px;
-            animation: floatUp 1.4s infinite ease-in-out;
+        .paid-en{
+            margin-top:7px;
+            color:#777286;
+            font-size:clamp(18px,2vw,28px);
+            line-height:1.35;
+            font-weight:900;
         }
 
-        .confetti {
-            position: fixed;
-            top: -30px;
-            font-size: 34px;
-            animation: fall 3s linear forwards;
-            z-index: 10000;
+        .confetti{
+            position:fixed;
+            top:-20px;
+            z-index:10000;
+            font-size:30px;
+            animation:fall 3s linear forwards;
         }
 
-        @keyframes popIn {
-            from { transform: scale(.72); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+        @keyframes popIn{
+            from{transform:scale(.75);opacity:0}
+            to{transform:scale(1);opacity:1}
         }
 
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-14px) scale(1.05); }
-        }
-
-        @keyframes floatUp {
-            0%, 100% { transform: translateY(0); opacity: 1; }
-            50% { transform: translateY(-10px); opacity: .75; }
-        }
-
-        @keyframes fall {
-            to {
-                transform: translateY(110vh) rotate(720deg);
-                opacity: 0;
+        @keyframes fall{
+            to{
+                transform:translateY(110vh) rotate(720deg);
+                opacity:0;
             }
         }
 
-        /* =========================
-           RESPONSIVE QR SIZE
-        ========================= */
-        @media (max-width: 1450px) {
-            .main-grid {
-                grid-template-columns: minmax(0, 1fr) 480px;
+        /* Smaller customer displays */
+        @media(max-width:900px){
+            .display-page{
+                padding:6px;
+                grid-template-rows:48px minmax(0,1fr) 28px;
+                gap:5px;
             }
 
-            .dynamic-qr {
-                width: 430px;
-                height: 430px;
+            .topbar{
+                padding:0 9px;
+                border-radius:13px;
             }
 
-            .qr-placeholder {
-                width: 410px;
-                height: 410px;
+            .brand-logo{
+                width:36px;
+                height:36px;
+                flex-basis:36px;
+            }
+
+            .brand-title{
+                font-size:16px;
+            }
+
+            .branch-pill{
+                display:none;
+            }
+
+            .rate-pill{
+                min-height:30px;
+                padding:0 9px;
+                font-size:9px;
+            }
+
+            .main-layout{
+                grid-template-columns:minmax(230px,32%) minmax(0,68%);
+                gap:5px;
+            }
+
+            .order-panel,
+            .payment-panel{
+                border-radius:15px;
+            }
+
+            .order-panel{
+                grid-template-rows:40px minmax(0,1fr);
+            }
+
+            .panel-title{
+                font-size:14px;
+            }
+
+            .order-row{
+                padding:6px;
+                grid-template-columns:40px minmax(0,1fr) auto;
+                gap:6px;
+                border-radius:11px;
+            }
+
+            .item-image,
+            .item-no-image{
+                width:40px;
+                height:40px;
+                border-radius:9px;
+            }
+
+            .item-name{
+                font-size:11px;
+            }
+
+            .item-meta{
+                font-size:8px;
+            }
+
+            .item-price strong{
+                font-size:12px;
+            }
+
+            .payment-panel{
+                padding:5px;
+                grid-template-rows:60px minmax(0,1fr);
+                gap:5px;
+            }
+
+            .amount-bar{
+                padding:5px 10px;
+                border-radius:13px;
+                gap:12px;
+            }
+
+            .amount-label{
+                font-size:11px;
+            }
+
+            .amount-usd{
+                font-size:clamp(32px,5vw,54px);
+            }
+
+            .amount-khr{
+                padding-left:12px;
+                font-size:clamp(12px,1.7vw,20px);
+            }
+
+            .qr-stage{
+                padding:4px;
+                grid-template-columns:minmax(0,1fr) 92px;
+                gap:5px;
+                border-radius:14px;
+            }
+
+            .qr-frame{
+                width:min(56vw,calc(100vh - 155px),510px);
+                height:min(56vw,calc(100vh - 155px),510px);
+                padding:3px;
+            }
+
+            .scan-side{
+                padding:6px 4px;
+                border-radius:10px;
+                gap:5px;
+            }
+
+            .scan-icon{
+                font-size:25px;
+            }
+
+            .scan-title{
+                font-size:12px;
+            }
+
+            .scan-note{
+                font-size:7px;
+            }
+
+            .exact-amount strong{
+                font-size:12px;
+            }
+
+            .footer{
+                padding:0 8px;
+                font-size:8px;
             }
         }
 
-        @media (max-width: 1100px) {
-            body {
-                padding: 8px;
+        @media(max-height:560px){
+            .display-page{
+                grid-template-rows:45px minmax(0,1fr) 26px;
             }
 
-            .display-page {
-                height: calc(100vh - 16px);
-                grid-template-rows: 120px 1fr 68px;
+            .payment-panel{
+                grid-template-rows:54px minmax(0,1fr);
             }
 
-            .hero-card {
-                grid-template-columns: 1fr 320px;
-                padding-left: 24px;
+            .amount-usd{
+                font-size:38px;
             }
 
-            .hero-text h1 {
-                font-size: 30px;
-            }
-
-            .main-grid {
-                grid-template-columns: minmax(0, 1fr) 410px;
-            }
-
-            .right-side {
-                grid-template-rows: 180px minmax(0, 1fr);
-            }
-
-            .dynamic-qr {
-                width: 370px;
-                height: 370px;
-            }
-
-            .qr-placeholder {
-                width: 350px;
-                height: 350px;
+            .qr-frame{
+                width:min(55vw,calc(100vh - 138px),470px);
+                height:min(55vw,calc(100vh - 138px),470px);
             }
         }
-
     </style>
 </head>
 
 <body>
+<div class="display-page">
 
-<div
-    class="display-page"
-    data-state-key="{{ display_state_key }}"
-    data-branch-id="{{ current_branch.id|default:0 }}"
-    data-payment-event-id="{{ payment_event_id|default:0 }}"
-    data-payment-amount="{{ payment_event_amount|default:0|floatformat:2 }}"
->
-
-    <!-- TOP HERO -->
-    <div class="hero-card">
-        <div class="hero-text">
-            <h1>Welcome to <span>BUBU!</span></h1>
-            <p>
-                Quality products for happy pets<br>
-                and happier families.
-            </p>
-        </div>
-
+    <header class="topbar">
         <img
-            src="{% static 'img/customer_display_hero.png' %}"
-            class="hero-art"
-            alt="BUBU Pets"
+            src="/static/img/bubu-logo.png"
+            class="brand-logo"
+            alt="BUBU"
         >
 
-        <div class="soft-paw p1">🐾</div>
-        <div class="soft-paw p2">♡</div>
-    </div>
-
-    {% if cart_items or selected_pet_sale %}
-    <div class="main-grid">
-
-        <!-- LEFT ORDER -->
-        <div class="order-card card">
-            <div class="order-title">
-                <div class="order-icon">🛍️</div>
-                <h2>Your Order</h2>
+        <div class="brand-copy">
+            <div class="brand-title">
+                Welcome to <strong>BUBU!</strong>
             </div>
-
-            <div class="order-head">
-                <div>Item</div>
-                <div style="text-align:center;">Qty</div>
-                <div style="text-align:right;">Total</div>
-            </div>
-
-            <div class="order-list">
-
-                {% if selected_pet_sale %}
-                <div class="order-row">
-                    {% if selected_pet_image_url %}
-                        <img class="product-img" src="{{ selected_pet_image_url }}" alt="Pet Sale">
-                    {% else %}
-                        <div class="no-img">🐶</div>
-                    {% endif %}
-
-                    <div>
-                        <div class="item-name">Pet Sale #{{ selected_pet_sale.id }}</div>
-                        <div class="variant">BUBU Pet Sale</div>
-                    </div>
-
-                    <div class="qty-pill">1</div>
-                    <div class="line-total">${{ selected_pet_remaining|default:total|floatformat:2 }}</div>
-                </div>
-                {% endif %}
-
-                {% for row in cart_items %}
-                <div class="order-row">
-                    {% if row.image_url %}
-                        <img class="product-img" src="{{ row.image_url }}" alt="{{ row.name }}">
-                    {% else %}
-                        <div class="no-img">🐾</div>
-                    {% endif %}
-
-                    <div>
-                        <div class="item-name">{{ row.name }}</div>
-                        {% if row.variant_label %}
-                            <div class="variant">{{ row.variant_label }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="qty-pill">{{ row.quantity }}</div>
-                    <div class="line-total">${{ row.total|floatformat:2 }}</div>
-                </div>
-                {% endfor %}
-
+            <div class="brand-sub">
+                Quality products for happy pets and happier families.
             </div>
         </div>
 
-        <!-- RIGHT SIDE -->
-        <div class="right-side">
+        <div class="top-spacer"></div>
 
-            <div class="summary-card card">
-                <div class="summary-title">
-                    <div class="summary-icon">🧾</div>
-                    <h3>Order Summary</h3>
+        <div class="branch-pill">
+            🏪
+            {% if current_branch %}
+                {{ current_branch.name }}
+            {% else %}
+                BUBU Pet Store
+            {% endif %}
+        </div>
+
+        <div class="rate-pill">
+            1 USD = <strong>{{ khr_rate|floatformat:0 }} Riel</strong>
+        </div>
+    </header>
+
+    {% if cart_items or selected_pet_sale %}
+        <main class="main-layout">
+
+            <section class="order-panel">
+                <div class="panel-head">
+                    <div class="panel-title">
+                        🛍️ Your Order
+                    </div>
+
+                    <div class="item-count">
+                        {% if selected_pet_sale %}
+                            {{ cart_items|length|add:"1" }}
+                        {% else %}
+                            {{ cart_items|length }}
+                        {% endif %}
+                    </div>
                 </div>
 
-                <div class="summary-line">
-                    <span>Subtotal</span>
-                    <strong>${{ subtotal|floatformat:2 }}</strong>
-                </div>
+                <div class="order-list">
+                    {% if selected_pet_sale %}
+                        <div class="order-row pet-row">
+                            {% if selected_pet_image_url %}
+                                <img
+                                    src="{{ selected_pet_image_url }}"
+                                    class="item-image pet-image"
+                                    alt="Pet"
+                                >
+                            {% else %}
+                                <div class="item-no-image">🐶</div>
+                            {% endif %}
 
-                {% if discount_amount %}
-                <div class="summary-line discount">
-                    <span>Discount</span>
-                    <strong>-${{ discount_amount|floatformat:2 }}</strong>
-                </div>
-                {% endif %}
+                            <div class="item-copy">
+                                <div class="item-name">
+                                    Pet Sale #{{ selected_pet_sale.id }}
+                                </div>
 
-                <div class="summary-divider"></div>
+                                <div class="item-meta">
+                                    {{ selected_pet_sale.pet_type_display }}
+                                    · {{ selected_pet_sale.breed_display }}
+                                    {% if selected_pet_sale.gender_display %}
+                                        · {{ selected_pet_sale.gender_display }}
+                                    {% endif %}
+                                </div>
+                            </div>
 
-                <div class="final-label">Final Total</div>
-                <div class="final-total">${{ total|floatformat:2 }}</div>
-
-                <div
-                    class="final-khr js-format-khr"
-                    data-value="{{ total_khr|default:0|floatformat:0 }}"
-                >
-                    {{ total_khr|default:0|floatformat:0 }} ៛
-                </div>
-
-                <div class="point-box">
-                    <span class="point-current">
-                        🎁 Current points:
-                        {{ customer_points|default:"---" }}
-                    </span>
-                    <span class="point-earn">
-                        ✨ Earn this order:
-                        {{ earn_points|default:"---" }} points
-                    </span>
-                </div>
-            </div>
-
-            <div class="qr-card card">
-                <div class="qr-inner">
-                    {% if branch_qr_image_url %}
-                        <img
-                            src="{{ branch_qr_image_url }}"
-                            class="dynamic-qr"
-                            alt="{{ current_branch.name|default:'BUBU' }} payment QR"
-                        >
-                    {% else %}
-                        <div class="qr-placeholder">
-                            <div class="qr-placeholder-icon">🐾</div>
-                            <div class="qr-placeholder-text">
-                                No payment QR uploaded<br>
-                                for this branch.<br>
-                                Please ask Owner/Admin.
+                            <div class="item-price">
+                                <strong>${{ selected_pet_remaining|floatformat:2 }}</strong>
+                                <span>Qty 1</span>
                             </div>
                         </div>
                     {% endif %}
 
-                    <div class="qr-note">
-                        {{ branch_qr_label|default:"Scan to pay" }}
-                        {% if current_branch %} · {{ current_branch.name }}{% endif %}
+                    {% for row in cart_items %}
+                        <div class="order-row">
+                            {% if row.image_url %}
+                                <img
+                                    src="{{ row.image_url }}"
+                                    class="item-image"
+                                    alt="{{ row.name }}"
+                                >
+                            {% elif row.variant and row.variant.image %}
+                                <img
+                                    src="{{ row.variant.image.url }}"
+                                    class="item-image"
+                                    alt="{{ row.name }}"
+                                >
+                            {% elif row.item and row.item.image %}
+                                <img
+                                    src="{{ row.item.image.url }}"
+                                    class="item-image"
+                                    alt="{{ row.name }}"
+                                >
+                            {% else %}
+                                <div class="item-no-image">🐾</div>
+                            {% endif %}
+
+                            <div class="item-copy">
+                                <div class="item-name">
+                                    {% if row.name %}
+                                        {{ row.name }}
+                                    {% elif row.item %}
+                                        {{ row.item.name }}
+                                    {% else %}
+                                        Item
+                                    {% endif %}
+                                </div>
+
+                                <div class="item-meta">
+                                    {% if row.variant_label %}
+                                        {{ row.variant_label }}
+                                    {% elif row.variant %}
+                                        {{ row.variant.label|default:"Variant" }}
+                                        {% if row.variant.size %} · {{ row.variant.size }}{% endif %}
+                                        {% if row.variant.color %} · {{ row.variant.color }}{% endif %}
+                                    {% else %}
+                                        Default
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="item-price">
+                                <strong>${{ row.total|floatformat:2 }}</strong>
+                                <span>Qty {{ row.quantity }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="payment-panel">
+                <div class="amount-bar">
+                    <span class="amount-label">TOTAL TO PAY</span>
+                    <strong class="amount-usd">${{ total|floatformat:2 }}</strong>
+                    <span class="amount-khr">៛{{ total_khr|floatformat:0 }}</span>
+                </div>
+
+                <div class="qr-stage">
+                    <div class="qr-main">
+                        <div class="qr-frame">
+                            {% if aba_qr_image_url %}
+                                <img
+                                    src="{{ aba_qr_image_url }}"
+                                    class="dynamic-qr"
+                                    alt="ABA QR Code"
+                                >
+                            {% elif aba_qr_text %}
+                                <img
+                                    src="https://api.qrserver.com/v1/create-qr-code/?size=900x900&margin=10&data={{ aba_qr_text|urlencode }}"
+                                    class="dynamic-qr"
+                                    alt="ABA QR Code"
+                                >
+                            {% else %}
+                                <div class="qr-placeholder">
+                                    <div class="qr-placeholder-icon">📱</div>
+                                    <div class="qr-placeholder-title">Waiting for ABA QR</div>
+                                    <div class="qr-placeholder-text">
+                                        The large payment QR will appear here<br>
+                                        after the cashier selects ABA.
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <aside class="scan-side">
+                        <div class="scan-icon">📲</div>
+                        <div class="scan-title">SCAN<br>TO PAY</div>
+
+                        <div class="scan-note">
+                            Open your banking app and scan the large QR.
+                        </div>
+
+                        <div class="exact-amount">
+                            <span>EXACT AMOUNT</span>
+                            <strong>${{ total|floatformat:2 }}</strong>
+                        </div>
+                    </aside>
+                </div>
+            </section>
+
+        </main>
+    {% else %}
+        <main class="main-layout">
+            <div class="waiting-wrap">
+                <div class="waiting-card">
+                    <img
+                        src="/static/img/customer-display-hero.png"
+                        alt="BUBU"
+                    >
+                    <div class="waiting-title">Waiting for cashier...</div>
+                    <div class="waiting-text">
+                        Your order and large payment QR will appear here.
                     </div>
                 </div>
             </div>
-
-        </div>
-
-    </div>
-    {% else %}
-    <div class="empty-state">
-        <div class="empty-icon">🛒</div>
-        <div class="empty-title">Waiting for cashier...</div>
-        <div class="empty-sub">1 USD = {{ khr_rate|floatformat:0 }} Riel</div>
-    </div>
+        </main>
     {% endif %}
 
-    <!-- BOTTOM -->
-    <div class="bottom-card">
-        <div class="bottom-left">
-            <div class="bottom-paw">🐾</div>
-            <div>
-                <div class="thanks-title">Thank you for shopping at BUBU!</div>
-                <div class="thanks-sub">We appreciate your trust and support. 💗</div>
-            </div>
-        </div>
-
-        <div class="rate-box">
-            🔁 1 USD = {{ khr_rate|floatformat:0 }} Riel
-        </div>
-
-        <img
-            src="{% static 'img/customer_display_bottom.png' %}"
-            class="bottom-art"
-            alt="BUBU Pets"
-        >
-    </div>
+    <footer class="footer">
+        <span>Thank you for shopping at <strong>BUBU Pet Store</strong> 🐾</span>
+        <span>Please confirm the amount before paying.</span>
+    </footer>
 
 </div>
 
@@ -894,7 +1005,9 @@
     <div class="paid-card">
         <div class="paid-icon">✅</div>
         <div class="paid-title">Payment Received</div>
-        <div class="paid-amount">$<span id="paidAmount">{{ total|floatformat:2 }}</span></div>
+        <div class="paid-amount">
+            $<span id="paidAmount">{{ total|floatformat:2 }}</span>
+        </div>
 
         <div class="paid-kh">
             បានទទួលប្រាក់រួចរាល់។ សូមអរគុណ ❤️
@@ -904,207 +1017,58 @@
             Thank you for shopping at BUBU Pet Store.<br>
             See you again soon!
         </div>
-
-        <div class="hearts">🐶 🐾 ❤️ 🐱</div>
     </div>
 </div>
 
 <script>
-    function formatKHRNumbers() {
-        document.querySelectorAll(".js-format-khr").forEach(function (el) {
-            const raw = el.dataset.value || "0";
-            const number = Number(String(raw).replace(/,/g, ""));
-
-            if (!isNaN(number)) {
-                el.innerText = number.toLocaleString("en-US") + " ៛";
-            }
-        });
-    }
-
-    formatKHRNumbers();
-
     function speakReceived(amount) {
-        const text = `បានទទួលប្រាក់ ${amount} ដុល្លារ។ សូមអរគុណ. Thank you for shopping at BUBU Pet Store. See you again soon.`;
+        const text = `បានទទួលប្រាក់ ${amount} ដុល្លារ។ សូមអរគុណ។ Thank you for shopping at BUBU Pet Store.`;
+        const message = new SpeechSynthesisUtterance(text);
 
-        try {
-            const msg = new SpeechSynthesisUtterance(text);
-            msg.lang = "km-KH";
-            msg.rate = 0.88;
-            msg.volume = 1;
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(msg);
-        } catch (e) {
-            console.log("Speech not supported", e);
-        }
+        message.lang = "km-KH";
+        message.rate = 0.88;
+        message.volume = 1;
+
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(message);
     }
 
     function createConfetti() {
         const icons = ["🐾", "❤️", "🐶", "🐱", "✨", "💖"];
 
-        for (let i = 0; i < 36; i++) {
-            const el = document.createElement("div");
-            el.className = "confetti";
-            el.innerText = icons[Math.floor(Math.random() * icons.length)];
-            el.style.left = Math.random() * 100 + "vw";
-            el.style.animationDelay = Math.random() * 0.8 + "s";
-            el.style.animationDuration = (2.2 + Math.random() * 1.4) + "s";
-            document.body.appendChild(el);
+        for (let index = 0; index < 32; index += 1) {
+            const element = document.createElement("div");
 
-            setTimeout(() => el.remove(), 4300);
+            element.className = "confetti";
+            element.innerText = icons[Math.floor(Math.random() * icons.length)];
+            element.style.left = `${Math.random() * 100}vw`;
+            element.style.animationDelay = `${Math.random() * 0.8}s`;
+            element.style.animationDuration = `${2.2 + Math.random() * 1.4}s`;
+
+            document.body.appendChild(element);
+
+            window.setTimeout(() => element.remove(), 4200);
         }
     }
 
     function showPaymentComplete(amount) {
         const overlay = document.getElementById("paidOverlay");
-        const paidAmount = document.getElementById("paidAmount");
+        const amountElement = document.getElementById("paidAmount");
 
-        paidAmount.innerText = amount;
+        if (!overlay || !amountElement) {
+            return;
+        }
+
+        amountElement.innerText = amount;
         overlay.style.display = "flex";
 
         createConfetti();
         speakReceived(amount);
 
-        setTimeout(function () {
+        window.setTimeout(() => {
             overlay.style.display = "none";
         }, 9000);
     }
-
-    let bubuDisplayRefreshBusy = false;
-
-    function getDisplayPage() {
-        return document.querySelector(".display-page");
-    }
-
-    function paymentStorageKey(page) {
-        const branchId = page?.dataset?.branchId || "0";
-        return `bubu_customer_display_last_payment_${branchId}`;
-    }
-
-    function rememberInitialPaymentEvent() {
-        const page = getDisplayPage();
-
-        if (!page) {
-            return;
-        }
-
-        const storageKey = paymentStorageKey(page);
-        const currentEventId = page.dataset.paymentEventId || "0";
-        const rememberedEventId = sessionStorage.getItem(storageKey);
-
-        // Opening the display for the first time should not replay an old sale.
-        if (rememberedEventId === null) {
-            sessionStorage.setItem(storageKey, currentEventId);
-            return;
-        }
-
-        // If the display was briefly reloaded after a new checkout, still show
-        // the thank-you screen once.
-        if (
-            currentEventId !== "0"
-            && currentEventId !== rememberedEventId
-        ) {
-            sessionStorage.setItem(storageKey, currentEventId);
-            showPaymentComplete(
-                page.dataset.paymentAmount || "0.00"
-            );
-        }
-    }
-
-    async function refreshCustomerDisplaySilently() {
-        if (bubuDisplayRefreshBusy || document.hidden) {
-            return;
-        }
-
-        bubuDisplayRefreshBusy = true;
-
-        try {
-            const url = new URL(window.location.href);
-            url.searchParams.set("_display_refresh", Date.now().toString());
-
-            const response = await fetch(url.toString(), {
-                method: "GET",
-                credentials: "same-origin",
-                cache: "no-store",
-                headers: {
-                    "X-Requested-With": "BUBU-Customer-Display"
-                }
-            });
-
-            if (!response.ok) {
-                return;
-            }
-
-            const html = await response.text();
-            const parsed = new DOMParser().parseFromString(
-                html,
-                "text/html"
-            );
-
-            const nextPage = parsed.querySelector(".display-page");
-            const currentPage = getDisplayPage();
-
-            if (!nextPage || !currentPage) {
-                return;
-            }
-
-            const currentKey = currentPage.dataset.stateKey || "";
-            const nextKey = nextPage.dataset.stateKey || "";
-
-            if (currentKey === nextKey) {
-                return;
-            }
-
-            const storageKey = paymentStorageKey(nextPage);
-            const rememberedEventId = (
-                sessionStorage.getItem(storageKey)
-                ?? currentPage.dataset.paymentEventId
-                ?? "0"
-            );
-            const nextEventId = nextPage.dataset.paymentEventId || "0";
-            const nextPaymentAmount = (
-                nextPage.dataset.paymentAmount || "0.00"
-            );
-
-            const currentOrderList = currentPage.querySelector(".order-list");
-            const oldScrollTop = currentOrderList
-                ? currentOrderList.scrollTop
-                : 0;
-
-            currentPage.innerHTML = nextPage.innerHTML;
-            currentPage.dataset.stateKey = nextKey;
-            currentPage.dataset.branchId = (
-                nextPage.dataset.branchId || "0"
-            );
-            currentPage.dataset.paymentEventId = nextEventId;
-            currentPage.dataset.paymentAmount = nextPaymentAmount;
-
-            formatKHRNumbers();
-
-            const newOrderList = currentPage.querySelector(".order-list");
-
-            if (newOrderList) {
-                newOrderList.scrollTop = oldScrollTop;
-            }
-
-            if (
-                nextEventId !== "0"
-                && nextEventId !== rememberedEventId
-            ) {
-                sessionStorage.setItem(storageKey, nextEventId);
-                showPaymentComplete(nextPaymentAmount);
-            }
-        } catch (error) {
-            console.log("Customer display update skipped:", error);
-        } finally {
-            bubuDisplayRefreshBusy = false;
-        }
-    }
-
-    rememberInitialPaymentEvent();
-
-    // No visible full-page refresh. Only changed content updates silently.
-    window.setInterval(refreshCustomerDisplaySilently, 1100);
 </script>
-
 </body>
 </html>
