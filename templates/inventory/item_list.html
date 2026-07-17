@@ -2230,13 +2230,21 @@ body.inventory-detail-open{
                         ✎
                     </a>
 
-                    <a
-                        href="{% url 'item_delete' item.id %}"
-                        class="icon-btn delete-btn"
-                        title="Delete"
+                    <form
+                        method="post"
+                        action="{% url 'item_delete' item.id %}"
+                        style="display:contents;"
+                        onsubmit="return confirm('Delete {{ item.name|escapejs }}?');"
                     >
-                        🗑
-                    </a>
+                        {% csrf_token %}
+                        <button
+                            type="submit"
+                            class="icon-btn delete-btn"
+                            title="Delete"
+                        >
+                            🗑
+                        </button>
+                    </form>
                 {% endif %}
             </div>
 

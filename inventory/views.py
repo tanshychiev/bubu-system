@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.files.base import ContentFile
 from django.db import transaction
+from django.db.models.deletion import ProtectedError
 from django.db.models import Prefetch, Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -343,6 +344,7 @@ def item_list(request):
 
     items = (
         Item.objects
+        .filter(is_active=True)
         .select_related("item_type")
         .prefetch_related(Prefetch("variants", queryset=variant_qs))
         .order_by("name", "id")
@@ -1081,21 +1083,50 @@ def item_edit(request, pk):
 
 
 @login_required
+@require_POST
 def item_delete(request, pk):
     if not can_manage_inventory(request.user):
         messages.error(request, "You do not have permission.")
         return redirect("item_list")
 
     item = get_object_or_404(Item, pk=pk)
+    item_name = item.name
 
-    if request.method == "POST":
+    try:
+        # Permanently delete items that have no protected transaction history.
         item.delete()
-        messages.success(request, "Item deleted successfully.")
-        return redirect("item_list")
+        messages.success(
+            request,
+            f"{item_name} deleted successfully.",
+        )
 
-    return render(request, "inventory/item_confirm_delete.html", {
-        "item": item,
-    })
+    except ProtectedError:
+        # Keep past sales and stock records safe, but remove the item from
+        # active inventory so staff no longer see or use it.
+        item.is_active = False
+        item.save(update_fields=["is_active"])
+
+        ItemVariant.objects.filter(item=item).update(is_active=False)
+
+        messages.warning(
+            request,
+            f"{item_name} has transaction history, so it was hidden instead of permanently deleted.",
+        )
+
+    except Exception:
+        # Avoid a Server Error 500 for other database relationships.
+        # Hide the item safely while preserving its related history.
+        item.is_active = False
+        item.save(update_fields=["is_active"])
+
+        ItemVariant.objects.filter(item=item).update(is_active=False)
+
+        messages.warning(
+            request,
+            f"{item_name} could not be permanently deleted, so it was hidden safely.",
+        )
+
+    return redirect("item_list")
 
 
 # ==================================================
