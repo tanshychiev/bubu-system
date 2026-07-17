@@ -1721,6 +1721,207 @@ html.bubu-loading body{
     }
 }
 
+
+/* =========================================================
+   BUBU GLOBAL ALERTS — ALL PAGES
+========================================================= */
+.bubu-alert-stack{
+    position:fixed;
+    top:78px;
+    right:18px;
+    z-index:99998;
+    width:min(390px,calc(100vw - 36px));
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    pointer-events:none;
+}
+
+.bubu-alert{
+    position:relative;
+    min-height:64px;
+    padding:12px 44px 12px 12px;
+    border:1px solid transparent;
+    border-radius:16px;
+    display:grid;
+    grid-template-columns:38px minmax(0,1fr);
+    align-items:center;
+    gap:10px;
+    overflow:hidden;
+    color:#28203a;
+    background:#fff;
+    box-shadow:0 16px 42px rgba(39,27,56,.18);
+    pointer-events:auto;
+    opacity:0;
+    transform:translateX(28px) scale(.98);
+    animation:bubuAlertIn .28s ease forwards;
+}
+
+.bubu-alert::after{
+    content:"";
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:4px;
+    background:currentColor;
+    opacity:.48;
+    transform-origin:left center;
+}
+
+.bubu-alert.is-timing::after{
+    animation:bubuAlertTimer var(--bubu-alert-timeout,4500ms) linear forwards;
+}
+
+.bubu-alert.is-leaving{
+    animation:bubuAlertOut .22s ease forwards;
+}
+
+.bubu-alert-icon{
+    width:38px;
+    height:38px;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:inherit;
+    background:rgba(255,255,255,.76);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.65);
+    font-size:19px;
+    line-height:1;
+}
+
+.bubu-alert-copy{
+    min-width:0;
+}
+
+.bubu-alert-title{
+    display:block;
+    margin-bottom:2px;
+    color:inherit;
+    font-size:12px;
+    line-height:1.15;
+    font-weight:1000;
+}
+
+.bubu-alert-message{
+    display:block;
+    overflow-wrap:anywhere;
+    color:#514960;
+    font-size:12px;
+    line-height:1.35;
+    font-weight:850;
+}
+
+.bubu-alert-close{
+    position:absolute;
+    top:50%;
+    right:8px;
+    width:32px;
+    height:32px;
+    min-height:32px;
+    padding:0;
+    border:0;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:inherit;
+    background:rgba(255,255,255,.58);
+    box-shadow:none;
+    font-size:18px;
+    line-height:1;
+    transform:translateY(-50%);
+}
+
+.bubu-alert-close:hover{
+    transform:translateY(-50%);
+    background:rgba(255,255,255,.88);
+}
+
+.bubu-alert-success{
+    color:#17825d;
+    border-color:#bfe9d8;
+    background:linear-gradient(135deg,#eafaf3,#ffffff);
+}
+
+.bubu-alert-error,
+.bubu-alert-danger{
+    color:#d94456;
+    border-color:#f3c4ca;
+    background:linear-gradient(135deg,#fff0f2,#ffffff);
+}
+
+.bubu-alert-warning{
+    color:#b47714;
+    border-color:#f1d79f;
+    background:linear-gradient(135deg,#fff8e6,#ffffff);
+}
+
+.bubu-alert-info,
+.bubu-alert-debug{
+    color:#5f48cc;
+    border-color:#d9cff8;
+    background:linear-gradient(135deg,#f3efff,#ffffff);
+}
+
+@keyframes bubuAlertIn{
+    to{
+        opacity:1;
+        transform:translateX(0) scale(1);
+    }
+}
+
+@keyframes bubuAlertOut{
+    to{
+        opacity:0;
+        transform:translateX(34px) scale(.97);
+    }
+}
+
+@keyframes bubuAlertTimer{
+    from{transform:scaleX(1)}
+    to{transform:scaleX(0)}
+}
+
+@media(max-width:767px){
+    .bubu-alert-stack{
+        top:70px;
+        left:8px;
+        right:8px;
+        width:auto;
+        gap:8px;
+    }
+
+    .bubu-alert{
+        min-height:58px;
+        padding:10px 42px 10px 10px;
+        grid-template-columns:34px minmax(0,1fr);
+        gap:9px;
+        border-radius:14px;
+    }
+
+    .bubu-alert-icon{
+        width:34px;
+        height:34px;
+        border-radius:10px;
+        font-size:17px;
+    }
+
+    .bubu-alert-title,
+    .bubu-alert-message{
+        font-size:11px;
+    }
+}
+
+@media(prefers-reduced-motion:reduce){
+    .bubu-alert,
+    .bubu-alert.is-leaving,
+    .bubu-alert.is-timing::after{
+        animation-duration:.01ms!important;
+    }
+}
+
 </style>
 </head>
 
@@ -1751,6 +1952,60 @@ html.bubu-loading body{
 <noscript>
     <style>.bubu-page-loader{display:none!important}</style>
 </noscript>
+
+{% if messages %}
+<div
+    class="bubu-alert-stack"
+    id="bubuGlobalAlerts"
+    aria-live="polite"
+    aria-atomic="false"
+>
+    {% for message in messages %}
+        <div
+            class="bubu-alert bubu-alert-{{ message.tags|default:'info' }}"
+            data-bubu-alert
+            data-alert-type="{{ message.tags|default:'info' }}"
+            data-timeout="{% if 'error' in message.tags or 'danger' in message.tags %}8000{% elif 'warning' in message.tags %}6500{% else %}4500{% endif %}"
+            role="{% if 'error' in message.tags or 'danger' in message.tags %}alert{% else %}status{% endif %}"
+        >
+            <span class="bubu-alert-icon" aria-hidden="true">
+                {% if 'success' in message.tags %}
+                    ✓
+                {% elif 'error' in message.tags or 'danger' in message.tags %}
+                    !
+                {% elif 'warning' in message.tags %}
+                    ⚠
+                {% else %}
+                    i
+                {% endif %}
+            </span>
+
+            <span class="bubu-alert-copy">
+                <strong class="bubu-alert-title">
+                    {% if 'success' in message.tags %}
+                        Successful
+                    {% elif 'error' in message.tags or 'danger' in message.tags %}
+                        Action failed
+                    {% elif 'warning' in message.tags %}
+                        Please check
+                    {% else %}
+                        Information
+                    {% endif %}
+                </strong>
+                <span class="bubu-alert-message">{{ message }}</span>
+            </span>
+
+            <button
+                type="button"
+                class="bubu-alert-close"
+                data-bubu-alert-close
+                aria-label="Close message"
+            >×</button>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
 
 
 
@@ -2772,6 +3027,186 @@ function bubuGoBack(){
     return false;
 }
 
+</script>
+
+
+<script>
+(function(){
+    "use strict";
+
+    const TYPE_META = {
+        success: {title:"Successful", icon:"✓"},
+        error: {title:"Action failed", icon:"!"},
+        danger: {title:"Action failed", icon:"!"},
+        warning: {title:"Please check", icon:"⚠"},
+        info: {title:"Information", icon:"i"},
+        debug: {title:"Information", icon:"i"}
+    };
+
+    function normalizedType(value){
+        const raw = String(value || "info").toLowerCase().trim();
+
+        if(raw.includes("success")) return "success";
+        if(raw.includes("error")) return "error";
+        if(raw.includes("danger")) return "danger";
+        if(raw.includes("warning")) return "warning";
+        if(raw.includes("debug")) return "debug";
+        return "info";
+    }
+
+    function defaultTimeout(type){
+        if(type === "error" || type === "danger") return 8000;
+        if(type === "warning") return 6500;
+        return 4500;
+    }
+
+    function ensureStack(){
+        let stack = document.getElementById("bubuGlobalAlerts");
+
+        if(stack){
+            return stack;
+        }
+
+        stack = document.createElement("div");
+        stack.id = "bubuGlobalAlerts";
+        stack.className = "bubu-alert-stack";
+        stack.setAttribute("aria-live","polite");
+        stack.setAttribute("aria-atomic","false");
+        document.body.appendChild(stack);
+        return stack;
+    }
+
+    function closeAlert(alert){
+        if(!alert || alert.dataset.closing === "1"){
+            return;
+        }
+
+        alert.dataset.closing = "1";
+
+        if(alert._bubuTimer){
+            window.clearTimeout(alert._bubuTimer);
+        }
+
+        alert.classList.add("is-leaving");
+
+        window.setTimeout(function(){
+            const stack = alert.parentElement;
+            alert.remove();
+
+            if(stack && !stack.querySelector("[data-bubu-alert]")){
+                stack.remove();
+            }
+        },240);
+    }
+
+    function startAlert(alert){
+        if(!alert || alert.dataset.ready === "1"){
+            return;
+        }
+
+        alert.dataset.ready = "1";
+
+        const closeButton = alert.querySelector("[data-bubu-alert-close]");
+        const type = normalizedType(alert.dataset.alertType || alert.className);
+        const requestedTimeout = Number(alert.dataset.timeout);
+        const timeout = Number.isFinite(requestedTimeout) && requestedTimeout > 0
+            ? requestedTimeout
+            : defaultTimeout(type);
+
+        if(closeButton){
+            closeButton.addEventListener("click",function(){
+                closeAlert(alert);
+            });
+        }
+
+        alert.style.setProperty("--bubu-alert-timeout",`${timeout}ms`);
+        alert.classList.add("is-timing");
+
+        alert._bubuTimer = window.setTimeout(function(){
+            closeAlert(alert);
+        },timeout);
+
+        alert.addEventListener("mouseenter",function(){
+            if(alert._bubuTimer){
+                window.clearTimeout(alert._bubuTimer);
+            }
+            alert.classList.remove("is-timing");
+        });
+
+        alert.addEventListener("mouseleave",function(){
+            if(alert.dataset.closing === "1"){
+                return;
+            }
+
+            alert.classList.remove("is-timing");
+            void alert.offsetWidth;
+            alert.classList.add("is-timing");
+
+            alert._bubuTimer = window.setTimeout(function(){
+                closeAlert(alert);
+            },timeout);
+        });
+    }
+
+    window.bubuAlert = function(message,type,options){
+        const cleanMessage = String(message || "").trim();
+
+        if(!cleanMessage){
+            return null;
+        }
+
+        const alertType = normalizedType(type);
+        const settings = options && typeof options === "object" ? options : {};
+        const meta = TYPE_META[alertType] || TYPE_META.info;
+        const stack = ensureStack();
+        const alert = document.createElement("div");
+        const timeout = Number(settings.timeout) > 0
+            ? Number(settings.timeout)
+            : defaultTimeout(alertType);
+
+        alert.className = `bubu-alert bubu-alert-${alertType}`;
+        alert.dataset.bubuAlert = "";
+        alert.dataset.alertType = alertType;
+        alert.dataset.timeout = String(timeout);
+        alert.setAttribute(
+            "role",
+            alertType === "error" || alertType === "danger" ? "alert" : "status"
+        );
+
+        const icon = document.createElement("span");
+        icon.className = "bubu-alert-icon";
+        icon.setAttribute("aria-hidden","true");
+        icon.textContent = settings.icon || meta.icon;
+
+        const copy = document.createElement("span");
+        copy.className = "bubu-alert-copy";
+
+        const title = document.createElement("strong");
+        title.className = "bubu-alert-title";
+        title.textContent = settings.title || meta.title;
+
+        const body = document.createElement("span");
+        body.className = "bubu-alert-message";
+        body.textContent = cleanMessage;
+
+        const close = document.createElement("button");
+        close.type = "button";
+        close.className = "bubu-alert-close";
+        close.dataset.bubuAlertClose = "";
+        close.setAttribute("aria-label","Close message");
+        close.textContent = "×";
+
+        copy.append(title,body);
+        alert.append(icon,copy,close);
+        stack.prepend(alert);
+        startAlert(alert);
+        return alert;
+    };
+
+    document.addEventListener("DOMContentLoaded",function(){
+        document.querySelectorAll("[data-bubu-alert]").forEach(startAlert);
+    });
+})();
 </script>
 
 </body>
