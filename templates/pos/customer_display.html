@@ -1510,6 +1510,106 @@ body{
     }
 }
 
+
+/* =========================================================
+   TOP WELCOME VISIBILITY FIX
+   Prevent text clipping on short customer-display monitors.
+========================================================= */
+.display-page{
+    grid-template-rows:90px minmax(0,1fr) 42px;
+}
+
+.hero-card{
+    min-height:0;
+    padding:8px 18px 8px 24px;
+    align-items:center;
+}
+
+.hero-text{
+    min-width:0;
+    align-self:center;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    transform:none!important;
+}
+
+.hero-text h1{
+    margin:0;
+    font-size:28px;
+    line-height:1.05;
+    letter-spacing:-.5px;
+}
+
+.hero-text p{
+    margin:5px 0 0;
+    max-width:620px;
+    overflow:visible;
+    font-size:11px;
+    line-height:1.25;
+    white-space:normal;
+}
+
+.hero-art{
+    width:100%;
+    height:76px;
+    max-height:100%;
+    object-fit:contain;
+    object-position:right center;
+    transform:none;
+}
+
+@media(max-width:1100px){
+    .display-page{
+        grid-template-rows:82px minmax(0,1fr) 38px;
+    }
+
+    .hero-card{
+        grid-template-columns:minmax(0,1fr) 190px;
+        padding:7px 13px 7px 18px;
+    }
+
+    .hero-text h1{
+        font-size:24px;
+    }
+
+    .hero-text p{
+        margin-top:4px;
+        font-size:10px;
+        line-height:1.2;
+    }
+
+    .hero-art{
+        height:68px;
+    }
+}
+
+@media(max-height:650px){
+    .display-page{
+        grid-template-rows:76px minmax(0,1fr) 32px;
+    }
+
+    .hero-card{
+        grid-template-columns:minmax(0,1fr) 170px;
+        padding:6px 12px 6px 17px;
+    }
+
+    .hero-text h1{
+        font-size:22px;
+        line-height:1.04;
+    }
+
+    .hero-text p{
+        margin-top:3px;
+        font-size:9px;
+        line-height:1.15;
+    }
+
+    .hero-art{
+        height:61px;
+    }
+}
+
 </style>
 </head>
 
@@ -1528,8 +1628,7 @@ body{
         <div class="hero-text">
             <h1>Welcome to <span>BUBU!</span></h1>
             <p>
-                Quality products for happy pets<br>
-                and happier families.
+                Quality products for happy pets and happier families.
             </p>
         </div>
 
