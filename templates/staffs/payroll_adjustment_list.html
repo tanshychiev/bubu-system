@@ -1,0 +1,484 @@
+{% extends "base.html" %}{% block content %}<div class="p"><h1>Bonus & Deductions</h1><p>Add performance bonus, absence deduction, salary advance, damage or other adjustments.</p><form method="post" class="c form">{% csrf_token %}<select name="staff">{% for s in staffs %}<option value="{{ s.id }}">{{ s.user.get_full_name|default:s.user.username }}</option>{% endfor %}</select><select name="adjustment_type"><option value="bonus">Bonus</option><option value="deduction">Deduction</option><option value="advance">Salary Advance</option></select><input type="number" step="0.01" min="0.01" name="amount" placeholder="Amount" required><input type="date" name="record_date" value="{{ today|date:'Y-m-d' }}"><input name="reason" placeholder="Reason" required><input name="note" placeholder="Note"><button>Save</button></form><div class="c table"><table><tr><th>Date</th><th>Staff</th><th>Type</th><th>Amount</th><th>Reason</th><th>Payroll</th></tr>{% for r in rows %}<tr><td>{{ r.record_date }}</td><td>{{ r.staff.user.get_full_name|default:r.staff.user.username }}</td><td>{{ r.get_adjustment_type_display }}</td><td>${{ r.amount }}</td><td>{{ r.reason }}</td><td>{% if r.payroll_record %}#{{ r.payroll_record.id }}{% else %}Not opened{% endif %}</td></tr>{% endfor %}</table></div></div><style>.p{padding:22px}.c{background:#fff;border:1px solid #f0dcd0;border-radius:20px;padding:15px;margin-top:14px}.form{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.form button{background:#8e63ff;color:#fff}.table{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid #eee;text-align:left}@media(max-width:700px){.p{padding:10px}.form{grid-template-columns:1fr}}</style>
+
+<style id="bubu-mobile-ui-upgrade">
+/* =========================================================
+   BUBU STAFF PAGES — PHONE UI UPGRADE
+========================================================= */
+@media (max-width: 767px){
+    .content{
+        padding:7px!important;
+    }
+
+    .work-page,.cmp-page,.p,.gps-page,.payroll-page,.adjust-page,
+    .attendance-page,.commission-page,.staff-page,.permission-page,
+    .qr-form-page,.qr-page,.salary-page,.scan-page,.setting-form-page,
+    .setting-page{
+        width:100%!important;
+        max-width:100%!important;
+        min-height:auto!important;
+        padding:6px!important;
+        margin:0!important;
+        overflow:visible!important;
+    }
+
+    .work-head,.head,.page-head,.page-top,.payroll-head,.commission-head,
+    .salary-head,.table-head,.section-head,.staff-head,.branch-head{
+        display:flex!important;
+        flex-direction:column!important;
+        align-items:stretch!important;
+        gap:8px!important;
+        margin-bottom:9px!important;
+    }
+
+    h1{
+        font-size:21px!important;
+        line-height:1.14!important;
+        margin:0 0 3px!important;
+        letter-spacing:-.2px!important;
+    }
+
+    h2{font-size:16px!important}
+    h3{font-size:14px!important}
+
+    p,.page-subtitle{
+        font-size:11px!important;
+        line-height:1.35!important;
+        margin-top:3px!important;
+    }
+
+    .card,.c,.form-card,.gps-card,.payroll-card,.section-card,.profile-card,
+    .filter-card,.table-card-custom,.commission-table-card,.salary-table-card,
+    .qr-card,.scan-card,.staff-card,.summary,.summary-card,.commission-stat,
+    .salary-stat,.hint-box,.quick-box{
+        border-radius:14px!important;
+        padding:10px!important;
+        margin-top:8px!important;
+        margin-bottom:8px!important;
+        box-shadow:0 5px 16px rgba(70,45,90,.05)!important;
+    }
+
+    .filter,.filters,.add-form,.form,.gps-form,.adjust-form,.permission-form,
+    .qr-form,.setting-form,.commission-filter,.salary-filter{
+        display:grid!important;
+        grid-template-columns:1fr!important;
+        gap:7px!important;
+        padding:9px!important;
+        margin:8px 0!important;
+    }
+
+    .grid-2,.grid-3,.two,.g,.payroll-grid,.toggle-grid,
+    .summary-grid,.commission-stat-grid,.salary-stat-grid,.info-grid,
+    .button-grid,.scan-actions,.form-actions,.top-actions{
+        display:grid!important;
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:7px!important;
+    }
+
+    .summary-grid,.commission-stat-grid,.salary-stat-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    }
+
+    .summary,.summary-card,.commission-stat,.salary-stat{
+        min-height:72px!important;
+        padding:9px!important;
+    }
+
+    .summary strong,.summary-card strong,.commission-stat strong,.salary-stat strong{
+        font-size:18px!important;
+        margin-top:3px!important;
+    }
+
+    input,select,textarea,.popup-field-btn{
+        width:100%!important;
+        min-height:40px!important;
+        height:auto!important;
+        padding:8px 10px!important;
+        border-radius:11px!important;
+        font-size:16px!important;
+    }
+
+    textarea{
+        min-height:76px!important;
+    }
+
+    button,.btn,a.main-btn,a.soft-btn,a.salary-btn,a.commission-btn,
+    a.payroll-btn,a.edit-btn,a.cancel-btn,a.open-btn{
+        min-height:40px!important;
+        padding:7px 10px!important;
+        border-radius:11px!important;
+        font-size:11px!important;
+        white-space:normal!important;
+        text-align:center!important;
+        justify-content:center!important;
+    }
+
+    .form-actions > *, .top-actions > *, .scan-actions > *, .button-grid > *{
+        width:100%!important;
+    }
+
+    /* Turn wide tables into compact phone cards. */
+    .table-wrap,.table,.commission-table-card,.salary-table-card,
+    .table-card,.table-card-custom{
+        width:100%!important;
+        overflow:visible!important;
+    }
+
+    table{
+        width:100%!important;
+        min-width:0!important;
+        border-collapse:separate!important;
+        border-spacing:0 8px!important;
+    }
+
+    table thead{
+        display:none!important;
+    }
+
+    table tbody,
+    table tr,
+    table td{
+        display:block!important;
+        width:100%!important;
+    }
+
+    table tr{
+        padding:7px 9px!important;
+        border:1px solid #eee1e8!important;
+        border-radius:12px!important;
+        background:#fff!important;
+        box-shadow:0 4px 12px rgba(60,40,75,.04)!important;
+    }
+
+    table td{
+        min-height:28px!important;
+        padding:5px 0!important;
+        border:0!important;
+        border-bottom:1px dashed #f0e5eb!important;
+        display:flex!important;
+        align-items:flex-start!important;
+        justify-content:space-between!important;
+        gap:10px!important;
+        text-align:right!important;
+        white-space:normal!important;
+        font-size:11px!important;
+        line-height:1.25!important;
+        overflow-wrap:anywhere!important;
+    }
+
+    table td:last-child{
+        border-bottom:0!important;
+    }
+
+    table td::before{
+        content:attr(data-bubu-label);
+        flex:0 0 42%;
+        color:#7a7185;
+        font-size:10px;
+        font-weight:1000;
+        text-align:left;
+    }
+
+    table td[colspan]{
+        display:block!important;
+        text-align:center!important;
+        padding:14px 6px!important;
+    }
+
+    table td[colspan]::before{
+        display:none!important;
+    }
+
+    .net{
+        padding:12px!important;
+        font-size:17px!important;
+        border-radius:13px!important;
+    }
+
+    .badge,.status-pill,.type-pill{
+        padding:5px 7px!important;
+        font-size:9px!important;
+    }
+}
+
+/* =========================================================
+   CENTERED SELECT PICKER
+========================================================= */
+.bubu-select-modal-backdrop{
+    position:fixed;
+    inset:0;
+    z-index:99990;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    background:rgba(23,21,47,.48);
+    backdrop-filter:blur(5px);
+    -webkit-backdrop-filter:blur(5px);
+}
+.bubu-select-modal-backdrop.show{display:flex}
+
+.bubu-select-modal{
+    width:min(430px,100%);
+    max-height:min(76vh,620px);
+    overflow:hidden;
+    border-radius:22px;
+    border:1px solid rgba(255,255,255,.8);
+    background:#fff;
+    box-shadow:0 28px 80px rgba(30,20,50,.28);
+    animation:bubuPickerIn .18s ease;
+}
+@keyframes bubuPickerIn{
+    from{opacity:0;transform:translateY(12px) scale(.97)}
+    to{opacity:1;transform:translateY(0) scale(1)}
+}
+.bubu-select-modal-head{
+    padding:14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    border-bottom:1px solid #eee5f1;
+    background:linear-gradient(135deg,#f6f0ff,#fff4ef);
+}
+.bubu-select-modal-head strong{
+    color:#17152f;
+    font-size:15px;
+    font-weight:1000;
+}
+.bubu-select-modal-close{
+    width:36px!important;
+    height:36px!important;
+    min-height:36px!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:11px!important;
+    color:#7354d8!important;
+    background:#eee7ff!important;
+    font-size:18px!important;
+}
+.bubu-select-search-wrap{
+    padding:10px 12px 6px;
+}
+.bubu-select-search{
+    width:100%;
+    min-height:42px;
+    border:1.5px solid #e4d8ef;
+    border-radius:12px;
+    padding:9px 11px;
+    font-size:16px;
+    font-weight:800;
+    outline:none;
+}
+.bubu-select-options{
+    max-height:52vh;
+    overflow:auto;
+    padding:7px 10px 12px;
+}
+.bubu-select-option{
+    width:100%!important;
+    min-height:44px!important;
+    margin:4px 0!important;
+    padding:9px 11px!important;
+    border:1px solid #eee4f1!important;
+    border-radius:12px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:9px!important;
+    color:#4f465c!important;
+    background:#fff!important;
+    font-size:12px!important;
+    font-weight:900!important;
+    text-align:left!important;
+    box-shadow:none!important;
+}
+.bubu-select-option.selected{
+    color:#7047db!important;
+    background:#f3edff!important;
+    border-color:#d9c9ff!important;
+}
+.bubu-select-option small{
+    color:#9b8fa7;
+    font-size:10px;
+}
+.bubu-select-trigger{
+    position:relative;
+    width:100%;
+    min-height:42px;
+    padding:9px 40px 9px 11px;
+    border:1.5px solid #eadfec;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    color:#17152f;
+    background:#fff;
+    font-size:14px;
+    font-weight:900;
+    text-align:left;
+    cursor:pointer;
+}
+.bubu-select-trigger::after{
+    content:"⌄";
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-55%);
+    color:#7959db;
+    font-size:18px;
+}
+.bubu-native-select-hidden{
+    position:absolute!important;
+    width:1px!important;
+    height:1px!important;
+    opacity:0!important;
+    pointer-events:none!important;
+}
+@media(min-width:768px){
+    .bubu-select-trigger{display:none!important}
+    .bubu-native-select-hidden{
+        position:static!important;
+        width:100%!important;
+        height:auto!important;
+        opacity:1!important;
+        pointer-events:auto!important;
+    }
+}
+</style>
+
+<div class="bubu-select-modal-backdrop" id="bubuSelectBackdrop" aria-hidden="true">
+    <div class="bubu-select-modal" role="dialog" aria-modal="true" aria-labelledby="bubuSelectTitle">
+        <div class="bubu-select-modal-head">
+            <strong id="bubuSelectTitle">Choose Option</strong>
+            <button type="button" class="bubu-select-modal-close" id="bubuSelectClose">×</button>
+        </div>
+        <div class="bubu-select-search-wrap">
+            <input type="search" class="bubu-select-search" id="bubuSelectSearch" placeholder="Search option...">
+        </div>
+        <div class="bubu-select-options" id="bubuSelectOptions"></div>
+    </div>
+</div>
+
+<script id="bubu-mobile-ui-script">
+(function(){
+    const isPhone = () => window.matchMedia("(max-width: 767px)").matches;
+
+    function makeTablesResponsive(){
+        document.querySelectorAll("table").forEach(function(table){
+            const headers = Array.from(table.querySelectorAll("thead th")).map(function(th){
+                return th.textContent.trim();
+            });
+            table.querySelectorAll("tbody tr").forEach(function(row){
+                Array.from(row.children).forEach(function(cell,index){
+                    if(cell.tagName === "TD" && !cell.hasAttribute("colspan")){
+                        cell.setAttribute("data-bubu-label", headers[index] || "");
+                    }
+                });
+            });
+        });
+    }
+
+    let activeSelect = null;
+    const backdrop = document.getElementById("bubuSelectBackdrop");
+    const title = document.getElementById("bubuSelectTitle");
+    const search = document.getElementById("bubuSelectSearch");
+    const optionsBox = document.getElementById("bubuSelectOptions");
+    const closeBtn = document.getElementById("bubuSelectClose");
+
+    function closePicker(){
+        backdrop.classList.remove("show");
+        backdrop.setAttribute("aria-hidden","true");
+        document.body.style.overflow = "";
+        activeSelect = null;
+    }
+
+    function renderOptions(filterText){
+        if(!activeSelect) return;
+        const query = (filterText || "").trim().toLowerCase();
+        optionsBox.innerHTML = "";
+
+        Array.from(activeSelect.options).forEach(function(option){
+            if(option.disabled) return;
+            const label = option.textContent.trim();
+            if(query && !label.toLowerCase().includes(query)) return;
+
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "bubu-select-option" + (option.selected ? " selected" : "");
+            btn.innerHTML = "<span></span><small></small>";
+            btn.querySelector("span").textContent = label;
+            btn.querySelector("small").textContent = option.selected ? "Selected" : "Choose";
+            btn.addEventListener("click", function(){
+                activeSelect.value = option.value;
+                activeSelect.dispatchEvent(new Event("change",{bubbles:true}));
+                const trigger = activeSelect._bubuTrigger;
+                if(trigger) trigger.textContent = label;
+                closePicker();
+            });
+            optionsBox.appendChild(btn);
+        });
+
+        if(!optionsBox.children.length){
+            const empty = document.createElement("div");
+            empty.style.cssText = "padding:20px;text-align:center;color:#8e8397;font-weight:900;font-size:12px;";
+            empty.textContent = "No option found";
+            optionsBox.appendChild(empty);
+        }
+    }
+
+    function openPicker(select){
+        if(!isPhone()) return;
+        activeSelect = select;
+        const label = select.closest("label");
+        let heading = "Choose Option";
+        if(label){
+            const clone = label.cloneNode(true);
+            clone.querySelectorAll("select,input,textarea,button").forEach(el => el.remove());
+            const txt = clone.textContent.trim();
+            if(txt) heading = txt;
+        }
+        title.textContent = heading;
+        search.value = "";
+        renderOptions("");
+        backdrop.classList.add("show");
+        backdrop.setAttribute("aria-hidden","false");
+        document.body.style.overflow = "hidden";
+        setTimeout(function(){ search.focus(); },80);
+    }
+
+    function enhanceSelect(select){
+        if(select.dataset.bubuEnhanced === "1") return;
+        if(select.multiple || select.size > 1) return;
+
+        select.dataset.bubuEnhanced = "1";
+        select.classList.add("bubu-native-select-hidden");
+
+        const trigger = document.createElement("button");
+        trigger.type = "button";
+        trigger.className = "bubu-select-trigger";
+        trigger.textContent = select.options[select.selectedIndex]?.textContent.trim() || "Choose option";
+        trigger.addEventListener("click", function(){ openPicker(select); });
+        select.insertAdjacentElement("afterend", trigger);
+        select._bubuTrigger = trigger;
+
+        select.addEventListener("change", function(){
+            trigger.textContent = select.options[select.selectedIndex]?.textContent.trim() || "Choose option";
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function(){
+        makeTablesResponsive();
+        document.querySelectorAll("select").forEach(enhanceSelect);
+
+        search.addEventListener("input", function(){ renderOptions(search.value); });
+        closeBtn.addEventListener("click", closePicker);
+        backdrop.addEventListener("click", function(e){
+            if(e.target === backdrop) closePicker();
+        });
+        document.addEventListener("keydown", function(e){
+            if(e.key === "Escape") closePicker();
+        });
+    });
+})();
+</script>
+
+{% endblock %}

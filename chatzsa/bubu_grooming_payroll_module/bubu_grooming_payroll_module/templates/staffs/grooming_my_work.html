@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="work-page">
+  <div class="work-head"><div><h1>My Grooming Work ✂️</h1><p>Record only work you completed. POS totals are hidden from staff.</p></div></div>
+  {% if messages %}{% for message in messages %}<div class="msg">{{ message }}</div>{% endfor %}{% endif %}
+  <form method="get" class="card filter"><input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}"><button>Open Date</button></form>
+  <div class="summary-grid">
+    {% for row in totals %}<div class="summary"><span>{{ row.work_type__name }}</span><strong>{{ row.total }}</strong></div>{% empty %}<div class="summary"><span>No work yet</span><strong>0</strong></div>{% endfor %}
+  </div>
+  <form method="post" class="card add-form">{% csrf_token %}
+    <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+    <select name="work_type" required><option value="">Choose work</option>{% for t in work_types %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}</select>
+    <input type="number" name="quantity" min="0.01" step="0.01" value="1" required>
+    <input type="text" name="note" placeholder="Optional note">
+    <button>Add Work</button>
+  </form>
+  <div class="card table-wrap"><table><thead><tr><th>Time</th><th>Work</th><th>Qty</th><th>Status</th><th></th></tr></thead><tbody>
+  {% for r in records %}<tr><td>{{ r.created_at|date:"h:i A" }}</td><td>{{ r.work_type.name }}</td><td>{{ r.quantity }}</td><td>{{ r.get_status_display }}</td><td>{% if r.status == 'draft' %}<form method="post" action="{% url 'grooming_work_delete' r.id %}">{% csrf_token %}<button class="delete">Delete</button></form>{% endif %}</td></tr>{% empty %}<tr><td colspan="5">No record.</td></tr>{% endfor %}
+  </tbody></table></div>
+</div>
+<style>
+.work-page{padding:22px}.work-head h1{margin:0;color:#17152f}.work-head p{color:#7b7288;font-weight:900}.card{background:#fff;border:1px solid #f0dcd0;border-radius:20px;padding:15px;margin-top:14px}.filter,.add-form{display:grid;grid-template-columns:1fr auto;gap:10px}.add-form{grid-template-columns:1.2fr .6fr 1.5fr auto}.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}.summary{background:#fff;border:1px solid #f0dcd0;border-radius:18px;padding:15px}.summary span{display:block;color:#7b7288;font-weight:900}.summary strong{font-size:26px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:12px;border-bottom:1px solid #eee;text-align:left}.delete{background:#ffe7ec;color:#d33}.msg{padding:12px;border-radius:12px;background:#eafff3;margin-top:10px}@media(max-width:700px){.work-page{padding:10px}.summary-grid{grid-template-columns:1fr 1fr}.filter,.add-form{grid-template-columns:1fr}.add-form button{min-height:60px}}
+</style>
+{% endblock %}

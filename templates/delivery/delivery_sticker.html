@@ -18,17 +18,24 @@
         :root{
             --ink:#17152f;
             --muted:#766e81;
-            --purple:#8e63ff;
-            --purple-dark:#7047db;
+            --purple:#8657f4;
+            --purple-dark:#6841d8;
+            --purple-soft:#f5f0ff;
             --pink:#ff7f91;
             --green:#168f59;
             --line:#ded8e5;
-            --soft:#f8f5ff;
+            --soft:#faf8ff;
             --warm:#fff7fa;
+            --white:#ffffff;
+        }
+
+        html,
+        body{
+            margin:0;
+            min-height:100%;
         }
 
         body{
-            margin:0;
             padding:76px 14px 28px;
             color:var(--ink);
             background:linear-gradient(135deg,#f4efff,#fff4f7);
@@ -97,22 +104,38 @@
             background:#fff;
         }
 
+        /* =========================
+           PAID STAMP — INSIDE A5 PAGE SPACE
+        ========================= */
+        .paid-stamp-slot{
+            display:none;
+        }
+
+        .label-card.paid-delivery .paid-stamp-slot{
+            margin-top:auto;
+            padding-top:2mm;
+            display:flex;
+            justify-content:flex-end;
+            align-items:flex-end;
+        }
+
+        .label-card.paid-delivery .footer{
+            margin-top:0;
+        }
+
         .paid-stamp{
-            position:absolute;
-            top:71mm;
-            right:8mm;
-            z-index:5;
-            width:43mm;
+            width:45mm;
             height:24mm;
             border:3px solid var(--green);
             border-radius:4mm;
-            transform:rotate(-10deg);
+            transform:rotate(-7deg);
             display:flex;
             flex-direction:column;
             align-items:center;
             justify-content:center;
             color:var(--green);
-            background:rgba(255,255,255,.90);
+            background:rgba(255,255,255,.97);
+            box-shadow:0 4px 10px rgba(22,143,89,.08);
             font-weight:1000;
             line-height:1.05;
         }
@@ -127,6 +150,46 @@
             letter-spacing:.5px;
         }
 
+        .label-card.many-items .paid-stamp{
+            width:39mm;
+            height:20mm;
+        }
+
+        .label-card.many-items .paid-stamp strong{
+            font-size:18px;
+        }
+
+        .label-card.many-items .paid-stamp span{
+            font-size:8px;
+        }
+
+        .label-card.very-many-items .paid-stamp-slot,
+        .label-card.ultra-many-items .paid-stamp-slot{
+            padding-top:1mm;
+        }
+
+        .label-card.very-many-items .paid-stamp,
+        .label-card.ultra-many-items .paid-stamp{
+            width:33mm;
+            height:16mm;
+            border-width:2px;
+            border-radius:3mm;
+            transform:rotate(-5deg);
+        }
+
+        .label-card.very-many-items .paid-stamp strong,
+        .label-card.ultra-many-items .paid-stamp strong{
+            font-size:14px;
+        }
+
+        .label-card.very-many-items .paid-stamp span,
+        .label-card.ultra-many-items .paid-stamp span{
+            font-size:6.5px;
+        }
+
+        /* =========================
+           HEADER
+        ========================= */
         .top{
             padding-bottom:4mm;
             border-bottom:2px solid var(--ink);
@@ -151,7 +214,7 @@
         }
 
         .shop-name{
-            font-size:26px;
+            font-size:25px;
             font-weight:1000;
             line-height:1;
             overflow-wrap:anywhere;
@@ -178,70 +241,140 @@
             font-size:11px;
         }
 
-        .customer-grid{
-            display:grid;
-            grid-template-columns:1.1fr .9fr;
+        /* =========================
+           CUSTOMER INFORMATION
+        ========================= */
+        .customer-card{
+            padding:4mm;
+            border:1.5px solid #d9d0e7;
+            border-radius:4mm;
+            background:linear-gradient(135deg,#fff,#faf7ff);
+        }
+
+        .customer-title{
+            margin-bottom:3mm;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
             gap:3mm;
         }
 
-        .customer-card,
-        .service-card,
-        .address-card,
-        .note-card{
-            padding:3.5mm;
-            border:1.5px solid var(--line);
-            border-radius:4mm;
+        .customer-title h2{
+            margin:0;
+            font-size:14px;
+            font-weight:1000;
+        }
+
+        .service-pill{
+            max-width:55mm;
+            padding:1.8mm 3mm;
+            border-radius:999px;
+            overflow:hidden;
+            color:var(--purple-dark);
+            background:#eee7ff;
+            font-size:8px;
+            font-weight:1000;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+        }
+
+        .customer-info-grid{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:2.5mm;
+        }
+
+        .info-box{
+            min-width:0;
+            min-height:19mm;
+            padding:3mm;
+            border:1px solid #e4ddec;
+            border-radius:3.5mm;
             background:#fff;
         }
 
-        .section-label{
+        .info-box.location-box{
+            grid-column:1 / -1;
+            min-height:23mm;
+            background:var(--purple-soft);
+        }
+
+        .info-label{
             margin-bottom:1.5mm;
             color:var(--muted);
-            font-size:8.5px;
-            font-weight:900;
+            font-size:8px;
+            font-weight:1000;
             text-transform:uppercase;
             letter-spacing:.4px;
         }
 
-        .customer-name{
-            font-size:20px;
-            font-weight:1000;
-            line-height:1.15;
-            overflow-wrap:anywhere;
-        }
-
-        .phone{
-            margin-top:2mm;
-            font-size:17px;
-            font-weight:1000;
-        }
-
-        .service-name{
+        .info-value{
+            color:var(--ink);
             font-size:15px;
-            font-weight:1000;
-            line-height:1.2;
-            overflow-wrap:anywhere;
-        }
-
-        .service-meta{
-            margin-top:2mm;
-            color:var(--muted);
-            font-size:10px;
-            font-weight:850;
             line-height:1.3;
-        }
-
-        .address-card{
-            background:var(--soft);
-        }
-
-        .address{
-            font-size:14px;
-            font-weight:900;
-            line-height:1.38;
+            font-weight:1000;
             overflow-wrap:anywhere;
         }
 
+        .info-box.name-box .info-value{
+            font-size:18px;
+        }
+
+        .info-box.phone-box .info-value{
+            font-size:16px;
+        }
+
+        /* =========================
+           TOTAL COD HERO
+        ========================= */
+        .cod-hero{
+            min-height:25mm;
+            padding:3.5mm 4mm;
+            border-radius:4mm;
+            display:grid;
+            grid-template-columns:1fr auto;
+            align-items:center;
+            gap:4mm;
+            color:#fff;
+            background:linear-gradient(135deg,var(--purple-dark),var(--purple));
+            box-shadow:0 8px 18px rgba(104,65,216,.18);
+        }
+
+        .cod-hero.paid{
+            color:var(--green);
+            border:1.5px solid #a9e8c9;
+            background:#edfff5;
+            box-shadow:none;
+        }
+
+        .cod-label{
+            font-size:11px;
+            font-weight:1000;
+            text-transform:uppercase;
+            letter-spacing:.5px;
+        }
+
+        .cod-sub{
+            margin-top:1.5mm;
+            color:rgba(255,255,255,.78);
+            font-size:8.5px;
+            font-weight:900;
+        }
+
+        .cod-hero.paid .cod-sub{
+            color:#58a77d;
+        }
+
+        .cod-value{
+            font-size:30px;
+            line-height:1;
+            font-weight:1000;
+            white-space:nowrap;
+        }
+
+        /* =========================
+           ITEM LIST
+        ========================= */
         .items-card{
             overflow:hidden;
             border:1.5px solid var(--line);
@@ -252,26 +385,26 @@
             min-height:9mm;
             padding:0 3mm;
             display:grid;
-            grid-template-columns:1fr 15mm 23mm;
+            grid-template-columns:1fr 14mm 21mm 24mm;
             align-items:center;
             gap:2mm;
             color:#fff;
             background:var(--ink);
-            font-size:8.5px;
-            font-weight:900;
+            font-size:8px;
+            font-weight:1000;
             text-transform:uppercase;
         }
 
         .item-row{
-            min-height:9mm;
-            padding:1.8mm 3mm;
+            min-height:10mm;
+            padding:2mm 3mm;
             display:grid;
-            grid-template-columns:1fr 15mm 23mm;
+            grid-template-columns:1fr 14mm 21mm 24mm;
             align-items:center;
             gap:2mm;
             border-top:1px solid #ece8ef;
-            font-size:9.5px;
-            font-weight:850;
+            font-size:9px;
+            font-weight:900;
         }
 
         .item-row:nth-child(odd){
@@ -288,79 +421,505 @@
             display:block;
             margin-top:1px;
             color:var(--muted);
-            font-size:7.5px;
+            font-size:7px;
             font-weight:800;
         }
 
         .item-qty,
+        .item-unit,
         .item-total{
             text-align:right;
             white-space:nowrap;
         }
 
         .empty-row{
-            padding:4mm;
+            padding:5mm;
             color:var(--muted);
             text-align:center;
             font-size:10px;
-            font-weight:850;
+            font-weight:900;
         }
 
-        .money-row{
-            display:grid;
-            grid-template-columns:repeat(3,1fr);
-            gap:2.5mm;
-        }
-
-        .money-box{
-            min-height:22mm;
-            padding:3mm;
-            border:1.5px solid var(--line);
-            border-radius:4mm;
-            display:flex;
-            flex-direction:column;
-            justify-content:center;
+        /* =========================
+           COMPACT PAYMENT NOTE
+        ========================= */
+        .calculation-card{
+            padding:2mm 2.5mm;
+            border:1px solid #dcd4e5;
+            border-radius:3mm;
             background:#fff;
         }
 
-        .money-box span{
+        .calc-title{
+            margin-bottom:1.2mm;
             color:var(--muted);
-            font-size:8px;
-            font-weight:900;
+            font-size:6.8px;
+            font-weight:1000;
+            text-transform:uppercase;
+            letter-spacing:.35px;
+        }
+
+        .compact-calc{
+            display:grid;
+            grid-template-columns:1fr 5mm 1fr 5mm 1.15fr;
+            align-items:stretch;
+            gap:1.2mm;
+        }
+
+        .compact-calc-part{
+            min-width:0;
+            min-height:10mm;
+            padding:1.6mm 2mm;
+            border-radius:2.4mm;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:1.5mm;
+            background:#f8f5ff;
+            font-weight:1000;
+        }
+
+        .compact-calc-part small{
+            color:var(--muted);
+            font-size:6.5px;
+            line-height:1.1;
+            font-weight:1000;
             text-transform:uppercase;
         }
 
-        .money-box strong{
-            display:block;
-            margin-top:1.5mm;
-            font-size:18px;
+        .compact-calc-part strong{
+            color:var(--ink);
+            font-size:10px;
             line-height:1;
+            white-space:nowrap;
         }
 
-        .money-box.cod{
+        .compact-calc-symbol{
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:var(--purple-dark);
+            font-size:12px;
+            font-weight:1000;
+        }
+
+        .compact-calc-part.total{
             color:#fff;
-            border-color:transparent;
             background:linear-gradient(135deg,var(--purple-dark),var(--purple));
         }
 
-        .money-box.cod span{
-            color:rgba(255,255,255,.82);
+        .compact-calc-part.total small,
+        .compact-calc-part.total strong{
+            color:#fff;
         }
 
-        .money-box.paid{
+        .compact-calc-part.total.paid{
             color:var(--green);
-            border-color:#a9e8c9;
+            border:1px solid #a9e8c9;
             background:#edfff5;
         }
 
+        .compact-calc-part.total.paid small,
+        .compact-calc-part.total.paid strong{
+            color:var(--green);
+        }
+
+        /* =========================
+           AUTOMATIC A5 DENSE MODES
+           More items = shorter surrounding sections and rows.
+        ========================= */
+        .label-card.many-items{
+            padding:5mm;
+            gap:2.5mm;
+        }
+
+        .label-card.many-items .top{
+            padding-bottom:2.5mm;
+        }
+
+        .label-card.many-items .brand-logo{
+            width:14mm;
+            height:14mm;
+        }
+
+        .label-card.many-items .shop-name{
+            font-size:22px;
+        }
+
+        .label-card.many-items .customer-card{
+            padding:2.5mm;
+        }
+
+        .label-card.many-items .customer-title{
+            margin-bottom:1.8mm;
+        }
+
+        .label-card.many-items .info-box{
+            min-height:15mm;
+            padding:2mm;
+        }
+
+        .label-card.many-items .info-box.location-box{
+            min-height:17mm;
+        }
+
+        .label-card.many-items .info-value{
+            font-size:12px;
+            line-height:1.2;
+        }
+
+        .label-card.many-items .info-box.name-box .info-value{
+            font-size:14px;
+        }
+
+        .label-card.many-items .info-box.phone-box .info-value{
+            font-size:13px;
+        }
+
+        .label-card.many-items .cod-hero{
+            min-height:18mm;
+            padding:2.3mm 3mm;
+        }
+
+        .label-card.many-items .cod-value{
+            font-size:24px;
+        }
+
+        .label-card.many-items .items-head{
+            min-height:7mm;
+        }
+
+        .label-card.many-items .item-row{
+            min-height:7mm;
+            padding:1.1mm 2.5mm;
+            font-size:8px;
+        }
+
+        .label-card.many-items .item-name small{
+            font-size:6.3px;
+        }
+
+        .label-card.many-items .calculation-card{
+            padding:1.4mm 2mm;
+        }
+
+        .label-card.many-items .compact-calc-part{
+            min-height:8.5mm;
+            padding:1.2mm 1.6mm;
+        }
+
+        .label-card.many-items .note-card{
+            min-height:13mm;
+            padding:2.5mm;
+        }
+
+        .label-card.many-items .footer{
+            padding-top:1.6mm;
+            font-size:8.5px;
+        }
+
+        .label-card.very-many-items{
+            padding:4mm;
+            gap:1.7mm;
+        }
+
+        .label-card.very-many-items .top{
+            padding-bottom:1.8mm;
+        }
+
+        .label-card.very-many-items .brand-row{
+            gap:2mm;
+        }
+
+        .label-card.very-many-items .brand-logo{
+            width:11mm;
+            height:11mm;
+        }
+
+        .label-card.very-many-items .shop-name{
+            font-size:18px;
+        }
+
+        .label-card.very-many-items .top-meta strong{
+            font-size:14px;
+        }
+
+        .label-card.very-many-items .top-meta .date{
+            font-size:8px;
+        }
+
+        .label-card.very-many-items .customer-card{
+            padding:1.8mm;
+        }
+
+        .label-card.very-many-items .customer-title{
+            margin-bottom:1.2mm;
+        }
+
+        .label-card.very-many-items .customer-title h2{
+            font-size:10px;
+        }
+
+        .label-card.very-many-items .service-pill{
+            padding:1mm 2mm;
+            font-size:6.5px;
+        }
+
+        .label-card.very-many-items .customer-info-grid{
+            gap:1.4mm;
+        }
+
+        .label-card.very-many-items .info-box{
+            min-height:11mm;
+            padding:1.5mm;
+            border-radius:2.5mm;
+        }
+
+        .label-card.very-many-items .info-box.location-box{
+            min-height:13mm;
+        }
+
+        .label-card.very-many-items .info-label{
+            margin-bottom:.7mm;
+            font-size:6px;
+        }
+
+        .label-card.very-many-items .info-value,
+        .label-card.very-many-items .info-box.name-box .info-value,
+        .label-card.very-many-items .info-box.phone-box .info-value{
+            font-size:10px;
+            line-height:1.1;
+        }
+
+        .label-card.very-many-items .cod-hero{
+            min-height:13mm;
+            padding:1.5mm 2.5mm;
+            border-radius:3mm;
+        }
+
+        .label-card.very-many-items .cod-label{
+            font-size:8px;
+        }
+
+        .label-card.very-many-items .cod-sub{
+            display:none;
+        }
+
+        .label-card.very-many-items .cod-value{
+            font-size:20px;
+        }
+
+        .label-card.very-many-items .items-head{
+            min-height:6mm;
+            padding:0 2mm;
+            font-size:6.5px;
+        }
+
+        .label-card.very-many-items .item-row{
+            min-height:5.7mm;
+            padding:.7mm 2mm;
+            font-size:7px;
+        }
+
+        .label-card.very-many-items .item-name{
+            line-height:1.05;
+        }
+
+        .label-card.very-many-items .item-name small{
+            margin-top:0;
+            font-size:5.5px;
+        }
+
+        .label-card.very-many-items .calculation-card{
+            padding:1mm 1.5mm;
+        }
+
+        .label-card.very-many-items .calc-title{
+            margin-bottom:.7mm;
+            font-size:5.7px;
+        }
+
+        .label-card.very-many-items .compact-calc{
+            grid-template-columns:1fr 3.5mm 1fr 3.5mm 1.15fr;
+            gap:.7mm;
+        }
+
+        .label-card.very-many-items .compact-calc-part{
+            min-height:6.5mm;
+            padding:.8mm 1.1mm;
+            border-radius:1.8mm;
+        }
+
+        .label-card.very-many-items .compact-calc-part small{
+            font-size:5.2px;
+        }
+
+        .label-card.very-many-items .compact-calc-part strong{
+            font-size:8px;
+        }
+
+        .label-card.very-many-items .compact-calc-symbol{
+            font-size:9px;
+        }
+
+        .label-card.very-many-items .note-card{
+            min-height:9mm;
+            max-height:13mm;
+            padding:1.5mm 2mm;
+            overflow:hidden;
+        }
+
+        .label-card.very-many-items .section-label{
+            margin-bottom:.6mm;
+            font-size:6px;
+        }
+
+        .label-card.very-many-items .note{
+            font-size:7px;
+            line-height:1.15;
+        }
+
+        .label-card.very-many-items .footer{
+            padding-top:1mm;
+            font-size:7px;
+        }
+
+        .label-card.ultra-many-items{
+            padding:3.5mm;
+            gap:1.2mm;
+        }
+
+        .label-card.ultra-many-items .top{
+            padding-bottom:1.2mm;
+        }
+
+        .label-card.ultra-many-items .brand-logo{
+            width:9mm;
+            height:9mm;
+        }
+
+        .label-card.ultra-many-items .shop-name{
+            font-size:15px;
+        }
+
+        .label-card.ultra-many-items .top-meta{
+            font-size:6px;
+        }
+
+        .label-card.ultra-many-items .top-meta strong{
+            font-size:12px;
+        }
+
+        .label-card.ultra-many-items .customer-title{
+            display:none;
+        }
+
+        .label-card.ultra-many-items .customer-info-grid{
+            gap:1mm;
+        }
+
+        .label-card.ultra-many-items .info-box{
+            min-height:9mm;
+            padding:1mm 1.3mm;
+        }
+
+        .label-card.ultra-many-items .info-box.location-box{
+            min-height:10mm;
+        }
+
+        .label-card.ultra-many-items .info-label{
+            font-size:5px;
+        }
+
+        .label-card.ultra-many-items .info-value,
+        .label-card.ultra-many-items .info-box.name-box .info-value,
+        .label-card.ultra-many-items .info-box.phone-box .info-value{
+            font-size:8px;
+        }
+
+        .label-card.ultra-many-items .cod-hero{
+            min-height:10mm;
+            padding:1mm 2mm;
+        }
+
+        .label-card.ultra-many-items .cod-label{
+            font-size:6.5px;
+        }
+
+        .label-card.ultra-many-items .cod-value{
+            font-size:17px;
+        }
+
+        .label-card.ultra-many-items .items-head{
+            min-height:5mm;
+            font-size:5.7px;
+        }
+
+        .label-card.ultra-many-items .item-row{
+            min-height:4.7mm;
+            padding:.45mm 1.8mm;
+            font-size:6.2px;
+        }
+
+        .label-card.ultra-many-items .item-name small{
+            display:none;
+        }
+
+        .label-card.ultra-many-items .calculation-card{
+            padding:.7mm 1mm;
+        }
+
+        .label-card.ultra-many-items .calc-title{
+            display:none;
+        }
+
+        .label-card.ultra-many-items .compact-calc-part{
+            min-height:5.5mm;
+            padding:.5mm .8mm;
+        }
+
+        .label-card.ultra-many-items .compact-calc-part small{
+            font-size:4.7px;
+        }
+
+        .label-card.ultra-many-items .compact-calc-part strong{
+            font-size:7px;
+        }
+
+        .label-card.ultra-many-items .note-card{
+            min-height:7mm;
+            max-height:9mm;
+            padding:1mm 1.5mm;
+        }
+
+        .label-card.ultra-many-items .footer{
+            padding-top:.6mm;
+            font-size:6px;
+        }
+
+        /* =========================
+           NOTE + FOOTER
+        ========================= */
         .note-card{
-            min-height:19mm;
+            min-height:17mm;
+            padding:3.5mm;
+            border:1.5px solid var(--line);
+            border-radius:4mm;
             background:var(--warm);
+        }
+
+        .section-label{
+            margin-bottom:1.5mm;
+            color:var(--muted);
+            font-size:8px;
+            font-weight:1000;
+            text-transform:uppercase;
+            letter-spacing:.4px;
         }
 
         .note{
             font-size:10px;
-            font-weight:850;
+            font-weight:900;
             line-height:1.35;
             overflow-wrap:anywhere;
         }
@@ -371,7 +930,7 @@
             border-top:1px dashed #aaa;
             text-align:center;
             color:var(--purple-dark);
-            font-size:11px;
+            font-size:10px;
             font-weight:1000;
         }
 
@@ -423,8 +982,7 @@
                 gap:12px;
             }
 
-            .top,
-            .customer-grid{
+            .top{
                 grid-template-columns:1fr;
             }
 
@@ -438,51 +996,44 @@
             }
 
             .shop-name{
-                font-size:24px;
+                font-size:23px;
             }
 
-            .customer-name{
-                font-size:18px;
+            .customer-info-grid{
+                grid-template-columns:1fr;
             }
 
-            .phone{
-                font-size:16px;
+            .info-box.location-box{
+                grid-column:auto;
             }
 
-            .money-row{
-                grid-template-columns:repeat(3,1fr);
-                gap:6px;
-            }
-
-            .money-box{
-                min-height:70px;
-                padding:8px;
-            }
-
-            .money-box strong{
-                font-size:15px;
+            .cod-value{
+                font-size:25px;
             }
 
             .items-head,
             .item-row{
-                grid-template-columns:1fr 42px 62px;
+                grid-template-columns:1fr 38px 56px 62px;
+            }
+}
+
+        @media screen and (max-width:420px){
+            .items-head,
+            .item-row{
+                grid-template-columns:1fr 35px 52px;
             }
 
-            .paid-stamp{
-                top:250px;
-                right:18px;
-                width:130px;
-                height:70px;
+            .items-head > div:nth-child(3),
+            .item-row .item-unit{
+                display:none;
             }
-        }
 
-        @media screen and (max-width:390px){
-            .money-row{
+            .cod-hero{
                 grid-template-columns:1fr;
             }
 
-            .paid-stamp{
-                top:300px;
+            .cod-value{
+                font-size:28px;
             }
         }
     </style>
@@ -500,20 +1051,14 @@
     </div>
 
     <main class="a5-page">
-        <article class="label-card">
-
-            {% if delivery.payment_type == "paid" %}
-                <div class="paid-stamp">
-                    <strong>បង់រួច</strong>
-                    <span>PAID · COD $0.00</span>
-                </div>
-            {% endif %}
-
+        <article class="label-card{% if delivery.payment_type == 'paid' %} paid-delivery{% endif %}{% if delivery.items.all|length > 5 %} many-items{% endif %}{% if delivery.items.all|length > 9 %} very-many-items{% endif %}{% if delivery.items.all|length > 13 %} ultra-many-items{% endif %}">
             <header class="top">
                 <div class="brand-row">
-                    <img src="{% static 'img/bubu-logo.png' %}"
-                         class="brand-logo"
-                         alt="BUBU">
+                    <img
+                        src="{% static 'img/bubu-logo.png' %}"
+                        class="brand-logo"
+                        alt="BUBU"
+                    >
 
                     <div class="shop-name">BUBU Sensok</div>
                 </div>
@@ -526,44 +1071,72 @@
                 </div>
             </header>
 
-            <section class="customer-grid">
-                <div class="customer-card">
-                    <div class="section-label">Customer</div>
-                    <div class="customer-name">
-                        {{ delivery.customer_name|default:"Walk-in Customer" }}
-                    </div>
-                    <div class="phone">
-                        ☎ {{ delivery.phone|default:"-" }}
-                    </div>
-                </div>
+            <!-- CUSTOMER INFORMATION -->
+            <section class="customer-card">
+                <div class="customer-title">
+                    <h2>Customer Information</h2>
 
-                <div class="service-card">
-                    <div class="section-label">Delivery Service</div>
-                    <div class="service-name">
+                    <div class="service-pill">
                         {% if delivery.delivery_company %}
                             {{ delivery.delivery_company.name }}
                         {% else %}
-                            No Service
+                            Delivery Service
+                        {% endif %}
+                        {% if delivery.get_delivery_area_display %}
+                            · {{ delivery.get_delivery_area_display }}
                         {% endif %}
                     </div>
+                </div>
 
-                    <div class="service-meta">
-                        {{ delivery.get_delivery_area_display }}
+                <div class="customer-info-grid">
+                    <div class="info-box location-box">
+                        <div class="info-label">Location</div>
+                        <div class="info-value">
+                            {{ delivery.location|default:"Need add address" }}
+                        </div>
+                    </div>
+
+                    <div class="info-box phone-box">
+                        <div class="info-label">Phone Number</div>
+                        <div class="info-value">
+                            ☎ {{ delivery.phone|default:"-" }}
+                        </div>
+                    </div>
+
+                    <div class="info-box name-box">
+                        <div class="info-label">Customer Name</div>
+                        <div class="info-value">
+                            {{ delivery.customer_name|default:"Walk-in Customer" }}
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <section class="address-card">
-                <div class="section-label">Customer Address</div>
-                <div class="address">
-                    {{ delivery.location|default:"Need add address" }}
+            <!-- TOTAL COD -->
+            <section class="cod-hero {% if delivery.payment_type == 'paid' %}paid{% endif %}">
+                <div>
+                    <div class="cod-label">Total COD</div>
+
+                    <div class="cod-sub">
+                        Item total + delivery fee
+                    </div>
+                </div>
+
+                <div class="cod-value">
+                    {% if delivery.payment_type == "paid" %}
+                        $0.00
+                    {% else %}
+                        ${{ delivery.cod_total|floatformat:2 }}
+                    {% endif %}
                 </div>
             </section>
 
+            <!-- ITEM LIST -->
             <section class="items-card">
                 <div class="items-head">
                     <div>Item</div>
                     <div style="text-align:right">Qty</div>
+                    <div style="text-align:right">Unit</div>
                     <div style="text-align:right">Total</div>
                 </div>
 
@@ -571,14 +1144,18 @@
                     <div class="item-row">
                         <div class="item-name">
                             {{ item.variant.item.name }}
+
                             <small>
                                 {{ item.variant.display_name }}
-                                · ${{ item.unit_price|floatformat:2 }} each
                             </small>
                         </div>
 
                         <div class="item-qty">
                             {{ item.qty }}
+                        </div>
+
+                        <div class="item-unit">
+                            ${{ item.unit_price|floatformat:2 }}
                         </div>
 
                         <div class="item-total">
@@ -592,35 +1169,56 @@
                 {% endfor %}
             </section>
 
-            <section class="money-row">
-                <div class="money-box">
-                    <span>Item Total</span>
-                    <strong>${{ delivery.total_price|floatformat:2 }}</strong>
-                </div>
+            <!-- COMPACT PAYMENT NOTE -->
+            <section class="calculation-card">
+                <div class="calc-title">Payment Note</div>
 
-                <div class="money-box">
-                    <span>Delivery Fee</span>
-                    <strong>${{ delivery.delivery_fee|floatformat:2 }}</strong>
-                </div>
+                <div class="compact-calc">
+                    <div class="compact-calc-part">
+                        <small>Items</small>
+                        <strong>${{ delivery.total_price|floatformat:2 }}</strong>
+                    </div>
 
-                <div class="money-box cod {% if delivery.payment_type == 'paid' %}paid{% endif %}">
-                    <span>Total COD</span>
+                    <div class="compact-calc-symbol">+</div>
 
-                    {% if delivery.payment_type == "paid" %}
-                        <strong>$0.00</strong>
-                    {% else %}
-                        <strong>${{ delivery.cod_total|floatformat:2 }}</strong>
-                    {% endif %}
+                    <div class="compact-calc-part">
+                        <small>Delivery</small>
+                        <strong>${{ delivery.delivery_fee|floatformat:2 }}</strong>
+                    </div>
+
+                    <div class="compact-calc-symbol">=</div>
+
+                    <div class="compact-calc-part total {% if delivery.payment_type == 'paid' %}paid{% endif %}">
+                        <small>Total COD</small>
+
+                        <strong>
+                            {% if delivery.payment_type == "paid" %}
+                                $0.00
+                            {% else %}
+                                ${{ delivery.cod_total|floatformat:2 }}
+                            {% endif %}
+                        </strong>
+                    </div>
                 </div>
             </section>
 
             {% if delivery.delivery_note %}
                 <section class="note-card">
                     <div class="section-label">Delivery Note</div>
+
                     <div class="note">
                         {{ delivery.delivery_note }}
                     </div>
                 </section>
+            {% endif %}
+
+            {% if delivery.payment_type == "paid" %}
+                <div class="paid-stamp-slot">
+                    <div class="paid-stamp">
+                        <strong>បង់រួច</strong>
+                        <span>PAID · COD $0.00</span>
+                    </div>
+                </div>
             {% endif %}
 
             <footer class="footer">

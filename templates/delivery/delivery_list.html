@@ -916,23 +916,17 @@
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Shop</th>
-                        <th>Delivery Type / Company</th>
-                        <th>POS Sale</th>
-                        <th>Customer</th>
-                        <th>Phone</th>
-                        <th>Location</th>
-                        <th>Total / COD</th>
-                        <th>Payment</th>
-                        <th>Expected</th>
-                        <th>Received</th>
-                        <th>Lack</th>
-                        <th>Delivery Fee</th>
-                        <th>Fee Paid</th>
-                        <th>Delivery Date</th>
-                        <th>Status</th>
-                        <th>Action</th>
+                        <th class="col-id">ID</th>
+                        <th class="col-date">Date</th>
+                        <th class="col-customer">Customer</th>
+                        <th class="col-phone">Phone</th>
+                        <th class="col-location">Location</th>
+                        <th class="col-item-total">Total / COD</th>
+                        <th class="col-payment">Payment</th>
+                        <th class="col-cod-total">Total COD</th>
+                        <th class="col-delivery">Delivery</th>
+                        <th class="col-status">Status</th>
+                        <th class="col-action">Action</th>
                     </tr>
                 </thead>
 
@@ -940,72 +934,44 @@
                     {% for delivery in deliveries %}
                         <tr>
                             <td>
-                                <strong style="color:#9b7cf6;">
+                                <strong class="delivery-id-text">
                                     #DLV-{{ delivery.id|stringformat:"04d" }}
                                 </strong>
                             </td>
 
-                            <td>
-                                {% if delivery.branch %}
-                                    <span class="badge badge-purple">🏪 {{ delivery.branch.name }}</span>
-                                {% else %}
-                                    <span class="badge badge-red">No Branch</span>
-                                {% endif %}
-                            </td>
-
-                            <td>
-                                <div style="display:grid;gap:5px;justify-items:start;min-width:150px;">
-                                    <span class="badge {% if delivery.delivery_area == 'province' %}badge-orange{% else %}badge-blue{% endif %}">
-                                        {% if delivery.delivery_area == "province" %}
-                                            🚌 Province
-                                        {% else %}
-                                            🏙️ Phnom Penh
-                                        {% endif %}
-                                    </span>
-
-                                    {% if delivery.delivery_company %}
-                                        <strong style="color:#302842;">
-                                            🚚 {{ delivery.delivery_company.name }}
-                                        </strong>
-
-                                        {% if not delivery.delivery_company.is_active %}
-                                            <span class="badge badge-red">Inactive</span>
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="badge badge-red">No Company</span>
-                                    {% endif %}
-                                </div>
-                            </td>
-
-                            <td>
-                                {% if delivery.sale %}
-                                    <a href="{% url 'sale_detail' delivery.sale.id %}" class="badge badge-blue">
-                                        Sale #{{ delivery.sale.id }}
-                                    </a>
-                                {% else %}
-                                    <span class="badge badge-orange">Manual</span>
-                                {% endif %}
+                            <td class="date-cell">
+                                <span class="date-main">
+                                    {{ delivery.delivery_date|date:"M d" }}
+                                </span>
+                                <small>{{ delivery.delivery_date|date:"Y" }}</small>
                             </td>
 
                             <td>
                                 <div class="customer-box">
                                     <div class="customer-icon">🐶</div>
+
                                     <div class="customer-text">
-                                        <strong>{{ delivery.customer_name|default:"-" }}</strong>
-                                        <small>{{ delivery.delivery_note|default:"No note"|truncatechars:35 }}</small>
+                                        <strong>
+                                            {{ delivery.customer_name|default:"-" }}
+                                        </strong>
+
+                                        <small>
+                                            {{ delivery.delivery_note|default:"No note"|truncatechars:30 }}
+                                        </small>
                                     </div>
                                 </div>
                             </td>
 
-                            <td>
-                                📞 {{ delivery.phone|default:"-" }}
+                            <td class="phone-cell">
+                                <span>📞</span>
+                                <strong>{{ delivery.phone|default:"-" }}</strong>
                             </td>
 
                             <td class="location-cell">
-                                {{ delivery.location|default:"Need add address"|truncatechars:75 }}
+                                {{ delivery.location|default:"Need add address" }}
                             </td>
 
-                            <td>
+                            <td class="money-cell">
                                 <strong>${{ delivery.total_price|floatformat:2 }}</strong>
                             </td>
 
@@ -1016,35 +982,39 @@
                                     <span class="badge badge-orange">COD Collect</span>
                                 {% elif delivery.payment_type == "cod_shop" %}
                                     <span class="badge badge-purple">COD Pay To Shop</span>
-                                {% endif %}
-                            </td>
-
-                            <td>${{ delivery.expected_collect|floatformat:2 }}</td>
-
-                            <td>${{ delivery.actual_received|floatformat:2 }}</td>
-
-                            <td>
-                                {% if delivery.lack_amount > 0 %}
-                                    <span class="badge badge-red">-${{ delivery.lack_amount|floatformat:2 }}</span>
                                 {% else %}
-                                    <span class="badge badge-green">$0.00</span>
+                                    <span class="badge badge-blue">
+                                        {{ delivery.get_payment_type_display }}
+                                    </span>
                                 {% endif %}
                             </td>
 
-                            <td>
-                                <strong>${{ delivery.delivery_fee|floatformat:2 }}</strong>
-                            </td>
-
-                            <td>
-                                {% if delivery.delivery_fee_paid %}
-                                    <span class="badge badge-green">Paid</span>
+                            <td class="money-cell cod-money-cell">
+                                {% if delivery.payment_type == "paid" %}
+                                    <strong class="paid-cod">$0.00</strong>
                                 {% else %}
-                                    <span class="badge badge-red">Unpaid</span>
+                                    <strong>${{ delivery.cod_total|floatformat:2 }}</strong>
                                 {% endif %}
                             </td>
 
                             <td>
-                                📅 {{ delivery.delivery_date|date:"M d, Y" }}
+                                <div class="delivery-cell">
+                                    <span class="badge {% if delivery.delivery_area == 'province' %}badge-orange{% else %}badge-blue{% endif %}">
+                                        {% if delivery.delivery_area == "province" %}
+                                            🚌 Province
+                                        {% else %}
+                                            🏙️ Phnom Penh
+                                        {% endif %}
+                                    </span>
+
+                                    <strong>
+                                        {% if delivery.delivery_company %}
+                                            🚚 {{ delivery.delivery_company.name }}
+                                        {% else %}
+                                            No Company
+                                        {% endif %}
+                                    </strong>
+                                </div>
                             </td>
 
                             <td>
@@ -1054,6 +1024,10 @@
                                     <span class="badge badge-blue">Out</span>
                                 {% elif delivery.status == "cancelled" %}
                                     <span class="badge badge-red">Cancelled</span>
+                                {% elif delivery.status == "returned" %}
+                                    <span class="badge badge-red">Returned</span>
+                                {% elif delivery.status == "failed" %}
+                                    <span class="badge badge-red">Failed</span>
                                 {% else %}
                                     <span class="badge badge-orange">Pending</span>
                                 {% endif %}
@@ -1061,19 +1035,36 @@
 
                             <td>
                                 <div class="action-cell">
-                                    <a href="{% url 'delivery_detail' delivery.id %}" class="mini-btn btn-view" title="View">
+                                    <a
+                                        href="{% url 'delivery_detail' delivery.id %}"
+                                        class="mini-btn btn-view"
+                                        title="View"
+                                    >
                                         👁
                                     </a>
 
-                                    <a href="{% url 'delivery_update' delivery.id %}" class="mini-btn btn-edit" title="Edit">
+                                    <a
+                                        href="{% url 'delivery_update' delivery.id %}"
+                                        class="mini-btn btn-edit"
+                                        title="Edit"
+                                    >
                                         ✏️
                                     </a>
 
-                                    <a href="{% url 'delivery_sticker' delivery.id %}" target="_blank" class="mini-btn btn-view" title="Print Label">
+                                    <a
+                                        href="{% url 'delivery_sticker' delivery.id %}"
+                                        target="_blank"
+                                        class="mini-btn btn-view"
+                                        title="Print Label"
+                                    >
                                         🏷️
                                     </a>
 
-                                    <a href="{% url 'delivery_delete' delivery.id %}" class="mini-btn btn-delete" title="Delete">
+                                    <a
+                                        href="{% url 'delivery_delete' delivery.id %}"
+                                        class="mini-btn btn-delete"
+                                        title="Delete"
+                                    >
                                         🗑️
                                     </a>
                                 </div>
@@ -1081,7 +1072,7 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="17">
+                            <td colspan="11">
                                 <div class="empty-box">
                                     <div class="empty-icon">🚚✨</div>
                                     <h3>No delivery found</h3>
@@ -1139,15 +1130,6 @@
                 </div>
 
                 <div class="mobile-tags">
-                    <span class="badge badge-purple">
-                        🏪
-                        {% if delivery.branch %}
-                            {{ delivery.branch.name }}
-                        {% else %}
-                            No Shop
-                        {% endif %}
-                    </span>
-
                     <span class="badge
                         {% if delivery.delivery_area == 'province' %}
                             badge-orange
@@ -1174,8 +1156,24 @@
 
                 <div class="mobile-info-grid">
                     <div class="mobile-info-box">
-                        <span>Total</span>
+                        <span>Date</span>
+                        <strong>{{ delivery.delivery_date|date:"M d, Y" }}</strong>
+                    </div>
+
+                    <div class="mobile-info-box">
+                        <span>Total / COD</span>
                         <strong>${{ delivery.total_price|floatformat:2 }}</strong>
+                    </div>
+
+                    <div class="mobile-info-box">
+                        <span>Total COD</span>
+                        <strong>
+                            {% if delivery.payment_type == "paid" %}
+                                $0.00
+                            {% else %}
+                                ${{ delivery.cod_total|floatformat:2 }}
+                            {% endif %}
+                        </strong>
                     </div>
 
                     <div class="mobile-info-box">
@@ -1184,39 +1182,16 @@
                             {% if delivery.payment_type == "paid" %}
                                 Already Paid
                             {% elif delivery.payment_type == "cod_collect" %}
-                                COD
+                                COD Collect
+                            {% elif delivery.payment_type == "cod_shop" %}
+                                COD Pay To Shop
                             {% else %}
                                 {{ delivery.get_payment_type_display }}
                             {% endif %}
                         </strong>
                     </div>
 
-                    <div class="mobile-info-box">
-                        <span>Expected</span>
-                        <strong>${{ delivery.expected_collect|floatformat:2 }}</strong>
-                    </div>
-
-                    <div class="mobile-info-box">
-                        <span>Received</span>
-                        <strong>${{ delivery.actual_received|floatformat:2 }}</strong>
-                    </div>
-
-                    <div class="mobile-info-box">
-                        <span>Lack</span>
-                        <strong>${{ delivery.lack_amount|floatformat:2 }}</strong>
-                    </div>
-
-                    <div class="mobile-info-box">
-                        <span>Delivery Fee</span>
-                        <strong>${{ delivery.delivery_fee|floatformat:2 }}</strong>
-                    </div>
-
-                    <div class="mobile-info-box mobile-info-full">
-                        <span>Delivery Date</span>
-                        <strong>{{ delivery.delivery_date|date:"M d, Y" }}</strong>
-                    </div>
-
-                    <div class="mobile-info-box mobile-info-full">
+                    <div class="mobile-info-box mobile-info-full mobile-location-box">
                         <span>Location</span>
                         <strong>{{ delivery.location|default:"Need add address" }}</strong>
                     </div>
@@ -1243,6 +1218,13 @@
                         class="mobile-action-btn label"
                     >
                         🏷️ Label
+                    </a>
+
+                    <a
+                        href="{% url 'delivery_delete' delivery.id %}"
+                        class="mobile-action-btn delete"
+                    >
+                        🗑 Delete
                     </a>
                 </div>
             </article>
@@ -2582,6 +2564,486 @@ tbody tr:hover{
     .top-action-row{grid-template-columns:1fr!important}
     .mobile-info-grid{grid-template-columns:1fr 1fr!important}
     .mobile-action-grid{grid-template-columns:repeat(3,1fr)!important}
+}
+</style>
+
+
+<style id="bubu-delivery-compact-table-v2">
+/* =========================================================
+   COMPACT DESKTOP TABLE
+========================================================= */
+.table-card{
+    overflow:hidden!important;
+}
+
+.table-scroll{
+    position:relative;
+    max-width:100%;
+    overflow:auto!important;
+    scrollbar-width:thin;
+    scrollbar-color:#cfc3da #f8f3fb;
+}
+
+.table-scroll::-webkit-scrollbar{
+    width:8px;
+    height:8px;
+}
+
+.table-scroll::-webkit-scrollbar-track{
+    background:#f8f3fb;
+}
+
+.table-scroll::-webkit-scrollbar-thumb{
+    border-radius:999px;
+    background:#cfc3da;
+}
+
+.table-scroll table{
+    width:100%!important;
+    min-width:1080px!important;
+    table-layout:fixed;
+}
+
+.table-scroll thead{
+    position:sticky;
+    top:0;
+    z-index:8;
+}
+
+.table-scroll thead th{
+    padding:10px 5px!important;
+    font-size:9px!important;
+    line-height:1.15!important;
+    font-weight:1000!important;
+    letter-spacing:-.1px;
+    white-space:normal!important;
+    vertical-align:middle!important;
+}
+
+.table-scroll tbody td{
+    height:62px;
+    padding:8px 5px!important;
+    font-size:10px!important;
+    line-height:1.22!important;
+    vertical-align:middle!important;
+    overflow:hidden;
+}
+
+.table-scroll tbody tr{
+    transition:background .14s ease;
+}
+
+.table-scroll tbody tr:hover{
+    background:#fff9fc!important;
+}
+
+/* Controlled column widths */
+.table-scroll .col-id{width:72px}
+.table-scroll .col-shop{width:74px}
+.table-scroll .col-delivery{width:112px}
+.table-scroll .col-sale{width:64px}
+.table-scroll .col-customer{width:118px}
+.table-scroll .col-phone{width:88px}
+.table-scroll .col-location{width:130px}
+.table-scroll .col-total{width:72px}
+.table-scroll .col-payment{width:78px}
+.table-scroll .col-money{width:66px}
+.table-scroll .col-lack{width:68px}
+.table-scroll .col-fee{width:56px}
+.table-scroll .col-fee-paid{width:66px}
+.table-scroll .col-date{width:76px}
+.table-scroll .col-status{width:70px}
+.table-scroll .col-action{width:84px}
+
+/* Compact content */
+.table-scroll .badge{
+    min-height:22px!important;
+    max-width:100%;
+    padding:3px 6px!important;
+    font-size:8px!important;
+    line-height:1.1!important;
+    white-space:normal!important;
+    text-align:center;
+}
+
+.table-scroll .customer-box{
+    gap:5px!important;
+    justify-content:flex-start!important;
+}
+
+.table-scroll .customer-icon{
+    width:30px!important;
+    height:30px!important;
+    flex:0 0 30px!important;
+    font-size:15px!important;
+}
+
+.table-scroll .customer-text{
+    min-width:0!important;
+    width:100%;
+    overflow:hidden;
+}
+
+.table-scroll .customer-text strong,
+.table-scroll .customer-text small{
+    overflow:hidden;
+    display:block;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.table-scroll .customer-text strong{
+    font-size:10px!important;
+}
+
+.table-scroll .customer-text small{
+    margin-top:2px;
+    font-size:7px!important;
+}
+
+.table-scroll .location-cell{
+    max-width:none!important;
+    text-align:left!important;
+    display:-webkit-box;
+    overflow:hidden;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:3;
+    line-clamp:3;
+}
+
+.table-scroll .action-cell{
+    gap:3px!important;
+    display:grid!important;
+    grid-template-columns:repeat(2,30px);
+    justify-content:center!important;
+}
+
+.table-scroll .mini-btn{
+    min-width:30px!important;
+    width:30px!important;
+    min-height:30px!important;
+    height:30px!important;
+    margin:0!important;
+    padding:0!important;
+    border-radius:9px!important;
+    font-size:13px!important;
+}
+
+/* Keep ID and Action visible during horizontal scroll */
+.table-scroll thead th:first-child,
+.table-scroll tbody td:first-child{
+    position:sticky;
+    left:0;
+    z-index:5;
+    background:#fff;
+    box-shadow:4px 0 8px rgba(49,35,67,.04);
+}
+
+.table-scroll thead th:first-child{
+    z-index:10;
+    background:#f3eafa;
+}
+
+.table-scroll thead th:last-child,
+.table-scroll tbody td:last-child{
+    position:sticky;
+    right:0;
+    z-index:5;
+    background:#fff;
+    box-shadow:-4px 0 8px rgba(49,35,67,.04);
+}
+
+.table-scroll thead th:last-child{
+    z-index:10;
+    background:#f3eafa;
+}
+
+/* Medium desktop/tablet: hide lower-priority columns */
+@media(max-width:1250px) and (min-width:761px){
+    .table-scroll table{
+        min-width:920px!important;
+    }
+
+    .table-scroll .col-shop,
+    .table-scroll th:nth-child(2),
+    .table-scroll td:nth-child(2),
+    .table-scroll .col-sale,
+    .table-scroll th:nth-child(4),
+    .table-scroll td:nth-child(4),
+    .table-scroll .col-money,
+    .table-scroll th:nth-child(10),
+    .table-scroll td:nth-child(10),
+    .table-scroll th:nth-child(11),
+    .table-scroll td:nth-child(11),
+    .table-scroll .col-fee-paid,
+    .table-scroll th:nth-child(14),
+    .table-scroll td:nth-child(14){
+        display:none!important;
+    }
+}
+
+/* =========================================================
+   PHONE CARD LIST
+========================================================= */
+@media(max-width:760px){
+    .table-card{
+        display:none!important;
+    }
+
+    .delivery-mobile-list{
+        display:grid!important;
+        gap:8px!important;
+    }
+
+    .delivery-mobile-card{
+        position:relative;
+        padding:11px!important;
+        border:1px solid #eadff0!important;
+        border-radius:16px!important;
+        background:linear-gradient(145deg,#fff,#fffafd)!important;
+        box-shadow:0 6px 16px rgba(54,38,77,.06)!important;
+    }
+
+    .mobile-card-head{
+        align-items:flex-start!important;
+    }
+
+    .mobile-delivery-id{
+        font-size:11px!important;
+    }
+
+    .mobile-customer-name{
+        font-size:16px!important;
+        line-height:1.15!important;
+    }
+
+    .mobile-phone{
+        font-size:10px!important;
+    }
+
+    .mobile-card-head > .badge{
+        min-height:25px!important;
+        padding:4px 8px!important;
+        font-size:9px!important;
+    }
+
+    .mobile-tags{
+        margin-top:8px!important;
+    }
+
+    .mobile-tags .badge{
+        min-height:23px!important;
+        padding:3px 6px!important;
+        font-size:8px!important;
+    }
+
+    .mobile-info-grid{
+        margin-top:8px!important;
+        grid-template-columns:repeat(3,minmax(0,1fr))!important;
+        gap:5px!important;
+    }
+
+    .mobile-info-box{
+        min-height:55px;
+        padding:7px!important;
+        border-radius:11px!important;
+    }
+
+    .mobile-info-box span{
+        font-size:7px!important;
+        line-height:1.1!important;
+        text-transform:uppercase;
+    }
+
+    .mobile-info-box strong{
+        font-size:10px!important;
+        line-height:1.2!important;
+    }
+
+    .mobile-info-full{
+        grid-column:1/-1!important;
+        min-height:auto;
+    }
+
+    .mobile-action-grid{
+        margin-top:8px!important;
+        grid-template-columns:repeat(4,minmax(0,1fr))!important;
+        gap:5px!important;
+    }
+
+    .mobile-action-btn{
+        min-height:39px!important;
+        padding:0 2px!important;
+        border-radius:11px!important;
+        font-size:9px!important;
+    }
+
+    .mobile-action-btn.delete{
+        color:#db3f58;
+        background:#ffe8eb;
+    }
+}
+
+@media(max-width:420px){
+    .mobile-info-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    }
+
+    .mobile-info-full{
+        grid-column:1/-1!important;
+    }
+
+    .mobile-action-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    }
+
+    .mobile-action-btn{
+        min-height:42px!important;
+        font-size:10px!important;
+    }
+}
+</style>
+
+
+<style id="bubu-delivery-final-column-layout">
+/* Final desktop order:
+   ID · Date · Customer · Phone · Location · Item Total · Payment
+   · Total COD · Delivery · Status · Action
+*/
+.table-scroll table{
+    min-width:1040px!important;
+    table-layout:fixed!important;
+}
+
+.table-scroll th,
+.table-scroll td{
+    display:table-cell!important;
+}
+
+.table-scroll .col-id{width:76px!important}
+.table-scroll .col-date{width:74px!important}
+.table-scroll .col-customer{width:125px!important}
+.table-scroll .col-phone{width:92px!important}
+.table-scroll .col-location{width:190px!important}
+.table-scroll .col-item-total{width:76px!important}
+.table-scroll .col-payment{width:92px!important}
+.table-scroll .col-cod-total{width:82px!important}
+.table-scroll .col-delivery{width:125px!important}
+.table-scroll .col-status{width:76px!important}
+.table-scroll .col-action{width:82px!important}
+
+.delivery-id-text{
+    color:#8c68ed;
+    font-size:10px;
+    white-space:nowrap;
+}
+
+.date-cell{
+    text-align:center!important;
+}
+
+.date-cell .date-main{
+    display:block;
+    color:#25203a;
+    font-size:10px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+
+.date-cell small{
+    display:block;
+    margin-top:2px;
+    color:#786f86;
+    font-size:8px;
+    font-weight:900;
+}
+
+.phone-cell{
+    text-align:left!important;
+    white-space:normal!important;
+}
+
+.phone-cell span{
+    margin-right:3px;
+}
+
+.phone-cell strong{
+    overflow-wrap:anywhere;
+}
+
+.location-cell{
+    max-width:none!important;
+    padding-left:9px!important;
+    padding-right:9px!important;
+    text-align:left!important;
+    vertical-align:middle!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere!important;
+    word-break:break-word!important;
+    display:table-cell!important;
+    -webkit-line-clamp:unset!important;
+    line-clamp:unset!important;
+}
+
+.money-cell{
+    text-align:center!important;
+    white-space:nowrap!important;
+}
+
+.cod-money-cell strong{
+    color:#6841d8;
+    font-size:11px;
+}
+
+.cod-money-cell .paid-cod{
+    color:#168f59;
+}
+
+.delivery-cell{
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:center;
+    gap:4px;
+    text-align:left;
+}
+
+.delivery-cell strong{
+    width:100%;
+    overflow:hidden;
+    color:#302842;
+    font-size:9px;
+    line-height:1.15;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+/* Location remains easy to read on all desktop/tablet sizes. */
+@media(max-width:1250px) and (min-width:761px){
+    .table-scroll table{
+        min-width:980px!important;
+    }
+
+    .table-scroll .col-location{
+        width:170px!important;
+    }
+}
+
+/* Simplified matching phone layout. */
+@media(max-width:760px){
+    .mobile-info-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    }
+
+    .mobile-location-box{
+        text-align:left!important;
+    }
+
+    .mobile-location-box strong{
+        overflow-wrap:anywhere!important;
+        word-break:break-word!important;
+    }
 }
 </style>
 

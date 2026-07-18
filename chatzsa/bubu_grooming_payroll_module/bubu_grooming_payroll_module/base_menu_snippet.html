@@ -1,0 +1,24 @@
+{# Add inside the existing Staff submenu in base.html #}
+<a href="{% url 'grooming_my_work' %}"
+   class="{% if request.resolver_match.url_name == 'grooming_my_work' %}active{% endif %}">
+    <span>✂️</span><span>My Grooming Work</span>
+</a>
+
+{% if request.user.is_superuser or perms.auth.view_user %}
+<a href="{% url 'grooming_daily_comparison' %}"
+   class="{% if request.resolver_match.url_name == 'grooming_daily_comparison' %}active{% endif %}">
+    <span>📊</span><span>Daily Work Comparison</span>
+</a>
+<a href="{% url 'grooming_work_settings' %}"
+   class="{% if request.resolver_match.url_name == 'grooming_work_settings' %}active{% endif %}">
+    <span>🧩</span><span>Service Work Mapping</span>
+</a>
+<a href="{% url 'staff_work_commission_rules' %}"
+   class="{% if request.resolver_match.url_name == 'staff_work_commission_rules' %}active{% endif %}">
+    <span>💰</span><span>Work Commission Rules</span>
+</a>
+<a href="{% url 'payroll_adjustment_list' %}"
+   class="{% if request.resolver_match.url_name == 'payroll_adjustment_list' %}active{% endif %}">
+    <span>➕</span><span>Bonus & Deductions</span>
+</a>
+{% endif %}

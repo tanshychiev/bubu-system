@@ -25,12 +25,15 @@ from staffs.telegram import send_staff_telegram_message
 from .models import (
     BranchAttendanceQR,
     GroomingCommission,
+    GroomingWorkRecord,
+    PayrollAdjustment,
     PayrollHistory,
     PayrollRecord,
     StaffAttendance,
     StaffCommission,
     StaffPayrollSetting,
     StaffPermissionRequest,
+    StaffWorkCommissionRule,
     StaffShift,
 )
 
@@ -995,6 +998,84 @@ def branch_location_setting(request):
     })
 
 # =========================================================
+# CONFIRMED WORK COMMISSION / PAYROLL ADJUSTMENTS
+# =========================================================
+
+def _work_commission_for_period(staff, period_start, period_end, only_unlinked=False):
+    """Calculate commission from confirmed or payroll-locked work records."""
+    records = GroomingWorkRecord.objects.filter(
+        staff=staff,
+        work_date__gte=period_start,
+        work_date__lte=period_end,
+        status__in=["confirmed", "locked"],
+    )
+
+    if only_unlinked:
+        records = records.filter(payroll_record__isnull=True)
+
+    quantities = {
+        row["work_type_id"]: Decimal(row["total"] or 0)
+        for row in records.values("work_type_id").annotate(total=Sum("quantity"))
+    }
+
+    total = Decimal("0.00")
+    breakdown = []
+
+    for work_type_id, quantity in quantities.items():
+        rule = (
+            StaffWorkCommissionRule.objects
+            .filter(
+                staff=staff,
+                work_type_id=work_type_id,
+                is_active=True,
+                effective_from__lte=period_end,
+            )
+            .filter(Q(effective_to__isnull=True) | Q(effective_to__gte=period_start))
+            .select_related("work_type")
+            .order_by("-effective_from", "-id")
+            .first()
+        )
+
+        amount = rule.calculate(quantity) if rule else Decimal("0.00")
+        total += Decimal(amount or 0)
+
+        breakdown.append({
+            "work_type_id": work_type_id,
+            "work_type": rule.work_type.name if rule else f"Work #{work_type_id}",
+            "quantity": quantity,
+            "amount": Decimal(amount or 0),
+            "rule": rule.get_calculation_type_display() if rule else "No active rule",
+        })
+
+    return total, breakdown
+
+
+def _adjustments_for_period(staff, period_start, period_end, only_unlinked=False):
+    rows = PayrollAdjustment.objects.filter(
+        staff=staff,
+        record_date__gte=period_start,
+        record_date__lte=period_end,
+    )
+
+    if only_unlinked:
+        rows = rows.filter(payroll_record__isnull=True)
+
+    bonus = (
+        rows.filter(adjustment_type="bonus")
+        .aggregate(total=Sum("amount"))["total"]
+        or Decimal("0.00")
+    )
+
+    deductions = (
+        rows.filter(adjustment_type__in=["deduction", "advance"])
+        .aggregate(total=Sum("amount"))["total"]
+        or Decimal("0.00")
+    )
+
+    return rows, Decimal(bonus), Decimal(deductions)
+
+
+# =========================================================
 # STAFF SALARY CENTER V2
 # =========================================================
 
@@ -1125,6 +1206,7 @@ def _salary_preview_for_setting(setting, today=None):
 
     allowed_late = int(setting.allowed_late_times or 3)
     extra_late_day_off = 0
+
     if allowed_late > 0 and late_count > allowed_late:
         extra_late_day_off = ((late_count - allowed_late - 1) // allowed_late) + 1
     elif allowed_late == 0 and late_count > 0:
@@ -1148,16 +1230,25 @@ def _salary_preview_for_setting(setting, today=None):
         created_at__date__gte=period_start,
         created_at__date__lte=period_end,
     )
-    pet_commission = pet_commission_qs.aggregate(total=Sum("commission_amount"))["total"] or Decimal("0.00")
-
-    grooming_commission_qs = GroomingCommission.objects.filter(
-        staff=staff,
-        status__in=["pending", "approved"],
-        payroll_record__isnull=True,
-        created_at__date__gte=period_start,
-        created_at__date__lte=period_end,
+    pet_commission = (
+        pet_commission_qs.aggregate(total=Sum("commission_amount"))["total"]
+        or Decimal("0.00")
     )
-    grooming_commission = grooming_commission_qs.aggregate(total=Sum("commission_amount"))["total"] or Decimal("0.00")
+
+    # New workflow: grooming commission comes only from confirmed staff work.
+    work_commission, work_breakdown = _work_commission_for_period(
+        staff,
+        period_start,
+        period_end,
+        only_unlinked=True,
+    )
+
+    adjustment_rows, manual_bonus, manual_deduction = _adjustments_for_period(
+        staff,
+        period_start,
+        period_end,
+        only_unlinked=True,
+    )
 
     pet_sales = PetSale.objects.filter(
         status="completed",
@@ -1165,17 +1256,19 @@ def _salary_preview_for_setting(setting, today=None):
         completed_at__date__gte=period_start,
         completed_at__date__lte=period_end,
     )
+
     dog_count = 0
     for sale in pet_sales:
         try:
             pet_type = sale.pet.pet_type if sale.pet else sale.preorder_pet_type
         except Exception:
             pet_type = sale.preorder_pet_type
+
         if pet_type == "dog":
             dog_count += 1
 
     pet_target_bonus = _pet_sale_bonus(dog_count)
-    total_commission = Decimal(pet_commission or 0) + Decimal(grooming_commission or 0)
+    total_commission = Decimal(pet_commission or 0) + Decimal(work_commission or 0)
 
     net_salary = (
         Decimal(setting.base_salary or 0)
@@ -1183,9 +1276,11 @@ def _salary_preview_for_setting(setting, today=None):
         + attendance_bonus
         + unused_day_off_bonus
         + pet_target_bonus
+        + manual_bonus
         - day_off_deduction
         - late_deduction
         - absent_deduction
+        - manual_deduction
     )
 
     if payroll and payroll.status == "paid":
@@ -1216,8 +1311,12 @@ def _salary_preview_for_setting(setting, today=None):
         "payroll": payroll,
         "base_salary": Decimal(setting.base_salary or 0),
         "pet_commission": Decimal(pet_commission or 0),
-        "grooming_commission": Decimal(grooming_commission or 0),
+        "grooming_commission": Decimal(work_commission or 0),
+        "work_breakdown": work_breakdown,
         "total_commission": total_commission,
+        "manual_bonus": manual_bonus,
+        "manual_deduction": manual_deduction,
+        "adjustment_rows": adjustment_rows,
         "dog_count": dog_count,
         "pet_target_bonus": pet_target_bonus,
         "late_count": late_count,
@@ -1363,7 +1462,7 @@ def staff_commission_list(request):
             rows.append({
                 "created_at": item.created_at,
                 "date": item.created_at.date(),
-                "type": "Grooming",
+                "type": "Legacy Grooming",
                 "staff": item.staff,
                 "branch": item.branch or getattr(item.staff, "branch", None),
                 "source": f"POS Sale #{item.sale_id}",
@@ -1422,30 +1521,45 @@ def staff_salary_open(request, staff_id):
         },
     )
 
+    if payroll.status == "paid":
+        messages.error(request, "This payroll is already paid and locked.")
+        return redirect("payroll_record_detail", pk=payroll.pk)
+
     payroll.expected_open_date = preview["expected_open_date"]
     payroll.opened_at = payroll.opened_at or timezone.now()
     payroll.opened_by = payroll.opened_by or request.user
     payroll.status = "opened" if payroll.status == "draft" else payroll.status
+
     payroll.base_salary = preview["base_salary"]
     payroll.pet_sale_commission = preview["pet_commission"]
     payroll.grooming_commission = preview["grooming_commission"]
     payroll.total_commission = preview["total_commission"]
+
     payroll.dog_sale_count = preview["dog_count"]
     payroll.pet_sale_target_bonus = preview["pet_target_bonus"]
+
     payroll.allowed_day_off = preview["allowed_day_off"]
     payroll.used_day_off = preview["day_off_used"]
     payroll.over_day_off_days = preview["over_day_off"]
     payroll.unused_day_off_days = preview["unused_day_off"]
+
     payroll.attendance_bonus = preview["attendance_bonus"]
     payroll.unused_day_off_bonus = preview["unused_day_off_bonus"]
     payroll.day_off_deduction = preview["day_off_deduction"]
+
     payroll.late_days = preview["late_count"]
     payroll.late_minutes = preview["late_minutes"]
     payroll.absent_days = preview["absent_count"]
     payroll.permission_days = preview["permission_count"]
     payroll.late_deduction = preview["late_deduction"]
     payroll.absent_deduction = preview["absent_deduction"]
-    payroll.note = request.POST.get("note", "").strip() if request.method == "POST" else payroll.note
+
+    payroll.bonus = preview["manual_bonus"]
+    payroll.other_deduction = preview["manual_deduction"]
+
+    if request.method == "POST":
+        payroll.note = request.POST.get("note", "").strip()
+
     payroll.save()
 
     StaffCommission.objects.filter(
@@ -1454,21 +1568,31 @@ def staff_salary_open(request, staff_id):
         payroll_record__isnull=True,
         created_at__date__gte=preview["period_start"],
         created_at__date__lte=preview["period_end"],
-    ).update(payroll_record=payroll, status="approved", approved_at=timezone.now())
+    ).update(
+        payroll_record=payroll,
+        status="approved",
+        approved_at=timezone.now(),
+    )
 
-    GroomingCommission.objects.filter(
+    # Lock only confirmed work. Draft records never enter payroll.
+    GroomingWorkRecord.objects.filter(
         staff=setting.staff,
-        status__in=["pending", "approved"],
+        status="confirmed",
         payroll_record__isnull=True,
-        created_at__date__gte=preview["period_start"],
-        created_at__date__lte=preview["period_end"],
-    ).update(payroll_record=payroll, status="approved", approved_at=timezone.now())
+        work_date__gte=preview["period_start"],
+        work_date__lte=preview["period_end"],
+    ).update(
+        status="locked",
+        payroll_record=payroll,
+    )
+
+    preview["adjustment_rows"].update(payroll_record=payroll)
 
     PayrollHistory.objects.create(
         payroll=payroll,
         action="opened" if created else "edited",
         created_by=request.user,
-        note="Salary opened from Staff Salary Dashboard.",
+        note="Salary opened from Staff Salary Dashboard with confirmed work records.",
     )
 
     messages.success(request, f"Salary opened for {preview['staff_name']}.")
@@ -1487,13 +1611,29 @@ def payroll_record_detail(request, pk):
     )
 
     pet_commissions = payroll.commissions.select_related("pet_sale").all()
-    grooming_commissions = payroll.grooming_commissions.select_related("sale", "branch").all()
+    work_records = (
+        payroll.grooming_work_records
+        .select_related("work_type", "branch", "staff__user")
+        .order_by("work_type__sort_order", "work_date", "id")
+    )
+    adjustments = payroll.adjustments.select_related("created_by").all()
     histories = payroll.histories.select_related("created_by").all()
+
+    work_commission, work_breakdown = _work_commission_for_period(
+        payroll.staff,
+        payroll.period_start,
+        payroll.period_end,
+        only_unlinked=False,
+    )
 
     return render(request, "staffs/payroll_record_detail.html", {
         "payroll": payroll,
         "pet_commissions": pet_commissions,
-        "grooming_commissions": grooming_commissions,
+        "grooming_commissions": [],
+        "work_records": work_records,
+        "work_breakdown": work_breakdown,
+        "work_commission": work_commission,
+        "adjustments": adjustments,
         "histories": histories,
     })
 
@@ -1515,7 +1655,6 @@ def payroll_mark_paid(request, pk):
     payroll.save()
 
     payroll.commissions.update(status="paid", paid_at=timezone.now())
-    payroll.grooming_commissions.update(status="paid", paid_at=timezone.now())
 
     PayrollHistory.objects.create(
         payroll=payroll,
