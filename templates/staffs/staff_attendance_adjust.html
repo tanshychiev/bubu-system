@@ -1716,4 +1716,121 @@ html,body{max-width:100%;overflow-x:hidden}
 })();
 </script>
 
+
+<style id="bubu-final-phone-alignment-fix">
+/* Final phone alignment and overflow correction */
+html,body{max-width:100%;overflow-x:hidden}
+@media (max-width: 767px){
+  .content,.main-content,[class$="-page"],.p{
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    margin-left:0!important;margin-right:0!important;overflow-x:hidden!important;
+  }
+  [class$="-card"],.card,.c,.form-card,.section-card,.filter-card,
+  .table-card-custom,.commission-table-card,.salary-table-card{
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    box-sizing:border-box!important;
+  }
+  form,.setting-form,.permission-form,.adjust-form,.gps-form,.qr-form,
+  .commission-filter,.salary-filter,.add-form,.filter,.filters{
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    box-sizing:border-box!important;
+  }
+  .setting-form>.grid-2,.setting-form>.grid-3,.setting-form>.toggle-grid,
+  .permission-form>.grid-2,.permission-form>.grid-3,
+  .adjust-form>.grid-2,.adjust-form>.grid-3,
+  .gps-form>.grid-2,.gps-form>.grid-3,
+  form>.grid-2,form>.grid-3,form>.toggle-grid{
+    grid-column:1/-1!important;width:100%!important;min-width:0!important;
+  }
+  .grid-2,.grid-3,.toggle-grid,.info-grid,.summary-grid,
+  .top-actions,.form-actions,.button-grid,.scan-actions{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    width:100%!important;min-width:0!important;gap:10px!important;
+  }
+  label,.fake-label,.field-group,.toggle-card,.summary-card,.summary,
+  .info-grid>*,.grid-2>*,.grid-3>*{min-width:0!important;max-width:100%!important}
+  input:not([type="checkbox"]):not([type="radio"]),select,textarea,
+  .popup-field-btn,.bubu-smart-field{
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    min-height:50px!important;height:auto!important;box-sizing:border-box!important;
+    padding:11px 13px!important;font-size:15px!important;line-height:1.25!important;
+  }
+  .popup-field-btn,.bubu-smart-field{
+    display:flex!important;align-items:center!important;justify-content:space-between!important;
+    gap:8px!important;text-align:left!important;overflow:hidden!important;
+  }
+  .popup-field-btn span,.bubu-smart-field span{
+    min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+  button,a.main-btn,a.soft-btn,a.submit-btn,a.cancel-btn,a.save-btn,
+  .dark-btn,.clear-btn,.salary-btn,.commission-btn,.payroll-btn,.row-action{
+    width:auto;max-width:100%!important;min-width:0!important;min-height:48px!important;
+    height:auto!important;padding:10px 12px!important;line-height:1.2!important;
+    white-space:normal!important;overflow-wrap:anywhere!important;box-sizing:border-box!important;
+  }
+  .top-actions>a,.form-actions>* ,.button-grid>* ,.scan-actions>*{
+    width:100%!important;
+  }
+  .toggle-card{padding:12px!important;align-items:flex-start!important;overflow:hidden!important}
+  .toggle-text{min-width:0!important}
+  .toggle-text strong,.toggle-text small{overflow-wrap:anywhere!important;word-break:normal!important}
+  .table-wrap,.table,.commission-table-card,.salary-table-card{
+    max-width:100%!important;overflow-x:auto!important;
+  }
+
+  /* Every popup is centered and remains inside the phone screen */
+  .bubu-picker-sheet,.picker-popup,.staff-popup,.status-popup,.time-popup,
+  .late-popup,.date-popup,[class*="picker-popup"]{
+    position:fixed!important;left:50%!important;right:auto!important;top:50%!important;
+    bottom:auto!important;transform:translate(-50%,-50%) scale(.98)!important;
+    width:calc(100vw - 28px)!important;max-width:430px!important;
+    max-height:76dvh!important;margin:0!important;border-radius:24px!important;
+    overflow:hidden!important;box-sizing:border-box!important;z-index:100001!important;
+  }
+  .bubu-picker-sheet.show,.picker-popup.active,.staff-popup.active,
+  .status-popup.active,.time-popup.active,.late-popup.active,.date-popup.active,
+  [class*="picker-popup"].active{
+    transform:translate(-50%,-50%) scale(1)!important;
+  }
+  .popup-backdrop,.bubu-picker-backdrop,.popup-bg{
+    position:fixed!important;inset:0!important;z-index:100000!important;
+  }
+  .bubu-picker-options,.staff-list,.status-list,.popup-body,.picker-body{
+    max-height:48dvh!important;overflow-y:auto!important;overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  .bubu-picker-option,.staff-option,.status-option{
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    min-height:54px!important;padding:11px 13px!important;box-sizing:border-box!important;
+  }
+  .bubu-picker-head,.popup-head{flex:0 0 auto!important}
+  .bubu-picker-close,.popup-head button{
+    flex:0 0 42px!important;width:42px!important;height:42px!important;min-height:42px!important;
+    padding:0!important;
+  }
+}
+@media (max-width:390px){
+  .grid-2,.grid-3,.toggle-grid,.top-actions,.form-actions,.button-grid,.scan-actions{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  .setting-form,.permission-form,.adjust-form,.gps-form,.qr-form,
+  .commission-filter,.salary-filter,.add-form,.filter,.filters{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  form>label:has(textarea),form>label:has(input[type="file"]),
+  form>.hint-box,form>.form-actions,form>button[type="submit"],
+  .setting-form>.selected-staff-box,.permission-form>label:first-of-type{
+    grid-column:1/-1!important;
+  }
+}
+@media (max-width:340px){
+  .grid-2,.grid-3,.toggle-grid,.top-actions,.form-actions,.button-grid,.scan-actions,
+  .setting-form,.permission-form,.adjust-form,.gps-form,.qr-form,
+  .commission-filter,.salary-filter,.add-form,.filter,.filters{
+    grid-template-columns:1fr!important;
+  }
+}
+</style>
+
 {% endblock %}
