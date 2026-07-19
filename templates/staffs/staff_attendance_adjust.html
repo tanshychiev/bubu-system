@@ -1541,4 +1541,179 @@ document.addEventListener("keydown", function(e){
 })();
 </script>
 
+
+
+<!-- BUBU UNIVERSAL PHONE POPUP UI — generated update -->
+<style id="bubu-phone-popup-v3">
+*{box-sizing:border-box}
+html,body{max-width:100%;overflow-x:hidden}
+
+@media (max-width:900px){
+  body,.content,.main-content,.page-content{max-width:100vw!important;overflow-x:hidden!important}
+  .work-page,.cmp-page,.p,.gps-page,.payroll-page,.adjust-page,.attendance-page,
+  .commission-page,.staff-page,.permission-page,.qr-form-page,.qr-page,.salary-page,
+  .scan-page,.setting-form-page,.setting-page{width:100%!important;max-width:100%!important;padding:8px!important;margin:0!important}
+
+  .form-card,.card,.c,.section-card,.filter-card,.table-card-custom,.commission-table-card,
+  .salary-table-card,.payroll-card,.gps-card,.scan-card,.profile-card,.staff-card,.qr-card{
+    width:100%!important;max-width:100%!important;min-width:0!important;border-radius:18px!important;padding:12px!important;margin-left:0!important;margin-right:0!important
+  }
+
+  .page-top,.page-head,.work-head,.head,.payroll-head,.commission-head,.salary-head,
+  .section-head,.staff-head,.branch-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
+
+  .top-actions,.form-actions,.salary-actions,.button-grid,.scan-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;width:100%!important}
+  .top-actions>*:only-child,.form-actions>*:only-child{grid-column:1/-1}
+
+  h1{font-size:22px!important;line-height:1.18!important;margin:0!important}
+  h2{font-size:18px!important}
+  p{overflow-wrap:anywhere}
+
+  form{max-width:100%!important;min-width:0!important}
+  .form,.add-form,.filter,.filters,.commission-filter,.salary-filter,.gps-form,.adjust-form,
+  .permission-form,.qr-form,.setting-form,.scan-form{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;width:100%!important;max-width:100%!important
+  }
+
+  .form>h1,.form>h2,.form>h3,.form>p,.form>.hint-box,.form>.form-actions,
+  .add-form>h1,.add-form>h2,.add-form>h3,.add-form>p,.add-form>.hint-box,.add-form>.form-actions,
+  .gps-form>.quick-box,.gps-form>.hint-box,.gps-form>.form-actions,
+  .adjust-form>.hint-box,.adjust-form>.form-actions,
+  .permission-form>textarea,.permission-form>label:has(textarea),.permission-form>label:has(input[type=file]),.permission-form>.form-actions,
+  .setting-form>.selected-staff-box,.setting-form>.hint-box,.setting-form>.form-actions,
+  .scan-form>.gps-box,.scan-form>.scan-actions,.scan-form>.small-note,
+  .form>button[type=submit]{grid-column:1/-1!important}
+
+  .grid-2,.grid-3,.two,.g,.summary-grid,.commission-stat-grid,.salary-stat-grid,.info-grid{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important
+  }
+
+  label,.fake-label,.field-group{min-width:0!important;width:100%!important;margin:0!important;font-size:12px!important;font-weight:900!important}
+  input,textarea,select,button,a{max-width:100%}
+  input:not([type=checkbox]):not([type=radio]),textarea,select,.popup-field-btn,.bubu-smart-field{
+    width:100%!important;min-width:0!important;min-height:44px!important;border-radius:13px!important
+  }
+  textarea{min-height:92px!important;resize:vertical}
+  button,.main-btn,.soft-btn,.submit-btn,.cancel-btn,.save-btn,.dark-btn,.clear-btn,.salary-btn,.commission-btn,.payroll-btn{
+    min-height:44px!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;padding:9px 11px!important;white-space:normal!important
+  }
+
+  .table-wrap,.table,.commission-table-card,.salary-table-card{width:100%!important;max-width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}
+  table{max-width:none!important}
+
+  .bubu-original-control{position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important;min-height:1px!important;padding:0!important;border:0!important}
+  .bubu-smart-wrap{width:100%;min-width:0}
+  .bubu-smart-field{border:1.5px solid #e5daf6;background:#fff;color:#17152f;padding:0 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:900;box-shadow:0 4px 14px rgba(82,52,140,.05)}
+  .bubu-smart-field span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+  .bubu-smart-field b{flex:0 0 auto;font-size:15px}
+  .bubu-smart-field:focus{outline:3px solid rgba(142,99,255,.16);border-color:#8e63ff}
+}
+
+@media (max-width:390px){
+  .form,.add-form,.filter,.filters,.commission-filter,.salary-filter,.gps-form,.adjust-form,
+  .permission-form,.qr-form,.setting-form,.scan-form,.grid-2,.grid-3,.two,.g,
+  .top-actions,.form-actions,.salary-actions,.button-grid,.scan-actions{
+    grid-template-columns:1fr!important
+  }
+  .summary-grid,.commission-stat-grid,.salary-stat-grid,.info-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .form>* ,.add-form>* ,.filter>* ,.filters>* ,.commission-filter>* ,.salary-filter>* ,.gps-form>* ,.adjust-form>* ,.permission-form>* ,.qr-form>* ,.setting-form>* ,.scan-form>*{grid-column:auto!important}
+}
+
+.bubu-picker-backdrop{position:fixed;inset:0;background:rgba(17,12,35,.46);backdrop-filter:blur(3px);z-index:99998;display:none}
+.bubu-picker-backdrop.show{display:block}
+.bubu-picker-sheet{position:fixed;z-index:99999;left:50%;top:50%;transform:translate(-50%,-46%) scale(.98);width:min(430px,calc(100vw - 22px));max-height:min(78vh,650px);background:#fff;border-radius:24px;box-shadow:0 24px 80px rgba(20,12,50,.3);padding:14px;opacity:0;pointer-events:none;transition:.18s ease;display:flex;flex-direction:column;gap:10px}
+.bubu-picker-sheet.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+.bubu-picker-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.bubu-picker-head h3{margin:0;font-size:18px;color:#17152f}
+.bubu-picker-close{width:38px;height:38px;border:0;border-radius:12px;background:#f4efff;color:#6d4ddd;font-size:20px;font-weight:900}
+.bubu-picker-search,.bubu-picker-native{width:100%;height:46px;border:1.5px solid #e5daf6;border-radius:13px;padding:0 12px;font-weight:800;font-size:15px;background:#fff}
+.bubu-picker-options{overflow:auto;display:grid;gap:7px;padding:2px;max-height:50vh}
+.bubu-picker-option{width:100%;min-height:46px;border:1px solid #eee3f7;border-radius:14px;background:#fff;padding:10px 12px;text-align:left;font-weight:900;color:#312846;display:flex;justify-content:space-between;align-items:center}
+.bubu-picker-option.active{background:linear-gradient(135deg,#8e63ff,#bd69e9);color:#fff;border-color:transparent}
+.bubu-picker-confirm{height:46px;border:0;border-radius:14px;background:linear-gradient(135deg,#8e63ff,#ff8464);color:#fff;font-weight:1000;font-size:15px}
+.bubu-picker-empty{text-align:center;padding:24px;color:#84798f;font-weight:800}
+@media(max-width:600px){.bubu-picker-sheet{top:auto;bottom:8px;transform:translateX(-50%) translateY(110%);width:calc(100vw - 16px);border-radius:24px 24px 18px 18px;max-height:82vh}.bubu-picker-sheet.show{transform:translateX(-50%) translateY(0)}}
+</style>
+
+<script id="bubu-phone-popup-v3-js">
+(function(){
+  function textOfOption(o){ return (o.textContent || '').trim(); }
+  function closePicker(){
+    document.querySelectorAll('.bubu-picker-backdrop,.bubu-picker-sheet').forEach(function(el){el.remove();});
+    document.body.style.overflow='';
+  }
+  function shell(title){
+    closePicker();
+    var bg=document.createElement('div'); bg.className='bubu-picker-backdrop show'; bg.onclick=closePicker;
+    var sh=document.createElement('div'); sh.className='bubu-picker-sheet show';
+    sh.innerHTML='<div class="bubu-picker-head"><h3></h3><button type="button" class="bubu-picker-close">×</button></div>';
+    sh.querySelector('h3').textContent=title || 'Select';
+    sh.querySelector('.bubu-picker-close').onclick=closePicker;
+    document.body.appendChild(bg); document.body.appendChild(sh); document.body.style.overflow='hidden';
+    return sh;
+  }
+  function enhanceSelect(sel){
+    if(sel.dataset.bubuEnhanced || sel.multiple || sel.size>1) return;
+    sel.dataset.bubuEnhanced='1';
+    var wrap=document.createElement('div'); wrap.className='bubu-smart-wrap';
+    var btn=document.createElement('button'); btn.type='button'; btn.className='bubu-smart-field';
+    var icon='⌄';
+    function refresh(){
+      var opt=sel.options[sel.selectedIndex];
+      btn.innerHTML='<span></span><b>'+icon+'</b>';
+      btn.querySelector('span').textContent=opt?textOfOption(opt):'Select';
+    }
+    sel.parentNode.insertBefore(wrap,sel); wrap.appendChild(sel); wrap.appendChild(btn); sel.classList.add('bubu-original-control'); refresh();
+    btn.onclick=function(){
+      var title=(sel.closest('label,.fake-label,.field-group')?.childNodes[0]?.textContent || sel.name || 'Select').trim();
+      var sh=shell(title);
+      var opts=[].slice.call(sel.options);
+      if(opts.length>6){
+        var search=document.createElement('input'); search.className='bubu-picker-search'; search.placeholder='Search...'; sh.appendChild(search);
+      }
+      var list=document.createElement('div'); list.className='bubu-picker-options'; sh.appendChild(list);
+      function draw(q){
+        list.innerHTML=''; var found=0;
+        opts.forEach(function(o){
+          var label=textOfOption(o); if(q && label.toLowerCase().indexOf(q.toLowerCase())<0) return; found++;
+          var ob=document.createElement('button'); ob.type='button'; ob.className='bubu-picker-option'+(o.selected?' active':'');
+          ob.innerHTML='<span></span><b>'+(o.selected?'✓':'')+'</b>'; ob.querySelector('span').textContent=label;
+          ob.onclick=function(){ sel.value=o.value; sel.dispatchEvent(new Event('change',{bubbles:true})); refresh(); closePicker(); };
+          list.appendChild(ob);
+        });
+        if(!found) list.innerHTML='<div class="bubu-picker-empty">No option found</div>';
+      }
+      draw(''); var s=sh.querySelector('.bubu-picker-search'); if(s) s.oninput=function(){draw(s.value)};
+    };
+    sel.addEventListener('change',refresh);
+  }
+  function enhanceDateTime(inp){
+    if(inp.dataset.bubuEnhanced) return; inp.dataset.bubuEnhanced='1';
+    var type=inp.type, wrap=document.createElement('div'); wrap.className='bubu-smart-wrap';
+    var btn=document.createElement('button'); btn.type='button'; btn.className='bubu-smart-field';
+    function display(){
+      var value=inp.value, label=value||('Select '+(type==='date'?'Date':'Time'));
+      if(value && type==='date'){var p=value.split('-'); if(p.length===3) label=p[1]+'/'+p[2]+'/'+p[0];}
+      btn.innerHTML='<span></span><b>'+(type==='date'?'📅':'🕘')+'</b>'; btn.querySelector('span').textContent=label;
+    }
+    inp.parentNode.insertBefore(wrap,inp); wrap.appendChild(inp); wrap.appendChild(btn); inp.classList.add('bubu-original-control'); display();
+    btn.onclick=function(){
+      var title=type==='date'?'Select Date':'Select Time', sh=shell(title);
+      var picker=document.createElement('input'); picker.type=type; picker.className='bubu-picker-native'; picker.value=inp.value; sh.appendChild(picker);
+      var ok=document.createElement('button'); ok.type='button'; ok.className='bubu-picker-confirm'; ok.textContent='Confirm'; sh.appendChild(ok);
+      ok.onclick=function(){ if(picker.value){inp.value=picker.value; inp.dispatchEvent(new Event('change',{bubbles:true})); display();} closePicker(); };
+      setTimeout(function(){try{picker.showPicker && picker.showPicker()}catch(e){}},120);
+    };
+    inp.addEventListener('change',display);
+  }
+  function run(){
+    if(window.innerWidth>900) return;
+    document.querySelectorAll('select').forEach(enhanceSelect);
+    document.querySelectorAll('input[type="date"],input[type="time"]').forEach(enhanceDateTime);
+  }
+  document.addEventListener('DOMContentLoaded',run);
+  window.addEventListener('resize',function(){if(window.innerWidth<=900) run();});
+})();
+</script>
+
 {% endblock %}
