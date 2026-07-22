@@ -6371,12 +6371,19 @@ function filterPOSProducts(query){
 
     cards.forEach(function(card){
         const matches = !normalizedQuery || getPOSCardSearchText(card).includes(normalizedQuery);
+
+        /*
+         * Use inline display instead of only the HTML hidden attribute.
+         * Some POS card CSS uses display:grid/flex and can override hidden.
+         */
         card.hidden = !matches;
+        card.style.display = matches ? "" : "none";
 
         const modal = card.nextElementSibling;
         if(modal && modal.classList && modal.classList.contains("variant-modal")){
             if(!matches){
                 modal.classList.remove("active");
+                modal.style.display = "none";
             }
         }
 
@@ -8704,6 +8711,14 @@ function posCartAction(url){
         return false;
     }
 
+    /*
+     * Save the exact cashier position before changing the cart.
+     * Do not focus the search field after a mouse/touch product selection,
+     * because focusing it can pull the page back to the top.
+     */
+    const savedScrollX = window.scrollX;
+    const savedScrollY = window.scrollY;
+
     fetch(url, {
         method: "POST",
         credentials: "same-origin",
@@ -8735,17 +8750,24 @@ function posCartAction(url){
         syncSelectedItemsFromCart();
         closeAllVariantModals();
 
-        const searchBox = document.getElementById("posSearch");
-        if(searchBox){
-            try{
-                searchBox.focus({preventScroll:true});
-            }catch(error){
-                searchBox.focus();
-            }
-        }
+        /*
+         * Restore twice: once immediately and once after the browser finishes
+         * recalculating the cart/product layout.
+         */
+        window.scrollTo(savedScrollX, savedScrollY);
+        requestAnimationFrame(function(){
+            window.scrollTo(savedScrollX, savedScrollY);
+            requestAnimationFrame(function(){
+                window.scrollTo(savedScrollX, savedScrollY);
+            });
+        });
     })
     .catch(function(error){
+        window.scrollTo(savedScrollX, savedScrollY);
         alert((error && error.message) ? error.message : "Cart update failed. Please refresh and try again.");
+        requestAnimationFrame(function(){
+            window.scrollTo(savedScrollX, savedScrollY);
+        });
     });
 
     return false;
