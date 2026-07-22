@@ -63,22 +63,6 @@
                 </div>
             </div>
 
-            <form method="get" id="posSearchForm" class="scan-box">
-                <input
-                    type="text"
-                    name="q"
-                    id="posSearch"
-                    value="{{ request.GET.q }}"
-                    placeholder="Scan barcode or type product name..."
-                    autocomplete="off"
-                    autofocus
-                >
-
-                {% if selected_type %}
-                    <input type="hidden" name="type" value="{{ selected_type }}">
-                {% endif %}
-            </form>
-
         </div>
 
         <img src="{% static 'img/pos-hero.png' %}" class="pos-hero-img" alt="POS">
@@ -96,6 +80,23 @@
             </a>
         {% endfor %}
     </div>
+
+    <!-- Search / barcode input is between item types and item list -->
+    <form method="get" id="posSearchForm" class="scan-box pos-search-between">
+        <input
+            type="text"
+            name="q"
+            id="posSearch"
+            value="{{ request.GET.q }}"
+            placeholder="Scan barcode or type product name, then press Enter..."
+            autocomplete="off"
+            autofocus
+        >
+
+        {% if selected_type %}
+            <input type="hidden" name="type" value="{{ selected_type }}">
+        {% endif %}
+    </form>
 
     <div class="pos-layout">
 
@@ -6018,6 +6019,16 @@ a{
    - Product types use all free width and wrap
    - Cart remains beside products in its original area
    ================================================== */
+.pos-search-between{
+    width:100%;
+    max-width:none;
+    margin:14px 0 22px;
+}
+
+.pos-search-between input{
+    width:100%;
+}
+
 .pos-type-row-full{
     width:100%;
     margin:18px 0 24px;
