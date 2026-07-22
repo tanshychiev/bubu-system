@@ -6299,6 +6299,181 @@ a{
     }
 }
 
+
+/* ==================================================
+   FINAL CART ROW DESIGN — match requested second image
+   ================================================== */
+#posCartPanel .cart-list{
+    max-height:440px !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+    padding-right:5px !important;
+}
+
+#posCartPanel .cart-item.cart-item-compact{
+    display:block !important;
+    min-height:0 !important;
+    padding:10px 0 12px !important;
+    border-bottom:1px dashed #ead9d5 !important;
+}
+
+#posCartPanel .cart-item-top{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) 64px !important;
+    gap:10px !important;
+    align-items:start !important;
+}
+
+#posCartPanel .cart-title-block{
+    min-width:0 !important;
+    padding-left:78px !important;
+}
+
+#posCartPanel .cart-product-title{
+    display:inline !important;
+    max-width:100% !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+    color:#17152f !important;
+    font-size:13px !important;
+    line-height:1.2 !important;
+}
+
+#posCartPanel .cart-variant-text{
+    display:inline !important;
+    margin-left:6px !important;
+    color:#8d8494 !important;
+    font-size:9px !important;
+    font-weight:800 !important;
+    white-space:nowrap !important;
+}
+
+#posCartPanel .cart-title-block .cart-type-chip{
+    display:block !important;
+    width:max-content !important;
+    max-width:100% !important;
+    margin-top:4px !important;
+    padding:3px 7px !important;
+    border-radius:7px !important;
+    font-size:8px !important;
+}
+
+#posCartPanel .cart-item-bottom{
+    display:grid !important;
+    grid-template-columns:68px minmax(0,1fr) !important;
+    gap:10px !important;
+    align-items:center !important;
+    margin-top:-2px !important;
+}
+
+#posCartPanel .cart-img{
+    width:68px !important;
+    height:76px !important;
+    min-width:68px !important;
+    min-height:76px !important;
+    margin:0 !important;
+    border-radius:10px !important;
+    overflow:hidden !important;
+    background:#fff8f4 !important;
+}
+
+#posCartPanel .cart-img img{
+    width:100% !important;
+    height:100% !important;
+    max-width:none !important;
+    max-height:none !important;
+    object-fit:contain !important;
+    object-position:center !important;
+    transform:none !important;
+}
+
+#posCartPanel .cart-bottom-main{
+    min-width:0 !important;
+}
+
+#posCartPanel .cart-unit-row{
+    display:flex !important;
+    align-items:center !important;
+    gap:12px !important;
+    flex-wrap:wrap !important;
+}
+
+#posCartPanel .cart-unit-price{
+    color:#6f6777 !important;
+    font-size:10px !important;
+    font-weight:900 !important;
+}
+
+#posCartPanel .qty-box{
+    display:grid !important;
+    grid-template-columns:28px 34px 28px !important;
+    gap:4px !important;
+    margin:0 !important;
+}
+
+#posCartPanel .qty-box a,
+#posCartPanel .qty-box span{
+    width:100% !important;
+    height:28px !important;
+    min-height:28px !important;
+    border-radius:8px !important;
+    font-size:13px !important;
+}
+
+#posCartPanel .stock-alert,
+#posCartPanel .stock-ok{
+    display:inline-flex !important;
+    width:max-content !important;
+    max-width:100% !important;
+    margin-top:6px !important;
+    padding:4px 8px !important;
+    border-radius:999px !important;
+    font-size:8px !important;
+    white-space:nowrap !important;
+}
+
+#posCartPanel .cart-side{
+    width:64px !important;
+    min-width:64px !important;
+    padding:0 !important;
+    margin:0 !important;
+    align-self:start !important;
+    text-align:right !important;
+}
+
+#posCartPanel .cart-side strong{
+    display:block !important;
+    color:#ff4f6d !important;
+    font-size:14px !important;
+    line-height:1.2 !important;
+}
+
+#posCartPanel .remove-btn{
+    display:inline-flex !important;
+    min-height:28px !important;
+    margin-top:6px !important;
+    padding:0 8px !important;
+    align-items:center !important;
+    justify-content:center !important;
+    border-radius:9px !important;
+    font-size:8px !important;
+}
+
+@media(max-width:900px){
+    #posCartPanel .cart-title-block{
+        padding-left:78px !important;
+    }
+
+    #posCartPanel .cart-item-top{
+        grid-template-columns:minmax(0,1fr) 64px !important;
+    }
+
+    #posCartPanel .cart-item-bottom{
+        grid-template-columns:68px minmax(0,1fr) !important;
+    }
+}
+
 </style>
 
 <script>
