@@ -1,160 +1,159 @@
 <div class="cart-card">
-            <div class="cart-head">
-                <div>
-                    <h2>🛒 Cart</h2>
-                    {% if current_branch %}
-                        <small class="cart-branch">Shop: {{ current_branch.name }}</small>
-                    {% endif %}
-                </div>
-
-                <div class="cart-head-actions">
-                    <button type="button" class="customer-display-btn" onclick="openCustomerDisplayTab()">
-                        🖥️ Open Customer Display
-                    </button>
-
-                    {% if cart_items %}
-                        <a href="{% url 'pos_clear_cart' %}" class="clear-btn pos-safe-nav pos-cart-action">Clear</a>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="cart-list">
-                {% for cart_item in cart_items %}
-                    <div class="cart-item">
-                        <div class="cart-img">
-                            {% if cart_item.variant and cart_item.variant.image %}
-                                <img src="{{ cart_item.variant.image.url }}" alt="{{ cart_item.variant.label|default:cart_item.item.name }}">
-                            {% elif cart_item.item.image %}
-                                <img src="{{ cart_item.item.image.url }}" alt="{{ cart_item.item.name }}">
-                            {% else %}
-                                <div>🐾</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="cart-main">
-                            <div class="cart-name">
-                                <strong>{{ cart_item.item.name }}</strong>
-
-                                {% if cart_item.variant %}
-                                    <small>
-                                        {{ cart_item.variant.label|default:"Variant" }}
-                                        {% if cart_item.variant.size %} · {{ cart_item.variant.size }}{% endif %}
-                                        {% if cart_item.variant.color %} · {{ cart_item.variant.color }}{% endif %}
-                                    </small>
-                                {% endif %}
-
-                                {% if cart_item.item_type_name %}
-                                    <small class="cart-type-chip">{{ cart_item.item_type_name }}</small>
-                                {% endif %}
-
-                                <small>${{ cart_item.price|default:cart_item.item.sale_price }}</small>
-
-                                {% if not cart_item.is_service %}
-                                    {% if cart_item.branch_stock < cart_item.quantity %}
-                                        <small class="stock-alert">⚠ Stock in this shop: {{ cart_item.branch_stock }}</small>
-                                    {% else %}
-                                        <small class="stock-ok">Stock in this shop: {{ cart_item.branch_stock }}</small>
-                                    {% endif %}
-                                {% endif %}
-                            </div>
-
-                            <div class="qty-box">
-                                <a href="{% url 'pos_minus_cart' cart_item.cart_key %}" class="pos-cart-action">−</a>
-                                <span>{{ cart_item.quantity }}</span>
-                                <a href="{% url 'pos_plus_cart' cart_item.cart_key %}" class="pos-cart-action">＋</a>
-                            </div>
-                        </div>
-
-                        <div class="cart-side">
-                            <strong>${{ cart_item.total }}</strong>
-                            <a href="{% url 'pos_remove_cart' cart_item.cart_key %}" class="remove-btn pos-cart-action">Remove</a>
-                        </div>
-                    </div>
-                {% empty %}
-                    <div class="empty-cart">🛒 Cart is empty</div>
-                {% endfor %}
-            </div>
-
-            {% if selected_pet_sale %}
-            <div class="selected-pet-sale-card">
-                <div class="selected-pet-head">
-                    <div>
-                        <strong>🐶 Pet Sale Attached</strong>
-                        <span>Pet Sale #{{ selected_pet_sale.id }} will be paid together with POS.</span>
-                    </div>
-                    <a href="{% url 'pet_sale_detail' selected_pet_sale.id %}" target="_blank">View</a>
-                </div>
-
-                <div class="selected-pet-grid">
-                    <div>
-                        <span>Full Price</span>
-                        <strong>${{ selected_pet_full_price|floatformat:2 }}</strong>
-                    </div>
-                    <div>
-                        <span>Deposit / Paid</span>
-                        <strong>${{ selected_pet_paid|floatformat:2 }}</strong>
-                    </div>
-                    <div class="pay-now">
-                        <span>Pay Now</span>
-                        <strong>${{ selected_pet_remaining|floatformat:2 }}</strong>
-                    </div>
-                </div>
-
-                <div class="selected-pet-note">
-                    Customer pays one total. System will print normal POS receipt and pet warranty later.
-                </div>
-            </div>
+    <div class="cart-head">
+        <div>
+            <h2>🛒 Cart</h2>
+            {% if current_branch %}
+                <small class="cart-branch">Shop: {{ current_branch.name }}</small>
             {% endif %}
-
-            <div class="customer-bill-summary">
-                <div class="bill-title">Customer Bill Summary</div>
-
-                <div class="bill-row">
-                    <span>🛍️ Products / Accessories</span>
-                    <strong>${{ product_total|default:"0.00" }}</strong>
-                </div>
-
-                <div class="bill-row">
-                    <span>✂️ Grooming</span>
-                    <strong>${{ grooming_total|default:"0.00" }}</strong>
-                </div>
-
-                <div class="bill-row">
-                    <span>🎀 Services</span>
-                    <strong>${{ service_total|default:"0.00" }}</strong>
-                </div>
-
-                {% if selected_pet_sale %}
-                <div class="bill-row pet-combined-row">
-                    <span>🐶 Pet Sale #{{ selected_pet_sale.id }}</span>
-                    <strong>${{ selected_pet_remaining|floatformat:2 }}</strong>
-                </div>
-
-                <div class="bill-row pet-sub-row">
-                    <span>Pet Full Price</span>
-                    <strong>${{ selected_pet_full_price|floatformat:2 }}</strong>
-                </div>
-
-                <div class="bill-row pet-sub-row">
-                    <span>Pet Deposit / Paid</span>
-                    <strong>-${{ selected_pet_paid|floatformat:2 }}</strong>
-                </div>
-                {% endif %}
-
-            </div>
-
-            <div class="summary">
-                <div><span>Subtotal</span><strong id="cartSubtotalShow">${{ subtotal|default:"0.00" }}</strong></div>
-                <div><span>Discount</span><strong id="cartDiscountShow">-$0.00</strong></div>
-                <div><span>Tax</span><strong id="cartTaxShow">$0.00</strong></div>
-            </div>
-
-            <div class="grand-total">
-                <span>Customer Pay Total</span>
-                <strong id="cartTotalShow">${{ total|default:"0.00" }}</strong>
-            </div>
-
-            <button type="button" class="checkout-btn" onclick="openPaymentModal()" {% if not cart_items and not selected_pet_sale %}disabled{% endif %}>
-                Checkout
-            </button>
         </div>
+
+        <div class="cart-head-actions">
+            <button type="button" class="customer-display-btn" onclick="openCustomerDisplayTab()">
+                🖥️ Open Customer Display
+            </button>
+
+            {% if cart_items %}
+                <a href="{% url 'pos_clear_cart' %}" class="clear-btn pos-safe-nav pos-cart-action">Clear</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="cart-list">
+        {% for cart_item in cart_items %}
+            <div class="cart-item">
+                <div class="cart-img">
+                    {% if cart_item.variant and cart_item.variant.image %}
+                        <img src="{{ cart_item.variant.image.url }}" alt="{{ cart_item.variant.label|default:cart_item.item.name }}">
+                    {% elif cart_item.item.image %}
+                        <img src="{{ cart_item.item.image.url }}" alt="{{ cart_item.item.name }}">
+                    {% else %}
+                        <div>🐾</div>
+                    {% endif %}
+                </div>
+
+                <div class="cart-main">
+                    <div class="cart-name">
+                        <strong>{{ cart_item.item.name }}</strong>
+
+                        {% if cart_item.variant %}
+                            <small>
+                                {{ cart_item.variant.label|default:"Variant" }}
+                                {% if cart_item.variant.size %} · {{ cart_item.variant.size }}{% endif %}
+                                {% if cart_item.variant.color %} · {{ cart_item.variant.color }}{% endif %}
+                            </small>
+                        {% endif %}
+
+                        {% if cart_item.item_type_name %}
+                            <small class="cart-type-chip">{{ cart_item.item_type_name }}</small>
+                        {% endif %}
+
+                        <small>${{ cart_item.price|default:cart_item.item.sale_price }}</small>
+
+                        {% if not cart_item.is_service %}
+                            {% if cart_item.branch_stock < cart_item.quantity %}
+                                <small class="stock-alert">⚠ Stock in this shop: {{ cart_item.branch_stock }}</small>
+                            {% else %}
+                                <small class="stock-ok">Stock in this shop: {{ cart_item.branch_stock }}</small>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+
+                    <div class="qty-box">
+                        <a href="{% url 'pos_minus_cart' cart_item.cart_key %}" class="pos-cart-action">−</a>
+                        <span>{{ cart_item.quantity }}</span>
+                        <a href="{% url 'pos_plus_cart' cart_item.cart_key %}" class="pos-cart-action">＋</a>
+                    </div>
+                </div>
+
+                <div class="cart-side">
+                    <strong>${{ cart_item.total }}</strong>
+                    <a href="{% url 'pos_remove_cart' cart_item.cart_key %}" class="remove-btn pos-cart-action">Remove</a>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-cart">🛒 Cart is empty</div>
+        {% endfor %}
+    </div>
+
+    {% if selected_pet_sale %}
+    <div class="selected-pet-sale-card">
+        <div class="selected-pet-head">
+            <div>
+                <strong>🐶 Pet Sale Attached</strong>
+                <span>Pet Sale #{{ selected_pet_sale.id }} will be paid together with POS.</span>
+            </div>
+            <a href="{% url 'pet_sale_detail' selected_pet_sale.id %}" target="_blank">View</a>
+        </div>
+
+        <div class="selected-pet-grid">
+            <div>
+                <span>Full Price</span>
+                <strong>${{ selected_pet_full_price|floatformat:2 }}</strong>
+            </div>
+            <div>
+                <span>Deposit / Paid</span>
+                <strong>${{ selected_pet_paid|floatformat:2 }}</strong>
+            </div>
+            <div class="pay-now">
+                <span>Pay Now</span>
+                <strong>${{ selected_pet_remaining|floatformat:2 }}</strong>
+            </div>
+        </div>
+
+        <div class="selected-pet-note">
+            Customer pays one total. System will print normal POS receipt and pet warranty later.
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="customer-bill-summary">
+        <div class="bill-title">Customer Bill Summary</div>
+
+        <div class="bill-row">
+            <span>🛍️ Products / Accessories</span>
+            <strong>${{ product_total|default:"0.00" }}</strong>
+        </div>
+
+        <div class="bill-row">
+            <span>✂️ Grooming</span>
+            <strong>${{ grooming_total|default:"0.00" }}</strong>
+        </div>
+
+        <div class="bill-row">
+            <span>🎀 Services</span>
+            <strong>${{ service_total|default:"0.00" }}</strong>
+        </div>
+
+        {% if selected_pet_sale %}
+        <div class="bill-row pet-combined-row">
+            <span>🐶 Pet Sale #{{ selected_pet_sale.id }}</span>
+            <strong>${{ selected_pet_remaining|floatformat:2 }}</strong>
+        </div>
+
+        <div class="bill-row pet-sub-row">
+            <span>Pet Full Price</span>
+            <strong>${{ selected_pet_full_price|floatformat:2 }}</strong>
+        </div>
+
+        <div class="bill-row pet-sub-row">
+            <span>Pet Deposit / Paid</span>
+            <strong>-${{ selected_pet_paid|floatformat:2 }}</strong>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="summary">
+        <div><span>Subtotal</span><strong id="cartSubtotalShow">${{ subtotal|default:"0.00" }}</strong></div>
+        <div><span>Discount</span><strong id="cartDiscountShow">-$0.00</strong></div>
+        <div><span>Tax</span><strong id="cartTaxShow">$0.00</strong></div>
+    </div>
+
+    <div class="grand-total">
+        <span>Customer Pay Total</span>
+        <strong id="cartTotalShow">${{ total|default:"0.00" }}</strong>
+    </div>
+
+    <button type="button" class="checkout-btn" onclick="openPaymentModal()" {% if not cart_items and not selected_pet_sale %}disabled{% endif %}>
+        Checkout
+    </button>
+</div>

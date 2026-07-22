@@ -92,7 +92,13 @@
             </div>
         </div>
 
-        <img src="{% static 'img/pos-hero.png' %}" class="pos-hero-img" alt="POS">
+        <div class="pos-top-side">
+            <img src="{% static 'img/pos-hero.png' %}" class="pos-hero-img" alt="POS">
+
+            <div id="posCartPanel">
+                {% include "pos/partials/cart_panel.html" %}
+            </div>
+        </div>
     </div>
 
     <div class="pos-layout">
@@ -230,10 +236,6 @@
                     </div>
                 {% endfor %}
             </div>
-        </div>
-
-        <div id="posCartPanel">
-            {% include "pos/partials/cart_panel.html" %}
         </div>
 
     </div>
@@ -1144,11 +1146,22 @@ a{
    TOP
 ========================= */
 .pos-top{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    gap:22px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 430px;
+    align-items:start;
+    gap:24px;
     margin-bottom:26px;
+}
+
+.pos-top-side{
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+}
+
+.pos-top-side #posCartPanel{
+    min-width:0;
 }
 
 .pos-top h1{
@@ -1444,8 +1457,9 @@ a{
 }
 
 .pos-hero-img{
-    width:320px;
-    max-width:32%;
+    width:100%;
+    max-width:320px;
+    align-self:center;
     object-fit:contain;
 }
 
@@ -1453,10 +1467,7 @@ a{
    MAIN LAYOUT
 ========================= */
 .pos-layout{
-    display:grid;
-    grid-template-columns:minmax(0,1.45fr) 430px;
-    gap:24px;
-    align-items:start;
+    display:block;
 }
 
 .product-area h2{
@@ -1568,7 +1579,7 @@ a{
 ========================= */
 .cart-card{
     position:sticky;
-    top:18px;
+    top:12px;
     background:white;
     border:2px solid #f5e0d8;
     border-radius:30px;
@@ -3001,6 +3012,10 @@ a{
     .pos-top{
         display:block;
         margin-bottom:22px;
+    }
+
+    .pos-top-side{
+        margin-top:16px;
     }
 
     .pos-top h1{
@@ -6093,7 +6108,7 @@ document.addEventListener("submit", function(event){
 
 window.addEventListener("load", function(){
     if(searchInput){
-        searchInput.focus();
+        focusPOSSearchWithoutScroll();
     }
 
     formatDeliveryExpense();
@@ -6139,19 +6154,104 @@ document.addEventListener("click", function(e){
 });
 
 let typingTimer = null;
+let posScanBusy = false;
+
+function focusPOSSearchWithoutScroll(){
+    if(!searchInput){ return; }
+
+    try{
+        searchInput.focus({preventScroll:true});
+    }catch(error){
+        searchInput.focus();
+    }
+}
+
+function posScanBarcode(value){
+    const code = String(value || "").trim();
+
+    if(!code || posScanBusy){
+        return;
+    }
+
+    posScanBusy = true;
+    clearTimeout(typingTimer);
+
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    const url = new URL(searchForm.action || window.location.href, window.location.origin);
+    url.searchParams.set("q", code);
+
+    const selectedType = searchForm.querySelector('input[name="type"]');
+    if(selectedType && selectedType.value){
+        url.searchParams.set("type", selectedType.value);
+    }
+
+    fetch(url.toString(), {
+        method:"GET",
+        credentials:"same-origin",
+        headers:{
+            "X-Requested-With":"XMLHttpRequest"
+        }
+    })
+    .then(function(response){
+        return response.json().then(function(data){
+            if(!response.ok){ throw data; }
+            return data;
+        });
+    })
+    .then(function(data){
+        if(!data.success){
+            throw data;
+        }
+
+        const panel = document.getElementById("posCartPanel");
+        if(panel && data.cart_html){
+            panel.innerHTML = data.cart_html;
+        }
+
+        setPOSTotalsFromAjax(data);
+        syncSelectedItemsFromCart();
+        closeAllVariantModals();
+
+        searchInput.value = "";
+        window.scrollTo(scrollX, scrollY);
+        focusPOSSearchWithoutScroll();
+    })
+    .catch(function(error){
+        alert((error && error.message) ? error.message : "Barcode not found.");
+        window.scrollTo(scrollX, scrollY);
+        focusPOSSearchWithoutScroll();
+    })
+    .finally(function(){
+        posScanBusy = false;
+    });
+}
 
 if(searchInput){
     searchInput.addEventListener("input", function(){
         clearTimeout(typingTimer);
+
         typingTimer = setTimeout(function(){
-            searchForm.submit();
-        }, 450);
+            if(!posScanBusy && searchInput.value.trim()){
+                markPOSNormalNavigation();
+                searchForm.submit();
+            }
+        }, 650);
     });
 
     searchInput.addEventListener("keydown", function(e){
         if(e.key === "Enter"){
             e.preventDefault();
-            searchForm.submit();
+            clearTimeout(typingTimer);
+            posScanBarcode(searchInput.value);
+        }
+    });
+
+    searchForm.addEventListener("submit", function(e){
+        if(searchInput.value.trim()){
+            e.preventDefault();
+            clearTimeout(typingTimer);
+            posScanBarcode(searchInput.value);
         }
     });
 }
@@ -8251,6 +8351,9 @@ function posCartAction(url){
         return false;
     }
 
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+
     fetch(url, {
         method: "POST",
         credentials: "same-origin",
@@ -8282,13 +8385,13 @@ function posCartAction(url){
         syncSelectedItemsFromCart();
         closeAllVariantModals();
 
-        const searchBox = document.getElementById("posSearch");
-        if(searchBox){
-            searchBox.focus();
-        }
+        window.scrollTo(scrollX, scrollY);
+        focusPOSSearchWithoutScroll();
     })
     .catch(function(error){
         alert((error && error.message) ? error.message : "Cart update failed. Please refresh and try again.");
+        window.scrollTo(scrollX, scrollY);
+        focusPOSSearchWithoutScroll();
     });
 
     return false;

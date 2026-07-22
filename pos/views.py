@@ -708,6 +708,13 @@ def pos(request):
 
         if variant:
             _add_to_cart(request, variant.item, variant)
+
+            if _is_ajax(request):
+                return _cart_ajax_response(
+                    request,
+                    message=f"Added {variant.item.name} - {variant.display_name()}",
+                )
+
             messages.success(
                 request,
                 f"Added {variant.item.name} - {variant.display_name()}",
@@ -728,13 +735,33 @@ def pos(request):
             if active_variants.count() == 1:
                 variant = active_variants.first()
                 _add_to_cart(request, exact_item, variant)
+
+                if _is_ajax(request):
+                    return _cart_ajax_response(
+                        request,
+                        message=f"Added {exact_item.name}",
+                    )
+
                 messages.success(request, f"Added {exact_item.name}")
                 return redirect("pos")
 
             if active_variants.count() == 0 or is_service_item(exact_item):
                 _add_to_cart(request, exact_item, None)
+
+                if _is_ajax(request):
+                    return _cart_ajax_response(
+                        request,
+                        message=f"Added {exact_item.name}",
+                    )
+
                 messages.success(request, f"Added {exact_item.name}")
                 return redirect("pos")
+
+    if q and _is_ajax(request):
+        return JsonResponse({
+            "success": False,
+            "message": f"Barcode or SKU not found: {raw_q}",
+        }, status=404)
 
     # ==================================================
     # FILTER PRODUCT LIST
