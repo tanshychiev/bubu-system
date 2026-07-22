@@ -6633,6 +6633,58 @@ a{
     }
 }
 
+
+/* ==================================================
+   CART V14 — trash icon + more space before total
+   ================================================== */
+#posCartPanel .cart-price-qty-row{
+    grid-template-columns:auto auto minmax(18px,1fr) auto auto !important;
+    column-gap:10px !important;
+}
+
+#posCartPanel .cart-line-total{
+    margin-left:10px !important;
+}
+
+#posCartPanel .trash-btn{
+    width:34px !important;
+    min-width:34px !important;
+    height:34px !important;
+    min-height:34px !important;
+    margin:0 !important;
+    padding:0 !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    border-radius:10px !important;
+    background:#fff0f2 !important;
+    color:#ff4f6d !important;
+    font-size:16px !important;
+    line-height:1 !important;
+    text-decoration:none !important;
+}
+
+#posCartPanel .trash-btn:hover{
+    background:#ffe3e8 !important;
+    transform:translateY(-1px);
+}
+
+@media(max-width:900px){
+    #posCartPanel .cart-price-qty-row{
+        grid-template-columns:auto auto minmax(14px,1fr) auto auto !important;
+        column-gap:8px !important;
+    }
+
+    #posCartPanel .cart-line-total{
+        margin-left:8px !important;
+    }
+
+    #posCartPanel .trash-btn{
+        grid-column:auto !important;
+        justify-self:end !important;
+    }
+}
+
 </style>
 
 <script>

@@ -62,7 +62,12 @@
 
                             <strong class="cart-line-total">${{ cart_item.total }}</strong>
 
-                            <a href="{% url 'pos_remove_cart' cart_item.cart_key %}" class="remove-btn pos-cart-action">Remove</a>
+                            <a
+                                href="{% url 'pos_remove_cart' cart_item.cart_key %}"
+                                class="remove-btn trash-btn pos-cart-action"
+                                aria-label="Remove item"
+                                title="Remove item"
+                            >🗑️</a>
                         </div>
 
                         {% if not cart_item.is_service %}
