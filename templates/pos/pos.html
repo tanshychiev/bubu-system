@@ -174,7 +174,7 @@
 
                             <div class="variant-list">
                                 {% for variant in item.variants.all|dictsort:"sale_price" %}
-                                    <a href="{% url 'pos_add_variant_cart' item.id variant.id %}" class="variant-row pos-cart-action">
+                                    <a href="{% url 'pos_add_variant_cart' item.id variant.id %}" class="variant-row pos-cart-action" data-sku="{{ variant.sku|default:''|escape }}" data-add-url="{% url 'pos_add_variant_cart' item.id variant.id %}">
                                         <div class="variant-left">
                                             <strong class="variant-title">
                                                 {{ variant.label|default:item.name }}
@@ -6068,6 +6068,13 @@ a{
         margin-top:20px;
     }
 }
+
+.product-area.pos-products-updating{
+    opacity:.58;
+    pointer-events:none;
+    transition:opacity .12s ease;
+}
+
 </style>
 
 <script>
@@ -6315,6 +6322,100 @@ if(searchInput){
         }
     });
 }
+
+
+/* ==================================================
+   FAST ITEM-TYPE FILTER — update products only
+   No full page reload / no BUBU loading screen
+   ================================================== */
+let posTypeFilterBusy = false;
+
+function setActiveTypeChip(clickedChip){
+    document.querySelectorAll(".type-chip").forEach(function(chip){
+        chip.classList.remove("active");
+    });
+
+    if(clickedChip){
+        clickedChip.classList.add("active");
+    }
+}
+
+function refreshBarcodeMapFromProductArea(){
+    /* Keep barcode scanning working after changing item type. */
+    document.querySelectorAll(".variant-row[data-sku][data-add-url]").forEach(function(row){
+        const sku = String(row.dataset.sku || "").trim().toLowerCase();
+        const url = String(row.dataset.addUrl || "").trim();
+
+        if(sku && url){
+            posBarcodeUrls[sku] = url;
+        }
+    });
+}
+
+function loadPOSItemType(url, clickedChip){
+    if(posTypeFilterBusy || !url){
+        return;
+    }
+
+    posTypeFilterBusy = true;
+    setActiveTypeChip(clickedChip);
+
+    const productArea = document.querySelector(".product-area");
+    if(productArea){
+        productArea.classList.add("pos-products-updating");
+    }
+
+    fetch(url, {
+        method:"GET",
+        credentials:"same-origin",
+        headers:{
+            "X-Requested-With":"XMLHttpRequest"
+        }
+    })
+    .then(function(response){
+        if(!response.ok){
+            throw new Error("Cannot load this item type.");
+        }
+        return response.text();
+    })
+    .then(function(html){
+        const parsed = new DOMParser().parseFromString(html, "text/html");
+        const newProductArea = parsed.querySelector(".product-area");
+        const currentProductArea = document.querySelector(".product-area");
+
+        if(!newProductArea || !currentProductArea){
+            throw new Error("Product list was not found.");
+        }
+
+        currentProductArea.replaceWith(newProductArea);
+        refreshBarcodeMapFromProductArea();
+        history.replaceState({}, "", url);
+        focusPOSSearchWithoutScroll();
+    })
+    .catch(function(error){
+        alert(error.message || "Cannot load this item type.");
+        window.location.href = url;
+    })
+    .finally(function(){
+        posTypeFilterBusy = false;
+        const currentProductArea = document.querySelector(".product-area");
+        if(currentProductArea){
+            currentProductArea.classList.remove("pos-products-updating");
+        }
+    });
+}
+
+document.addEventListener("click", function(event){
+    const chip = event.target.closest(".type-chip");
+
+    if(!chip){
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    loadPOSItemType(chip.href, chip);
+}, true);
 
 function openSwitchShopModal(){
     const modal = document.getElementById("switchShopModal");
