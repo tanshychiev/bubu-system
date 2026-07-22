@@ -6733,6 +6733,65 @@ a{
     }
 }
 
+
+/* ==================================================
+   CART V16 — fixed right alignment for total + trash
+   All totals line up even when values have different lengths
+   ================================================== */
+#posCartPanel .cart-price-qty-row{
+    display:grid !important;
+    grid-template-columns:auto auto minmax(18px,1fr) 72px 36px !important;
+    align-items:center !important;
+    width:100% !important;
+    column-gap:8px !important;
+}
+
+#posCartPanel .cart-unit-price{
+    justify-self:start !important;
+    white-space:nowrap !important;
+}
+
+#posCartPanel .qty-box{
+    justify-self:start !important;
+    margin:0 !important;
+}
+
+#posCartPanel .cart-line-total{
+    width:72px !important;
+    margin:0 !important;
+    justify-self:end !important;
+    text-align:right !important;
+    white-space:nowrap !important;
+    font-variant-numeric:tabular-nums !important;
+}
+
+#posCartPanel .trash-btn{
+    width:36px !important;
+    min-width:36px !important;
+    height:36px !important;
+    min-height:36px !important;
+    margin:0 !important;
+    justify-self:end !important;
+}
+
+@media(max-width:900px){
+    #posCartPanel .cart-price-qty-row{
+        grid-template-columns:auto auto minmax(12px,1fr) 68px 34px !important;
+        column-gap:7px !important;
+    }
+
+    #posCartPanel .cart-line-total{
+        width:68px !important;
+    }
+
+    #posCartPanel .trash-btn{
+        width:34px !important;
+        min-width:34px !important;
+        height:34px !important;
+        min-height:34px !important;
+    }
+}
+
 </style>
 
 <script>
