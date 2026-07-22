@@ -428,6 +428,35 @@ a { text-decoration:none !important; }
     flex-wrap:wrap;
 }
 
+.variant-chip-wrap {
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    max-width:100%;
+}
+
+.variant-print-btn {
+    width:27px;
+    height:27px;
+    flex:0 0 27px;
+    border-radius:8px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background:#f4edff;
+    border:1px solid #e2d5ff;
+    color:#7b5cff;
+    font-size:13px;
+    text-decoration:none;
+    transition:.2s;
+}
+
+.variant-print-btn:hover {
+    transform:translateY(-1px);
+    background:#e9dcff;
+    color:#6846e8;
+}
+
 .variant-chip {
     background:#fff8fb;
     border:1px solid #f0e5ee;
@@ -925,8 +954,16 @@ a { text-decoration:none !important; }
         font-size:6px;
     }
 
-    .variant-chip:nth-child(n+3){
+    .variant-chip-wrap:nth-child(n+3){
         display:none;
+    }
+
+    .variant-print-btn{
+        width:21px;
+        height:21px;
+        flex-basis:21px;
+        border-radius:6px;
+        font-size:9px;
     }
 
     .price-row{
@@ -2187,9 +2224,23 @@ body.inventory-detail-open{
 
             <div class="variant-list">
                 {% for variant in item.variants.all|slice:":3" %}
-                    <span class="variant-chip {% if variant.branch_stock_qty <= 0 %}low{% else %}good{% endif %}">
-                        {{ variant.display_name }}: {{ variant.branch_stock_qty }}
-                    </span>
+                    <div class="variant-chip-wrap">
+                        <span class="variant-chip {% if variant.branch_stock_qty <= 0 %}low{% else %}good{% endif %}">
+                            {{ variant.display_name }}: {{ variant.branch_stock_qty }}
+                        </span>
+
+                        {% if can_manage_inventory %}
+                            <a
+                                href="{% url 'variant_barcode_label' variant.id %}"
+                                class="variant-print-btn"
+                                title="Print {{ variant.display_name }} label"
+                                target="_blank"
+                                rel="noopener"
+                            >
+                                🖨️
+                            </a>
+                        {% endif %}
+                    </div>
                 {% empty %}
                     <span class="variant-chip">No variant yet</span>
                 {% endfor %}

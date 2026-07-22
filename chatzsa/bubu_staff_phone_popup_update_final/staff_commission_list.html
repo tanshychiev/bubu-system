@@ -1,0 +1,805 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.commission-page{padding:22px;}.commission-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:16px}.commission-head h1{margin:0;font-size:30px;font-weight:1000;color:#17152f}.commission-head p{margin:6px 0 0;color:#7b7288;font-weight:900}.commission-btn{min-height:42px;padding:0 16px;border-radius:14px;background:linear-gradient(135deg,#8e63ff,#ff8464);color:white;font-weight:1000;display:inline-flex;align-items:center}.commission-filter{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr auto;gap:10px;margin:16px 0;padding:14px;border-radius:18px;background:white;border:1px solid #f0dcd0}.commission-filter input,.commission-filter select{height:44px;border:1.5px solid #eadfec;border-radius:12px;padding:0 12px;font-weight:900}.commission-filter button{height:44px;border:0;border-radius:12px;background:#8e63ff;color:white;font-weight:1000}.commission-stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}.commission-stat{padding:14px;border-radius:18px;background:white;border:1px solid #f0dcd0;box-shadow:0 8px 20px rgba(0,0,0,.04)}.commission-stat span{display:block;color:#7b7288;font-weight:900;font-size:12px}.commission-stat strong{display:block;margin-top:6px;font-size:22px;color:#17152f;font-weight:1000}.commission-table-card{overflow:auto;background:white;border:1px solid #f0dcd0;border-radius:20px;box-shadow:0 10px 24px rgba(0,0,0,.05)}.commission-table{width:100%;border-collapse:collapse;min-width:1050px}.commission-table th{background:#f8f3ff;color:#17152f;font-size:12px;padding:12px;font-weight:1000;text-align:left;white-space:nowrap}.commission-table td{border-top:1px solid #f3e7df;padding:12px;font-size:13px;font-weight:900;color:#4c465a;vertical-align:middle;white-space:nowrap}.type-pill,.status-pill{padding:7px 10px;border-radius:999px;font-weight:1000;font-size:11px;display:inline-flex}.type-Pet{background:#fff0e8;color:#ff5d73}.type-Grooming{background:#fff7df;color:#b86b00}.status-pending{background:#fff7df;color:#b86b00}.status-approved{background:#eafff3;color:#16a05d}.status-paid{background:#e7f5ff;color:#2299e8}.status-cancelled{background:#ffe7ec;color:#ff4d6d}.money-main{color:#8e63ff!important;font-weight:1000!important}@media(max-width:767px){.commission-page{padding:10px}.commission-head{display:block}.commission-filter{grid-template-columns:1fr}.commission-stat-grid{grid-template-columns:1fr 1fr}}
+</style>
+<div class="commission-page">
+    <div class="commission-head">
+        <div><h1>Commission List</h1><p>Check pet sale and grooming commission in one page.</p></div>
+        <a href="{% url 'staff_salary_dashboard' %}" class="commission-btn">Back to Salary</a>
+    </div>
+    <form method="get" class="commission-filter">
+        <input type="text" name="q" value="{{ q }}" placeholder="Search staff or sale ID...">
+        <select name="type"><option value="">All Type</option><option value="pet" {% if commission_type == 'pet' %}selected{% endif %}>Pet Sale</option><option value="grooming" {% if commission_type == 'grooming' %}selected{% endif %}>Grooming</option></select>
+        <select name="status"><option value="">All Status</option><option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option><option value="approved" {% if status == 'approved' %}selected{% endif %}>Approved</option><option value="paid" {% if status == 'paid' %}selected{% endif %}>Paid</option><option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>Cancelled</option></select>
+        <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}">
+        <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}">
+        <button type="submit">Search</button>
+    </form>
+    <div class="commission-stat-grid">
+        <div class="commission-stat"><span>Total Rows</span><strong>{{ totals.count }}</strong></div>
+        <div class="commission-stat"><span>Total Commission</span><strong>${{ totals.amount|floatformat:2 }}</strong></div>
+        <div class="commission-stat"><span>Pending</span><strong>{{ totals.pending }}</strong></div>
+        <div class="commission-stat"><span>Approved</span><strong>{{ totals.approved }}</strong></div>
+        <div class="commission-stat"><span>Paid</span><strong>{{ totals.paid }}</strong></div>
+    </div>
+    <div class="commission-table-card"><table class="commission-table"><thead><tr><th>Date</th><th>Staff</th><th>Branch</th><th>Type</th><th>Source</th><th>Sale Amount</th><th>Rate</th><th>Commission</th><th>Status</th><th>Payroll</th><th>Note</th></tr></thead><tbody>
+        {% for row in rows %}<tr><td>{{ row.date|date:"d M Y" }}</td><td>{{ row.staff.user.get_full_name|default:row.staff.user.username }}</td><td>{% if row.branch %}{{ row.branch.name }}{% else %}-{% endif %}</td><td><span class="type-pill type-{{ row.type|cut:' Sale' }}">{{ row.type }}</span></td><td>{{ row.source }}</td><td>${{ row.sale_amount|floatformat:2 }}</td><td>{{ row.rate|floatformat:2 }}%</td><td class="money-main">${{ row.amount|floatformat:2 }}</td><td><span class="status-pill status-{{ row.status }}">{{ row.status|title }}</span></td><td>{% if row.payroll %}<a href="{% url 'payroll_record_detail' row.payroll.id %}">Payroll #{{ row.payroll.id }}</a>{% else %}-{% endif %}</td><td>{{ row.note|default:"-" }}</td></tr>{% empty %}<tr><td colspan="11">No commission found.</td></tr>{% endfor %}
+    </tbody></table></div>
+</div>
+
+
+<style id="bubu-mobile-ui-upgrade">
+/* =========================================================
+   BUBU STAFF PAGES — PHONE UI UPGRADE
+========================================================= */
+@media (max-width: 767px){
+    .content{
+        padding:7px!important;
+    }
+
+    .work-page,.cmp-page,.p,.gps-page,.payroll-page,.adjust-page,
+    .attendance-page,.commission-page,.staff-page,.permission-page,
+    .qr-form-page,.qr-page,.salary-page,.scan-page,.setting-form-page,
+    .setting-page{
+        width:100%!important;
+        max-width:100%!important;
+        min-height:auto!important;
+        padding:6px!important;
+        margin:0!important;
+        overflow:visible!important;
+    }
+
+    .work-head,.head,.page-head,.page-top,.payroll-head,.commission-head,
+    .salary-head,.table-head,.section-head,.staff-head,.branch-head{
+        display:flex!important;
+        flex-direction:column!important;
+        align-items:stretch!important;
+        gap:8px!important;
+        margin-bottom:9px!important;
+    }
+
+    h1{
+        font-size:21px!important;
+        line-height:1.14!important;
+        margin:0 0 3px!important;
+        letter-spacing:-.2px!important;
+    }
+
+    h2{font-size:16px!important}
+    h3{font-size:14px!important}
+
+    p,.page-subtitle{
+        font-size:11px!important;
+        line-height:1.35!important;
+        margin-top:3px!important;
+    }
+
+    .card,.c,.form-card,.gps-card,.payroll-card,.section-card,.profile-card,
+    .filter-card,.table-card-custom,.commission-table-card,.salary-table-card,
+    .qr-card,.scan-card,.staff-card,.summary,.summary-card,.commission-stat,
+    .salary-stat,.hint-box,.quick-box{
+        border-radius:14px!important;
+        padding:10px!important;
+        margin-top:8px!important;
+        margin-bottom:8px!important;
+        box-shadow:0 5px 16px rgba(70,45,90,.05)!important;
+    }
+
+    .filter,.filters,.add-form,.form,.gps-form,.adjust-form,.permission-form,
+    .qr-form,.setting-form,.commission-filter,.salary-filter{
+        display:grid!important;
+        grid-template-columns:1fr!important;
+        gap:7px!important;
+        padding:9px!important;
+        margin:8px 0!important;
+    }
+
+    .grid-2,.grid-3,.two,.g,.payroll-grid,.toggle-grid,
+    .summary-grid,.commission-stat-grid,.salary-stat-grid,.info-grid,
+    .button-grid,.scan-actions,.form-actions,.top-actions{
+        display:grid!important;
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:7px!important;
+    }
+
+    .summary-grid,.commission-stat-grid,.salary-stat-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    }
+
+    .summary,.summary-card,.commission-stat,.salary-stat{
+        min-height:72px!important;
+        padding:9px!important;
+    }
+
+    .summary strong,.summary-card strong,.commission-stat strong,.salary-stat strong{
+        font-size:18px!important;
+        margin-top:3px!important;
+    }
+
+    input,select,textarea,.popup-field-btn{
+        width:100%!important;
+        min-height:40px!important;
+        height:auto!important;
+        padding:8px 10px!important;
+        border-radius:11px!important;
+        font-size:16px!important;
+    }
+
+    textarea{
+        min-height:76px!important;
+    }
+
+    button,.btn,a.main-btn,a.soft-btn,a.salary-btn,a.commission-btn,
+    a.payroll-btn,a.edit-btn,a.cancel-btn,a.open-btn{
+        min-height:40px!important;
+        padding:7px 10px!important;
+        border-radius:11px!important;
+        font-size:11px!important;
+        white-space:normal!important;
+        text-align:center!important;
+        justify-content:center!important;
+    }
+
+    .form-actions > *, .top-actions > *, .scan-actions > *, .button-grid > *{
+        width:100%!important;
+    }
+
+    /* Turn wide tables into compact phone cards. */
+    .table-wrap,.table,.commission-table-card,.salary-table-card,
+    .table-card,.table-card-custom{
+        width:100%!important;
+        overflow:visible!important;
+    }
+
+    table{
+        width:100%!important;
+        min-width:0!important;
+        border-collapse:separate!important;
+        border-spacing:0 8px!important;
+    }
+
+    table thead{
+        display:none!important;
+    }
+
+    table tbody,
+    table tr,
+    table td{
+        display:block!important;
+        width:100%!important;
+    }
+
+    table tr{
+        padding:7px 9px!important;
+        border:1px solid #eee1e8!important;
+        border-radius:12px!important;
+        background:#fff!important;
+        box-shadow:0 4px 12px rgba(60,40,75,.04)!important;
+    }
+
+    table td{
+        min-height:28px!important;
+        padding:5px 0!important;
+        border:0!important;
+        border-bottom:1px dashed #f0e5eb!important;
+        display:flex!important;
+        align-items:flex-start!important;
+        justify-content:space-between!important;
+        gap:10px!important;
+        text-align:right!important;
+        white-space:normal!important;
+        font-size:11px!important;
+        line-height:1.25!important;
+        overflow-wrap:anywhere!important;
+    }
+
+    table td:last-child{
+        border-bottom:0!important;
+    }
+
+    table td::before{
+        content:attr(data-bubu-label);
+        flex:0 0 42%;
+        color:#7a7185;
+        font-size:10px;
+        font-weight:1000;
+        text-align:left;
+    }
+
+    table td[colspan]{
+        display:block!important;
+        text-align:center!important;
+        padding:14px 6px!important;
+    }
+
+    table td[colspan]::before{
+        display:none!important;
+    }
+
+    .net{
+        padding:12px!important;
+        font-size:17px!important;
+        border-radius:13px!important;
+    }
+
+    .badge,.status-pill,.type-pill{
+        padding:5px 7px!important;
+        font-size:9px!important;
+    }
+}
+
+/* =========================================================
+   CENTERED SELECT PICKER
+========================================================= */
+.bubu-select-modal-backdrop{
+    position:fixed;
+    inset:0;
+    z-index:99990;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    background:rgba(23,21,47,.48);
+    backdrop-filter:blur(5px);
+    -webkit-backdrop-filter:blur(5px);
+}
+.bubu-select-modal-backdrop.show{display:flex}
+
+.bubu-select-modal{
+    width:min(430px,100%);
+    max-height:min(76vh,620px);
+    overflow:hidden;
+    border-radius:22px;
+    border:1px solid rgba(255,255,255,.8);
+    background:#fff;
+    box-shadow:0 28px 80px rgba(30,20,50,.28);
+    animation:bubuPickerIn .18s ease;
+}
+@keyframes bubuPickerIn{
+    from{opacity:0;transform:translateY(12px) scale(.97)}
+    to{opacity:1;transform:translateY(0) scale(1)}
+}
+.bubu-select-modal-head{
+    padding:14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    border-bottom:1px solid #eee5f1;
+    background:linear-gradient(135deg,#f6f0ff,#fff4ef);
+}
+.bubu-select-modal-head strong{
+    color:#17152f;
+    font-size:15px;
+    font-weight:1000;
+}
+.bubu-select-modal-close{
+    width:36px!important;
+    height:36px!important;
+    min-height:36px!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:11px!important;
+    color:#7354d8!important;
+    background:#eee7ff!important;
+    font-size:18px!important;
+}
+.bubu-select-search-wrap{
+    padding:10px 12px 6px;
+}
+.bubu-select-search{
+    width:100%;
+    min-height:42px;
+    border:1.5px solid #e4d8ef;
+    border-radius:12px;
+    padding:9px 11px;
+    font-size:16px;
+    font-weight:800;
+    outline:none;
+}
+.bubu-select-options{
+    max-height:52vh;
+    overflow:auto;
+    padding:7px 10px 12px;
+}
+.bubu-select-option{
+    width:100%!important;
+    min-height:44px!important;
+    margin:4px 0!important;
+    padding:9px 11px!important;
+    border:1px solid #eee4f1!important;
+    border-radius:12px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:9px!important;
+    color:#4f465c!important;
+    background:#fff!important;
+    font-size:12px!important;
+    font-weight:900!important;
+    text-align:left!important;
+    box-shadow:none!important;
+}
+.bubu-select-option.selected{
+    color:#7047db!important;
+    background:#f3edff!important;
+    border-color:#d9c9ff!important;
+}
+.bubu-select-option small{
+    color:#9b8fa7;
+    font-size:10px;
+}
+.bubu-select-trigger{
+    position:relative;
+    width:100%;
+    min-height:42px;
+    padding:9px 40px 9px 11px;
+    border:1.5px solid #eadfec;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    color:#17152f;
+    background:#fff;
+    font-size:14px;
+    font-weight:900;
+    text-align:left;
+    cursor:pointer;
+}
+.bubu-select-trigger::after{
+    content:"⌄";
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-55%);
+    color:#7959db;
+    font-size:18px;
+}
+.bubu-native-select-hidden{
+    position:absolute!important;
+    width:1px!important;
+    height:1px!important;
+    opacity:0!important;
+    pointer-events:none!important;
+}
+@media(min-width:768px){
+    .bubu-select-trigger{display:none!important}
+    .bubu-native-select-hidden{
+        position:static!important;
+        width:100%!important;
+        height:auto!important;
+        opacity:1!important;
+        pointer-events:auto!important;
+    }
+}
+</style>
+
+<div class="bubu-select-modal-backdrop" id="bubuSelectBackdrop" aria-hidden="true">
+    <div class="bubu-select-modal" role="dialog" aria-modal="true" aria-labelledby="bubuSelectTitle">
+        <div class="bubu-select-modal-head">
+            <strong id="bubuSelectTitle">Choose Option</strong>
+            <button type="button" class="bubu-select-modal-close" id="bubuSelectClose">×</button>
+        </div>
+        <div class="bubu-select-search-wrap">
+            <input type="search" class="bubu-select-search" id="bubuSelectSearch" placeholder="Search option...">
+        </div>
+        <div class="bubu-select-options" id="bubuSelectOptions"></div>
+    </div>
+</div>
+
+<script id="bubu-mobile-ui-script">
+(function(){
+    const isPhone = () => window.matchMedia("(max-width: 767px)").matches;
+
+    function makeTablesResponsive(){
+        document.querySelectorAll("table").forEach(function(table){
+            const headers = Array.from(table.querySelectorAll("thead th")).map(function(th){
+                return th.textContent.trim();
+            });
+            table.querySelectorAll("tbody tr").forEach(function(row){
+                Array.from(row.children).forEach(function(cell,index){
+                    if(cell.tagName === "TD" && !cell.hasAttribute("colspan")){
+                        cell.setAttribute("data-bubu-label", headers[index] || "");
+                    }
+                });
+            });
+        });
+    }
+
+    let activeSelect = null;
+    const backdrop = document.getElementById("bubuSelectBackdrop");
+    const title = document.getElementById("bubuSelectTitle");
+    const search = document.getElementById("bubuSelectSearch");
+    const optionsBox = document.getElementById("bubuSelectOptions");
+    const closeBtn = document.getElementById("bubuSelectClose");
+
+    function closePicker(){
+        backdrop.classList.remove("show");
+        backdrop.setAttribute("aria-hidden","true");
+        document.body.style.overflow = "";
+        activeSelect = null;
+    }
+
+    function renderOptions(filterText){
+        if(!activeSelect) return;
+        const query = (filterText || "").trim().toLowerCase();
+        optionsBox.innerHTML = "";
+
+        Array.from(activeSelect.options).forEach(function(option){
+            if(option.disabled) return;
+            const label = option.textContent.trim();
+            if(query && !label.toLowerCase().includes(query)) return;
+
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "bubu-select-option" + (option.selected ? " selected" : "");
+            btn.innerHTML = "<span></span><small></small>";
+            btn.querySelector("span").textContent = label;
+            btn.querySelector("small").textContent = option.selected ? "Selected" : "Choose";
+            btn.addEventListener("click", function(){
+                activeSelect.value = option.value;
+                activeSelect.dispatchEvent(new Event("change",{bubbles:true}));
+                const trigger = activeSelect._bubuTrigger;
+                if(trigger) trigger.textContent = label;
+                closePicker();
+            });
+            optionsBox.appendChild(btn);
+        });
+
+        if(!optionsBox.children.length){
+            const empty = document.createElement("div");
+            empty.style.cssText = "padding:20px;text-align:center;color:#8e8397;font-weight:900;font-size:12px;";
+            empty.textContent = "No option found";
+            optionsBox.appendChild(empty);
+        }
+    }
+
+    function openPicker(select){
+        if(!isPhone()) return;
+        activeSelect = select;
+        const label = select.closest("label");
+        let heading = "Choose Option";
+        if(label){
+            const clone = label.cloneNode(true);
+            clone.querySelectorAll("select,input,textarea,button").forEach(el => el.remove());
+            const txt = clone.textContent.trim();
+            if(txt) heading = txt;
+        }
+        title.textContent = heading;
+        search.value = "";
+        renderOptions("");
+        backdrop.classList.add("show");
+        backdrop.setAttribute("aria-hidden","false");
+        document.body.style.overflow = "hidden";
+        setTimeout(function(){ search.focus(); },80);
+    }
+
+    function enhanceSelect(select){
+        if(select.dataset.bubuEnhanced === "1") return;
+        if(select.multiple || select.size > 1) return;
+
+        select.dataset.bubuEnhanced = "1";
+        select.classList.add("bubu-native-select-hidden");
+
+        const trigger = document.createElement("button");
+        trigger.type = "button";
+        trigger.className = "bubu-select-trigger";
+        trigger.textContent = select.options[select.selectedIndex]?.textContent.trim() || "Choose option";
+        trigger.addEventListener("click", function(){ openPicker(select); });
+        select.insertAdjacentElement("afterend", trigger);
+        select._bubuTrigger = trigger;
+
+        select.addEventListener("change", function(){
+            trigger.textContent = select.options[select.selectedIndex]?.textContent.trim() || "Choose option";
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function(){
+        makeTablesResponsive();
+        document.querySelectorAll("select").forEach(enhanceSelect);
+
+        search.addEventListener("input", function(){ renderOptions(search.value); });
+        closeBtn.addEventListener("click", closePicker);
+        backdrop.addEventListener("click", function(e){
+            if(e.target === backdrop) closePicker();
+        });
+        document.addEventListener("keydown", function(e){
+            if(e.key === "Escape") closePicker();
+        });
+    });
+})();
+</script>
+
+
+
+<!-- BUBU UNIVERSAL PHONE POPUP UI — generated update -->
+<style id="bubu-phone-popup-v3">
+*{box-sizing:border-box}
+html,body{max-width:100%;overflow-x:hidden}
+
+@media (max-width:900px){
+  body,.content,.main-content,.page-content{max-width:100vw!important;overflow-x:hidden!important}
+  .work-page,.cmp-page,.p,.gps-page,.payroll-page,.adjust-page,.attendance-page,
+  .commission-page,.staff-page,.permission-page,.qr-form-page,.qr-page,.salary-page,
+  .scan-page,.setting-form-page,.setting-page{width:100%!important;max-width:100%!important;padding:8px!important;margin:0!important}
+
+  .form-card,.card,.c,.section-card,.filter-card,.table-card-custom,.commission-table-card,
+  .salary-table-card,.payroll-card,.gps-card,.scan-card,.profile-card,.staff-card,.qr-card{
+    width:100%!important;max-width:100%!important;min-width:0!important;border-radius:18px!important;padding:12px!important;margin-left:0!important;margin-right:0!important
+  }
+
+  .page-top,.page-head,.work-head,.head,.payroll-head,.commission-head,.salary-head,
+  .section-head,.staff-head,.branch-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
+
+  .top-actions,.form-actions,.salary-actions,.button-grid,.scan-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;width:100%!important}
+  .top-actions>*:only-child,.form-actions>*:only-child{grid-column:1/-1}
+
+  h1{font-size:22px!important;line-height:1.18!important;margin:0!important}
+  h2{font-size:18px!important}
+  p{overflow-wrap:anywhere}
+
+  form{max-width:100%!important;min-width:0!important}
+  .form,.add-form,.filter,.filters,.commission-filter,.salary-filter,.gps-form,.adjust-form,
+  .permission-form,.qr-form,.setting-form,.scan-form{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;width:100%!important;max-width:100%!important
+  }
+
+  .form>h1,.form>h2,.form>h3,.form>p,.form>.hint-box,.form>.form-actions,
+  .add-form>h1,.add-form>h2,.add-form>h3,.add-form>p,.add-form>.hint-box,.add-form>.form-actions,
+  .gps-form>.quick-box,.gps-form>.hint-box,.gps-form>.form-actions,
+  .adjust-form>.hint-box,.adjust-form>.form-actions,
+  .permission-form>textarea,.permission-form>label:has(textarea),.permission-form>label:has(input[type=file]),.permission-form>.form-actions,
+  .setting-form>.selected-staff-box,.setting-form>.hint-box,.setting-form>.form-actions,
+  .scan-form>.gps-box,.scan-form>.scan-actions,.scan-form>.small-note,
+  .form>button[type=submit]{grid-column:1/-1!important}
+
+  .grid-2,.grid-3,.two,.g,.summary-grid,.commission-stat-grid,.salary-stat-grid,.info-grid{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important
+  }
+
+  label,.fake-label,.field-group{min-width:0!important;width:100%!important;margin:0!important;font-size:12px!important;font-weight:900!important}
+  input,textarea,select,button,a{max-width:100%}
+  input:not([type=checkbox]):not([type=radio]),textarea,select,.popup-field-btn,.bubu-smart-field{
+    width:100%!important;min-width:0!important;min-height:44px!important;border-radius:13px!important
+  }
+  textarea{min-height:92px!important;resize:vertical}
+  button,.main-btn,.soft-btn,.submit-btn,.cancel-btn,.save-btn,.dark-btn,.clear-btn,.salary-btn,.commission-btn,.payroll-btn{
+    min-height:44px!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;padding:9px 11px!important;white-space:normal!important
+  }
+
+  .table-wrap,.table,.commission-table-card,.salary-table-card{width:100%!important;max-width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}
+  table{max-width:none!important}
+
+  .bubu-original-control{position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important;min-height:1px!important;padding:0!important;border:0!important}
+  .bubu-smart-wrap{width:100%;min-width:0}
+  .bubu-smart-field{border:1.5px solid #e5daf6;background:#fff;color:#17152f;padding:0 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:900;box-shadow:0 4px 14px rgba(82,52,140,.05)}
+  .bubu-smart-field span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+  .bubu-smart-field b{flex:0 0 auto;font-size:15px}
+  .bubu-smart-field:focus{outline:3px solid rgba(142,99,255,.16);border-color:#8e63ff}
+}
+
+@media (max-width:390px){
+  .form,.add-form,.filter,.filters,.commission-filter,.salary-filter,.gps-form,.adjust-form,
+  .permission-form,.qr-form,.setting-form,.scan-form,.grid-2,.grid-3,.two,.g,
+  .top-actions,.form-actions,.salary-actions,.button-grid,.scan-actions{
+    grid-template-columns:1fr!important
+  }
+  .summary-grid,.commission-stat-grid,.salary-stat-grid,.info-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .form>* ,.add-form>* ,.filter>* ,.filters>* ,.commission-filter>* ,.salary-filter>* ,.gps-form>* ,.adjust-form>* ,.permission-form>* ,.qr-form>* ,.setting-form>* ,.scan-form>*{grid-column:auto!important}
+}
+
+.bubu-picker-backdrop{position:fixed;inset:0;background:rgba(17,12,35,.46);backdrop-filter:blur(3px);z-index:99998;display:none}
+.bubu-picker-backdrop.show{display:block}
+.bubu-picker-sheet{position:fixed;z-index:99999;left:50%;top:50%;transform:translate(-50%,-46%) scale(.98);width:min(430px,calc(100vw - 22px));max-height:min(78vh,650px);background:#fff;border-radius:24px;box-shadow:0 24px 80px rgba(20,12,50,.3);padding:14px;opacity:0;pointer-events:none;transition:.18s ease;display:flex;flex-direction:column;gap:10px}
+.bubu-picker-sheet.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+.bubu-picker-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.bubu-picker-head h3{margin:0;font-size:18px;color:#17152f}
+.bubu-picker-close{width:38px;height:38px;border:0;border-radius:12px;background:#f4efff;color:#6d4ddd;font-size:20px;font-weight:900}
+.bubu-picker-search,.bubu-picker-native{width:100%;height:46px;border:1.5px solid #e5daf6;border-radius:13px;padding:0 12px;font-weight:800;font-size:15px;background:#fff}
+.bubu-picker-options{overflow:auto;display:grid;gap:7px;padding:2px;max-height:50vh}
+.bubu-picker-option{width:100%;min-height:46px;border:1px solid #eee3f7;border-radius:14px;background:#fff;padding:10px 12px;text-align:left;font-weight:900;color:#312846;display:flex;justify-content:space-between;align-items:center}
+.bubu-picker-option.active{background:linear-gradient(135deg,#8e63ff,#bd69e9);color:#fff;border-color:transparent}
+.bubu-picker-confirm{height:46px;border:0;border-radius:14px;background:linear-gradient(135deg,#8e63ff,#ff8464);color:#fff;font-weight:1000;font-size:15px}
+.bubu-picker-empty{text-align:center;padding:24px;color:#84798f;font-weight:800}
+@media(max-width:600px){.bubu-picker-sheet{top:auto;bottom:8px;transform:translateX(-50%) translateY(110%);width:calc(100vw - 16px);border-radius:24px 24px 18px 18px;max-height:82vh}.bubu-picker-sheet.show{transform:translateX(-50%) translateY(0)}}
+</style>
+
+<script id="bubu-phone-popup-v3-js">
+(function(){
+  function textOfOption(o){ return (o.textContent || '').trim(); }
+  function closePicker(){
+    document.querySelectorAll('.bubu-picker-backdrop,.bubu-picker-sheet').forEach(function(el){el.remove();});
+    document.body.style.overflow='';
+  }
+  function shell(title){
+    closePicker();
+    var bg=document.createElement('div'); bg.className='bubu-picker-backdrop show'; bg.onclick=closePicker;
+    var sh=document.createElement('div'); sh.className='bubu-picker-sheet show';
+    sh.innerHTML='<div class="bubu-picker-head"><h3></h3><button type="button" class="bubu-picker-close">×</button></div>';
+    sh.querySelector('h3').textContent=title || 'Select';
+    sh.querySelector('.bubu-picker-close').onclick=closePicker;
+    document.body.appendChild(bg); document.body.appendChild(sh); document.body.style.overflow='hidden';
+    return sh;
+  }
+  function enhanceSelect(sel){
+    if(sel.dataset.bubuEnhanced || sel.multiple || sel.size>1) return;
+    sel.dataset.bubuEnhanced='1';
+    var wrap=document.createElement('div'); wrap.className='bubu-smart-wrap';
+    var btn=document.createElement('button'); btn.type='button'; btn.className='bubu-smart-field';
+    var icon='⌄';
+    function refresh(){
+      var opt=sel.options[sel.selectedIndex];
+      btn.innerHTML='<span></span><b>'+icon+'</b>';
+      btn.querySelector('span').textContent=opt?textOfOption(opt):'Select';
+    }
+    sel.parentNode.insertBefore(wrap,sel); wrap.appendChild(sel); wrap.appendChild(btn); sel.classList.add('bubu-original-control'); refresh();
+    btn.onclick=function(){
+      var title=(sel.closest('label,.fake-label,.field-group')?.childNodes[0]?.textContent || sel.name || 'Select').trim();
+      var sh=shell(title);
+      var opts=[].slice.call(sel.options);
+      if(opts.length>6){
+        var search=document.createElement('input'); search.className='bubu-picker-search'; search.placeholder='Search...'; sh.appendChild(search);
+      }
+      var list=document.createElement('div'); list.className='bubu-picker-options'; sh.appendChild(list);
+      function draw(q){
+        list.innerHTML=''; var found=0;
+        opts.forEach(function(o){
+          var label=textOfOption(o); if(q && label.toLowerCase().indexOf(q.toLowerCase())<0) return; found++;
+          var ob=document.createElement('button'); ob.type='button'; ob.className='bubu-picker-option'+(o.selected?' active':'');
+          ob.innerHTML='<span></span><b>'+(o.selected?'✓':'')+'</b>'; ob.querySelector('span').textContent=label;
+          ob.onclick=function(){ sel.value=o.value; sel.dispatchEvent(new Event('change',{bubbles:true})); refresh(); closePicker(); };
+          list.appendChild(ob);
+        });
+        if(!found) list.innerHTML='<div class="bubu-picker-empty">No option found</div>';
+      }
+      draw(''); var s=sh.querySelector('.bubu-picker-search'); if(s) s.oninput=function(){draw(s.value)};
+    };
+    sel.addEventListener('change',refresh);
+  }
+  function enhanceDateTime(inp){
+    if(inp.dataset.bubuEnhanced) return; inp.dataset.bubuEnhanced='1';
+    var type=inp.type, wrap=document.createElement('div'); wrap.className='bubu-smart-wrap';
+    var btn=document.createElement('button'); btn.type='button'; btn.className='bubu-smart-field';
+    function display(){
+      var value=inp.value, label=value||('Select '+(type==='date'?'Date':'Time'));
+      if(value && type==='date'){var p=value.split('-'); if(p.length===3) label=p[1]+'/'+p[2]+'/'+p[0];}
+      btn.innerHTML='<span></span><b>'+(type==='date'?'📅':'🕘')+'</b>'; btn.querySelector('span').textContent=label;
+    }
+    inp.parentNode.insertBefore(wrap,inp); wrap.appendChild(inp); wrap.appendChild(btn); inp.classList.add('bubu-original-control'); display();
+    btn.onclick=function(){
+      var title=type==='date'?'Select Date':'Select Time', sh=shell(title);
+      var picker=document.createElement('input'); picker.type=type; picker.className='bubu-picker-native'; picker.value=inp.value; sh.appendChild(picker);
+      var ok=document.createElement('button'); ok.type='button'; ok.className='bubu-picker-confirm'; ok.textContent='Confirm'; sh.appendChild(ok);
+      ok.onclick=function(){ if(picker.value){inp.value=picker.value; inp.dispatchEvent(new Event('change',{bubbles:true})); display();} closePicker(); };
+      setTimeout(function(){try{picker.showPicker && picker.showPicker()}catch(e){}},120);
+    };
+    inp.addEventListener('change',display);
+  }
+  function run(){
+    if(window.innerWidth>900) return;
+    document.querySelectorAll('select').forEach(enhanceSelect);
+    document.querySelectorAll('input[type="date"],input[type="time"]').forEach(enhanceDateTime);
+  }
+  document.addEventListener('DOMContentLoaded',run);
+  window.addEventListener('resize',function(){if(window.innerWidth<=900) run();});
+})();
+</script>
+
+
+<style id="bubu-final-phone-alignment-fix">
+/* Final phone alignment and overflow correction */
+html,body{max-width:100%;overflow-x:hidden}
+@media (max-width: 767px){
+  .content,.main-content,[class$="-page"],.p{
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    margin-left:0!important;margin-right:0!important;overflow-x:hidden!important;
+  }
+  [class$="-card"],.card,.c,.form-card,.section-card,.filter-card,
+  .table-card-custom,.commission-table-card,.salary-table-card{
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    box-sizing:border-box!important;
+  }
+  form,.setting-form,.permission-form,.adjust-form,.gps-form,.qr-form,
+  .commission-filter,.salary-filter,.add-form,.filter,.filters{
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    box-sizing:border-box!important;
+  }
+  .setting-form>.grid-2,.setting-form>.grid-3,.setting-form>.toggle-grid,
+  .permission-form>.grid-2,.permission-form>.grid-3,
+  .adjust-form>.grid-2,.adjust-form>.grid-3,
+  .gps-form>.grid-2,.gps-form>.grid-3,
+  form>.grid-2,form>.grid-3,form>.toggle-grid{
+    grid-column:1/-1!important;width:100%!important;min-width:0!important;
+  }
+  .grid-2,.grid-3,.toggle-grid,.info-grid,.summary-grid,
+  .top-actions,.form-actions,.button-grid,.scan-actions{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    width:100%!important;min-width:0!important;gap:10px!important;
+  }
+  label,.fake-label,.field-group,.toggle-card,.summary-card,.summary,
+  .info-grid>*,.grid-2>*,.grid-3>*{min-width:0!important;max-width:100%!important}
+  input:not([type="checkbox"]):not([type="radio"]),select,textarea,
+  .popup-field-btn,.bubu-smart-field{
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    min-height:50px!important;height:auto!important;box-sizing:border-box!important;
+    padding:11px 13px!important;font-size:15px!important;line-height:1.25!important;
+  }
+  .popup-field-btn,.bubu-smart-field{
+    display:flex!important;align-items:center!important;justify-content:space-between!important;
+    gap:8px!important;text-align:left!important;overflow:hidden!important;
+  }
+  .popup-field-btn span,.bubu-smart-field span{
+    min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+  button,a.main-btn,a.soft-btn,a.submit-btn,a.cancel-btn,a.save-btn,
+  .dark-btn,.clear-btn,.salary-btn,.commission-btn,.payroll-btn,.row-action{
+    width:auto;max-width:100%!important;min-width:0!important;min-height:48px!important;
+    height:auto!important;padding:10px 12px!important;line-height:1.2!important;
+    white-space:normal!important;overflow-wrap:anywhere!important;box-sizing:border-box!important;
+  }
+  .top-actions>a,.form-actions>* ,.button-grid>* ,.scan-actions>*{
+    width:100%!important;
+  }
+  .toggle-card{padding:12px!important;align-items:flex-start!important;overflow:hidden!important}
+  .toggle-text{min-width:0!important}
+  .toggle-text strong,.toggle-text small{overflow-wrap:anywhere!important;word-break:normal!important}
+  .table-wrap,.table,.commission-table-card,.salary-table-card{
+    max-width:100%!important;overflow-x:auto!important;
+  }
+
+  /* Every popup is centered and remains inside the phone screen */
+  .bubu-picker-sheet,.picker-popup,.staff-popup,.status-popup,.time-popup,
+  .late-popup,.date-popup,[class*="picker-popup"]{
+    position:fixed!important;left:50%!important;right:auto!important;top:50%!important;
+    bottom:auto!important;transform:translate(-50%,-50%) scale(.98)!important;
+    width:calc(100vw - 28px)!important;max-width:430px!important;
+    max-height:76dvh!important;margin:0!important;border-radius:24px!important;
+    overflow:hidden!important;box-sizing:border-box!important;z-index:100001!important;
+  }
+  .bubu-picker-sheet.show,.picker-popup.active,.staff-popup.active,
+  .status-popup.active,.time-popup.active,.late-popup.active,.date-popup.active,
+  [class*="picker-popup"].active{
+    transform:translate(-50%,-50%) scale(1)!important;
+  }
+  .popup-backdrop,.bubu-picker-backdrop,.popup-bg{
+    position:fixed!important;inset:0!important;z-index:100000!important;
+  }
+  .bubu-picker-options,.staff-list,.status-list,.popup-body,.picker-body{
+    max-height:48dvh!important;overflow-y:auto!important;overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  .bubu-picker-option,.staff-option,.status-option{
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    min-height:54px!important;padding:11px 13px!important;box-sizing:border-box!important;
+  }
+  .bubu-picker-head,.popup-head{flex:0 0 auto!important}
+  .bubu-picker-close,.popup-head button{
+    flex:0 0 42px!important;width:42px!important;height:42px!important;min-height:42px!important;
+    padding:0!important;
+  }
+}
+@media (max-width:390px){
+  .grid-2,.grid-3,.toggle-grid,.top-actions,.form-actions,.button-grid,.scan-actions{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  .setting-form,.permission-form,.adjust-form,.gps-form,.qr-form,
+  .commission-filter,.salary-filter,.add-form,.filter,.filters{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  form>label:has(textarea),form>label:has(input[type="file"]),
+  form>.hint-box,form>.form-actions,form>button[type="submit"],
+  .setting-form>.selected-staff-box,.permission-form>label:first-of-type{
+    grid-column:1/-1!important;
+  }
+}
+@media (max-width:340px){
+  .grid-2,.grid-3,.toggle-grid,.top-actions,.form-actions,.button-grid,.scan-actions,
+  .setting-form,.permission-form,.adjust-form,.gps-form,.qr-form,
+  .commission-filter,.salary-filter,.add-form,.filter,.filters{
+    grid-template-columns:1fr!important;
+  }
+}
+</style>
+
+{% endblock %}
