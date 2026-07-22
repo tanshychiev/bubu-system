@@ -6792,6 +6792,103 @@ a{
     }
 }
 
+
+/* ==================================================
+   CART V17 — total immediately next to trash on right
+   ================================================== */
+#posCartPanel .cart-price-qty-row{
+    display:flex !important;
+    align-items:center !important;
+    width:100% !important;
+    gap:8px !important;
+}
+
+#posCartPanel .cart-unit-price,
+#posCartPanel .qty-box{
+    flex:0 0 auto !important;
+}
+
+#posCartPanel .cart-total-actions{
+    margin-left:auto !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:4px !important;
+    flex:0 0 auto !important;
+}
+
+#posCartPanel .cart-total-actions .cart-line-total{
+    width:auto !important;
+    min-width:62px !important;
+    margin:0 !important;
+    text-align:right !important;
+    justify-self:auto !important;
+    font-variant-numeric:tabular-nums !important;
+}
+
+#posCartPanel .cart-total-actions .trash-btn{
+    margin:0 !important;
+    flex:0 0 34px !important;
+}
+
+@media(max-width:900px){
+    #posCartPanel .cart-price-qty-row{
+        display:flex !important;
+        gap:7px !important;
+    }
+
+    #posCartPanel .cart-total-actions{
+        margin-left:auto !important;
+        gap:3px !important;
+    }
+
+    #posCartPanel .cart-total-actions .cart-line-total{
+        min-width:58px !important;
+    }
+}
+
+
+/* ==================================================
+   CART V18 — align currency symbol and numbers
+   $ 16.00
+   $  2.00
+   $  3.00
+   ================================================== */
+#posCartPanel .cart-total-actions .cart-line-total{
+    display:grid !important;
+    grid-template-columns:10px 48px !important;
+    align-items:center !important;
+    min-width:62px !important;
+    width:62px !important;
+    text-align:right !important;
+    font-variant-numeric:tabular-nums !important;
+    letter-spacing:0 !important;
+}
+
+/* Keep the $ in a fixed left column and the number right-aligned. */
+#posCartPanel .cart-total-actions .cart-line-total::first-letter{
+    text-align:left !important;
+}
+
+#posCartPanel .cart-total-actions{
+    margin-left:auto !important;
+    justify-content:flex-end !important;
+    gap:5px !important;
+}
+
+
+#posCartPanel .cart-line-total .cart-currency-symbol{
+    display:block !important;
+    width:10px !important;
+    text-align:left !important;
+}
+
+#posCartPanel .cart-line-total .cart-total-number{
+    display:block !important;
+    width:48px !important;
+    text-align:right !important;
+    font-variant-numeric:tabular-nums !important;
+}
+
 </style>
 
 <script>

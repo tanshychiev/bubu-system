@@ -60,14 +60,19 @@
                                 <a href="{% url 'pos_plus_cart' cart_item.cart_key %}" class="pos-cart-action">＋</a>
                             </div>
 
-                            <strong class="cart-line-total">${{ cart_item.total }}</strong>
+                            <div class="cart-total-actions">
+                                <strong class="cart-line-total">
+                                    <span class="cart-currency-symbol">$</span>
+                                    <span class="cart-total-number">{{ cart_item.total }}</span>
+                                </strong>
 
-                            <a
-                                href="{% url 'pos_remove_cart' cart_item.cart_key %}"
-                                class="remove-btn trash-btn pos-cart-action"
-                                aria-label="Remove item"
-                                title="Remove item"
-                            >🗑️</a>
+                                <a
+                                    href="{% url 'pos_remove_cart' cart_item.cart_key %}"
+                                    class="remove-btn trash-btn pos-cart-action"
+                                    aria-label="Remove item"
+                                    title="Remove item"
+                                >🗑️</a>
+                            </div>
                         </div>
 
                         {% if not cart_item.is_service %}
