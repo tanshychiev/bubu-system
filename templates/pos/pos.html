@@ -6685,6 +6685,54 @@ a{
     }
 }
 
+
+/* ==================================================
+   CART V15 — qty, space, total, trash aligned right
+   Layout: price | − 1 + | space | total | trash
+   ================================================== */
+#posCartPanel .cart-price-qty-row{
+    display:flex !important;
+    align-items:center !important;
+    width:100% !important;
+    gap:8px !important;
+}
+
+#posCartPanel .cart-unit-price{
+    flex:0 0 auto !important;
+}
+
+#posCartPanel .qty-box{
+    flex:0 0 auto !important;
+    margin-right:20px !important;
+}
+
+#posCartPanel .cart-line-total{
+    flex:0 0 auto !important;
+    margin-left:auto !important;
+    margin-right:6px !important;
+}
+
+#posCartPanel .trash-btn{
+    flex:0 0 34px !important;
+    margin-left:0 !important;
+}
+
+@media(max-width:900px){
+    #posCartPanel .cart-price-qty-row{
+        display:flex !important;
+        gap:7px !important;
+    }
+
+    #posCartPanel .qty-box{
+        margin-right:14px !important;
+    }
+
+    #posCartPanel .cart-line-total{
+        margin-left:auto !important;
+        margin-right:5px !important;
+    }
+}
+
 </style>
 
 <script>
