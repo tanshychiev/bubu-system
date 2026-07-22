@@ -6075,6 +6075,157 @@ a{
     transition:opacity .12s ease;
 }
 
+
+/* ==================================================
+   COMPACT CART — clean layout, show about 4 items
+   ================================================== */
+#posCartPanel .cart-card{
+    padding:16px !important;
+    border-radius:24px !important;
+}
+
+#posCartPanel .cart-head{
+    margin-bottom:10px !important;
+    gap:8px !important;
+}
+
+#posCartPanel .cart-head h2{
+    font-size:22px !important;
+    line-height:1.1 !important;
+}
+
+#posCartPanel .cart-branch{
+    margin-top:2px !important;
+    font-size:11px !important;
+}
+
+#posCartPanel .clear-btn{
+    min-height:36px !important;
+    padding:0 12px !important;
+    border-radius:12px !important;
+    font-size:11px !important;
+}
+
+#posCartPanel .cart-list{
+    /*
+     * Four compact rows remain visible. More items stay inside the cart and
+     * can be scrolled without making the whole POS page very tall.
+     */
+    max-height:424px !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+    padding-right:5px !important;
+    scrollbar-gutter:stable;
+}
+
+#posCartPanel .cart-item{
+    min-height:98px !important;
+    padding:8px 0 !important;
+    grid-template-columns:48px minmax(0,1fr) auto !important;
+    gap:8px !important;
+    align-items:center !important;
+}
+
+#posCartPanel .cart-img{
+    width:48px !important;
+    height:48px !important;
+    border-radius:12px !important;
+    font-size:22px !important;
+}
+
+#posCartPanel .cart-name{
+    min-width:0 !important;
+}
+
+#posCartPanel .cart-name strong{
+    max-width:100% !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+    font-size:13px !important;
+    line-height:1.2 !important;
+}
+
+#posCartPanel .cart-name small{
+    max-width:100% !important;
+    margin:3px 0 5px !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+    font-size:9px !important;
+    line-height:1.25 !important;
+}
+
+#posCartPanel .cart-type-chip,
+#posCartPanel .stock-alert,
+#posCartPanel .stock-ok{
+    max-width:100% !important;
+    min-height:20px !important;
+    padding:2px 6px !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+    font-size:8px !important;
+}
+
+#posCartPanel .qty-box{
+    margin-top:5px !important;
+    grid-template-columns:28px 34px 28px !important;
+    gap:4px !important;
+}
+
+#posCartPanel .qty-box a,
+#posCartPanel .qty-box span{
+    height:28px !important;
+    min-height:28px !important;
+    border-radius:8px !important;
+    font-size:13px !important;
+}
+
+#posCartPanel .cart-side{
+    min-width:55px !important;
+}
+
+#posCartPanel .cart-side strong{
+    font-size:13px !important;
+    line-height:1.2 !important;
+}
+
+#posCartPanel .remove-btn,
+#posCartPanel .cart-remove{
+    min-height:28px !important;
+    margin-top:4px !important;
+    padding:0 7px !important;
+    border-radius:8px !important;
+    font-size:9px !important;
+}
+
+@media(max-width:900px){
+    #posCartPanel .cart-list{
+        max-height:424px !important;
+        overflow-y:auto !important;
+    }
+
+    #posCartPanel .cart-item{
+        grid-template-columns:48px minmax(0,1fr) auto !important;
+        gap:8px !important;
+    }
+
+    #posCartPanel .cart-img{
+        width:48px !important;
+        height:48px !important;
+    }
+
+    #posCartPanel .qty-box{
+        grid-template-columns:28px 34px 28px !important;
+    }
+
+    #posCartPanel .qty-box a,
+    #posCartPanel .qty-box span{
+        height:28px !important;
+    }
+}
+
 </style>
 
 <script>
@@ -6192,15 +6343,22 @@ document.addEventListener("click", function(e){
         return;
     }
 
-    if(
-        e.target.tagName !== "INPUT" &&
-        e.target.tagName !== "TEXTAREA" &&
-        e.target.tagName !== "BUTTON" &&
-        e.target.tagName !== "A" &&
-        e.target.tagName !== "LABEL"
-    ){
-        if(searchInput) searchInput.focus();
+    /*
+     * Never focus the search field when the cashier taps a product, variant,
+     * cart control, modal, button, link, input, or label. The old code checked
+     * only e.target.tagName, so tapping an image/div inside a button focused the
+     * search box and pulled the page back to the top.
+     */
+    const interactive = e.target.closest(
+        "button, a, input, textarea, select, label, .product-card, " +
+        ".variant-modal, .cart-card, #posCartPanel, [role='button']"
+    );
+
+    if(interactive){
+        return;
     }
+
+    focusPOSSearchWithoutScroll();
 });
 
 /* ==================================================
@@ -6781,13 +6939,36 @@ function closePaymentModal(){
     if(searchInput) searchInput.focus();
 }
 
+let posVariantScrollX = 0;
+let posVariantScrollY = 0;
+
+function restorePOSVariantScroll(){
+    window.scrollTo(posVariantScrollX, posVariantScrollY);
+    requestAnimationFrame(function(){
+        window.scrollTo(posVariantScrollX, posVariantScrollY);
+    });
+}
+
 function openVariantModal(id){
-    document.getElementById(id).style.display = "flex";
+    posVariantScrollX = window.scrollX;
+    posVariantScrollY = window.scrollY;
+
+    const modal = document.getElementById(id);
+    if(modal){
+        modal.style.display = "flex";
+    }
+
+    restorePOSVariantScroll();
 }
 
 function closeVariantModal(id){
-    document.getElementById(id).style.display = "none";
-    if(searchInput) searchInput.focus();
+    const modal = document.getElementById(id);
+    if(modal){
+        modal.style.display = "none";
+    }
+
+    /* Do not focus the search input here; that can jump the page upward. */
+    restorePOSVariantScroll();
 }
 
 function num(id){
