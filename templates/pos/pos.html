@@ -6240,9 +6240,9 @@ function fastAddBarcode(rawCode){
 
     const addUrl = posBarcodeUrls[code.toLowerCase()];
 
-    /* Not an exact barcode: search products through AJAX without reloading POS. */
+    /* Not an exact barcode: instantly filter products already on the POS page. */
     if(!addUrl){
-        loadPOSSearch(code);
+        filterPOSProducts(code);
         return;
     }
 
@@ -6304,7 +6304,7 @@ if(searchForm){
             return;
         }
 
-        loadPOSSearch(code);
+        filterPOSProducts(code);
     });
 }
 
@@ -6326,10 +6326,92 @@ if(searchInput){
             return;
         }
 
-        loadPOSSearch(code);
+        filterPOSProducts(code);
     });
 }
 
+
+/* ==================================================
+   INSTANT POS SEARCH — filter while typing
+   No Enter, no request, no reload, no loading logo
+   ================================================== */
+let posSearchTimer = null;
+
+function normalizePOSSearchText(value){
+    return String(value || "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function getPOSCardSearchText(card){
+    if(!card){
+        return "";
+    }
+
+    let text = card.textContent || "";
+    const modal = card.nextElementSibling;
+
+    if(modal && modal.classList && modal.classList.contains("variant-modal")){
+        text += " " + (modal.textContent || "");
+    }
+
+    return normalizePOSSearchText(text);
+}
+
+function filterPOSProducts(query){
+    const productArea = document.querySelector(".product-area");
+    if(!productArea){
+        return;
+    }
+
+    const normalizedQuery = normalizePOSSearchText(query);
+    const cards = Array.from(productArea.querySelectorAll(".product-card"));
+    let visibleCount = 0;
+
+    cards.forEach(function(card){
+        const matches = !normalizedQuery || getPOSCardSearchText(card).includes(normalizedQuery);
+        card.hidden = !matches;
+
+        const modal = card.nextElementSibling;
+        if(modal && modal.classList && modal.classList.contains("variant-modal")){
+            if(!matches){
+                modal.classList.remove("active");
+            }
+        }
+
+        if(matches){
+            visibleCount += 1;
+        }
+    });
+
+    let empty = productArea.querySelector(".pos-live-search-empty");
+
+    if(visibleCount === 0){
+        if(!empty){
+            empty = document.createElement("div");
+            empty.className = "empty-box pos-live-search-empty";
+            empty.innerHTML = "<h3>No products found</h3><p>Try another product name or barcode.</p>";
+
+            const grid = productArea.querySelector(".product-grid");
+            if(grid){
+                grid.appendChild(empty);
+            }
+        }
+        empty.hidden = false;
+    }else if(empty){
+        empty.hidden = true;
+    }
+}
+
+if(searchInput){
+    searchInput.addEventListener("input", function(){
+        clearTimeout(posSearchTimer);
+        posSearchTimer = setTimeout(function(){
+            filterPOSProducts(searchInput.value);
+        }, 40);
+    });
+}
 
 /* ==================================================
    FAST PRODUCT SEARCH — update product list only
@@ -6419,7 +6501,8 @@ function loadPOSSearch(query){
             return;
         }
 
-        alert((error && error.message) ? error.message : "Cannot search products.");
+        /* Search is handled locally, so never interrupt the cashier with an alert. */
+        filterPOSProducts(searchInput ? searchInput.value : "");
         focusPOSSearchWithoutScroll();
     })
     .finally(function(){
