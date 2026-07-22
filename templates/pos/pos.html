@@ -79,26 +79,22 @@
                 {% endif %}
             </form>
 
-            <div class="type-row">
-                <a href="{% url 'pos' %}" class="type-chip {% if not selected_type %}active{% endif %}">
-                    🛍️ All
-                </a>
-
-                {% for type in item_types %}
-                    <a href="?type={{ type.id }}" class="type-chip {% if selected_type|stringformat:'s' == type.id|stringformat:'s' %}active{% endif %}">
-                        {{ type.emoji|default:"📦" }} {{ type.name }}
-                    </a>
-                {% endfor %}
-            </div>
         </div>
 
-        <div class="pos-top-side">
-            <img src="{% static 'img/pos-hero.png' %}" class="pos-hero-img" alt="POS">
+        <img src="{% static 'img/pos-hero.png' %}" class="pos-hero-img" alt="POS">
+    </div>
 
-            <div id="posCartPanel">
-                {% include "pos/partials/cart_panel.html" %}
-            </div>
-        </div>
+    <!-- Product types use the full page width and wrap to a new row -->
+    <div class="type-row pos-type-row-full">
+        <a href="{% url 'pos' %}" class="type-chip {% if not selected_type %}active{% endif %}">
+            🛍️ All
+        </a>
+
+        {% for type in item_types %}
+            <a href="?type={{ type.id }}" class="type-chip {% if selected_type|stringformat:'s' == type.id|stringformat:'s' %}active{% endif %}">
+                {{ type.emoji|default:"📦" }} {{ type.name }}
+            </a>
+        {% endfor %}
     </div>
 
     <div class="pos-layout">
@@ -236,6 +232,10 @@
                     </div>
                 {% endfor %}
             </div>
+        </div>
+
+        <div id="posCartPanel">
+            {% include "pos/partials/cart_panel.html" %}
         </div>
 
     </div>
@@ -1146,22 +1146,11 @@ a{
    TOP
 ========================= */
 .pos-top{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) 430px;
-    align-items:start;
-    gap:24px;
-    margin-bottom:26px;
-}
-
-.pos-top-side{
-    min-width:0;
     display:flex;
-    flex-direction:column;
-    gap:14px;
-}
-
-.pos-top-side #posCartPanel{
-    min-width:0;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:22px;
+    margin-bottom:26px;
 }
 
 .pos-top h1{
@@ -1457,9 +1446,8 @@ a{
 }
 
 .pos-hero-img{
-    width:100%;
-    max-width:320px;
-    align-self:center;
+    width:320px;
+    max-width:32%;
     object-fit:contain;
 }
 
@@ -1467,7 +1455,10 @@ a{
    MAIN LAYOUT
 ========================= */
 .pos-layout{
-    display:block;
+    display:grid;
+    grid-template-columns:minmax(0,1.45fr) 430px;
+    gap:24px;
+    align-items:start;
 }
 
 .product-area h2{
@@ -1579,7 +1570,7 @@ a{
 ========================= */
 .cart-card{
     position:sticky;
-    top:12px;
+    top:18px;
     background:white;
     border:2px solid #f5e0d8;
     border-radius:30px;
@@ -3012,10 +3003,6 @@ a{
     .pos-top{
         display:block;
         margin-bottom:22px;
-    }
-
-    .pos-top-side{
-        margin-top:16px;
     }
 
     .pos-top h1{
@@ -6025,6 +6012,51 @@ a{
 .change-record-help{margin-top:9px;color:#74687e;font-size:9px;font-weight:850;line-height:1.4}
 @media(max-width:650px){.change-record-head{display:block}.change-record-head>span{display:inline-flex;margin-top:7px}.change-entry-row{grid-template-columns:1fr}.change-mode-row{grid-template-columns:1fr}.change-currency-row{width:100%}.change-currency-btn{flex:1}.change-manual-grid{grid-template-columns:1fr 1fr}.manual-change-summary{display:block}.manual-change-summary small{display:block;max-width:none;margin-top:5px;text-align:left}.manual-change-balance-copy strong{font-size:18px}}
 @media(max-width:390px){.change-manual-grid{grid-template-columns:1fr}.change-currency-row{display:grid;grid-template-columns:1fr 1fr}}
+
+/* ==================================================
+   POS DESKTOP LAYOUT FIX
+   - Product types use all free width and wrap
+   - Cart remains beside products in its original area
+   ================================================== */
+.pos-type-row-full{
+    width:100%;
+    margin:18px 0 24px;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:12px;
+}
+
+.pos-layout{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) minmax(360px, 420px);
+    gap:20px;
+    align-items:start;
+}
+
+#posCartPanel{
+    position:sticky;
+    top:16px;
+    align-self:start;
+    min-width:0;
+}
+
+@media(max-width:1100px){
+    .pos-layout{
+        grid-template-columns:minmax(0, 1fr) 360px;
+    }
+}
+
+@media(max-width:900px){
+    .pos-layout{
+        display:block;
+    }
+
+    #posCartPanel{
+        position:static;
+        margin-top:20px;
+    }
+}
 </style>
 
 <script>
@@ -6108,7 +6140,7 @@ document.addEventListener("submit", function(event){
 
 window.addEventListener("load", function(){
     if(searchInput){
-        focusPOSSearchWithoutScroll();
+        searchInput.focus();
     }
 
     formatDeliveryExpense();
@@ -6153,7 +6185,19 @@ document.addEventListener("click", function(e){
     }
 });
 
-let typingTimer = null;
+/* ==================================================
+   FAST BARCODE SCAN — no page reload / no loading screen
+   ================================================== */
+const posBarcodeUrls = {};
+{% for item in items %}
+    {% for variant in item.variants.all %}
+        {% if variant.sku %}
+            posBarcodeUrls["{{ variant.sku|escapejs }}".trim().toLowerCase()] =
+                "{% url 'pos_add_variant_cart' item.id variant.id %}";
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+
 let posScanBusy = false;
 
 function focusPOSSearchWithoutScroll(){
@@ -6166,30 +6210,34 @@ function focusPOSSearchWithoutScroll(){
     }
 }
 
-function posScanBarcode(value){
-    const code = String(value || "").trim();
+function fastAddBarcode(rawCode){
+    if(posScanBusy){ return; }
 
-    if(!code || posScanBusy){
+    let code = String(rawCode || "").trim();
+    if(code.toUpperCase().startsWith("SKU:")){
+        code = code.substring(4).trim();
+    }
+
+    if(!code){ return; }
+
+    const addUrl = posBarcodeUrls[code.toLowerCase()];
+
+    /* Not an exact barcode: keep normal product-name search behavior. */
+    if(!addUrl){
+        markPOSNormalNavigation();
+        searchForm.submit();
         return;
     }
 
     posScanBusy = true;
-    clearTimeout(typingTimer);
+    const oldX = window.scrollX;
+    const oldY = window.scrollY;
 
-    const scrollX = window.scrollX;
-    const scrollY = window.scrollY;
-    const url = new URL(searchForm.action || window.location.href, window.location.origin);
-    url.searchParams.set("q", code);
-
-    const selectedType = searchForm.querySelector('input[name="type"]');
-    if(selectedType && selectedType.value){
-        url.searchParams.set("type", selectedType.value);
-    }
-
-    fetch(url.toString(), {
-        method:"GET",
+    fetch(addUrl, {
+        method:"POST",
         credentials:"same-origin",
         headers:{
+            "X-CSRFToken":getPOSCSRFToken(),
             "X-Requested-With":"XMLHttpRequest"
         }
     })
@@ -6200,9 +6248,7 @@ function posScanBarcode(value){
         });
     })
     .then(function(data){
-        if(!data.success){
-            throw data;
-        }
+        if(!data.success){ throw data; }
 
         const panel = document.getElementById("posCartPanel");
         if(panel && data.cart_html){
@@ -6214,12 +6260,12 @@ function posScanBarcode(value){
         closeAllVariantModals();
 
         searchInput.value = "";
-        window.scrollTo(scrollX, scrollY);
+        window.scrollTo(oldX, oldY);
         focusPOSSearchWithoutScroll();
     })
     .catch(function(error){
-        alert((error && error.message) ? error.message : "Barcode not found.");
-        window.scrollTo(scrollX, scrollY);
+        alert((error && error.message) ? error.message : "Cannot add this barcode.");
+        window.scrollTo(oldX, oldY);
         focusPOSSearchWithoutScroll();
     })
     .finally(function(){
@@ -6227,31 +6273,34 @@ function posScanBarcode(value){
     });
 }
 
-if(searchInput){
-    searchInput.addEventListener("input", function(){
-        clearTimeout(typingTimer);
+if(searchForm){
+    searchForm.addEventListener("submit", function(e){
+        const code = searchInput ? searchInput.value.trim() : "";
+        const normalized = code.toUpperCase().startsWith("SKU:")
+            ? code.substring(4).trim().toLowerCase()
+            : code.toLowerCase();
 
-        typingTimer = setTimeout(function(){
-            if(!posScanBusy && searchInput.value.trim()){
-                markPOSNormalNavigation();
-                searchForm.submit();
-            }
-        }, 650);
-    });
-
-    searchInput.addEventListener("keydown", function(e){
-        if(e.key === "Enter"){
+        if(normalized && posBarcodeUrls[normalized]){
             e.preventDefault();
-            clearTimeout(typingTimer);
-            posScanBarcode(searchInput.value);
+            fastAddBarcode(code);
+        }else{
+            markPOSNormalNavigation();
         }
     });
+}
 
-    searchForm.addEventListener("submit", function(e){
-        if(searchInput.value.trim()){
-            e.preventDefault();
-            clearTimeout(typingTimer);
-            posScanBarcode(searchInput.value);
+if(searchInput){
+    searchInput.addEventListener("keydown", function(e){
+        if(e.key === "Enter"){
+            const code = searchInput.value.trim();
+            const normalized = code.toUpperCase().startsWith("SKU:")
+                ? code.substring(4).trim().toLowerCase()
+                : code.toLowerCase();
+
+            if(normalized && posBarcodeUrls[normalized]){
+                e.preventDefault();
+                fastAddBarcode(code);
+            }
         }
     });
 }
@@ -8351,9 +8400,6 @@ function posCartAction(url){
         return false;
     }
 
-    const scrollX = window.scrollX;
-    const scrollY = window.scrollY;
-
     fetch(url, {
         method: "POST",
         credentials: "same-origin",
@@ -8385,13 +8431,17 @@ function posCartAction(url){
         syncSelectedItemsFromCart();
         closeAllVariantModals();
 
-        window.scrollTo(scrollX, scrollY);
-        focusPOSSearchWithoutScroll();
+        const searchBox = document.getElementById("posSearch");
+        if(searchBox){
+            try{
+                searchBox.focus({preventScroll:true});
+            }catch(error){
+                searchBox.focus();
+            }
+        }
     })
     .catch(function(error){
         alert((error && error.message) ? error.message : "Cart update failed. Please refresh and try again.");
-        window.scrollTo(scrollX, scrollY);
-        focusPOSSearchWithoutScroll();
     });
 
     return false;
