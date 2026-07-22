@@ -5176,7 +5176,7 @@ a{
     }
 
     .delivery-company-card{
-        min-height:48px !important;
+        min-height:68px !important;
         padding:4px 5px !important;
     }
 
@@ -5399,13 +5399,13 @@ a{
     }
 
     .payment-head h2{
-        font-size:22px !important;
+        font-size:28px !important;
     }
 
     .payment-head button{
         width:40px !important;
         height:40px !important;
-        font-size:22px !important;
+        font-size:28px !important;
         box-shadow:none !important;
     }
 
@@ -5490,7 +5490,7 @@ a{
     }
 
     .delivery-choice-card{
-        min-height:48px !important;
+        min-height:68px !important;
         padding:5px 6px !important;
         border-radius:12px !important;
     }
@@ -6090,7 +6090,7 @@ a{
 }
 
 #posCartPanel .cart-head h2{
-    font-size:22px !important;
+    font-size:28px !important;
     line-height:1.1 !important;
 }
 
@@ -6119,18 +6119,18 @@ a{
 }
 
 #posCartPanel .cart-item{
-    min-height:98px !important;
+    min-height:112px !important;
     padding:8px 0 !important;
-    grid-template-columns:48px minmax(0,1fr) auto !important;
+    grid-template-columns:68px minmax(0,1fr) auto !important;
     gap:8px !important;
     align-items:center !important;
 }
 
 #posCartPanel .cart-img{
-    width:48px !important;
-    height:48px !important;
+    width:68px !important;
+    height:68px !important;
     border-radius:12px !important;
-    font-size:22px !important;
+    font-size:28px !important;
 }
 
 #posCartPanel .cart-name{
@@ -6207,13 +6207,13 @@ a{
     }
 
     #posCartPanel .cart-item{
-        grid-template-columns:48px minmax(0,1fr) auto !important;
+        grid-template-columns:68px minmax(0,1fr) auto !important;
         gap:8px !important;
     }
 
     #posCartPanel .cart-img{
-        width:48px !important;
-        height:48px !important;
+        width:68px !important;
+        height:68px !important;
     }
 
     #posCartPanel .qty-box{
@@ -6223,6 +6223,79 @@ a{
     #posCartPanel .qty-box a,
     #posCartPanel .qty-box span{
         height:28px !important;
+    }
+}
+
+
+/* ==================================================
+   CONSISTENT CART ITEM STYLE
+   Make every cart row match the first/top item style
+   ================================================== */
+#posCartPanel .cart-item{
+    grid-template-columns:68px minmax(0,1fr) 62px !important;
+    align-items:start !important;
+}
+
+#posCartPanel .cart-img{
+    width:68px !important;
+    height:68px !important;
+    min-width:68px !important;
+    min-height:68px !important;
+    margin-top:22px !important;
+    align-self:start !important;
+    overflow:hidden !important;
+    background:#fff8f4 !important;
+}
+
+#posCartPanel .cart-img img{
+    width:100% !important;
+    height:100% !important;
+    max-width:none !important;
+    max-height:none !important;
+    object-fit:cover !important;
+    object-position:center !important;
+    transform:scale(1.28) !important;
+    transform-origin:center !important;
+}
+
+#posCartPanel .cart-main{
+    min-width:0 !important;
+}
+
+#posCartPanel .cart-side{
+    width:62px !important;
+    min-width:62px !important;
+    padding-top:22px !important;
+    align-self:start !important;
+    text-align:right !important;
+}
+
+#posCartPanel .cart-name{
+    min-height:72px !important;
+}
+
+#posCartPanel .qty-box{
+    margin-top:4px !important;
+}
+
+@media(max-width:900px){
+    #posCartPanel .cart-item{
+        grid-template-columns:68px minmax(0,1fr) 62px !important;
+        align-items:start !important;
+    }
+
+    #posCartPanel .cart-img{
+        width:68px !important;
+        height:68px !important;
+        min-width:68px !important;
+        min-height:68px !important;
+        margin-top:22px !important;
+    }
+
+    #posCartPanel .cart-side{
+        width:62px !important;
+        min-width:62px !important;
+        padding-top:22px !important;
     }
 }
 
