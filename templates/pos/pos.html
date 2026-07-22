@@ -6474,6 +6474,165 @@ a{
     }
 }
 
+
+/* ==================================================
+   CART V13 — name above image, larger image/text,
+   total aligned with unit price and quantity
+   ================================================== */
+#posCartPanel .cart-item.cart-item-compact{
+    display:block !important;
+    padding:12px 0 14px !important;
+}
+
+#posCartPanel .cart-title-block{
+    display:flex !important;
+    align-items:center !important;
+    gap:7px !important;
+    min-width:0 !important;
+    padding:0 0 8px 0 !important;
+}
+
+#posCartPanel .cart-product-title{
+    display:block !important;
+    min-width:0 !important;
+    max-width:210px !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+    color:#17152f !important;
+    font-size:15px !important;
+    font-weight:900 !important;
+    line-height:1.2 !important;
+}
+
+#posCartPanel .cart-variant-text{
+    display:block !important;
+    min-width:0 !important;
+    max-width:120px !important;
+    margin:0 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+    color:#8d8494 !important;
+    font-size:10px !important;
+    font-weight:800 !important;
+}
+
+#posCartPanel .cart-title-block .cart-type-chip{
+    flex:0 0 auto !important;
+    display:inline-flex !important;
+    margin:0 !important;
+    padding:4px 8px !important;
+    font-size:9px !important;
+}
+
+#posCartPanel .cart-item-bottom{
+    display:grid !important;
+    grid-template-columns:86px minmax(0,1fr) !important;
+    gap:12px !important;
+    align-items:center !important;
+    margin:0 !important;
+}
+
+#posCartPanel .cart-img{
+    width:86px !important;
+    height:92px !important;
+    min-width:86px !important;
+    min-height:92px !important;
+    margin:0 !important;
+    border-radius:12px !important;
+    overflow:hidden !important;
+    background:#fff8f4 !important;
+}
+
+#posCartPanel .cart-img img{
+    width:100% !important;
+    height:100% !important;
+    object-fit:contain !important;
+    transform:none !important;
+}
+
+#posCartPanel .cart-bottom-main{
+    min-width:0 !important;
+}
+
+#posCartPanel .cart-price-qty-row{
+    display:grid !important;
+    grid-template-columns:auto auto 1fr auto !important;
+    gap:8px !important;
+    align-items:center !important;
+}
+
+#posCartPanel .cart-unit-price{
+    color:#6f6777 !important;
+    font-size:12px !important;
+    font-weight:900 !important;
+    white-space:nowrap !important;
+}
+
+#posCartPanel .qty-box{
+    display:grid !important;
+    grid-template-columns:30px 36px 30px !important;
+    gap:4px !important;
+    margin:0 !important;
+}
+
+#posCartPanel .qty-box a,
+#posCartPanel .qty-box span{
+    height:31px !important;
+    min-height:31px !important;
+    font-size:14px !important;
+}
+
+#posCartPanel .cart-line-total{
+    justify-self:end !important;
+    color:#ff4f6d !important;
+    font-size:16px !important;
+    font-weight:900 !important;
+    white-space:nowrap !important;
+}
+
+#posCartPanel .remove-btn{
+    min-height:31px !important;
+    margin:0 !important;
+    padding:0 9px !important;
+    font-size:9px !important;
+}
+
+#posCartPanel .stock-alert,
+#posCartPanel .stock-ok{
+    margin-top:7px !important;
+    font-size:9px !important;
+}
+
+@media(max-width:900px){
+    #posCartPanel .cart-product-title{
+        max-width:170px !important;
+        font-size:14px !important;
+    }
+
+    #posCartPanel .cart-item-bottom{
+        grid-template-columns:82px minmax(0,1fr) !important;
+        gap:10px !important;
+    }
+
+    #posCartPanel .cart-img{
+        width:82px !important;
+        height:88px !important;
+        min-width:82px !important;
+        min-height:88px !important;
+    }
+
+    #posCartPanel .cart-price-qty-row{
+        grid-template-columns:auto auto 1fr !important;
+    }
+
+    #posCartPanel .remove-btn{
+        grid-column:3 !important;
+        justify-self:end !important;
+    }
+}
+
 </style>
 
 <script>

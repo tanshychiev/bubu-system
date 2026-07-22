@@ -21,29 +21,22 @@
     <div class="cart-list">
         {% for cart_item in cart_items %}
             <div class="cart-item cart-item-compact">
-                <div class="cart-item-top">
-                    <div class="cart-title-block">
-                        <strong class="cart-product-title">{{ cart_item.item.name }}</strong>
+                <div class="cart-title-block">
+                    <strong class="cart-product-title">{{ cart_item.item.name }}</strong>
 
-                        {% if cart_item.variant %}
-                            <small class="cart-variant-text">
-                                {{ cart_item.variant.label|default:"Variant" }}
-                                {% if cart_item.variant.size %} · {{ cart_item.variant.size }}{% endif %}
-                                {% if cart_item.variant.color %} · {{ cart_item.variant.color }}{% endif %}
-                            </small>
-                        {% else %}
-                            <small class="cart-variant-text">Default</small>
-                        {% endif %}
+                    {% if cart_item.variant %}
+                        <small class="cart-variant-text">
+                            {{ cart_item.variant.label|default:"Variant" }}
+                            {% if cart_item.variant.size %} · {{ cart_item.variant.size }}{% endif %}
+                            {% if cart_item.variant.color %} · {{ cart_item.variant.color }}{% endif %}
+                        </small>
+                    {% else %}
+                        <small class="cart-variant-text">Default</small>
+                    {% endif %}
 
-                        {% if cart_item.item_type_name %}
-                            <small class="cart-type-chip">{{ cart_item.item_type_name }}</small>
-                        {% endif %}
-                    </div>
-
-                    <div class="cart-side">
-                        <strong>${{ cart_item.total }}</strong>
-                        <a href="{% url 'pos_remove_cart' cart_item.cart_key %}" class="remove-btn pos-cart-action">Remove</a>
-                    </div>
+                    {% if cart_item.item_type_name %}
+                        <small class="cart-type-chip">{{ cart_item.item_type_name }}</small>
+                    {% endif %}
                 </div>
 
                 <div class="cart-item-bottom">
@@ -58,7 +51,7 @@
                     </div>
 
                     <div class="cart-bottom-main">
-                        <div class="cart-unit-row">
+                        <div class="cart-price-qty-row">
                             <small class="cart-unit-price">${{ cart_item.price|default:cart_item.item.sale_price }}</small>
 
                             <div class="qty-box">
@@ -66,6 +59,10 @@
                                 <span>{{ cart_item.quantity }}</span>
                                 <a href="{% url 'pos_plus_cart' cart_item.cart_key %}" class="pos-cart-action">＋</a>
                             </div>
+
+                            <strong class="cart-line-total">${{ cart_item.total }}</strong>
+
+                            <a href="{% url 'pos_remove_cart' cart_item.cart_key %}" class="remove-btn pos-cart-action">Remove</a>
                         </div>
 
                         {% if not cart_item.is_service %}
