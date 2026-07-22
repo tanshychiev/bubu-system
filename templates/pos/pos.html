@@ -6240,10 +6240,9 @@ function fastAddBarcode(rawCode){
 
     const addUrl = posBarcodeUrls[code.toLowerCase()];
 
-    /* Not an exact barcode: keep normal product-name search behavior. */
+    /* Not an exact barcode: search products through AJAX without reloading POS. */
     if(!addUrl){
-        markPOSNormalNavigation();
-        searchForm.submit();
+        loadPOSSearch(code);
         return;
     }
 
@@ -6293,36 +6292,146 @@ function fastAddBarcode(rawCode){
 
 if(searchForm){
     searchForm.addEventListener("submit", function(e){
+        e.preventDefault();
+
         const code = searchInput ? searchInput.value.trim() : "";
         const normalized = code.toUpperCase().startsWith("SKU:")
             ? code.substring(4).trim().toLowerCase()
             : code.toLowerCase();
 
         if(normalized && posBarcodeUrls[normalized]){
-            e.preventDefault();
             fastAddBarcode(code);
-        }else{
-            markPOSNormalNavigation();
+            return;
         }
+
+        loadPOSSearch(code);
     });
 }
 
 if(searchInput){
     searchInput.addEventListener("keydown", function(e){
-        if(e.key === "Enter"){
-            const code = searchInput.value.trim();
-            const normalized = code.toUpperCase().startsWith("SKU:")
-                ? code.substring(4).trim().toLowerCase()
-                : code.toLowerCase();
-
-            if(normalized && posBarcodeUrls[normalized]){
-                e.preventDefault();
-                fastAddBarcode(code);
-            }
+        if(e.key !== "Enter"){
+            return;
         }
+
+        e.preventDefault();
+
+        const code = searchInput.value.trim();
+        const normalized = code.toUpperCase().startsWith("SKU:")
+            ? code.substring(4).trim().toLowerCase()
+            : code.toLowerCase();
+
+        if(normalized && posBarcodeUrls[normalized]){
+            fastAddBarcode(code);
+            return;
+        }
+
+        loadPOSSearch(code);
     });
 }
 
+
+/* ==================================================
+   FAST PRODUCT SEARCH — update product list only
+   No full page reload / no BUBU loading screen
+   ================================================== */
+let posSearchBusy = false;
+let posSearchController = null;
+
+function buildPOSSearchURL(query){
+    const url = new URL(window.location.href);
+    const selectedChip = document.querySelector(".type-chip.active");
+    const selectedTypeURL = selectedChip ? new URL(selectedChip.href, window.location.origin) : null;
+    const selectedType = selectedTypeURL ? selectedTypeURL.searchParams.get("type") : "";
+
+    url.search = "";
+
+    if(query){
+        url.searchParams.set("q", query);
+    }
+
+    if(selectedType){
+        url.searchParams.set("type", selectedType);
+    }
+
+    return url.toString();
+}
+
+function replacePOSProductsFromHTML(html, url){
+    const parsed = new DOMParser().parseFromString(html, "text/html");
+    const newProductArea = parsed.querySelector(".product-area");
+    const currentProductArea = document.querySelector(".product-area");
+
+    if(!newProductArea || !currentProductArea){
+        throw new Error("Product list was not found.");
+    }
+
+    currentProductArea.replaceWith(newProductArea);
+
+    /* An exact SKU handled by Django may have changed the cart before redirecting. */
+    const returnedCart = parsed.querySelector("#posCartPanel");
+    const currentCart = document.querySelector("#posCartPanel");
+
+    if(returnedCart && currentCart){
+        currentCart.innerHTML = returnedCart.innerHTML;
+    }
+
+    refreshBarcodeMapFromProductArea();
+    history.replaceState({}, "", url);
+    focusPOSSearchWithoutScroll();
+}
+
+function loadPOSSearch(query){
+    if(posSearchBusy && posSearchController){
+        posSearchController.abort();
+    }
+
+    const cleanQuery = String(query || "").trim();
+    const url = buildPOSSearchURL(cleanQuery);
+    const productArea = document.querySelector(".product-area");
+
+    posSearchBusy = true;
+    posSearchController = new AbortController();
+
+    if(productArea){
+        productArea.classList.add("pos-products-updating");
+    }
+
+    fetch(url, {
+        method:"GET",
+        credentials:"same-origin",
+        headers:{
+            "X-Requested-With":"XMLHttpRequest"
+        },
+        signal:posSearchController.signal
+    })
+    .then(function(response){
+        if(!response.ok){
+            throw new Error("Cannot search products.");
+        }
+        return response.text();
+    })
+    .then(function(html){
+        replacePOSProductsFromHTML(html, url);
+    })
+    .catch(function(error){
+        if(error && error.name === "AbortError"){
+            return;
+        }
+
+        alert((error && error.message) ? error.message : "Cannot search products.");
+        focusPOSSearchWithoutScroll();
+    })
+    .finally(function(){
+        posSearchBusy = false;
+        posSearchController = null;
+
+        const currentProductArea = document.querySelector(".product-area");
+        if(currentProductArea){
+            currentProductArea.classList.remove("pos-products-updating");
+        }
+    });
+}
 
 /* ==================================================
    FAST ITEM-TYPE FILTER — update products only
