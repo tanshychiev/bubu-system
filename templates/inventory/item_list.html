@@ -1974,6 +1974,106 @@ body.inventory-detail-open{
     }
 }
 
+
+/* =========================================================
+   POS-LIKE INVENTORY FILTERING
+   Types → instant search → products
+========================================================= */
+.inventory-live-search-wrap{
+    position:relative;
+    width:100%;
+    margin:-6px 0 18px;
+}
+
+.inventory-live-search{
+    width:100%!important;
+    height:58px;
+    padding:0 58px 0 20px!important;
+    border:2px solid #b799ff!important;
+    border-radius:22px!important;
+    outline:none;
+    background:white;
+    color:#17152f;
+    font-size:16px;
+    font-weight:900;
+    box-shadow:0 8px 24px rgba(142,99,255,.10);
+    transition:border-color .18s, box-shadow .18s;
+}
+
+.inventory-live-search:focus{
+    border-color:#8e63ff!important;
+    box-shadow:0 0 0 4px rgba(142,99,255,.12);
+}
+
+.inventory-search-clear{
+    position:absolute;
+    top:50%;
+    right:10px;
+    width:38px;
+    height:38px;
+    border:0;
+    border-radius:12px;
+    transform:translateY(-50%);
+    color:#8e63ff;
+    background:#f1ebff;
+    font-weight:1000;
+    cursor:pointer;
+    opacity:0;
+    pointer-events:none;
+    transition:.18s;
+}
+
+.inventory-live-search-wrap.has-value .inventory-search-clear{
+    opacity:1;
+    pointer-events:auto;
+}
+
+.inventory-command-actions-only{
+    grid-template-columns:1fr;
+}
+
+.inventory-product-updating{
+    opacity:.55;
+    pointer-events:none;
+    transition:opacity .12s;
+}
+
+.inventory-live-empty{
+    grid-column:1/-1;
+    min-height:240px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:28px;
+    border:1px dashed #dfd2e8;
+    border-radius:22px;
+    color:#7b7288;
+    background:#fffafd;
+    text-align:center;
+    font-weight:900;
+}
+
+@media(max-width:700px){
+    .inventory-live-search-wrap{
+        margin:0 0 9px;
+    }
+
+    .inventory-live-search{
+        height:46px!important;
+        min-height:46px!important;
+        padding:0 48px 0 13px!important;
+        border-radius:13px!important;
+        font-size:16px!important;
+    }
+
+    .inventory-search-clear{
+        right:6px;
+        width:34px;
+        height:34px;
+        border-radius:10px;
+    }
+}
+
 </style>
 
 <div class="inventory-hero inventory-hero-clean">
@@ -2018,29 +2118,13 @@ body.inventory-detail-open{
                 </button>
             {% endif %}
 
-            <input
-                class="search-pill"
-                type="text"
-                name="q"
-                placeholder="🔍 Search product..."
-                value="{{ q|default:'' }}"
-            >
-
-            <div class="inventory-command-row">
-                <button class="btn-search" type="submit">Search</button>
-                <a
-                    href="{% url 'item_list' %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}"
-                    class="btn-reset"
-                >
-                    Reset
-                </a>
-
-                {% if can_manage_inventory or can_create_inventory_type or can_manage_inventory_settings %}
+            {% if can_manage_inventory or can_create_inventory_type or can_manage_inventory_settings %}
+                <div class="inventory-command-row inventory-command-actions-only">
                     <button type="button" class="mobile-action-toggle" onclick="openMobileActions()">
                         ＋ Actions
                     </button>
-                {% endif %}
-            </div>
+                </div>
+            {% endif %}
 
             {% if can_manage_inventory or can_create_inventory_type or can_manage_inventory_settings %}
                 <div class="mobile-action-backdrop" id="mobileActionBackdrop" onclick="closeMobileActions()"></div>
@@ -2136,10 +2220,10 @@ body.inventory-detail-open{
 
 <div class="inventory-panel">
 
-    <div class="category-tabs">
+    <div class="category-tabs" id="inventoryTypeTabs">
         <div class="type-tab-wrap">
             <a
-                class="tab {% if not selected_type %}active{% endif %}"
+                class="tab inventory-type-tab {% if not selected_type %}active{% endif %}"
                 href="{% url 'item_list' %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}"
             >
                 ▦ All Items
@@ -2149,7 +2233,7 @@ body.inventory-detail-open{
         {% for type in item_types %}
             <div class="type-tab-wrap">
                 <a
-                    class="tab {% if selected_type == type.id|stringformat:'s' %}active{% endif %}"
+                    class="tab inventory-type-tab {% if selected_type == type.id|stringformat:'s' %}active{% endif %}"
                     href="?type={{ type.id }}{% if request.user.is_superuser and current_branch %}&branch={{ current_branch.id }}{% endif %}"
                 >
                     {{ type.emoji|default:"📦" }} {{ type.name }}
@@ -2158,7 +2242,25 @@ body.inventory-detail-open{
         {% endfor %}
     </div>
 
-    <div class="product-grid">
+    <div class="inventory-live-search-wrap">
+        <input
+            class="search-pill inventory-live-search"
+            type="search"
+            id="inventoryLiveSearch"
+            placeholder="🔍 Search product, brand, SKU or variant..."
+            value="{{ q|default:'' }}"
+            autocomplete="off"
+        >
+        <button
+            type="button"
+            class="inventory-search-clear"
+            id="inventorySearchClear"
+            aria-label="Clear search"
+            title="Clear search"
+        >✕</button>
+    </div>
+
+    <div class="product-grid" id="inventoryProductGrid">
 
         {% for item in items %}
         <div class="product-card">
@@ -2435,6 +2537,234 @@ body.inventory-detail-open{
 </section>
 
 <script>
+
+/* =========================================================
+   POS-LIKE INVENTORY SEARCH AND TYPE FILTER
+   - search while typing
+   - no Enter
+   - no full-page reload
+   - no BUBU loading screen
+   - preserve scroll position
+========================================================= */
+let inventoryTypeRequest = null;
+let inventoryDetailScrollX = 0;
+let inventoryDetailScrollY = 0;
+
+function normalizeInventorySearch(value){
+    return String(value || "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function inventoryCardSearchText(card){
+    if(!card){
+        return "";
+    }
+
+    let content = card.textContent || "";
+    const template = card.nextElementSibling;
+
+    if(template && template.tagName === "TEMPLATE"){
+        content += " " + (template.content?.textContent || "");
+    }
+
+    return normalizeInventorySearch(content);
+}
+
+function setInventorySearchClearState(){
+    const input = document.getElementById("inventoryLiveSearch");
+    const wrap = input?.closest(".inventory-live-search-wrap");
+
+    if(wrap){
+        wrap.classList.toggle("has-value", Boolean(input.value.trim()));
+    }
+}
+
+function filterInventoryProducts(){
+    const input = document.getElementById("inventoryLiveSearch");
+    const grid = document.getElementById("inventoryProductGrid");
+
+    if(!input || !grid){
+        return;
+    }
+
+    const query = normalizeInventorySearch(input.value);
+    const cards = Array.from(grid.querySelectorAll(":scope > .product-card"));
+    let visibleCount = 0;
+
+    cards.forEach(function(card){
+        const matches = !query || inventoryCardSearchText(card).includes(query);
+        const template = card.nextElementSibling;
+
+        card.hidden = !matches;
+        card.style.display = matches ? "" : "none";
+
+        if(template && template.tagName === "TEMPLATE"){
+            template.hidden = !matches;
+        }
+
+        if(matches){
+            visibleCount += 1;
+        }
+    });
+
+    let empty = grid.querySelector(".inventory-live-empty");
+
+    if(visibleCount === 0){
+        if(!empty){
+            empty = document.createElement("div");
+            empty.className = "inventory-live-empty";
+            empty.innerHTML = "<div><div style='font-size:42px'>🔎</div><div>No matching inventory items</div><small>Try another name, brand, SKU or variant.</small></div>";
+            grid.appendChild(empty);
+        }
+        empty.hidden = false;
+    }else if(empty){
+        empty.hidden = true;
+    }
+
+    setInventorySearchClearState();
+}
+
+function bindInventoryLiveSearch(){
+    const input = document.getElementById("inventoryLiveSearch");
+    const clear = document.getElementById("inventorySearchClear");
+
+    if(input && input.dataset.liveSearchBound !== "1"){
+        input.dataset.liveSearchBound = "1";
+
+        input.addEventListener("input", filterInventoryProducts);
+        input.addEventListener("keydown", function(event){
+            if(event.key === "Enter"){
+                event.preventDefault();
+            }
+        });
+    }
+
+    if(clear && clear.dataset.liveSearchBound !== "1"){
+        clear.dataset.liveSearchBound = "1";
+
+        clear.addEventListener("click", function(){
+            if(!input){
+                return;
+            }
+
+            input.value = "";
+            filterInventoryProducts();
+
+            try{
+                input.focus({preventScroll:true});
+            }catch(error){
+                input.focus();
+            }
+        });
+    }
+
+    filterInventoryProducts();
+}
+
+function setActiveInventoryType(clickedLink){
+    document.querySelectorAll(".inventory-type-tab").forEach(function(link){
+        link.classList.toggle("active", link === clickedLink);
+    });
+}
+
+function loadInventoryType(url, clickedLink){
+    const grid = document.getElementById("inventoryProductGrid");
+
+    if(!grid){
+        window.location.href = url;
+        return;
+    }
+
+    const savedX = window.scrollX;
+    const savedY = window.scrollY;
+
+    if(inventoryTypeRequest){
+        inventoryTypeRequest.abort();
+    }
+
+    inventoryTypeRequest = new AbortController();
+    grid.classList.add("inventory-product-updating");
+
+    fetch(url, {
+        method:"GET",
+        credentials:"same-origin",
+        headers:{
+            "X-Requested-With":"XMLHttpRequest"
+        },
+        signal:inventoryTypeRequest.signal
+    })
+    .then(function(response){
+        if(!response.ok){
+            throw new Error("Cannot load this inventory type.");
+        }
+        return response.text();
+    })
+    .then(function(html){
+        const parsed = new DOMParser().parseFromString(html, "text/html");
+        const incomingGrid = parsed.querySelector("#inventoryProductGrid");
+
+        if(!incomingGrid){
+            throw new Error("Inventory products were not found.");
+        }
+
+        grid.replaceWith(incomingGrid);
+        setActiveInventoryType(clickedLink);
+        history.replaceState({}, "", url);
+
+        normalizeInventoryImages();
+        filterInventoryProducts();
+
+        window.scrollTo(savedX, savedY);
+        requestAnimationFrame(function(){
+            window.scrollTo(savedX, savedY);
+        });
+    })
+    .catch(function(error){
+        if(error?.name === "AbortError"){
+            return;
+        }
+
+        console.error(error);
+        window.scrollTo(savedX, savedY);
+    })
+    .finally(function(){
+        inventoryTypeRequest = null;
+        const currentGrid = document.getElementById("inventoryProductGrid");
+        currentGrid?.classList.remove("inventory-product-updating");
+    });
+}
+
+function bindInventoryTypeTabs(){
+    document.querySelectorAll(".inventory-type-tab").forEach(function(link){
+        if(link.dataset.ajaxBound === "1"){
+            return;
+        }
+
+        link.dataset.ajaxBound = "1";
+        link.addEventListener("click", function(event){
+            if(
+                event.ctrlKey ||
+                event.metaKey ||
+                event.shiftKey ||
+                event.altKey ||
+                event.button !== 0
+            ){
+                return;
+            }
+
+            event.preventDefault();
+            loadInventoryType(link.href, link);
+        });
+    });
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+    bindInventoryLiveSearch();
+    bindInventoryTypeTabs();
+});
+
 function openBranchPopup(){
     const popup = document.getElementById("branchPopup");
     const backdrop = document.getElementById("branchPopupBackdrop");
@@ -2649,6 +2979,9 @@ function inventoryImageMarkup(rawUrl){
 
 
 function openInventoryItemDetail(trigger){
+    inventoryDetailScrollX = window.scrollX;
+    inventoryDetailScrollY = window.scrollY;
+
     const templateId = trigger?.dataset?.templateId;
     const template = templateId ? document.getElementById(templateId) : null;
     const popup = document.getElementById("inventoryDetailPopup");
@@ -2676,6 +3009,11 @@ function openInventoryItemDetail(trigger){
 
     document.body.classList.add("inventory-detail-open");
     normalizeInventoryImages();
+
+    window.scrollTo(inventoryDetailScrollX, inventoryDetailScrollY);
+    requestAnimationFrame(function(){
+        window.scrollTo(inventoryDetailScrollX, inventoryDetailScrollY);
+    });
 }
 
 function closeInventoryItemDetail(){
@@ -2696,6 +3034,11 @@ function closeInventoryItemDetail(){
     }
 
     document.body.classList.remove("inventory-detail-open");
+
+    window.scrollTo(inventoryDetailScrollX, inventoryDetailScrollY);
+    requestAnimationFrame(function(){
+        window.scrollTo(inventoryDetailScrollX, inventoryDetailScrollY);
+    });
 }
 
 document.addEventListener("keydown", function(event){
