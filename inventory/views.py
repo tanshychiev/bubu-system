@@ -1766,26 +1766,56 @@ def variant_barcode_label(request, variant_id):
         messages.error(request, "You do not have permission.")
         return redirect("item_list")
 
+    # Read only: this view never saves or changes the variant/database.
     variant = get_object_or_404(
         ItemVariant.objects.select_related("item", "item__item_type"),
         pk=variant_id,
     )
 
-    if not variant.sku:
-        variant.save()
+    original_sku = str(variant.sku or "").strip()
 
-    barcode_class = barcode.get_barcode_class("code128")
-    barcode_obj = barcode_class(variant.sku, writer=ImageWriter())
+    # python-barcode Code 128 supports ASCII. Some existing SKUs may contain
+    # Khmer, emoji, or other unsupported Unicode characters, which caused
+    # only those variants to return Server Error 500.
+    safe_sku = "".join(
+        character
+        for character in original_sku
+        if character.isascii()
+        and (character.isalnum() or character in "-._/")
+    )
 
-    buffer = BytesIO()
-    barcode_obj.write(buffer, options={
-        "write_text": False,
-        "module_height": 10,
-        "module_width": 0.35,
-        "font_size": 8,
-        "text_distance": 2,
-        "quiet_zone": 2,
-    })
+    # Runtime-only fallback. Nothing is written to the database.
+    if not safe_sku:
+        safe_sku = f"VAR-{variant.id}"
+
+    try:
+        barcode_class = barcode.get_barcode_class("code128")
+        barcode_obj = barcode_class(safe_sku, writer=ImageWriter())
+
+        buffer = BytesIO()
+        barcode_obj.write(buffer, options={
+            "write_text": False,
+            "module_height": 10,
+            "module_width": 0.35,
+            "font_size": 8,
+            "text_distance": 2,
+            "quiet_zone": 2,
+        })
+    except Exception:
+        # Final safe fallback for any unexpected invalid barcode value.
+        safe_sku = f"VAR-{variant.id}"
+        barcode_class = barcode.get_barcode_class("code128")
+        barcode_obj = barcode_class(safe_sku, writer=ImageWriter())
+
+        buffer = BytesIO()
+        barcode_obj.write(buffer, options={
+            "write_text": False,
+            "module_height": 10,
+            "module_width": 0.35,
+            "font_size": 8,
+            "text_distance": 2,
+            "quiet_zone": 2,
+        })
 
     barcode_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
@@ -1793,6 +1823,8 @@ def variant_barcode_label(request, variant_id):
         "variant": variant,
         "item": variant.item,
         "barcode_base64": barcode_base64,
+        "barcode_value": safe_sku,
+        "original_sku": original_sku,
     })
 
 
