@@ -952,10 +952,15 @@ a { text-decoration:none !important; }
 
     .variant-list{
         min-height:21px;
-        max-height:43px;
+        max-height:110px;
         margin-top:4px;
-        gap:2px;
-        overflow:hidden;
+        gap:4px;
+        display:flex;
+        flex-wrap:wrap;
+        overflow-y:auto;
+        overflow-x:hidden;
+        padding-right:2px;
+        -webkit-overflow-scrolling:touch;
     }
 
     .variant-chip{
@@ -967,8 +972,8 @@ a { text-decoration:none !important; }
         font-size:6px;
     }
 
-    .variant-chip-wrap:nth-child(n+3){
-        display:none;
+    .variant-chip-wrap{
+        display:inline-flex!important;
     }
 
     .variant-print-btn{
