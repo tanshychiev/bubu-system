@@ -100,6 +100,19 @@ a { text-decoration:none !important; }
     background:linear-gradient(135deg,#2f80ed,#63b3ff);
 }
 
+.cost-download-btn{
+    background:linear-gradient(135deg,#0ea5e9,#22c55e);
+}
+.cost-upload-btn{
+    width:100%;
+    border:0;
+    cursor:pointer;
+    background:linear-gradient(135deg,#f59e0b,#ef4444);
+}
+.cost-upload-input{
+    display:none;
+}
+
 .control-btn {
     background:linear-gradient(135deg,#ff8c6b,#ffbd73);
 }
@@ -2168,6 +2181,25 @@ body.inventory-detail-open{
                         {% endif %}
 
 
+                        {% if can_edit_cost_price %}
+                            <a href="{% url 'inventory_cost_excel_download' %}" class="add-btn cost-download-btn">
+                                ⬇ Download Cost Excel
+                            </a>
+
+                            <input
+                                type="file"
+                                name="cost_excel"
+                                id="costExcelInput"
+                                class="cost-upload-input"
+                                accept=".xlsx"
+                                form="costExcelUploadForm"
+                                onchange="submitCostExcelUpload(this)"
+                            >
+                            <button type="button" class="add-btn cost-upload-btn" onclick="document.getElementById('costExcelInput').click()">
+                                ⬆ Upload Cost Excel
+                            </button>
+                        {% endif %}
+
                         <a href="{% url 'stock_count_list' %}{% if current_branch %}?branch={{ current_branch.id }}{% endif %}" class="add-btn stock-count-btn">
                             ✓ Stock Count
                         </a>
@@ -2175,6 +2207,12 @@ body.inventory-detail-open{
                 </div>
             {% endif %}
         </form>
+
+        {% if can_edit_cost_price %}
+            <form method="post" action="{% url 'inventory_cost_excel_upload' %}" enctype="multipart/form-data" id="costExcelUploadForm">
+                {% csrf_token %}
+            </form>
+        {% endif %}
 
         {% if request.user.is_superuser %}
             <div class="branch-popup-backdrop" id="branchPopupBackdrop" onclick="closeBranchPopup()"></div>
@@ -3109,5 +3147,31 @@ document.addEventListener("keydown", function(event){
     }
 }
 </style>
+
+
+<script>
+function submitCostExcelUpload(input){
+    if(!input || !input.files || !input.files.length){
+        return;
+    }
+
+    const fileName = input.files[0].name || "";
+    if(!fileName.toLowerCase().endsWith(".xlsx")){
+        alert("Please choose the .xlsx cost file downloaded from this inventory page.");
+        input.value = "";
+        return;
+    }
+
+    const confirmed = confirm(
+        "Upload cost update? Only New Cost will be applied. Stock, names, SKU/barcodes and sale prices will not change."
+    );
+    if(!confirmed){
+        input.value = "";
+        return;
+    }
+
+    document.getElementById("costExcelUploadForm").submit();
+}
+</script>
 
 {% endblock %}

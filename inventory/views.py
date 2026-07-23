@@ -1,10 +1,16 @@
 import json
 import base64
 from io import BytesIO
+from pathlib import Path
 from decimal import Decimal, InvalidOperation
 
 import barcode
 from barcode.writer import ImageWriter
+
+from openpyxl import Workbook, load_workbook
+from openpyxl.drawing.image import Image as ExcelImage
+from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.utils import get_column_letter
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -12,7 +18,7 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
 from django.db.models import Prefetch, Q, Sum
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
@@ -105,11 +111,15 @@ def can_manage_inventory_settings(user):
 
 
 def can_view_cost_price(user):
-    return can_view_cost(user)
+    return bool(user and user.is_authenticated and (
+        user.is_superuser or is_owner(user) or can_view_cost(user)
+    ))
 
 
 def can_edit_cost_price(user):
-    return can_edit_cost(user)
+    return bool(user and user.is_authenticated and (
+        user.is_superuser or is_owner(user) or can_edit_cost(user)
+    ))
 
 
 # ==================================================
@@ -394,6 +404,245 @@ def item_list(request):
         "can_view_cost_price": can_view_cost_price(request.user),
         "can_edit_cost_price": can_edit_cost_price(request.user),
     })
+
+
+
+
+# ==================================================
+# COST EXCEL DOWNLOAD / UPLOAD
+# Only cost_price can be changed. No stock, name, SKU or sale-price updates.
+# ==================================================
+
+_COST_EXCEL_HEADERS = [
+    "Record Type",
+    "Item ID",
+    "Variant ID",
+    "Item Name (Reference Only)",
+    "Variant (Reference Only)",
+    "SKU (Reference Only)",
+    "Picture",
+    "Current Cost",
+    "New Cost",
+]
+
+
+def _cost_excel_variant_name(variant):
+    parts = [variant.label, variant.color, variant.size]
+    return " / ".join(str(part).strip() for part in parts if str(part or "").strip()) or "Default"
+
+
+def _add_cost_excel_picture(worksheet, row_number, image_field):
+    """Insert a local item/variant image when the storage backend exposes a path."""
+    if not image_field:
+        return
+
+    try:
+        image_path = Path(image_field.path)
+        if not image_path.exists() or not image_path.is_file():
+            return
+
+        excel_image = ExcelImage(str(image_path))
+        excel_image.width = 74
+        excel_image.height = 74
+        worksheet.add_image(excel_image, f"G{row_number}")
+        worksheet.row_dimensions[row_number].height = 60
+    except Exception:
+        # An unavailable/corrupt picture must never stop the Excel download.
+        return
+
+
+@login_required
+def inventory_cost_excel_download(request):
+    if not can_edit_cost_price(request.user):
+        messages.error(request, "You do not have permission to download or update inventory costs.")
+        return redirect("item_list")
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Cost Update"
+    worksheet.freeze_panes = "A2"
+    worksheet.auto_filter.ref = "A1:I1"
+
+    header_fill = PatternFill("solid", fgColor="6F50D8")
+    for column_number, header in enumerate(_COST_EXCEL_HEADERS, start=1):
+        cell = worksheet.cell(row=1, column=column_number, value=header)
+        cell.font = Font(color="FFFFFF", bold=True)
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    items = (
+        Item.objects
+        .all()
+        .select_related("item_type")
+        .prefetch_related(Prefetch("variants", queryset=ItemVariant.objects.order_by("sort_order", "id")))
+        .order_by("name", "id")
+    )
+
+    row_number = 2
+    for item in items:
+        worksheet.append([
+            "ITEM",
+            item.id,
+            "",
+            item.name,
+            "",
+            "",
+            "",
+            float(item.cost_price or 0),
+            "",
+        ])
+        _add_cost_excel_picture(worksheet, row_number, item.image)
+        row_number += 1
+
+        for variant in item.variants.all():
+            worksheet.append([
+                "VARIANT",
+                item.id,
+                variant.id,
+                item.name,
+                _cost_excel_variant_name(variant),
+                variant.sku or "",
+                "",
+                float(variant.cost_price or 0),
+                "",
+            ])
+            _add_cost_excel_picture(worksheet, row_number, variant.image or item.image)
+            row_number += 1
+
+    widths = {
+        "A": 14,
+        "B": 11,
+        "C": 12,
+        "D": 34,
+        "E": 28,
+        "F": 22,
+        "G": 15,
+        "H": 15,
+        "I": 15,
+    }
+    for column, width in widths.items():
+        worksheet.column_dimensions[column].width = width
+
+    for row in worksheet.iter_rows(min_row=2):
+        for cell in row:
+            cell.alignment = Alignment(vertical="center", wrap_text=True)
+
+    worksheet["K1"] = "Instructions"
+    worksheet["K1"].font = Font(bold=True)
+    worksheet["K2"] = "Enter costs only in the New Cost column (I)."
+    worksheet["K3"] = "Do not delete or change Item ID / Variant ID."
+    worksheet["K4"] = "Names, SKU, pictures and current cost are reference only."
+    worksheet.column_dimensions["K"].width = 56
+
+    output = BytesIO()
+    workbook.save(output)
+    output.seek(0)
+
+    response = HttpResponse(
+        output.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = 'attachment; filename="inventory-cost-update.xlsx"'
+    return response
+
+
+@login_required
+@require_POST
+@transaction.atomic
+def inventory_cost_excel_upload(request):
+    if not can_edit_cost_price(request.user):
+        messages.error(request, "You do not have permission to update inventory costs.")
+        return redirect("item_list")
+
+    uploaded_file = request.FILES.get("cost_excel")
+    if not uploaded_file:
+        messages.error(request, "Please choose the completed Excel file.")
+        return redirect("item_list")
+
+    if not uploaded_file.name.lower().endswith(".xlsx"):
+        messages.error(request, "Please upload the .xlsx file downloaded from this page.")
+        return redirect("item_list")
+
+    try:
+        workbook = load_workbook(uploaded_file, data_only=True)
+        worksheet = workbook["Cost Update"] if "Cost Update" in workbook.sheetnames else workbook.active
+    except Exception:
+        messages.error(request, "The Excel file could not be opened. Please use the downloaded .xlsx template.")
+        return redirect("item_list")
+
+    headers = {
+        str(cell.value or "").strip(): index
+        for index, cell in enumerate(worksheet[1], start=1)
+    }
+    required_headers = {"Record Type", "Item ID", "Variant ID", "New Cost"}
+    if not required_headers.issubset(headers):
+        messages.error(request, "This is not the correct cost-update Excel template.")
+        return redirect("item_list")
+
+    updated_items = 0
+    updated_variants = 0
+    ignored_blank = 0
+    errors = []
+
+    for row_number in range(2, worksheet.max_row + 1):
+        record_type = str(worksheet.cell(row_number, headers["Record Type"]).value or "").strip().upper()
+        item_id = worksheet.cell(row_number, headers["Item ID"]).value
+        variant_id = worksheet.cell(row_number, headers["Variant ID"]).value
+        raw_new_cost = worksheet.cell(row_number, headers["New Cost"]).value
+
+        if raw_new_cost is None or str(raw_new_cost).strip() == "":
+            ignored_blank += 1
+            continue
+
+        try:
+            new_cost = Decimal(str(raw_new_cost).replace(",", "").strip())
+            if new_cost < 0:
+                raise InvalidOperation
+            new_cost = new_cost.quantize(Decimal("0.01"))
+        except (InvalidOperation, TypeError, ValueError):
+            errors.append(f"Row {row_number}: New Cost must be a valid number 0 or greater.")
+            continue
+
+        try:
+            if record_type == "ITEM":
+                item_pk = int(item_id)
+                updated = Item.objects.filter(pk=item_pk).update(cost_price=new_cost)
+                if not updated:
+                    errors.append(f"Row {row_number}: Item ID {item_pk} was not found.")
+                    continue
+                updated_items += 1
+
+            elif record_type == "VARIANT":
+                item_pk = int(item_id)
+                variant_pk = int(variant_id)
+                updated = ItemVariant.objects.filter(pk=variant_pk, item_id=item_pk).update(cost_price=new_cost)
+                if not updated:
+                    errors.append(
+                        f"Row {row_number}: Variant ID {variant_pk} does not belong to Item ID {item_pk}."
+                    )
+                    continue
+                updated_variants += 1
+
+            else:
+                errors.append(f"Row {row_number}: Record Type must be ITEM or VARIANT.")
+        except (TypeError, ValueError):
+            errors.append(f"Row {row_number}: Invalid Item ID or Variant ID.")
+
+    if errors:
+        transaction.set_rollback(True)
+        preview = " ".join(errors[:5])
+        if len(errors) > 5:
+            preview += f" Plus {len(errors) - 5} more error(s)."
+        messages.error(request, f"No costs were changed. Please fix the Excel file. {preview}")
+        return redirect("item_list")
+
+    messages.success(
+        request,
+        f"Cost update completed: {updated_items} item cost(s) and "
+        f"{updated_variants} variant cost(s) changed. Blank rows ignored: {ignored_blank}. "
+        "Stock, names, SKU/barcodes and sale prices were not changed.",
+    )
+    return redirect("item_list")
 
 
 # ==================================================

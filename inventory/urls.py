@@ -8,6 +8,8 @@ urlpatterns = [
     # MAIN INVENTORY
     # ==================================================
     path("", views.item_list, name="item_list"),
+    path("cost-excel/download/", views.inventory_cost_excel_download, name="inventory_cost_excel_download"),
+    path("cost-excel/upload/", views.inventory_cost_excel_upload, name="inventory_cost_excel_upload"),
 
     # ==================================================
     # CONTROL CENTER
@@ -66,7 +68,6 @@ urlpatterns = [
         stock_count_views.stock_count_fill_remaining,
         name="stock_count_fill_remaining",
     ),
-    # Kept for compatibility; both now finish directly with no review stage.
     path(
         "stock/count/<int:pk>/submit/",
         stock_count_views.stock_count_submit,
