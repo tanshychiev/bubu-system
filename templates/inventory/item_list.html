@@ -952,15 +952,10 @@ a { text-decoration:none !important; }
 
     .variant-list{
         min-height:21px;
-        max-height:110px;
+        max-height:43px;
         margin-top:4px;
-        gap:4px;
-        display:flex;
-        flex-wrap:wrap;
-        overflow-y:auto;
-        overflow-x:hidden;
-        padding-right:2px;
-        -webkit-overflow-scrolling:touch;
+        gap:2px;
+        overflow:hidden;
     }
 
     .variant-chip{
@@ -972,9 +967,6 @@ a { text-decoration:none !important; }
         font-size:6px;
     }
 
-    .variant-chip-wrap{
-        display:inline-flex!important;
-    }
 
     .variant-print-btn{
         width:21px;
@@ -3153,6 +3145,38 @@ document.addEventListener("keydown", function(event){
 }
 </style>
 
+
+
+<!-- FIX: show every size/variant print button; scroll when the list is long -->
+<style id="inventory-all-variant-print-fix">
+.variant-list {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-content: flex-start !important;
+    gap: 6px !important;
+    max-height: 132px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 2px 3px 2px 0 !important;
+    scrollbar-gutter: stable;
+}
+
+.variant-chip-wrap,
+.variant-chip-wrap:nth-child(n) {
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
+@media (max-width: 700px) {
+    .variant-list {
+        min-height: 21px !important;
+        max-height: 112px !important;
+        gap: 4px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+}
+</style>
 
 <script>
 function submitCostExcelUpload(input){
