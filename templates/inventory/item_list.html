@@ -952,10 +952,13 @@ a { text-decoration:none !important; }
 
     .variant-list{
         min-height:21px;
-        max-height:43px;
+        max-height:110px;
         margin-top:4px;
-        gap:2px;
-        overflow:hidden;
+        gap:3px;
+        overflow-y:auto;
+        overflow-x:hidden;
+        align-content:flex-start;
+        padding-right:2px;
     }
 
     .variant-chip{
@@ -967,6 +970,10 @@ a { text-decoration:none !important; }
         font-size:6px;
     }
 
+    .variant-chip-wrap,
+    .variant-chip-wrap:nth-child(n){
+        display:inline-flex!important;
+    }
 
     .variant-print-btn{
         width:21px;
@@ -2084,6 +2091,33 @@ body.inventory-detail-open{
     }
 }
 
+
+/* =========================================================
+   SHOW ALL INVENTORY VARIANTS + PRINT LABEL BUTTONS
+========================================================= */
+.variant-list{
+    display:flex!important;
+    flex-wrap:wrap!important;
+    gap:6px!important;
+    max-height:150px!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    align-content:flex-start!important;
+    padding-right:3px!important;
+}
+
+.variant-chip-wrap,
+.variant-chip-wrap:nth-child(n){
+    display:inline-flex!important;
+}
+
+@media(max-width:700px){
+    .variant-list{
+        max-height:110px!important;
+        gap:3px!important;
+    }
+}
+
 </style>
 
 <div class="inventory-hero inventory-hero-clean">
@@ -2360,7 +2394,7 @@ body.inventory-detail-open{
             {% endif %}
 
             <div class="variant-list">
-                {% for variant in item.variants.all|slice:":3" %}
+                {% for variant in item.variants.all %}
                     <div class="variant-chip-wrap">
                         <span class="variant-chip {% if variant.branch_stock_qty <= 0 %}low{% else %}good{% endif %}">
                             {{ variant.display_name }}: {{ variant.branch_stock_qty }}
@@ -3145,38 +3179,6 @@ document.addEventListener("keydown", function(event){
 }
 </style>
 
-
-
-<!-- FIX: show every size/variant print button; scroll when the list is long -->
-<style id="inventory-all-variant-print-fix">
-.variant-list {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    align-content: flex-start !important;
-    gap: 6px !important;
-    max-height: 132px !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    padding: 2px 3px 2px 0 !important;
-    scrollbar-gutter: stable;
-}
-
-.variant-chip-wrap,
-.variant-chip-wrap:nth-child(n) {
-    display: inline-flex !important;
-    align-items: center !important;
-}
-
-@media (max-width: 700px) {
-    .variant-list {
-        min-height: 21px !important;
-        max-height: 112px !important;
-        gap: 4px !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-    }
-}
-</style>
 
 <script>
 function submitCostExcelUpload(input){
