@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.migration-page{max-width:1500px;margin:auto;padding:18px}.migration-head{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:16px}.migration-head h1{margin:0;color:#17152f;font-size:34px}.migration-head p{margin:5px 0 0;color:#756b82;font-weight:700}.summary{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:10px;margin-bottom:15px}.sum{background:#fff;border:1px solid #eaddec;border-radius:18px;padding:14px}.sum b{display:block;font-size:25px;color:#17152f}.sum span{font-size:12px;color:#756b82;font-weight:800}.safe-note{padding:13px 16px;border-radius:16px;background:#effcf3;border:1px solid #bce9ca;color:#176637;font-weight:850;margin-bottom:14px}.table-wrap{overflow:auto;border:1px solid #eaddec;border-radius:20px;background:#fff}.migration-table{width:100%;border-collapse:collapse;min-width:1180px}.migration-table th,.migration-table td{padding:10px;border-bottom:1px solid #f0e7f1;text-align:left;vertical-align:middle}.migration-table th{position:sticky;top:0;background:#faf7fc;color:#544c60;font-size:12px;z-index:2}.migration-table tr.protected{background:#fafafa}.pic{width:54px;height:54px;border-radius:12px;object-fit:contain;background:#f7f4f8}.no-pic{width:54px;height:54px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#f7f4f8}.sku-old{font-family:monospace;max-width:260px;overflow-wrap:anywhere}.sku-input{width:180px;min-height:42px;border:1.5px solid #d9cce2;border-radius:11px;padding:8px;font-weight:900;text-transform:uppercase}.sku-input.bad{border-color:#e43445;background:#fff1f2}.badge{display:inline-block;border-radius:999px;padding:6px 9px;font-size:11px;font-weight:900}.badge.replace{background:#fff1dd;color:#9a5700}.badge.keep{background:#edf8ef;color:#23703a}.actions{position:sticky;bottom:10px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:14px;padding:12px;border:1px solid #eaddec;border-radius:18px;background:rgba(255,255,255,.96);box-shadow:0 10px 30px rgba(0,0,0,.08)}.btn{min-height:48px;border-radius:14px;border:0;padding:0 18px;font-weight:950;cursor:pointer}.btn-print{background:#ede7ff;color:#5939b8}.btn-apply{background:#17152f;color:#fff}.btn-back{display:inline-flex;align-items:center;background:#fff;border:1px solid #eaddec;color:#62566e;text-decoration:none}.error-box{display:none;background:#fff0f1;color:#a51f2d;border:1px solid #ffcbd0;border-radius:14px;padding:12px;margin-bottom:12px;font-weight:800}@media(max-width:900px){.summary{grid-template-columns:repeat(2,1fr)}.migration-head h1{font-size:27px}}
+</style>
+<div class="migration-page">
+  <div class="migration-head"><div><h1>Barcode Migration</h1><p>Preview, print labels, then apply. Protected custom SKUs are never selected.</p></div><a class="btn btn-back" href="{% url 'item_list' %}">← Inventory</a></div>
+  <div class="safe-note">🛡️ Safe mode: no inventory quantity, price, image, stock, or item data is changed. Only selected replaceable SKUs can be updated.</div>
+  <div class="summary">
+    <div class="sum"><b>{{ counts.total }}</b><span>Total variants</span></div><div class="sum"><b>{{ counts.khmer }}</b><span>Khmer</span></div><div class="sum"><b>{{ counts.old_generated }}</b><span>Old generated</span></div><div class="sum"><b>{{ counts.blank }}</b><span>Blank</span></div><div class="sum"><b>{{ counts.protected }}</b><span>Protected/custom</span></div><div class="sum"><b id="selectedCount">{{ counts.selected }}</b><span>Selected</span></div>
+  </div>
+  <div id="errorBox" class="error-box"></div>
+  <form id="migrationForm" method="post">
+    {% csrf_token %}
+    <div class="table-wrap"><table class="migration-table"><thead><tr><th><input id="selectAll" type="checkbox" checked></th><th>Image</th><th>Type</th><th>Product</th><th>Variant</th><th>Old SKU</th><th>Proposed SKU</th><th>Status / reason</th></tr></thead><tbody>
+    {% for row in rows %}
+      <tr class="{% if not row.replaceable %}protected{% endif %}">
+        <td>{% if row.replaceable %}<input class="row-check" type="checkbox" name="selected_ids" value="{{ row.variant.id }}" checked>{% else %}<input type="checkbox" disabled>{% endif %}</td>
+        <td>{% if row.variant.image %}<img class="pic" src="{{ row.variant.image.url }}">{% elif row.variant.item.image %}<img class="pic" src="{{ row.variant.item.image.url }}">{% else %}<div class="no-pic">📦</div>{% endif %}</td>
+        <td>{{ row.variant.item.item_type.name|default:"OTHER" }}</td><td><b>{{ row.variant.item.name }}</b></td><td>{{ row.variant.display_name }}</td>
+        <td class="sku-old">{{ row.variant.sku|default:"—" }}</td>
+        <td>{% if row.replaceable %}<input class="sku-input" name="proposed_{{ row.variant.id }}" value="{{ row.proposed_sku }}" maxlength="20" autocomplete="off">{% else %}<b>{{ row.proposed_sku }}</b>{% endif %}</td>
+        <td><span class="badge {% if row.replaceable %}replace{% else %}keep{% endif %}">{{ row.reason }}</span></td>
+      </tr>
+    {% endfor %}
+    </tbody></table></div>
+    <div class="actions"><button class="btn btn-print" type="submit" formtarget="_blank" formaction="{% url 'barcode_migration_print' %}">🖨️ Print Selected Labels</button><button class="btn btn-apply" type="submit" formaction="{% url 'barcode_migration_apply' %}" onclick="return confirm('Apply selected SKU changes? Existing custom SKUs will remain protected.');">✅ Apply Changes</button></div>
+  </form>
+</div>
+<script>
+const checks=[...document.querySelectorAll('.row-check')], inputs=[...document.querySelectorAll('.sku-input')], box=document.getElementById('errorBox');
+function validate(){const used=new Map();let errors=[];inputs.forEach(input=>{input.value=input.value.toUpperCase().replace(/[^A-Z0-9-]/g,'');input.classList.remove('bad');const check=input.closest('tr').querySelector('.row-check');if(!check.checked)return;const v=input.value;if(!v){input.classList.add('bad');errors.push('A selected SKU is blank.');return;}if(used.has(v)){input.classList.add('bad');used.get(v).classList.add('bad');errors.push('Duplicate proposed SKU: '+v);}else used.set(v,input)});box.style.display=errors.length?'block':'none';box.textContent=[...new Set(errors)].join(' ');document.getElementById('selectedCount').textContent=checks.filter(c=>c.checked).length;return !errors.length}
+checks.forEach(c=>c.addEventListener('change',validate));inputs.forEach(i=>i.addEventListener('input',validate));document.getElementById('selectAll').addEventListener('change',e=>{checks.forEach(c=>c.checked=e.target.checked);validate()});document.getElementById('migrationForm').addEventListener('submit',e=>{if(!validate())e.preventDefault()});validate();
+</script>
+{% endblock %}

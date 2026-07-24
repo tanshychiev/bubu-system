@@ -89,6 +89,9 @@ urlpatterns = [
     # ==================================================
     path("variant/<int:variant_id>/stock/", views.variant_stock_movement, name="variant_stock_movement"),
     path("variant/<int:variant_id>/barcode/", views.variant_barcode_label, name="variant_barcode_label"),
+    path("barcode-migration/", views.barcode_migration_preview, name="barcode_migration_preview"),
+    path("barcode-migration/print/", views.barcode_migration_print, name="barcode_migration_print"),
+    path("barcode-migration/apply/", views.barcode_migration_apply, name="barcode_migration_apply"),
     path("<int:pk>/variants/reorder/", views.item_variant_reorder, name="item_variant_reorder"),
     path("<int:pk>/variant/<int:variant_id>/edit/", views.item_variant_edit, name="item_variant_edit"),
     path("<int:pk>/variant/<int:variant_id>/delete/", views.item_variant_delete, name="item_variant_delete"),

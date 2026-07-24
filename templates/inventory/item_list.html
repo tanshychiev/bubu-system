@@ -2188,6 +2188,9 @@ body.inventory-detail-open{
                         <a href="{% url 'inventory_control_center' %}" class="add-btn control-btn">
                             ⚙️ Control Center
                         </a>
+                        <a href="{% url 'barcode_migration_preview' %}" class="add-btn control-btn">
+                            🏷️ Barcode Migration
+                        </a>
                     {% endif %}
 
                     {% if can_create_inventory_type %}

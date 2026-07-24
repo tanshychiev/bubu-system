@@ -1,3 +1,6 @@
+import re
+import unicodedata
+
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -153,30 +156,51 @@ class ItemVariant(models.Model):
     def is_in_stock(self):
         return self.quantity > 0
 
-    def _clean_sku_part(self, value):
-        value = str(value or "").strip().upper()
-        value = value.replace(" ", "")
-        value = value.replace("/", "")
-        value = value.replace("\\", "")
-        value = value.replace("_", "")
-        return value
+    @staticmethod
+    def _ascii_letters(value):
+        normalized = unicodedata.normalize("NFKD", str(value or ""))
+        ascii_value = normalized.encode("ascii", "ignore").decode("ascii").upper()
+        return re.sub(r"[^A-Z0-9]+", " ", ascii_value).strip()
+
+    @classmethod
+    def _short_code_part(cls, value, length=3, fallback=""):
+        cleaned = cls._ascii_letters(value)
+        words = [word for word in cleaned.split() if word]
+        if not words:
+            return fallback[:length]
+        if len(words) >= 2:
+            code = "".join(word[0] for word in words)
+            if len(code) < length:
+                code += words[0][1:length - len(code) + 1]
+        else:
+            code = words[0]
+        return re.sub(r"[^A-Z0-9]", "", code)[:length]
+
+    def build_legacy_auto_sku(self):
+        """Return the exact old long automatic SKU for safe migration checks."""
+        type_name = self.item.item_type.name if self.item and self.item.item_type else ""
+        parts = [
+            re.sub(r"[ /\\_]", "", str(type_name or "").strip().upper()),
+            re.sub(r"[ /\\_]", "", str(self.item.name if self.item else "").strip().upper()),
+            re.sub(r"[ /\\_]", "", str(self.size or "").strip().upper()),
+            re.sub(r"[ /\\_]", "", str(self.color or "").strip().upper()),
+            re.sub(r"[ /\\_]", "", str(self.label or "").strip().upper()),
+            str(self.id or ""),
+        ]
+        return "-".join(part for part in parts if part)
 
     def build_auto_sku(self):
-        type_name = ""
+        """Build the new short, ASCII-only, scanner-friendly SKU."""
+        type_name = self.item.item_type.name if self.item and self.item.item_type else "ITEM"
+        variant_text = " ".join(part for part in [self.size, self.color, self.label] if part)
+        source_text = variant_text or (self.item.name if self.item else "ITEM")
+        id_part = str(self.id or "")
 
-        if self.item and self.item.item_type:
-            type_name = self.item.item_type.name
-
-        parts = [
-            self._clean_sku_part(type_name),
-            self._clean_sku_part(self.item.name if self.item else ""),
-            self._clean_sku_part(self.size),
-            self._clean_sku_part(self.color),
-            self._clean_sku_part(self.label),
-            str(self.id),
-        ]
-
-        return "-".join([p for p in parts if p])
+        # Keep the whole code around 8-12 characters, while preserving the ID.
+        available = max(2, 12 - 4 - len(id_part))
+        type_code = self._short_code_part(type_name, 4, "ITEM").ljust(4, "X")[:4]
+        detail_code = self._short_code_part(source_text, available, "IT") or "IT"
+        return f"{type_code}{detail_code}{id_part}"[:12]
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None

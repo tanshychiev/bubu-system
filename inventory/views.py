@@ -2171,3 +2171,204 @@ def branch_toggle(request, pk):
         "success": True,
         "is_active": branch.is_active,
     })
+# ==================================================
+# BARCODE SKU MIGRATION
+# ==================================================
+
+_KHMER_RE = __import__("re").compile(r"[\u1780-\u17FF]")
+_SAFE_SKU_RE = __import__("re").compile(r"^[A-Z0-9-]{2,20}$")
+
+
+def _barcode_migration_category(variant):
+    sku = str(variant.sku or "").strip()
+    if not sku:
+        return "blank", "Missing SKU", True
+    if _KHMER_RE.search(sku):
+        return "khmer", "Khmer SKU", True
+    if sku.upper() == variant.build_legacy_auto_sku().upper():
+        return "old_generated", "Old automatic long SKU", True
+    if _SAFE_SKU_RE.fullmatch(sku.upper()) and len(sku) <= 12:
+        return "short_custom", "Existing short/custom SKU — protected", False
+    return "custom_english", "Custom English SKU — protected", False
+
+
+def _migration_rows():
+    variants = list(
+        ItemVariant.objects
+        .select_related("item", "item__item_type")
+        .filter(is_active=True)
+        .order_by("item__item_type__name", "item__name", "sort_order", "id")
+    )
+    rows = []
+    for variant in variants:
+        category, reason, replaceable = _barcode_migration_category(variant)
+        rows.append({
+            "variant": variant,
+            "category": category,
+            "reason": reason,
+            "replaceable": replaceable,
+            "proposed_sku": variant.build_auto_sku() if replaceable else str(variant.sku or "").strip(),
+        })
+    return rows
+
+
+def _parse_migration_selection(request):
+    selected_ids = []
+    for raw in request.POST.getlist("selected_ids"):
+        try:
+            selected_ids.append(int(raw))
+        except (TypeError, ValueError):
+            continue
+
+    variants = {
+        variant.id: variant
+        for variant in ItemVariant.objects.select_related("item", "item__item_type").filter(id__in=selected_ids)
+    }
+    changes = []
+    errors = []
+    seen = {}
+
+    for variant_id in selected_ids:
+        variant = variants.get(variant_id)
+        if not variant:
+            errors.append(f"Variant #{variant_id} was not found.")
+            continue
+
+        _category, _reason, replaceable = _barcode_migration_category(variant)
+        if not replaceable:
+            errors.append(f"{variant.item.name}: protected custom SKU cannot be changed here.")
+            continue
+
+        proposed = str(request.POST.get(f"proposed_{variant_id}", "")).strip().upper()
+        if not proposed:
+            errors.append(f"{variant.item.name}: proposed SKU is required.")
+            continue
+        if not __import__("re").fullmatch(r"[A-Z0-9-]{2,20}", proposed):
+            errors.append(f"{variant.item.name}: {proposed} must use only A-Z, 0-9 or hyphen.")
+            continue
+
+        key = proposed.casefold()
+        if key in seen:
+            errors.append(f"Duplicate proposed SKU: {proposed}.")
+        seen[key] = variant_id
+        changes.append((variant, proposed))
+
+    if changes:
+        proposed_keys = [sku.casefold() for _, sku in changes]
+        existing = ItemVariant.objects.exclude(id__in=selected_ids).filter(
+            sku__in=[sku for _, sku in changes]
+        ).values_list("sku", flat=True)
+        existing_keys = {str(sku).casefold() for sku in existing}
+        for _, sku in changes:
+            if sku.casefold() in existing_keys:
+                errors.append(f"SKU already exists: {sku}.")
+
+        # Database collation may be case-sensitive, so also do a conservative case-insensitive check.
+        for variant, sku in changes:
+            if ItemVariant.objects.exclude(id__in=selected_ids).filter(sku__iexact=sku).exists():
+                errors.append(f"SKU already exists: {sku}.")
+
+    return changes, list(dict.fromkeys(errors))
+
+
+@login_required
+def barcode_migration_preview(request):
+    if not can_manage_inventory_settings(request.user):
+        messages.error(request, "Only Owner/Admin can migrate barcodes.")
+        return redirect("item_list")
+
+    rows = _migration_rows()
+    counts = {
+        "total": len(rows),
+        "khmer": sum(row["category"] == "khmer" for row in rows),
+        "old_generated": sum(row["category"] == "old_generated" for row in rows),
+        "blank": sum(row["category"] == "blank" for row in rows),
+        "protected": sum(not row["replaceable"] for row in rows),
+        "selected": sum(row["replaceable"] for row in rows),
+    }
+    return render(request, "inventory/barcode_migration.html", {"rows": rows, "counts": counts})
+
+
+@login_required
+@require_POST
+def barcode_migration_print(request):
+    if not can_manage_inventory_settings(request.user):
+        messages.error(request, "Only Owner/Admin can print migration labels.")
+        return redirect("item_list")
+
+    changes, errors = _parse_migration_selection(request)
+    if errors:
+        for error in errors:
+            messages.error(request, error)
+        return redirect("barcode_migration_preview")
+
+    groups = []
+    group_map = {}
+    barcode_class = barcode.get_barcode_class("code128")
+
+    for variant, proposed in changes:
+        buffer = BytesIO()
+        barcode_class(proposed, writer=ImageWriter()).write(buffer, options={
+            "write_text": False,
+            "module_height": 22,
+            "module_width": 0.50,
+            "quiet_zone": 6,
+        })
+        row = {
+            "variant": variant,
+            "item": variant.item,
+            "proposed_sku": proposed,
+            "barcode_base64": base64.b64encode(buffer.getvalue()).decode("utf-8"),
+        }
+        type_name = variant.item.item_type.name if variant.item.item_type else "OTHER"
+        if type_name not in group_map:
+            group_map[type_name] = {"name": type_name, "rows": []}
+            groups.append(group_map[type_name])
+        group_map[type_name]["rows"].append(row)
+
+    return render(request, "inventory/barcode_migration_print.html", {
+        "groups": groups,
+        "label_count": len(changes),
+    })
+
+
+@login_required
+@require_POST
+def barcode_migration_apply(request):
+    if not can_manage_inventory_settings(request.user):
+        messages.error(request, "Only Owner/Admin can apply barcode changes.")
+        return redirect("item_list")
+
+    changes, errors = _parse_migration_selection(request)
+    if errors:
+        for error in errors:
+            messages.error(request, error)
+        return redirect("barcode_migration_preview")
+    if not changes:
+        messages.error(request, "Select at least one SKU to apply.")
+        return redirect("barcode_migration_preview")
+
+    with transaction.atomic():
+        # Recheck under transaction before any write.
+        proposed = [sku for _, sku in changes]
+        selected_ids = [variant.id for variant, _ in changes]
+        if ItemVariant.objects.exclude(id__in=selected_ids).filter(sku__in=proposed).exists():
+            messages.error(request, "A duplicate SKU appeared. No changes were applied.")
+            return redirect("barcode_migration_preview")
+
+        for variant, new_sku in changes:
+            old_sku = str(variant.sku or "")
+            if old_sku == new_sku:
+                continue
+            variant.sku = new_sku
+            variant.save(update_fields=["sku"])
+            VariantEditHistory.objects.create(
+                variant=variant,
+                edited_by=request.user,
+                field_name="SKU (Barcode Migration)",
+                old_value=old_sku,
+                new_value=new_sku,
+            )
+
+    messages.success(request, f"Applied {len(changes)} barcode SKU change(s). Existing custom SKUs were not touched.")
+    return redirect("barcode_migration_preview")
