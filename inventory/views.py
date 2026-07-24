@@ -2202,27 +2202,30 @@ def _migration_rows():
     rows = []
     for variant in variants:
         category, reason, replaceable = _barcode_migration_category(variant)
+        generated_sku = variant.build_auto_sku()
         rows.append({
             "variant": variant,
             "category": category,
             "reason": reason,
             "replaceable": replaceable,
-            "proposed_sku": variant.build_auto_sku() if replaceable else str(variant.sku or "").strip(),
+            "proposed_sku": generated_sku if replaceable else str(variant.sku or "").strip(),
+            "generated_sku": generated_sku,
         })
     return rows
 
 
 def _parse_migration_selection(request):
-    """Parse a compact JSON payload to avoid Django's 1,000-field POST limit.
+    """Parse compact migration JSON, including explicit force-update choices.
 
-    The preview page may contain hundreds of variants. Submitting one checkbox and
-    one proposed-SKU input per row can raise TooManyFieldsSent and return HTTP 400.
-    New clients send one `migration_payload` JSON field. The legacy field parser is
-    retained as a fallback for older cached pages.
+    Protected/custom SKUs stay blocked by default. A protected row is accepted only
+    when the user explicitly clicked its "Generate New" button, which sends
+    ``force: true`` for that variant. Preview and print remain read-only; only the
+    Apply endpoint writes the selected SKU field.
     """
     payload = str(request.POST.get("migration_payload", "")).strip()
     selected_ids = []
     proposed_by_id = {}
+    force_by_id = {}
     errors = []
 
     if payload:
@@ -2239,6 +2242,7 @@ def _parse_migration_selection(request):
                     continue
                 selected_ids.append(variant_id)
                 proposed_by_id[variant_id] = str(row.get("sku", "")).strip().upper()
+                force_by_id[variant_id] = bool(row.get("force", False))
         except (TypeError, ValueError, json.JSONDecodeError):
             return [], ["Invalid barcode migration request. Refresh the page and try again."]
     else:
@@ -2252,6 +2256,7 @@ def _parse_migration_selection(request):
             proposed_by_id[variant_id] = str(
                 request.POST.get(f"proposed_{variant_id}", "")
             ).strip().upper()
+            force_by_id[variant_id] = request.POST.get(f"force_{variant_id}") == "1"
 
     selected_ids = list(dict.fromkeys(selected_ids))
     if not selected_ids:
@@ -2272,9 +2277,12 @@ def _parse_migration_selection(request):
             errors.append(f"Variant {variant_id} was not found.")
             continue
 
-        category, replaceable, _reason = _classify_variant_sku(variant)
-        if not replaceable:
-            errors.append(f"{variant.item.name}: custom SKU is protected and cannot be migrated.")
+        _category, _reason, replaceable = _barcode_migration_category(variant)
+        forced = force_by_id.get(variant_id, False)
+        if not replaceable and not forced:
+            errors.append(
+                f"{variant.item.name}: custom SKU is protected. Click Generate New first to update it."
+            )
             continue
 
         proposed = proposed_by_id.get(variant_id, "")
