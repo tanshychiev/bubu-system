@@ -2213,33 +2213,71 @@ def _migration_rows():
 
 
 def _parse_migration_selection(request):
+    """Parse a compact JSON payload to avoid Django's 1,000-field POST limit.
+
+    The preview page may contain hundreds of variants. Submitting one checkbox and
+    one proposed-SKU input per row can raise TooManyFieldsSent and return HTTP 400.
+    New clients send one `migration_payload` JSON field. The legacy field parser is
+    retained as a fallback for older cached pages.
+    """
+    payload = str(request.POST.get("migration_payload", "")).strip()
     selected_ids = []
-    for raw in request.POST.getlist("selected_ids"):
+    proposed_by_id = {}
+    errors = []
+
+    if payload:
         try:
-            selected_ids.append(int(raw))
-        except (TypeError, ValueError):
-            continue
+            rows = json.loads(payload)
+            if not isinstance(rows, list):
+                raise ValueError("payload must be a list")
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                try:
+                    variant_id = int(row.get("id"))
+                except (TypeError, ValueError):
+                    continue
+                selected_ids.append(variant_id)
+                proposed_by_id[variant_id] = str(row.get("sku", "")).strip().upper()
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return [], ["Invalid barcode migration request. Refresh the page and try again."]
+    else:
+        # Backward-compatible fallback for an older open browser tab.
+        for raw_id in request.POST.getlist("selected_ids"):
+            try:
+                variant_id = int(raw_id)
+            except (TypeError, ValueError):
+                continue
+            selected_ids.append(variant_id)
+            proposed_by_id[variant_id] = str(
+                request.POST.get(f"proposed_{variant_id}", "")
+            ).strip().upper()
+
+    selected_ids = list(dict.fromkeys(selected_ids))
+    if not selected_ids:
+        return [], ["Select at least one SKU."]
 
     variants = {
         variant.id: variant
-        for variant in ItemVariant.objects.select_related("item", "item__item_type").filter(id__in=selected_ids)
+        for variant in ItemVariant.objects.filter(id__in=selected_ids).select_related(
+            "item", "item__item_type"
+        )
     }
-    changes = []
-    errors = []
-    seen = {}
 
+    changes = []
+    seen = {}
     for variant_id in selected_ids:
         variant = variants.get(variant_id)
         if not variant:
-            errors.append(f"Variant #{variant_id} was not found.")
+            errors.append(f"Variant {variant_id} was not found.")
             continue
 
-        _category, _reason, replaceable = _barcode_migration_category(variant)
+        category, replaceable, _reason = _classify_variant_sku(variant)
         if not replaceable:
-            errors.append(f"{variant.item.name}: protected custom SKU cannot be changed here.")
+            errors.append(f"{variant.item.name}: custom SKU is protected and cannot be migrated.")
             continue
 
-        proposed = str(request.POST.get(f"proposed_{variant_id}", "")).strip().upper()
+        proposed = proposed_by_id.get(variant_id, "")
         if not proposed:
             errors.append(f"{variant.item.name}: proposed SKU is required.")
             continue
@@ -2254,16 +2292,6 @@ def _parse_migration_selection(request):
         changes.append((variant, proposed))
 
     if changes:
-        proposed_keys = [sku.casefold() for _, sku in changes]
-        existing = ItemVariant.objects.exclude(id__in=selected_ids).filter(
-            sku__in=[sku for _, sku in changes]
-        ).values_list("sku", flat=True)
-        existing_keys = {str(sku).casefold() for sku in existing}
-        for _, sku in changes:
-            if sku.casefold() in existing_keys:
-                errors.append(f"SKU already exists: {sku}.")
-
-        # Database collation may be case-sensitive, so also do a conservative case-insensitive check.
         for variant, sku in changes:
             if ItemVariant.objects.exclude(id__in=selected_ids).filter(sku__iexact=sku).exists():
                 errors.append(f"SKU already exists: {sku}.")

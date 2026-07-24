@@ -11,15 +11,15 @@
   </div>
   <div id="errorBox" class="error-box"></div>
   <form id="migrationForm" method="post">
-    {% csrf_token %}
+    {% csrf_token %}<input type="hidden" id="migrationPayload" name="migration_payload" value="[]">
     <div class="table-wrap"><table class="migration-table"><thead><tr><th><input id="selectAll" type="checkbox" checked></th><th>Image</th><th>Type</th><th>Product</th><th>Variant</th><th>Old SKU</th><th>Proposed SKU</th><th>Status / reason</th></tr></thead><tbody>
     {% for row in rows %}
       <tr class="{% if not row.replaceable %}protected{% endif %}">
-        <td>{% if row.replaceable %}<input class="row-check" type="checkbox" name="selected_ids" value="{{ row.variant.id }}" checked>{% else %}<input type="checkbox" disabled>{% endif %}</td>
+        <td>{% if row.replaceable %}<input class="row-check" type="checkbox" data-variant-id="{{ row.variant.id }}" checked>{% else %}<input type="checkbox" disabled>{% endif %}</td>
         <td>{% if row.variant.image %}<img class="pic" src="{{ row.variant.image.url }}">{% elif row.variant.item.image %}<img class="pic" src="{{ row.variant.item.image.url }}">{% else %}<div class="no-pic">📦</div>{% endif %}</td>
         <td>{{ row.variant.item.item_type.name|default:"OTHER" }}</td><td><b>{{ row.variant.item.name }}</b></td><td>{{ row.variant.display_name }}</td>
         <td class="sku-old">{{ row.variant.sku|default:"—" }}</td>
-        <td>{% if row.replaceable %}<input class="sku-input" name="proposed_{{ row.variant.id }}" value="{{ row.proposed_sku }}" maxlength="20" autocomplete="off">{% else %}<b>{{ row.proposed_sku }}</b>{% endif %}</td>
+        <td>{% if row.replaceable %}<input class="sku-input" data-variant-id="{{ row.variant.id }}" value="{{ row.proposed_sku }}" maxlength="20" autocomplete="off">{% else %}<b>{{ row.proposed_sku }}</b>{% endif %}</td>
         <td><span class="badge {% if row.replaceable %}replace{% else %}keep{% endif %}">{{ row.reason }}</span></td>
       </tr>
     {% endfor %}
@@ -30,6 +30,14 @@
 <script>
 const checks=[...document.querySelectorAll('.row-check')], inputs=[...document.querySelectorAll('.sku-input')], box=document.getElementById('errorBox');
 function validate(){const used=new Map();let errors=[];inputs.forEach(input=>{input.value=input.value.toUpperCase().replace(/[^A-Z0-9-]/g,'');input.classList.remove('bad');const check=input.closest('tr').querySelector('.row-check');if(!check.checked)return;const v=input.value;if(!v){input.classList.add('bad');errors.push('A selected SKU is blank.');return;}if(used.has(v)){input.classList.add('bad');used.get(v).classList.add('bad');errors.push('Duplicate proposed SKU: '+v);}else used.set(v,input)});box.style.display=errors.length?'block':'none';box.textContent=[...new Set(errors)].join(' ');document.getElementById('selectedCount').textContent=checks.filter(c=>c.checked).length;return !errors.length}
-checks.forEach(c=>c.addEventListener('change',validate));inputs.forEach(i=>i.addEventListener('input',validate));document.getElementById('selectAll').addEventListener('change',e=>{checks.forEach(c=>c.checked=e.target.checked);validate()});document.getElementById('migrationForm').addEventListener('submit',e=>{if(!validate())e.preventDefault()});validate();
+checks.forEach(c=>c.addEventListener('change',validate));inputs.forEach(i=>i.addEventListener('input',validate));document.getElementById('selectAll').addEventListener('change',e=>{checks.forEach(c=>c.checked=e.target.checked);validate()});document.getElementById('migrationForm').addEventListener('submit',e=>{
+  if(!validate()){e.preventDefault();return;}
+  const payload=checks.filter(c=>c.checked).map(c=>{
+    const id=c.dataset.variantId;
+    const input=document.querySelector('.sku-input[data-variant-id="'+id+'"]');
+    return {id:Number(id),sku:input?input.value:''};
+  });
+  document.getElementById('migrationPayload').value=JSON.stringify(payload);
+});validate();
 </script>
 {% endblock %}
