@@ -2,13 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1"
-    >
-
-    <title>Barcode {{ variant.sku }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Barcode Print Calibration</title>
 
     <style>
         *,
@@ -17,10 +12,6 @@
             box-sizing: border-box;
         }
 
-        /*
-         * Printer receives a 30mm × 50mm page.
-         * The 50mm × 30mm label is rotated 90 degrees inside it.
-         */
         @page {
             size: 30mm 50mm;
             margin: 0;
@@ -28,65 +19,96 @@
 
         html,
         body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            color: #000;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .test-page {
+            position: relative;
             width: 30mm;
             height: 50mm;
-            min-width: 30mm;
-            min-height: 50mm;
             margin: 0;
             padding: 0;
             overflow: hidden;
-            color: #000;
             background: #fff;
-            font-family: Arial, Helvetica, sans-serif;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            page-break-after: always;
+            break-after: page;
         }
 
-        body {
-            position: relative;
+        .test-page:last-child {
+            page-break-after: auto;
+            break-after: auto;
         }
 
-        /*
-         * Original label size:
-         * 50mm wide × 30mm high
-         *
-         * left: 30mm keeps the rotated label inside the page.
-         */
         .label {
             position: absolute;
-            top: 0;
-            left: 30mm;
-
             width: 50mm;
             height: 30mm;
             min-width: 50mm;
             min-height: 30mm;
             max-width: 50mm;
             max-height: 30mm;
-
             margin: 0;
             padding: 1.6mm 2mm;
-
             overflow: hidden;
-
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 0.6mm;
-
+            gap: .6mm;
             color: #000;
             background: #fff;
             text-align: center;
-
             transform-origin: top left;
+        }
+
+        /* A: current clockwise position */
+        .test-a .label {
+            top: 0;
+            left: 30mm;
             transform: rotate(90deg);
+        }
+
+        /* B: clockwise, moved 2 mm inward */
+        .test-b .label {
+            top: 2mm;
+            left: 28mm;
+            transform: rotate(90deg);
+        }
+
+        /* C: counter-clockwise position */
+        .test-c .label {
+            top: 50mm;
+            left: 0;
+            transform: rotate(-90deg);
+        }
+
+        /* D: counter-clockwise, moved 2 mm inward */
+        .test-d .label {
+            top: 48mm;
+            left: 2mm;
+            transform: rotate(-90deg);
+        }
+
+        .test-code {
+            position: absolute;
+            top: 1mm;
+            left: 1mm;
+            z-index: 5;
+            padding: .8mm 1.4mm;
+            border: .3mm solid #000;
+            font-size: 10px;
+            line-height: 1;
+            font-weight: 900;
+            background: #fff;
         }
 
         .label-name {
             width: 100%;
             overflow: hidden;
-            color: #000;
             font-size: 8.5px;
             line-height: 1.05;
             font-weight: 900;
@@ -97,7 +119,6 @@
         .label-info {
             width: 100%;
             overflow: hidden;
-            color: #000;
             font-size: 6.5px;
             line-height: 1.05;
             font-weight: 700;
@@ -107,21 +128,18 @@
 
         .barcode-img {
             display: block;
-
             width: 42mm;
             height: 9mm;
             min-width: 42mm;
             min-height: 9mm;
             max-width: 42mm;
             max-height: 9mm;
-
             margin: 0;
             object-fit: fill;
         }
 
         .label-bottom {
             width: 100%;
-
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto;
             gap: 1.2mm;
@@ -131,19 +149,15 @@
         .sku {
             min-width: 0;
             overflow: hidden;
-
-            color: #000;
             font-size: 6.5px;
             line-height: 1;
             font-weight: 900;
             text-align: left;
-
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
         .price {
-            color: #000;
             font-size: 8px;
             line-height: 1;
             font-weight: 900;
@@ -151,183 +165,111 @@
             white-space: nowrap;
         }
 
-        /*
-         * These controls only appear on screen.
-         * They are hidden when printing.
-         */
-        .screen-controls {
+        .screen-help {
             position: fixed;
-            right: 12px;
-            bottom: 12px;
+            inset: auto 12px 12px auto;
             z-index: 1000;
-
-            display: flex;
-            gap: 8px;
+            max-width: 320px;
+            padding: 12px;
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: 0 8px 24px rgba(0,0,0,.18);
+            font-size: 13px;
         }
 
-        .screen-controls button {
-            min-height: 42px;
-            padding: 0 16px;
-
+        .screen-help button {
+            width: 100%;
+            min-height: 40px;
+            margin-top: 8px;
             border: 0;
-            border-radius: 10px;
-
-            font-size: 12px;
+            border-radius: 8px;
+            color: #fff;
+            background: #7654dd;
             font-weight: 800;
             cursor: pointer;
         }
 
-        .print-button {
-            color: #fff;
-            background: #7654dd;
-        }
-
-        .close-button {
-            color: #333;
-            background: #eee;
-        }
-
         @media print {
-            @page {
-                size: 30mm 50mm;
-                margin: 0;
-            }
-
             html,
             body {
                 width: 30mm !important;
-                height: 50mm !important;
-                min-width: 30mm !important;
-                min-height: 50mm !important;
-
                 margin: 0 !important;
                 padding: 0 !important;
-
-                overflow: hidden !important;
+                overflow: visible !important;
                 background: #fff !important;
             }
 
-            body {
-                position: relative !important;
-            }
-
-            .label {
-                position: fixed !important;
-                top: 0 !important;
-                left: 30mm !important;
-
-                width: 50mm !important;
-                height: 30mm !important;
-                min-width: 50mm !important;
-                min-height: 30mm !important;
-                max-width: 50mm !important;
-                max-height: 30mm !important;
-
-                margin: 0 !important;
-                padding: 1.6mm 2mm !important;
-
-                border: 0 !important;
-                box-shadow: none !important;
-
-                transform-origin: top left !important;
-                transform: rotate(90deg) !important;
-
-                overflow: hidden !important;
-
-                page-break-before: avoid !important;
-                page-break-after: avoid !important;
-                page-break-inside: avoid !important;
-
-                break-before: avoid !important;
-                break-after: avoid !important;
-                break-inside: avoid !important;
-            }
-
-            .screen-controls {
+            .screen-help {
                 display: none !important;
+            }
+
+            .test-page {
+                width: 30mm !important;
+                height: 50mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="label">
-        <div class="label-name">
-            {{ item.name }}
-        </div>
-
-        <div class="label-info">
-            {{ variant.display_name }}
-        </div>
-
-        <img
-            id="barcodeImage"
-            class="barcode-img"
-            src="data:image/png;base64,{{ barcode_base64 }}"
-            alt="Barcode"
-        >
-
-        <div class="label-bottom">
-            <div class="sku">
-                {{ variant.sku }}
-            </div>
-
-            <div class="price">
-                ${{ variant.sale_price|floatformat:2 }}
+    <section class="test-page test-a">
+        <div class="test-code">A</div>
+        <div class="label">
+            <div class="label-name">{{ item.name }}</div>
+            <div class="label-info">{{ variant.display_name }}</div>
+            <img class="barcode-img" src="data:image/png;base64,{{ barcode_base64 }}" alt="Barcode">
+            <div class="label-bottom">
+                <div class="sku">{{ variant.sku }}</div>
+                <div class="price">${{ variant.sale_price|floatformat:2 }}</div>
             </div>
         </div>
+    </section>
+
+    <section class="test-page test-b">
+        <div class="test-code">B</div>
+        <div class="label">
+            <div class="label-name">{{ item.name }}</div>
+            <div class="label-info">{{ variant.display_name }}</div>
+            <img class="barcode-img" src="data:image/png;base64,{{ barcode_base64 }}" alt="Barcode">
+            <div class="label-bottom">
+                <div class="sku">{{ variant.sku }}</div>
+                <div class="price">${{ variant.sale_price|floatformat:2 }}</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="test-page test-c">
+        <div class="test-code">C</div>
+        <div class="label">
+            <div class="label-name">{{ item.name }}</div>
+            <div class="label-info">{{ variant.display_name }}</div>
+            <img class="barcode-img" src="data:image/png;base64,{{ barcode_base64 }}" alt="Barcode">
+            <div class="label-bottom">
+                <div class="sku">{{ variant.sku }}</div>
+                <div class="price">${{ variant.sale_price|floatformat:2 }}</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="test-page test-d">
+        <div class="test-code">D</div>
+        <div class="label">
+            <div class="label-name">{{ item.name }}</div>
+            <div class="label-info">{{ variant.display_name }}</div>
+            <img class="barcode-img" src="data:image/png;base64,{{ barcode_base64 }}" alt="Barcode">
+            <div class="label-bottom">
+                <div class="sku">{{ variant.sku }}</div>
+                <div class="price">${{ variant.sale_price|floatformat:2 }}</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="screen-help">
+        Print all 4 labels once, then tell me which one fits best: A, B, C, or D.
+        <button type="button" onclick="window.print()">Print Calibration</button>
     </div>
-
-    <div class="screen-controls">
-        <button
-            type="button"
-            class="close-button"
-            onclick="window.close()"
-        >
-            Close
-        </button>
-
-        <button
-            type="button"
-            class="print-button"
-            onclick="window.print()"
-        >
-            Print
-        </button>
-    </div>
-
-    <script>
-        function openPrintDialog() {
-            window.setTimeout(function () {
-                window.print();
-            }, 350);
-        }
-
-        window.addEventListener("load", function () {
-            const barcodeImage =
-                document.getElementById("barcodeImage");
-
-            if (
-                barcodeImage &&
-                !barcodeImage.complete
-            ) {
-                barcodeImage.addEventListener(
-                    "load",
-                    openPrintDialog,
-                    { once: true }
-                );
-
-                barcodeImage.addEventListener(
-                    "error",
-                    openPrintDialog,
-                    { once: true }
-                );
-
-                return;
-            }
-
-            openPrintDialog();
-        });
-    </script>
 </body>
 </html>
