@@ -7,6 +7,10 @@ from decimal import Decimal, InvalidOperation
 import barcode
 from barcode.writer import ImageWriter
 
+from reportlab.lib.utils import ImageReader
+from reportlab.lib.units import mm
+from reportlab.pdfgen import canvas
+
 from openpyxl import Workbook, load_workbook
 from openpyxl.drawing.image import Image as ExcelImage
 from openpyxl.styles import Alignment, Font, PatternFill
@@ -2410,6 +2414,14 @@ def barcode_migration_apply(request):
     return redirect("barcode_migration_preview")
 @login_required
 def variant_barcode_print(request, variant_id):
+    """
+    Generate an exact 50 mm × 30 mm PDF barcode label.
+
+    This endpoint is read-only:
+    - It does not update the variant.
+    - It does not change stock.
+    - It does not change the database.
+    """
     if not can_manage_inventory(request.user):
         messages.error(request, "You do not have permission.")
         return redirect("item_list")
@@ -2419,8 +2431,11 @@ def variant_barcode_print(request, variant_id):
         pk=variant_id,
     )
 
+    item = variant.item
     original_sku = str(variant.sku or "").strip()
 
+    # Code 128 supports ASCII. Keep a safe runtime barcode value without
+    # changing the SKU stored in the database.
     safe_sku = "".join(
         character
         for character in original_sku
@@ -2431,40 +2446,121 @@ def variant_barcode_print(request, variant_id):
     if not safe_sku:
         safe_sku = f"VAR-{variant.id}"
 
-    try:
+    def build_barcode_png(value):
         barcode_class = barcode.get_barcode_class("code128")
-        barcode_obj = barcode_class(safe_sku, writer=ImageWriter())
+        barcode_obj = barcode_class(value, writer=ImageWriter())
 
-        buffer = BytesIO()
-        barcode_obj.write(buffer, options={
-            "write_text": False,
-            "module_height": 10,
-            "module_width": 0.35,
-            "font_size": 8,
-            "text_distance": 2,
-            "quiet_zone": 2,
-        })
+        output = BytesIO()
+        barcode_obj.write(
+            output,
+            options={
+                "write_text": False,
+                "module_height": 10,
+                "module_width": 0.35,
+                "quiet_zone": 1.5,
+            },
+        )
+        output.seek(0)
+        return output
+
+    try:
+        barcode_buffer = build_barcode_png(safe_sku)
     except Exception:
         safe_sku = f"VAR-{variant.id}"
-        barcode_class = barcode.get_barcode_class("code128")
-        barcode_obj = barcode_class(safe_sku, writer=ImageWriter())
+        barcode_buffer = build_barcode_png(safe_sku)
 
-        buffer = BytesIO()
-        barcode_obj.write(buffer, options={
-            "write_text": False,
-            "module_height": 10,
-            "module_width": 0.35,
-            "font_size": 8,
-            "text_distance": 2,
-            "quiet_zone": 2,
-        })
+    # Exact physical sticker size.
+    page_width = 50 * mm
+    page_height = 30 * mm
 
-    barcode_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+    pdf_buffer = BytesIO()
+    pdf = canvas.Canvas(
+        pdf_buffer,
+        pagesize=(page_width, page_height),
+        pageCompression=1,
+    )
 
-    return render(request, "inventory/barcode_print.html", {
-        "variant": variant,
-        "item": variant.item,
-        "barcode_base64": barcode_base64,
-        "barcode_value": safe_sku,
-        "original_sku": original_sku,
-    })
+    pdf.setTitle(f"Barcode {safe_sku}")
+    pdf.setAuthor("BUBU Pet Store")
+
+    item_name = str(item.name or "").strip()
+
+    display_name_value = getattr(variant, "display_name", "")
+    if callable(display_name_value):
+        variant_name = str(display_name_value() or "").strip()
+    else:
+        variant_name = str(display_name_value or "").strip()
+
+    if not variant_name:
+        variant_name = "Default"
+
+    try:
+        price = Decimal(str(variant.sale_price or 0))
+    except (InvalidOperation, TypeError, ValueError):
+        price = Decimal("0.00")
+
+    # Product name.
+    pdf.setFillColorRGB(0, 0, 0)
+    pdf.setFont("Helvetica-Bold", 7.5)
+    pdf.drawCentredString(
+        page_width / 2,
+        page_height - (5.2 * mm),
+        item_name[:38],
+    )
+
+    # Variant description.
+    pdf.setFont("Helvetica", 5.8)
+    pdf.drawCentredString(
+        page_width / 2,
+        page_height - (7.8 * mm),
+        variant_name[:45],
+    )
+
+    # Barcode.
+    barcode_image = ImageReader(barcode_buffer)
+    barcode_width = 38 * mm
+    barcode_height = 9 * mm
+    barcode_x = (page_width - barcode_width) / 2
+    barcode_y = 9.2 * mm
+
+    pdf.drawImage(
+        barcode_image,
+        barcode_x,
+        barcode_y,
+        width=barcode_width,
+        height=barcode_height,
+        preserveAspectRatio=False,
+        mask="auto",
+    )
+
+    # SKU under the barcode.
+    pdf.setFont("Helvetica-Bold", 5.8)
+    pdf.drawString(
+        6 * mm,
+        5.5 * mm,
+        (original_sku or safe_sku)[:30],
+    )
+
+    # Price.
+    pdf.setFont("Helvetica-Bold", 7.2)
+    pdf.drawRightString(
+        page_width - (5.5 * mm),
+        5.5 * mm,
+        f"${price:.2f}",
+    )
+
+    pdf.showPage()
+    pdf.save()
+    pdf_buffer.seek(0)
+
+    response = HttpResponse(
+        pdf_buffer.getvalue(),
+        content_type="application/pdf",
+    )
+    response["Content-Disposition"] = (
+        f'inline; filename="barcode-{safe_sku}.pdf"'
+    )
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    response["Pragma"] = "no-cache"
+
+    return response
