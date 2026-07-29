@@ -53,7 +53,7 @@
         <div class="barcode-preview-title">
             <div>
                 <h2>Label Preview</h2>
-                <p>Print size: 50 mm × 30 mm · One label only</p>
+                <p>Print size: 50 mm × 30 mm · Deli printer corrected</p>
             </div>
 
             <span>Ready to print</span>
@@ -530,24 +530,28 @@ html{
     }
 }
 
-/* PRINT ONE LABEL ONLY — 50 mm × 30 mm
-   Fixed for browser preview, no rotation, no blank labels. */
+/* PRINT ONE LABEL ONLY — Deli DL-888D
+   Physical sticker: 50 mm × 30 mm
+   Printer stock: 30 mm × 50 mm, Portrait
+   The label is rotated once inside one printer page. */
 @media print{
     @page{
-        size:50mm 30mm;
+        size:30mm 50mm;
         margin:0;
     }
 
     html,
     body{
-        width:50mm!important;
-        height:30mm!important;
-        min-width:50mm!important;
-        min-height:30mm!important;
+        width:30mm!important;
+        height:50mm!important;
+        min-width:30mm!important;
+        min-height:50mm!important;
+        max-width:30mm!important;
+        max-height:50mm!important;
         margin:0!important;
         padding:0!important;
         overflow:hidden!important;
-        background:white!important;
+        background:#fff!important;
         -webkit-print-color-adjust:exact!important;
         print-color-adjust:exact!important;
     }
@@ -556,59 +560,47 @@ html{
         position:relative!important;
     }
 
-    /* Hide the normal screen UI */
-    .barcode-back,
-    .barcode-head,
-    .barcode-code-card,
-    .barcode-preview-title,
-    .barcode-actions{
-        display:none!important;
+    /* Hide every normal website element */
+    body *{
+        visibility:hidden!important;
     }
 
-    /* Keep only the label area */
-    .barcode-page,
-    .barcode-card,
-    .barcode-label-stage{
-        display:block!important;
-        position:static!important;
-        width:50mm!important;
-        height:30mm!important;
-        min-width:50mm!important;
-        min-height:30mm!important;
-        max-width:50mm!important;
-        max-height:30mm!important;
-        margin:0!important;
-        padding:0!important;
-        border:0!important;
-        border-radius:0!important;
-        box-shadow:none!important;
-        background:white!important;
-        overflow:hidden!important;
+    /* Show only the real label */
+    .label-box,
+    .label-box *{
+        visibility:visible!important;
     }
 
     .label-box{
-        display:flex!important;
         position:fixed!important;
         left:0!important;
         top:0!important;
+
         width:50mm!important;
         height:30mm!important;
         min-width:50mm!important;
         min-height:30mm!important;
         max-width:50mm!important;
         max-height:30mm!important;
+
         margin:0!important;
         padding:1.8mm 2.2mm!important;
         border:0!important;
         border-radius:0!important;
         box-shadow:none!important;
-        transform:none!important;
-        transform-origin:center!important;
-        visibility:visible!important;
-        opacity:1!important;
         overflow:hidden!important;
         color:#000!important;
         background:#fff!important;
+
+        display:flex!important;
+        flex-direction:column!important;
+        align-items:center!important;
+        justify-content:center!important;
+        gap:.7mm!important;
+
+        transform-origin:top left!important;
+        transform:translateX(30mm) rotate(90deg)!important;
+
         page-break-before:avoid!important;
         page-break-after:avoid!important;
         page-break-inside:avoid!important;
@@ -617,17 +609,24 @@ html{
         break-inside:avoid!important;
     }
 
-    .label-box *{
-        visibility:visible!important;
-        opacity:1!important;
-    }
-
     .label-name{
+        width:100%!important;
+        overflow:hidden!important;
         font-size:8.5px!important;
+        line-height:1.05!important;
+        font-weight:900!important;
+        text-overflow:ellipsis!important;
+        white-space:nowrap!important;
     }
 
     .label-info{
+        width:100%!important;
+        overflow:hidden!important;
         font-size:6.5px!important;
+        line-height:1.05!important;
+        font-weight:800!important;
+        text-overflow:ellipsis!important;
+        white-space:nowrap!important;
     }
 
     .barcode-img{
@@ -636,16 +635,36 @@ html{
         height:9mm!important;
         min-width:42mm!important;
         min-height:9mm!important;
+        max-width:42mm!important;
+        max-height:9mm!important;
         flex:0 0 9mm!important;
+        margin:0!important;
         object-fit:fill!important;
     }
 
+    .label-bottom{
+        width:100%!important;
+        display:grid!important;
+        grid-template-columns:minmax(0,1fr) auto!important;
+        gap:1.2mm!important;
+        align-items:center!important;
+    }
+
     .sku-text{
+        min-width:0!important;
+        overflow:hidden!important;
         font-size:6.5px!important;
+        line-height:1!important;
+        text-align:left!important;
+        text-overflow:ellipsis!important;
+        white-space:nowrap!important;
     }
 
     .price{
         font-size:8px!important;
+        line-height:1!important;
+        text-align:right!important;
+        white-space:nowrap!important;
     }
 }
 
