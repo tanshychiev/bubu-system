@@ -53,7 +53,7 @@
         <div class="barcode-preview-title">
             <div>
                 <h2>Label Preview</h2>
-                <p>Print size: 30 mm × 50 mm (Horizontal)</p>
+                <p>Print size: 50 mm × 30 mm</p>
             </div>
 
             <span>Ready to print</span>
@@ -295,7 +295,7 @@ html{
     background:linear-gradient(135deg,#fffafd,#faf7ff);
 }
 
-/* EXACT LABEL SIZE: 50 mm wide × 30 mm high (horizontal) */
+/* EXACT LABEL SIZE */
 .label-box{
     width:50mm;
     height:30mm;
@@ -530,10 +530,10 @@ html{
     }
 }
 
-/* PRINT ONLY THE 30 × 50 MM LABEL IN HORIZONTAL ORIENTATION */
+/* PRINT ONLY THE 50 × 30 MM LABEL */
 @media print{
     @page{
-        size:50mm 30mm; /* width × height = horizontal */
+        size:50mm 30mm;
         margin:0;
     }
 
@@ -545,9 +545,6 @@ html{
         padding:0!important;
         overflow:hidden!important;
         background:white!important;
-        writing-mode:horizontal-tb!important;
-        -webkit-print-color-adjust:exact!important;
-        print-color-adjust:exact!important;
     }
 
     body *{
@@ -575,10 +572,6 @@ html{
         page-break-before:avoid!important;
         page-break-after:avoid!important;
         page-break-inside:avoid!important;
-        break-inside:avoid!important;
-        writing-mode:horizontal-tb!important;
-        transform:none!important;
-        transform-origin:top left!important;
     }
 
     .label-name{
