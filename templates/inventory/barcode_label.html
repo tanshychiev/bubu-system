@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-
 <div class="barcode-page">
     <a href="{% url 'item_detail' item.id %}" class="barcode-back">← Back</a>
 
@@ -17,17 +16,23 @@
                 {% if variant.image %}
                     <img
                         class="barcode-product-photo inventory-media-image"
-                        src="{{ variant.image.url }}" data-media-src="{{ variant.image.url }}"
+                        src="{{ variant.image.url }}"
+                        data-media-src="{{ variant.image.url }}"
                         alt="{{ item.name }}"
-                       
-                     decoding="async" loading="eager" onerror="inventoryMediaError(this)">
+                        decoding="async"
+                        loading="eager"
+                        onerror="inventoryMediaError(this)"
+                    >
                 {% elif item.image %}
                     <img
                         class="barcode-product-photo inventory-media-image"
-                        src="{{ item.image.url }}" data-media-src="{{ item.image.url }}"
+                        src="{{ item.image.url }}"
+                        data-media-src="{{ item.image.url }}"
                         alt="{{ item.name }}"
-                       
-                     decoding="async" loading="eager" onerror="inventoryMediaError(this)">
+                        decoding="async"
+                        loading="eager"
+                        onerror="inventoryMediaError(this)"
+                    >
                 {% else %}
                     <div class="barcode-no-photo">📦</div>
                 {% endif %}
@@ -53,9 +58,8 @@
         <div class="barcode-preview-title">
             <div>
                 <h2>Label Preview</h2>
-                <p>Printer stock: 30 × 50 mm · Output label: 50 × 30 mm</p>
+                <p>Label: 50 mm × 30 mm · Driver: Landscape</p>
             </div>
-
             <span>Ready to print</span>
         </div>
 
@@ -78,7 +82,7 @@
         </div>
 
         <div class="barcode-actions">
-            <button type="button" onclick="window.print()" class="barcode-print-btn">
+            <button type="button" onclick="printBarcodeLabel()" class="barcode-print-btn">
                 🖨️ Print Barcode
             </button>
 
@@ -90,776 +94,569 @@
 </div>
 
 <style>
-*{
-    box-sizing:border-box;
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
 }
 
-a{
-    text-decoration:none;
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
-html{
-    -webkit-text-size-adjust:100%;
-    text-size-adjust:100%;
+a {
+    text-decoration: none;
 }
 
-.barcode-page{
-    width:min(760px,100%);
-    margin:0 auto;
-    padding:22px 18px;
+.barcode-page {
+    width: min(760px, 100%);
+    margin: 0 auto;
+    padding: 22px 18px;
 }
 
-.barcode-back{
-    min-height:42px;
-    margin-bottom:10px;
-    padding:0 14px;
-    border:1px solid #eaddec;
-    border-radius:13px;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    color:#6b6178;
-    background:white;
-    font-size:12px;
-    font-weight:1000;
+.barcode-back {
+    min-height: 42px;
+    margin-bottom: 10px;
+    padding: 0 14px;
+    border: 1px solid #eaddec;
+    border-radius: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b6178;
+    background: #fff;
+    font-size: 12px;
+    font-weight: 900;
 }
 
-.barcode-card{
-    padding:22px;
-    border:1px solid #f1ddd1;
-    border-radius:24px;
-    background:white;
-    box-shadow:0 18px 42px rgba(130,91,60,.08);
+.barcode-card {
+    padding: 22px;
+    border: 1px solid #f1ddd1;
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 18px 42px rgba(130, 91, 60, .08);
 }
 
-.barcode-head{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) 110px;
-    gap:16px;
-    align-items:center;
+.barcode-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 110px;
+    gap: 16px;
+    align-items: center;
 }
 
-.barcode-badge{
-    min-height:32px;
-    padding:0 10px;
-    border-radius:999px;
-    display:inline-flex;
-    align-items:center;
-    color:#7b5cff;
-    background:#f1ebff;
-    font-size:10px;
-    font-weight:1000;
+.barcode-badge {
+    min-height: 32px;
+    padding: 0 10px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    color: #7b5cff;
+    background: #f1ebff;
+    font-size: 10px;
+    font-weight: 900;
 }
 
-.barcode-head h1{
-    margin:8px 0 0;
-    color:#17152f;
-    font-size:32px;
-    line-height:1.08;
-    font-weight:1000;
+.barcode-head h1 {
+    margin: 8px 0 0;
+    color: #17152f;
+    font-size: 32px;
+    line-height: 1.08;
+    font-weight: 900;
 }
 
-.barcode-head p{
-    margin:6px 0 0;
-    color:#7b7288;
-    font-size:12px;
-    font-weight:900;
+.barcode-head p {
+    margin: 6px 0 0;
+    color: #7b7288;
+    font-size: 12px;
+    font-weight: 800;
 }
 
-.barcode-photo-wrap{
-    width:110px;
-    height:110px;
-    padding:6px;
-    border-radius:22px;
-    background:linear-gradient(135deg,#ffe4d6,#eee2ff);
-    box-shadow:0 10px 24px rgba(155,124,246,.14);
+.barcode-photo-wrap {
+    width: 110px;
+    height: 110px;
+    padding: 6px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #ffe4d6, #eee2ff);
+    box-shadow: 0 10px 24px rgba(155, 124, 246, .14);
 }
 
 .barcode-product-photo,
-.barcode-no-photo{
-    width:100%;
-    height:100%;
-    border-radius:17px;
-    background:white;
+.barcode-no-photo {
+    width: 100%;
+    height: 100%;
+    border-radius: 17px;
+    background: #fff;
 }
 
-.barcode-product-photo{
-    object-fit:contain;
-    display:block;
+.barcode-product-photo {
+    object-fit: contain;
+    display: block;
 }
 
-.barcode-no-photo{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:#8e63ff;
-    font-size:38px;
+.barcode-no-photo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8e63ff;
+    font-size: 38px;
 }
 
-.barcode-code-card{
-    margin-top:16px;
-    padding:12px;
-    border:1px solid #e6ddff;
-    border-radius:16px;
-    display:grid;
-    grid-template-columns:minmax(0,1fr) auto;
-    gap:10px;
-    align-items:center;
-    background:linear-gradient(135deg,#faf7ff,#fff9f5);
+.barcode-code-card {
+    margin-top: 16px;
+    padding: 12px;
+    border: 1px solid #e6ddff;
+    border-radius: 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    background: linear-gradient(135deg, #faf7ff, #fff9f5);
 }
 
-.barcode-code-copy{
-    min-width:0;
+.barcode-code-copy {
+    min-width: 0;
 }
 
-.barcode-code-copy span{
-    display:block;
-    margin-bottom:4px;
-    color:#7b7288;
-    font-size:9px;
-    font-weight:1000;
+.barcode-code-copy span {
+    display: block;
+    margin-bottom: 4px;
+    color: #7b7288;
+    font-size: 9px;
+    font-weight: 900;
 }
 
-.barcode-code-copy strong{
-    display:block;
-    overflow-wrap:anywhere;
-    word-break:break-word;
-    color:#17152f;
-    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    font-size:17px;
-    line-height:1.35;
-    letter-spacing:.7px;
-    font-weight:1000;
+.barcode-code-copy strong {
+    display: block;
+    overflow-wrap: anywhere;
+    color: #17152f;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 17px;
+    line-height: 1.35;
+    letter-spacing: .7px;
+    font-weight: 900;
 }
 
-.barcode-copy-btn{
-    min-height:44px;
-    padding:0 14px;
-    border:0;
-    border-radius:12px;
-    color:white;
-    background:linear-gradient(135deg,#7b5cff,#9b7cf6);
-    font-size:11px;
-    font-weight:1000;
-    cursor:pointer;
-    white-space:nowrap;
+.barcode-copy-btn {
+    min-height: 44px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 12px;
+    color: #fff;
+    background: linear-gradient(135deg, #7b5cff, #9b7cf6);
+    font-size: 11px;
+    font-weight: 900;
+    cursor: pointer;
+    white-space: nowrap;
 }
 
-.barcode-copy-btn.copied{
-    background:linear-gradient(135deg,#19a974,#7be0b2);
+.barcode-copy-btn.copied {
+    background: linear-gradient(135deg, #19a974, #7be0b2);
 }
 
-.barcode-preview-title{
-    margin-top:18px;
-    display:flex;
-    align-items:flex-start;
-    justify-content:space-between;
-    gap:10px;
+.barcode-preview-title {
+    margin-top: 18px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
 }
 
-.barcode-preview-title h2{
-    margin:0;
-    color:#17152f;
-    font-size:18px;
-    font-weight:1000;
+.barcode-preview-title h2 {
+    margin: 0;
+    color: #17152f;
+    font-size: 18px;
+    font-weight: 900;
 }
 
-.barcode-preview-title p{
-    margin:3px 0 0;
-    color:#7b7288;
-    font-size:10px;
-    font-weight:900;
+.barcode-preview-title p {
+    margin: 3px 0 0;
+    color: #7b7288;
+    font-size: 10px;
+    font-weight: 800;
 }
 
-.barcode-preview-title > span{
-    min-height:30px;
-    padding:0 9px;
-    border-radius:999px;
-    display:flex;
-    align-items:center;
-    color:#19a974;
-    background:#eafff4;
-    font-size:8px;
-    font-weight:1000;
-    white-space:nowrap;
+.barcode-preview-title > span {
+    min-height: 30px;
+    padding: 0 9px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    color: #19a974;
+    background: #eafff4;
+    font-size: 8px;
+    font-weight: 900;
+    white-space: nowrap;
 }
 
-.barcode-label-stage{
-    margin-top:10px;
-    padding:20px 10px;
-    border:1px dashed #d9c6ec;
-    border-radius:18px;
-    display:flex;
-    justify-content:center;
-    overflow-x:auto;
-    background:linear-gradient(135deg,#fffafd,#faf7ff);
+.barcode-label-stage {
+    margin-top: 10px;
+    padding: 20px 10px;
+    border: 1px dashed #d9c6ec;
+    border-radius: 18px;
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+    background: linear-gradient(135deg, #fffafd, #faf7ff);
 }
 
-/* EXACT LABEL SIZE: 50 mm wide × 30 mm high (horizontal) */
-.label-box{
-    width:50mm;
-    height:30mm;
-    min-width:50mm;
-    min-height:30mm;
-    padding:1.8mm 2.2mm;
-    border:1px dashed #bbb;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:.7mm;
-    overflow:hidden;
-    color:black;
-    background:white;
-    text-align:center;
+/* Screen preview only. The printed clone uses the same 50 × 30 layout. */
+.label-box {
+    width: 50mm;
+    height: 30mm;
+    min-width: 50mm;
+    min-height: 30mm;
+    padding: 1.6mm 2mm;
+    border: 1px dashed #bbb;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .6mm;
+    overflow: hidden;
+    color: #000;
+    background: #fff;
+    text-align: center;
+    transform: none;
 }
 
-.label-name{
-    width:100%;
-    overflow:hidden;
-    color:#000;
-    font-size:8.5px;
-    line-height:1.05;
-    font-weight:900;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+.label-name {
+    width: 100%;
+    overflow: hidden;
+    color: #000;
+    font-family: Arial, sans-serif;
+    font-size: 8.5px;
+    line-height: 1.05;
+    font-weight: 900;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.label-info{
-    width:100%;
-    overflow:hidden;
-    color:#000;
-    font-size:6.5px;
-    line-height:1.05;
-    font-weight:800;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+.label-info {
+    width: 100%;
+    overflow: hidden;
+    color: #000;
+    font-family: Arial, sans-serif;
+    font-size: 6.5px;
+    line-height: 1.05;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.barcode-img{
-    width:42mm;
-    height:9mm;
-    flex:0 0 9mm;
-    margin:0;
-    object-fit:fill;
-    display:block;
+.barcode-img {
+    display: block;
+    width: 42mm;
+    height: 9mm;
+    min-width: 42mm;
+    min-height: 9mm;
+    max-width: 42mm;
+    max-height: 9mm;
+    flex: 0 0 9mm;
+    margin: 0;
+    object-fit: fill;
 }
 
-.label-bottom{
-    width:100%;
-    display:grid;
-    grid-template-columns:minmax(0,1fr) auto;
-    gap:1.2mm;
-    align-items:center;
+.label-bottom {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1.2mm;
+    align-items: center;
 }
 
-.sku-text{
-    min-width:0;
-    overflow:hidden;
-    color:#000;
-    font-family:Arial,sans-serif;
-    font-size:6.5px;
-    line-height:1;
-    letter-spacing:.2px;
-    font-weight:900;
-    text-align:left;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+.sku-text {
+    min-width: 0;
+    overflow: hidden;
+    color: #000;
+    font-family: Arial, sans-serif;
+    font-size: 6.5px;
+    line-height: 1;
+    letter-spacing: .2px;
+    font-weight: 900;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.price{
-    color:#000;
-    font-size:8px;
-    line-height:1;
-    font-weight:1000;
-    text-align:right;
-    white-space:nowrap;
+.price {
+    color: #000;
+    font-family: Arial, sans-serif;
+    font-size: 8px;
+    line-height: 1;
+    font-weight: 900;
+    text-align: right;
+    white-space: nowrap;
 }
 
-.barcode-actions{
-    margin-top:16px;
-    display:grid;
-    grid-template-columns:1.5fr .7fr;
-    gap:8px;
+.barcode-actions {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: 1.5fr .7fr;
+    gap: 8px;
 }
 
 .barcode-print-btn,
-.barcode-cancel-btn{
-    min-height:50px;
-    border:0;
-    border-radius:14px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:12px;
-    font-weight:1000;
+.barcode-cancel-btn {
+    min-height: 50px;
+    border: 0;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 900;
 }
 
-.barcode-print-btn{
-    color:white;
-    background:linear-gradient(135deg,#9b7cf6,#ff8c6b);
-    cursor:pointer;
+.barcode-print-btn {
+    color: #fff;
+    background: linear-gradient(135deg, #9b7cf6, #ff8c6b);
+    cursor: pointer;
 }
 
-.barcode-cancel-btn{
-    color:#6b6178;
-    background:#f5f3f7;
+.barcode-cancel-btn {
+    color: #6b6178;
+    background: #f5f3f7;
 }
 
-/* PHONE */
-@media(max-width:700px){
-    .barcode-page{
-        padding:7px 6px 78px;
+/* Created by JavaScript as a direct child of <body>. */
+.print-root {
+    display: none;
+}
+
+@media (max-width: 700px) {
+    .barcode-page {
+        padding: 8px 7px 78px;
     }
 
-    .barcode-back{
-        min-height:35px;
-        margin-bottom:6px;
-        padding:0 9px;
-        border-radius:9px;
-        font-size:10px;
+    .barcode-card {
+        padding: 10px;
+        border-radius: 15px;
+        box-shadow: none;
     }
 
-    .barcode-card{
-        padding:9px;
-        border-radius:15px;
-        box-shadow:none;
+    .barcode-head {
+        grid-template-columns: minmax(0, 1fr) 72px;
+        gap: 8px;
     }
 
-    .barcode-head{
-        grid-template-columns:minmax(0,1fr) 72px;
-        gap:7px;
+    .barcode-head h1 {
+        font-size: 22px;
     }
 
-    .barcode-badge{
-        min-height:27px;
-        padding:0 8px;
-        font-size:8px;
+    .barcode-photo-wrap {
+        width: 72px;
+        height: 72px;
+        padding: 4px;
+        border-radius: 14px;
     }
 
-    .barcode-head h1{
-        margin-top:5px;
-        font-size:22px;
+    .barcode-code-card {
+        padding: 8px;
     }
 
-    .barcode-head p{
-        margin-top:3px;
-        max-width:230px;
-        overflow:hidden;
-        font-size:9px;
-        text-overflow:ellipsis;
-        white-space:nowrap;
+    .barcode-copy-btn {
+        min-height: 40px;
+        padding: 0 9px;
+        font-size: 9px;
     }
 
-    .barcode-photo-wrap{
-        width:72px;
-        height:72px;
-        padding:4px;
-        border-radius:14px;
+    .barcode-label-stage {
+        padding: 10px 4px;
     }
 
-    .barcode-product-photo,
-    .barcode-no-photo{
-        border-radius:11px;
+    .label-box {
+        transform: scale(.93);
+        transform-origin: center;
     }
 
-    .barcode-no-photo{
-        font-size:28px;
-    }
-
-    .barcode-code-card{
-        margin-top:7px;
-        padding:7px;
-        border-radius:11px;
-        grid-template-columns:minmax(0,1fr) auto;
-        gap:5px;
-    }
-
-    .barcode-code-copy strong{
-        font-size:13px;
-        letter-spacing:.3px;
-    }
-
-    .barcode-copy-btn{
-        min-height:39px;
-        padding:0 9px;
-        border-radius:9px;
-        font-size:9px;
-    }
-
-    .barcode-preview-title{
-        margin-top:9px;
-    }
-
-    .barcode-preview-title h2{
-        font-size:14px;
-    }
-
-    .barcode-label-stage{
-        margin-top:6px;
-        padding:10px 4px;
-        border-radius:12px;
-    }
-
-    .label-box{
-        transform:scale(.93);
-        transform-origin:center;
-    }
-
-    .barcode-actions{
-        position:fixed;
-        left:6px;
-        right:6px;
-        bottom:calc(6px + env(safe-area-inset-bottom));
-        z-index:5000;
-        height:58px;
-        margin:0;
-        padding:5px;
-        border:1px solid rgba(228,213,236,.9);
-        border-radius:15px;
-        background:rgba(255,255,255,.97);
-        box-shadow:0 14px 34px rgba(39,27,61,.18);
-        backdrop-filter:blur(16px);
-    }
-
-    .barcode-print-btn,
-    .barcode-cancel-btn{
-        min-height:46px;
-        border-radius:10px;
-        font-size:10px;
+    .barcode-actions {
+        position: fixed;
+        left: 7px;
+        right: 7px;
+        bottom: calc(7px + env(safe-area-inset-bottom));
+        z-index: 5000;
+        height: 58px;
+        margin: 0;
+        padding: 5px;
+        border: 1px solid rgba(228, 213, 236, .9);
+        border-radius: 15px;
+        background: rgba(255, 255, 255, .97);
     }
 }
 
-/* PRINT FIX FOR DELI DRIVER
-   Printer stock/page: 30 mm wide × 50 mm high (Portrait)
-   Finished label design: 50 mm wide × 30 mm high
-   The complete label is rotated once inside the 30 × 50 browser page. */
-@media print{
-    @page{
-        size:30mm 50mm;
-        margin:0;
+/*
+IMPORTANT:
+The print label is cloned directly under <body>.
+This prevents Chrome/Edge from printing the base.html navbar, sidebar,
+page wrapper, transforms, scaling, or inherited application layout.
+*/
+@media print {
+    @page {
+        size: 50mm 30mm;
+        margin: 0;
     }
 
     html,
-    body{
-        width:30mm!important;
-        height:50mm!important;
-        min-width:30mm!important;
-        min-height:50mm!important;
-        max-width:30mm!important;
-        max-height:50mm!important;
-        margin:0!important;
-        padding:0!important;
-        overflow:hidden!important;
-        background:#fff!important;
-        -webkit-print-color-adjust:exact!important;
-        print-color-adjust:exact!important;
+    body {
+        width: 50mm !important;
+        height: 30mm !important;
+        min-width: 50mm !important;
+        min-height: 30mm !important;
+        max-width: 50mm !important;
+        max-height: 30mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        background: #fff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
 
-    body{
-        position:relative!important;
+    /* Hide every original application element, including navbar/sidebar. */
+    body > *:not(.print-root) {
+        display: none !important;
     }
 
-    /* Remove every screen-only section. */
-    .barcode-back,
-    .barcode-head,
-    .barcode-code-card,
-    .barcode-preview-title,
-    .barcode-actions{
-        display:none!important;
+    .print-root {
+        display: block !important;
+        position: fixed !important;
+        inset: 0 auto auto 0 !important;
+        width: 50mm !important;
+        height: 30mm !important;
+        min-width: 50mm !important;
+        min-height: 30mm !important;
+        max-width: 50mm !important;
+        max-height: 30mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        overflow: hidden !important;
+        background: #fff !important;
+        transform: none !important;
     }
 
-    /* The browser and printer receive one 30 × 50 portrait page. */
-    .barcode-page,
-    .barcode-card,
-    .barcode-label-stage{
-        display:block!important;
-        position:static!important;
-        width:30mm!important;
-        height:50mm!important;
-        min-width:30mm!important;
-        min-height:50mm!important;
-        max-width:30mm!important;
-        max-height:50mm!important;
-        margin:0!important;
-        padding:0!important;
-        border:0!important;
-        border-radius:0!important;
-        box-shadow:none!important;
-        background:#fff!important;
-        overflow:hidden!important;
+    .print-root .label-box {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 50mm !important;
+        height: 30mm !important;
+        min-width: 50mm !important;
+        min-height: 30mm !important;
+        max-width: 50mm !important;
+        max-height: 30mm !important;
+        margin: 0 !important;
+        padding: 1.6mm 2mm !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        overflow: hidden !important;
+        display: flex !important;
+        transform: none !important;
+        transform-origin: initial !important;
+        color: #000 !important;
+        background: #fff !important;
+        page-break-before: avoid !important;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+        break-before: avoid !important;
+        break-after: avoid !important;
+        break-inside: avoid !important;
     }
 
-    /* Build the label as 50 × 30, then rotate it clockwise exactly once.
-       translateX(30mm) keeps the rotated label fully inside the 30 × 50 page. */
-    .label-box{
-        display:flex!important;
-        position:fixed!important;
-        left:0!important;
-        top:0!important;
-
-        width:50mm!important;
-        height:30mm!important;
-        min-width:50mm!important;
-        min-height:30mm!important;
-        max-width:50mm!important;
-        max-height:30mm!important;
-
-        margin:0!important;
-        padding:1.8mm 2.2mm!important;
-        border:0!important;
-        border-radius:0!important;
-        box-shadow:none!important;
-        overflow:hidden!important;
-
-        color:#000!important;
-        background:#fff!important;
-        visibility:visible!important;
-        opacity:1!important;
-
-        transform-origin:top left!important;
-        transform:translateX(30mm) rotate(90deg)!important;
-
-        page-break-before:avoid!important;
-        page-break-after:avoid!important;
-        page-break-inside:avoid!important;
-        break-before:avoid!important;
-        break-after:avoid!important;
-        break-inside:avoid!important;
-    }
-
-    .label-box,
-    .label-box *{
-        visibility:visible!important;
-        opacity:1!important;
-    }
-
-    .label-name{
-        width:100%!important;
-        overflow:hidden!important;
-        font-size:8.5px!important;
-        line-height:1.05!important;
-        font-weight:900!important;
-        text-overflow:ellipsis!important;
-        white-space:nowrap!important;
-    }
-
-    .label-info{
-        width:100%!important;
-        overflow:hidden!important;
-        font-size:6.5px!important;
-        line-height:1.05!important;
-        font-weight:800!important;
-        text-overflow:ellipsis!important;
-        white-space:nowrap!important;
-    }
-
-    .barcode-img{
-        display:block!important;
-        width:42mm!important;
-        height:9mm!important;
-        min-width:42mm!important;
-        min-height:9mm!important;
-        max-width:42mm!important;
-        max-height:9mm!important;
-        flex:0 0 9mm!important;
-        margin:0!important;
-        object-fit:fill!important;
-    }
-
-    .label-bottom{
-        width:100%!important;
-        display:grid!important;
-        grid-template-columns:minmax(0,1fr) auto!important;
-        gap:1.2mm!important;
-        align-items:center!important;
-    }
-
-    .sku-text{
-        min-width:0!important;
-        overflow:hidden!important;
-        font-size:6.5px!important;
-        line-height:1!important;
-        text-align:left!important;
-        text-overflow:ellipsis!important;
-        white-space:nowrap!important;
-    }
-
-    .price{
-        font-size:8px!important;
-        line-height:1!important;
-        text-align:right!important;
-        white-space:nowrap!important;
+    .print-root .barcode-img {
+        width: 42mm !important;
+        height: 9mm !important;
+        min-width: 42mm !important;
+        min-height: 9mm !important;
+        max-width: 42mm !important;
+        max-height: 9mm !important;
     }
 }
-
-/* =========================================================
-   INVENTORY MEDIA FIX — iPhone Safari / PWA
-========================================================= */
-.inventory-media-image{
-    display:block!important;
-    width:100%!important;
-    height:100%!important;
-    max-width:100%!important;
-    opacity:1!important;
-    visibility:visible!important;
-    object-fit:contain!important;
-    filter:none!important;
-    transform:none!important;
-    background:white!important;
-}
-
-.inventory-media-fallback{
-    width:100%;
-    height:100%;
-    min-height:44px;
-    display:flex!important;
-    align-items:center!important;
-    justify-content:center!important;
-    color:#8e63ff;
-    background:linear-gradient(135deg,#f4edff,#fff8f4);
-    font-size:clamp(24px,5vw,54px);
-    line-height:1;
-}
-
 </style>
 
 <script>
-function showBarcodePhotoFallback(img){
-    inventoryMediaError(img);
-}
+(function () {
+    "use strict";
 
-async function copyBarcodeCode(){
-    const codeElement = document.getElementById("barcodeCodeText");
-    const button = document.getElementById("copyCodeButton");
-    const code = codeElement ? codeElement.textContent.trim() : "";
-
-    if(!code){
-        return;
-    }
-
-    try{
-        await navigator.clipboard.writeText(code);
-    }catch(error){
-        const textarea = document.createElement("textarea");
-        textarea.value = code;
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.focus();
-        textarea.select();
-        document.execCommand("copy");
-        textarea.remove();
-    }
-
-    button.classList.add("copied");
-    button.textContent = "✓ Copied";
-
-    setTimeout(function(){
-        button.classList.remove("copied");
-        button.textContent = "📋 Copy Code";
-    }, 1600);
-}
-
-function inventoryResolveMediaUrl(rawUrl){
-    let value = String(rawUrl || "").trim().replace(/\\/g, "/");
-
-    if(!value){
-        return "";
-    }
-
-    if(/^(data:|blob:)/i.test(value)){
-        return value;
-    }
-
-    try{
-        const parsed = new URL(value, window.location.href);
-        const path = parsed.pathname || "";
-
-        /*
-         * iPhone/PWA can load the page through HTTPS while Django returns
-         * an absolute HTTP image URL. Keep the image path, but use the same
-         * origin and protocol as the current page.
-         */
-        if(
-            path.startsWith("/media/") ||
-            path.includes("/media/") ||
-            parsed.hostname === window.location.hostname
-        ){
-            return window.location.origin + path + parsed.search + parsed.hash;
+    function createPrintRoot() {
+        const oldRoot = document.querySelector(".print-root");
+        if (oldRoot) {
+            oldRoot.remove();
         }
 
-        return parsed.href;
-    }catch(error){
-        if(value.startsWith("/")){
-            return window.location.origin + value;
+        const sourceLabel = document.getElementById("printLabel");
+        if (!sourceLabel) {
+            return null;
         }
 
-        if(value.startsWith("media/")){
-            return window.location.origin + "/" + value;
+        const printRoot = document.createElement("div");
+        printRoot.className = "print-root";
+        printRoot.setAttribute("aria-hidden", "true");
+
+        const labelClone = sourceLabel.cloneNode(true);
+        labelClone.removeAttribute("id");
+        labelClone.style.transform = "none";
+
+        printRoot.appendChild(labelClone);
+        document.body.appendChild(printRoot);
+
+        return printRoot;
+    }
+
+    window.printBarcodeLabel = function () {
+        createPrintRoot();
+
+        /* Give Chrome/Edge one frame to finish inserting the clean print node. */
+        window.requestAnimationFrame(function () {
+            window.requestAnimationFrame(function () {
+                window.print();
+            });
+        });
+    };
+
+    window.copyBarcodeCode = async function () {
+        const codeElement = document.getElementById("barcodeCodeText");
+        const button = document.getElementById("copyCodeButton");
+
+        if (!codeElement || !button) {
+            return;
         }
 
-        return window.location.origin + "/media/" + value.replace(/^\.?\//, "");
-    }
-}
+        const code = codeElement.textContent.trim();
 
-function inventoryMediaFallback(img){
-    const holder = img?.parentElement;
+        try {
+            await navigator.clipboard.writeText(code);
+        } catch (error) {
+            const input = document.createElement("textarea");
+            input.value = code;
+            input.style.position = "fixed";
+            input.style.opacity = "0";
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand("copy");
+            input.remove();
+        }
 
-    if(img){
-        img.remove();
-    }
+        const originalText = button.textContent;
+        button.textContent = "✓ Copied";
+        button.classList.add("copied");
 
-    if(!holder){
-        return;
-    }
-        
-    if(!holder.querySelector(".inventory-media-fallback")){
-        const fallback = document.createElement("span");
-        fallback.className = "inventory-media-fallback";
-        fallback.textContent = "📦";
-        holder.appendChild(fallback);
-    }
-}
+        window.setTimeout(function () {
+            button.textContent = originalText;
+            button.classList.remove("copied");
+        }, 1500);
+    };
 
-function inventoryMediaError(img){
-    if(!img){
-        return;
-    }
+    window.addEventListener("beforeprint", createPrintRoot);
 
-    const original = img.dataset.mediaSrc || img.getAttribute("src") || "";
-    const resolved = inventoryResolveMediaUrl(original);
-
-    if(
-        img.dataset.mediaRetried !== "1" &&
-        resolved &&
-        resolved !== img.getAttribute("src")
-    ){
-        img.dataset.mediaRetried = "1";
-        img.src = resolved;
-        return;
-    }
-
-    inventoryMediaFallback(img);
-}
-
-function inventoryNormalizeMediaImages(root){
-    const scope = root || document;
-
-    scope.querySelectorAll("img.inventory-media-image").forEach(function(img){
-        const raw = img.dataset.mediaSrc || img.getAttribute("src") || "";
-        const resolved = inventoryResolveMediaUrl(raw);
-
-        if(resolved && resolved !== img.getAttribute("src")){
-            img.src = resolved;
+    window.addEventListener("afterprint", function () {
+        const root = document.querySelector(".print-root");
+        if (root) {
+            root.remove();
         }
     });
-}
-
-document.addEventListener("DOMContentLoaded", function(){
-    inventoryNormalizeMediaImages(document);
-});
-
+})();
 </script>
-
 {% endblock %}
