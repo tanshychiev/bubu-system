@@ -53,7 +53,7 @@
         <div class="barcode-preview-title">
             <div>
                 <h2>Label Preview</h2>
-                <p>Print size: 50 mm × 30 mm · Landscape</p>
+                <p>Printer stock: 30 × 50 mm · Output label: 50 × 30 mm</p>
             </div>
 
             <span>Ready to print</span>
@@ -530,24 +530,24 @@ html{
     }
 }
 
-/* PRINT ONE LABEL ONLY — 50 mm × 30 mm LANDSCAPE
-   Printer stock: 50 mm wide × 30 mm high
-   Orientation: Landscape
-   No CSS rotation. */
+/* PRINT FIX FOR DELI DRIVER
+   Printer stock/page: 30 mm wide × 50 mm high (Portrait)
+   Finished label design: 50 mm wide × 30 mm high
+   The complete label is rotated once inside the 30 × 50 browser page. */
 @media print{
     @page{
-        size:50mm 30mm;
+        size:30mm 50mm;
         margin:0;
     }
 
     html,
     body{
-        width:50mm!important;
-        height:30mm!important;
-        min-width:50mm!important;
-        min-height:30mm!important;
-        max-width:50mm!important;
-        max-height:30mm!important;
+        width:30mm!important;
+        height:50mm!important;
+        min-width:30mm!important;
+        min-height:50mm!important;
+        max-width:30mm!important;
+        max-height:50mm!important;
         margin:0!important;
         padding:0!important;
         overflow:hidden!important;
@@ -560,18 +560,40 @@ html{
         position:relative!important;
     }
 
-    /* Hide all normal website content */
-    body *{
-        visibility:hidden!important;
+    /* Remove every screen-only section. */
+    .barcode-back,
+    .barcode-head,
+    .barcode-code-card,
+    .barcode-preview-title,
+    .barcode-actions{
+        display:none!important;
     }
 
-    /* Show only the barcode label */
-    .label-box,
-    .label-box *{
-        visibility:visible!important;
+    /* The browser and printer receive one 30 × 50 portrait page. */
+    .barcode-page,
+    .barcode-card,
+    .barcode-label-stage{
+        display:block!important;
+        position:static!important;
+        width:30mm!important;
+        height:50mm!important;
+        min-width:30mm!important;
+        min-height:50mm!important;
+        max-width:30mm!important;
+        max-height:50mm!important;
+        margin:0!important;
+        padding:0!important;
+        border:0!important;
+        border-radius:0!important;
+        box-shadow:none!important;
+        background:#fff!important;
+        overflow:hidden!important;
     }
 
+    /* Build the label as 50 × 30, then rotate it clockwise exactly once.
+       translateX(30mm) keeps the rotated label fully inside the 30 × 50 page. */
     .label-box{
+        display:flex!important;
         position:fixed!important;
         left:0!important;
         top:0!important;
@@ -589,17 +611,14 @@ html{
         border-radius:0!important;
         box-shadow:none!important;
         overflow:hidden!important;
+
         color:#000!important;
         background:#fff!important;
+        visibility:visible!important;
+        opacity:1!important;
 
-        display:flex!important;
-        flex-direction:column!important;
-        align-items:center!important;
-        justify-content:center!important;
-        gap:.7mm!important;
-
-        transform:none!important;
-        transform-origin:center!important;
+        transform-origin:top left!important;
+        transform:translateX(30mm) rotate(90deg)!important;
 
         page-break-before:avoid!important;
         page-break-after:avoid!important;
@@ -607,6 +626,12 @@ html{
         break-before:avoid!important;
         break-after:avoid!important;
         break-inside:avoid!important;
+    }
+
+    .label-box,
+    .label-box *{
+        visibility:visible!important;
+        opacity:1!important;
     }
 
     .label-name{
