@@ -53,7 +53,7 @@
         <div class="barcode-preview-title">
             <div>
                 <h2>Label Preview</h2>
-                <p>Print size: 30 mm × 50 mm (Horizontal)</p>
+                <p>Print size: 50 mm × 30 mm · Printer rotation fix</p>
             </div>
 
             <span>Ready to print</span>
@@ -530,22 +530,24 @@ html{
     }
 }
 
-/* PRINT ONLY THE 30 × 50 MM LABEL IN HORIZONTAL ORIENTATION */
+/* PRINT FIX FOR PRINTER THAT FORCES 30 × 50 MM PORTRAIT
+   The physical sticker is still 50 mm × 30 mm.
+   We send a 30 × 50 mm page and rotate the label 90 degrees
+   so it comes out horizontal at full size. */
 @media print{
     @page{
-        size:50mm 30mm; /* width × height = horizontal */
+        size:30mm 50mm;
         margin:0;
     }
 
     html,
     body{
-        width:50mm!important;
-        height:30mm!important;
+        width:30mm!important;
+        height:50mm!important;
         margin:0!important;
         padding:0!important;
         overflow:hidden!important;
         background:white!important;
-        writing-mode:horizontal-tb!important;
         -webkit-print-color-adjust:exact!important;
         print-color-adjust:exact!important;
     }
@@ -561,24 +563,26 @@ html{
 
     .label-box{
         position:fixed!important;
-        left:0!important;
+        left:30mm!important;
         top:0!important;
+
         width:50mm!important;
         height:30mm!important;
         min-width:50mm!important;
         min-height:30mm!important;
+
         margin:0!important;
         padding:1.8mm 2.2mm!important;
         border:0!important;
-        transform:none!important;
         box-shadow:none!important;
+
+        transform-origin:top left!important;
+        transform:rotate(90deg)!important;
+
         page-break-before:avoid!important;
         page-break-after:avoid!important;
         page-break-inside:avoid!important;
         break-inside:avoid!important;
-        writing-mode:horizontal-tb!important;
-        transform:none!important;
-        transform-origin:top left!important;
     }
 
     .label-name{
@@ -592,6 +596,7 @@ html{
     .barcode-img{
         width:42mm!important;
         height:9mm!important;
+        flex:0 0 9mm!important;
     }
 
     .sku-text{
