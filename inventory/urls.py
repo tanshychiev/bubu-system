@@ -83,6 +83,11 @@ urlpatterns = [
         stock_count_views.stock_count_cancel,
         name="stock_count_cancel",
     ),
+    path(
+        "variant/<int:variant_id>/barcode/print/",
+        views.variant_barcode_print,
+        name="variant_barcode_print",
+    ),
 
     # ==================================================
     # VARIANT

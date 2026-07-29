@@ -2408,3 +2408,63 @@ def barcode_migration_apply(request):
 
     messages.success(request, f"Applied {len(changes)} barcode SKU change(s). Existing custom SKUs were not touched.")
     return redirect("barcode_migration_preview")
+@login_required
+def variant_barcode_print(request, variant_id):
+    if not can_manage_inventory(request.user):
+        messages.error(request, "You do not have permission.")
+        return redirect("item_list")
+
+    variant = get_object_or_404(
+        ItemVariant.objects.select_related("item", "item__item_type"),
+        pk=variant_id,
+    )
+
+    original_sku = str(variant.sku or "").strip()
+
+    safe_sku = "".join(
+        character
+        for character in original_sku
+        if character.isascii()
+        and (character.isalnum() or character in "-._/")
+    )
+
+    if not safe_sku:
+        safe_sku = f"VAR-{variant.id}"
+
+    try:
+        barcode_class = barcode.get_barcode_class("code128")
+        barcode_obj = barcode_class(safe_sku, writer=ImageWriter())
+
+        buffer = BytesIO()
+        barcode_obj.write(buffer, options={
+            "write_text": False,
+            "module_height": 10,
+            "module_width": 0.35,
+            "font_size": 8,
+            "text_distance": 2,
+            "quiet_zone": 2,
+        })
+    except Exception:
+        safe_sku = f"VAR-{variant.id}"
+        barcode_class = barcode.get_barcode_class("code128")
+        barcode_obj = barcode_class(safe_sku, writer=ImageWriter())
+
+        buffer = BytesIO()
+        barcode_obj.write(buffer, options={
+            "write_text": False,
+            "module_height": 10,
+            "module_width": 0.35,
+            "font_size": 8,
+            "text_distance": 2,
+            "quiet_zone": 2,
+        })
+
+    barcode_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+    return render(request, "inventory/barcode_print.html", {
+        "variant": variant,
+        "item": variant.item,
+        "barcode_base64": barcode_base64,
+        "barcode_value": safe_sku,
+        "original_sku": original_sku,
+    })

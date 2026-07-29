@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Barcode {{ variant.sku }}</title>
+
+    <style>
+        /* This page is intentionally standalone.
+           It does NOT extend base.html and contains no sidebar/navbar. */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            color: #000;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+        }
+
+        .label {
+            width: 50mm;
+            height: 30mm;
+            min-width: 50mm;
+            min-height: 30mm;
+            max-width: 50mm;
+            max-height: 30mm;
+            margin: 0;
+            padding: 1.6mm 2mm;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: .6mm;
+            background: #fff;
+            color: #000;
+            text-align: center;
+        }
+
+        .label-name {
+            width: 100%;
+            overflow: hidden;
+            font-size: 8.5px;
+            line-height: 1.05;
+            font-weight: 900;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .label-info {
+            width: 100%;
+            overflow: hidden;
+            font-size: 6.5px;
+            line-height: 1.05;
+            font-weight: 700;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .barcode-img {
+            display: block;
+            width: 42mm;
+            height: 9mm;
+            min-width: 42mm;
+            min-height: 9mm;
+            max-width: 42mm;
+            max-height: 9mm;
+            margin: 0;
+            object-fit: fill;
+        }
+
+        .label-bottom {
+            width: 100%;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 1.2mm;
+            align-items: center;
+        }
+
+        .sku {
+            min-width: 0;
+            overflow: hidden;
+            font-size: 6.5px;
+            line-height: 1;
+            font-weight: 900;
+            text-align: left;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .price {
+            font-size: 8px;
+            line-height: 1;
+            font-weight: 900;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .screen-controls {
+            position: fixed;
+            right: 14px;
+            bottom: 14px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .screen-controls button {
+            min-height: 42px;
+            padding: 0 16px;
+            border: 0;
+            border-radius: 10px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .print-button {
+            color: #fff;
+            background: #7654dd;
+        }
+
+        .close-button {
+            color: #333;
+            background: #eee;
+        }
+
+        @media print {
+            @page {
+                margin: 0;
+            }
+
+            html,
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+                background: #fff !important;
+            }
+
+            body {
+                display: block !important;
+            }
+
+            .label {
+                margin: 0 !important;
+                border: 0 !important;
+                transform: none !important;
+                page-break-before: avoid !important;
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+                break-before: avoid !important;
+                break-after: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            .screen-controls {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="label">
+        <div class="label-name">{{ item.name }}</div>
+        <div class="label-info">{{ variant.display_name }}</div>
+
+        <img
+            class="barcode-img"
+            src="data:image/png;base64,{{ barcode_base64 }}"
+            alt="Barcode"
+        >
+
+        <div class="label-bottom">
+            <div class="sku">{{ variant.sku }}</div>
+            <div class="price">${{ variant.sale_price|floatformat:2 }}</div>
+        </div>
+    </div>
+
+    <div class="screen-controls">
+        <button type="button" class="close-button" onclick="window.close()">Close</button>
+        <button type="button" class="print-button" onclick="window.print()">Print</button>
+    </div>
+
+    <script>
+        /* Wait until the barcode image is loaded before opening print. */
+        window.addEventListener("load", function () {
+            window.setTimeout(function () {
+                window.print();
+            }, 250);
+        });
+    </script>
+</body>
+</html>
