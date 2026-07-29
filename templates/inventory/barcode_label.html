@@ -53,7 +53,7 @@
         <div class="barcode-preview-title">
             <div>
                 <h2>Label Preview</h2>
-                <p>Print size: 50 mm × 30 mm · Rotated opposite direction</p>
+                <p>Print size: 50 mm × 30 mm · Landscape</p>
             </div>
 
             <span>Ready to print</span>
@@ -530,24 +530,24 @@ html{
     }
 }
 
-/* PRINT ONE LABEL ONLY — Deli DL-888D
-   Physical sticker: 50 mm × 30 mm
-   Printer stock: 30 mm × 50 mm, Portrait
-   The label is rotated once inside one printer page. */
+/* PRINT ONE LABEL ONLY — 50 mm × 30 mm LANDSCAPE
+   Printer stock: 50 mm wide × 30 mm high
+   Orientation: Landscape
+   No CSS rotation. */
 @media print{
     @page{
-        size:30mm 50mm;
+        size:50mm 30mm;
         margin:0;
     }
 
     html,
     body{
-        width:30mm!important;
-        height:50mm!important;
-        min-width:30mm!important;
-        min-height:50mm!important;
-        max-width:30mm!important;
-        max-height:50mm!important;
+        width:50mm!important;
+        height:30mm!important;
+        min-width:50mm!important;
+        min-height:30mm!important;
+        max-width:50mm!important;
+        max-height:30mm!important;
         margin:0!important;
         padding:0!important;
         overflow:hidden!important;
@@ -560,12 +560,12 @@ html{
         position:relative!important;
     }
 
-    /* Hide every normal website element */
+    /* Hide all normal website content */
     body *{
         visibility:hidden!important;
     }
 
-    /* Show only the real label */
+    /* Show only the barcode label */
     .label-box,
     .label-box *{
         visibility:visible!important;
@@ -574,7 +574,7 @@ html{
     .label-box{
         position:fixed!important;
         left:0!important;
-        top:50mm!important;
+        top:0!important;
 
         width:50mm!important;
         height:30mm!important;
@@ -598,8 +598,8 @@ html{
         justify-content:center!important;
         gap:.7mm!important;
 
-        transform-origin:top left!important;
-        transform:rotate(-90deg)!important;
+        transform:none!important;
+        transform-origin:center!important;
 
         page-break-before:avoid!important;
         page-break-after:avoid!important;
