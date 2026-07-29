@@ -53,7 +53,7 @@
         <div class="barcode-preview-title">
             <div>
                 <h2>Label Preview</h2>
-                <p>Print size: 50 mm × 30 mm · One label only</p>
+                <p>Print size: 50 mm × 30 mm · 90° printer correction</p>
             </div>
 
             <span>Ready to print</span>
@@ -530,8 +530,9 @@ html{
     }
 }
 
-/* PRINT ONE LABEL ONLY — 50 mm wide × 30 mm high
-   No rotation and no extra blank labels. */
+/* PRINT: ONE 50 × 30 MM LABEL WITH 90° CORRECTION
+   Keeps the page at one physical label, while rotating the label
+   back for printers that ignore Landscape. */
 @media print{
     @page{
         size:50mm 30mm;
@@ -547,7 +548,7 @@ html{
         margin:0!important;
         padding:0!important;
         overflow:hidden!important;
-        background:white!important;
+        background:#fff!important;
         -webkit-print-color-adjust:exact!important;
         print-color-adjust:exact!important;
     }
@@ -563,21 +564,33 @@ html{
 
     .label-box{
         position:fixed!important;
-        left:0!important;
+        left:50mm!important;
         top:0!important;
-        width:50mm!important;
-        height:30mm!important;
-        min-width:50mm!important;
-        min-height:30mm!important;
-        max-width:50mm!important;
-        max-height:30mm!important;
+
+        /* Rotated working canvas: 30 × 50 becomes 50 × 30 */
+        width:30mm!important;
+        height:50mm!important;
+        min-width:30mm!important;
+        min-height:50mm!important;
+        max-width:30mm!important;
+        max-height:50mm!important;
+
         margin:0!important;
-        padding:1.8mm 2.2mm!important;
+        padding:1.5mm!important;
         border:0!important;
         box-shadow:none!important;
-        transform:none!important;
-        transform-origin:center!important;
+        background:#fff!important;
         overflow:hidden!important;
+
+        transform-origin:top left!important;
+        transform:rotate(90deg)!important;
+
+        display:grid!important;
+        grid-template-rows:auto auto 1fr auto!important;
+        align-content:center!important;
+        justify-items:center!important;
+        gap:.8mm!important;
+
         page-break-before:avoid!important;
         page-break-after:avoid!important;
         page-break-inside:avoid!important;
@@ -586,41 +599,57 @@ html{
         break-inside:avoid!important;
     }
 
-    .barcode-page,
-    .barcode-card,
-    .barcode-label-stage{
-        width:50mm!important;
-        height:30mm!important;
-        min-width:50mm!important;
-        min-height:30mm!important;
-        margin:0!important;
-        padding:0!important;
-        border:0!important;
-        background:white!important;
-        box-shadow:none!important;
-        overflow:hidden!important;
-    }
-
     .label-name{
-        font-size:8.5px!important;
+        width:27mm!important;
+        font-size:8px!important;
+        line-height:1.05!important;
+        white-space:nowrap!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
     }
 
     .label-info{
-        font-size:6.5px!important;
+        width:27mm!important;
+        font-size:6.2px!important;
+        line-height:1!important;
+        white-space:nowrap!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
     }
 
     .barcode-img{
-        width:42mm!important;
-        height:9mm!important;
-        flex:0 0 9mm!important;
+        width:27mm!important;
+        height:30mm!important;
+        max-width:27mm!important;
+        max-height:30mm!important;
+        object-fit:fill!important;
+        display:block!important;
+        margin:0!important;
+    }
+
+    .label-bottom{
+        width:27mm!important;
+        display:grid!important;
+        grid-template-columns:minmax(0,1fr) auto!important;
+        gap:1mm!important;
+        align-items:center!important;
     }
 
     .sku-text{
-        font-size:6.5px!important;
+        min-width:0!important;
+        font-size:6px!important;
+        line-height:1!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
+        white-space:nowrap!important;
+        text-align:left!important;
     }
 
     .price{
-        font-size:8px!important;
+        font-size:7.5px!important;
+        line-height:1!important;
+        white-space:nowrap!important;
+        text-align:right!important;
     }
 }
 
