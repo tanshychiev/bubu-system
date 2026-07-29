@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>Barcode {{ variant.sku }}</title>
 
     <style>
@@ -12,27 +13,20 @@
             box-sizing: border-box;
         }
 
-        /*
-         * Deli DL-888D setup:
-         * Browser/driver page = 30mm × 50mm
-         * Physical sticker     = 50mm × 30mm
-         */
         @page {
-            size: 30mm 50mm;
+            size: 50mm 30mm;
             margin: 0;
         }
 
         html,
         body {
-            width: 30mm;
-            height: 50mm;
-            min-width: 30mm;
-            min-height: 50mm;
+            width: 50mm;
+            height: 30mm;
             margin: 0;
             padding: 0;
             overflow: hidden;
-            color: #000;
             background: #fff;
+            color: #000;
             font-family: Arial, Helvetica, sans-serif;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
@@ -42,75 +36,50 @@
             position: relative;
         }
 
-        /*
-         * Uses calibration position D.
-         * The outer frame maps one 50×30 sticker into the 30×50 driver page.
-         */
-        .label-frame {
-            position: absolute;
-            top: 48mm;
-            left: 2mm;
+        .label {
+            position: fixed;
+            inset: 0;
 
             width: 50mm;
             height: 30mm;
-            min-width: 50mm;
-            min-height: 30mm;
-            max-width: 50mm;
-            max-height: 30mm;
 
             margin: 0;
             padding: 0;
+
             overflow: hidden;
-
-            transform-origin: top left;
-            transform: rotate(-90deg);
-
-            color: #000;
             background: #fff;
         }
 
-        /*
-         * Flip the label content another 90 degrees.
-         * This makes the product name and barcode read horizontally
-         * across the physical 50×30 sticker.
-         */
         .label-content {
             position: absolute;
             top: 50%;
             left: 50%;
 
-            width: 30mm;
-            height: 50mm;
-            min-width: 30mm;
-            min-height: 50mm;
-            max-width: 30mm;
-            max-height: 50mm;
+            width: 43mm;
+            height: 22mm;
 
-            margin: 0;
-            padding: 1.6mm 2mm;
-            overflow: hidden;
+            transform: translate(-50%, -50%);
 
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 0.7mm;
 
-            color: #000;
-            background: #fff;
+            gap: 0.5mm;
+            overflow: hidden;
+
             text-align: center;
-
-            transform-origin: center;
-            transform: translate(-50%, -50%) rotate(90deg);
         }
 
         .label-name {
             width: 100%;
             overflow: hidden;
+
             color: #000;
-            font-size: 8.5px;
+            font-size: 7.8px;
             line-height: 1.05;
             font-weight: 900;
+
             text-overflow: ellipsis;
             white-space: nowrap;
         }
@@ -118,54 +87,54 @@
         .label-info {
             width: 100%;
             overflow: hidden;
+
             color: #000;
-            font-size: 6.5px;
+            font-size: 6px;
             line-height: 1.05;
             font-weight: 700;
+
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        /*
-         * The content area is 30×50 before the second rotation.
-         * Use a tall barcode image here so it becomes horizontal
-         * on the physical sticker after rotation.
-         */
         .barcode-img {
             display: block;
-            width: 9mm;
-            height: 42mm;
-            min-width: 9mm;
-            min-height: 42mm;
-            max-width: 9mm;
-            max-height: 42mm;
+
+            width: 38mm;
+            height: 8.5mm;
+
             margin: 0;
+
             object-fit: fill;
         }
 
         .label-bottom {
-            width: 100%;
+            width: 38mm;
+
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto;
-            gap: 1.2mm;
             align-items: center;
+
+            gap: 1mm;
         }
 
         .sku {
             min-width: 0;
             overflow: hidden;
+
             color: #000;
-            font-size: 6.5px;
+            font-size: 6px;
             line-height: 1;
             font-weight: 900;
             text-align: left;
+
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
         .price {
             color: #000;
-            font-size: 8px;
+            font-size: 7.5px;
             line-height: 1;
             font-weight: 900;
             text-align: right;
@@ -177,6 +146,7 @@
             right: 10px;
             bottom: 10px;
             z-index: 1000;
+
             display: flex;
             gap: 8px;
         }
@@ -184,9 +154,13 @@
         .screen-controls button {
             min-height: 40px;
             padding: 0 14px;
+
             border: 0;
             border-radius: 9px;
+
+            font-size: 12px;
             font-weight: 800;
+
             cursor: pointer;
         }
 
@@ -202,38 +176,42 @@
 
         @media print {
             @page {
-                size: 30mm 50mm;
+                size: 50mm 30mm;
                 margin: 0;
             }
 
             html,
             body {
-                width: 30mm !important;
-                height: 50mm !important;
-                min-width: 30mm !important;
-                min-height: 50mm !important;
+                width: 50mm !important;
+                height: 30mm !important;
+
                 margin: 0 !important;
                 padding: 0 !important;
+
                 overflow: hidden !important;
                 background: #fff !important;
             }
 
-            .label-frame {
+            .label {
                 position: fixed !important;
-                top: 48mm !important;
-                left: 2mm !important;
+                inset: 0 !important;
+
                 width: 50mm !important;
                 height: 30mm !important;
+
                 margin: 0 !important;
                 padding: 0 !important;
+
                 border: 0 !important;
                 box-shadow: none !important;
+
                 overflow: hidden !important;
-                transform-origin: top left !important;
-                transform: rotate(-90deg) !important;
+                transform: none !important;
+
                 page-break-before: avoid !important;
                 page-break-after: avoid !important;
                 page-break-inside: avoid !important;
+
                 break-before: avoid !important;
                 break-after: avoid !important;
                 break-inside: avoid !important;
@@ -243,12 +221,11 @@
                 position: absolute !important;
                 top: 50% !important;
                 left: 50% !important;
-                width: 30mm !important;
-                height: 50mm !important;
-                margin: 0 !important;
-                padding: 1.6mm 2mm !important;
-                transform-origin: center !important;
-                transform: translate(-50%, -50%) rotate(90deg) !important;
+
+                width: 43mm !important;
+                height: 22mm !important;
+
+                transform: translate(-50%, -50%) !important;
             }
 
             .screen-controls {
@@ -259,7 +236,7 @@
 </head>
 
 <body>
-    <div class="label-frame">
+    <div class="label">
         <div class="label-content">
             <div class="label-name">
                 {{ item.name }}
@@ -310,7 +287,7 @@
         function openPrintDialog() {
             window.setTimeout(function () {
                 window.print();
-            }, 350);
+            }, 300);
         }
 
         window.addEventListener("load", function () {
