@@ -2,50 +2,71 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
     <title>Barcode {{ variant.sku }}</title>
 
     <style>
-        /* This page is intentionally standalone.
-           It does NOT extend base.html and contains no sidebar/navbar. */
         *,
         *::before,
         *::after {
             box-sizing: border-box;
         }
 
+        @page {
+            size: 50mm 30mm;
+            margin: 0;
+        }
+
         html,
         body {
+            width: 50mm;
+            height: 30mm;
+            min-width: 50mm;
+            min-height: 30mm;
             margin: 0;
             padding: 0;
-            background: #fff;
+            overflow: hidden;
             color: #000;
+            background: #fff;
             font-family: Arial, Helvetica, sans-serif;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
         body {
-            display: flex;
-            align-items: flex-start;
-            justify-content: flex-start;
+            position: relative;
         }
 
         .label {
+            position: absolute;
+            top: 0;
+            left: 0;
+
             width: 50mm;
             height: 30mm;
             min-width: 50mm;
             min-height: 30mm;
             max-width: 50mm;
             max-height: 30mm;
+
             margin: 0;
             padding: 1.6mm 2mm;
+
             overflow: hidden;
+
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: .6mm;
-            background: #fff;
+            gap: 0.6mm;
+
             color: #000;
+            background: #fff;
             text-align: center;
         }
 
@@ -112,6 +133,7 @@
             position: fixed;
             right: 14px;
             bottom: 14px;
+            z-index: 1000;
             display: flex;
             gap: 8px;
         }
@@ -136,29 +158,32 @@
         }
 
         @media print {
-            @page {
-                margin: 0;
-            }
-
             html,
             body {
+                width: 50mm !important;
+                height: 30mm !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 overflow: hidden !important;
-                background: #fff !important;
-            }
-
-            body {
-                display: block !important;
             }
 
             .label {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+
+                width: 50mm !important;
+                height: 30mm !important;
+
                 margin: 0 !important;
                 border: 0 !important;
+
                 transform: none !important;
+
                 page-break-before: avoid !important;
                 page-break-after: avoid !important;
                 page-break-inside: avoid !important;
+
                 break-before: avoid !important;
                 break-after: avoid !important;
                 break-inside: avoid !important;
@@ -173,32 +198,80 @@
 
 <body>
     <div class="label">
-        <div class="label-name">{{ item.name }}</div>
-        <div class="label-info">{{ variant.display_name }}</div>
+        <div class="label-name">
+            {{ item.name }}
+        </div>
+
+        <div class="label-info">
+            {{ variant.display_name }}
+        </div>
 
         <img
             class="barcode-img"
+            id="barcodeImage"
             src="data:image/png;base64,{{ barcode_base64 }}"
             alt="Barcode"
         >
 
         <div class="label-bottom">
-            <div class="sku">{{ variant.sku }}</div>
-            <div class="price">${{ variant.sale_price|floatformat:2 }}</div>
+            <div class="sku">
+                {{ variant.sku }}
+            </div>
+
+            <div class="price">
+                ${{ variant.sale_price|floatformat:2 }}
+            </div>
         </div>
     </div>
 
     <div class="screen-controls">
-        <button type="button" class="close-button" onclick="window.close()">Close</button>
-        <button type="button" class="print-button" onclick="window.print()">Print</button>
+        <button
+            type="button"
+            class="close-button"
+            onclick="window.close()"
+        >
+            Close
+        </button>
+
+        <button
+            type="button"
+            class="print-button"
+            onclick="window.print()"
+        >
+            Print
+        </button>
     </div>
 
     <script>
-        /* Wait until the barcode image is loaded before opening print. */
-        window.addEventListener("load", function () {
+        function openPrintDialog() {
             window.setTimeout(function () {
                 window.print();
-            }, 250);
+            }, 300);
+        }
+
+        window.addEventListener("load", function () {
+            const barcodeImage = document.getElementById("barcodeImage");
+
+            if (
+                barcodeImage &&
+                !barcodeImage.complete
+            ) {
+                barcodeImage.addEventListener(
+                    "load",
+                    openPrintDialog,
+                    { once: true }
+                );
+
+                barcodeImage.addEventListener(
+                    "error",
+                    openPrintDialog,
+                    { once: true }
+                );
+
+                return;
+            }
+
+            openPrintDialog();
         });
     </script>
 </body>
