@@ -53,7 +53,7 @@
         <div class="barcode-preview-title">
             <div>
                 <h2>Label Preview</h2>
-                <p>Print size: 50 mm × 30 mm · Deli printer corrected</p>
+                <p>Print size: 50 mm × 30 mm · Rotated opposite direction</p>
             </div>
 
             <span>Ready to print</span>
@@ -574,7 +574,7 @@ html{
     .label-box{
         position:fixed!important;
         left:0!important;
-        top:0!important;
+        top:50mm!important;
 
         width:50mm!important;
         height:30mm!important;
@@ -599,7 +599,7 @@ html{
         gap:.7mm!important;
 
         transform-origin:top left!important;
-        transform:translateX(30mm) rotate(90deg)!important;
+        transform:rotate(-90deg)!important;
 
         page-break-before:avoid!important;
         page-break-after:avoid!important;
