@@ -53,7 +53,7 @@
         <div class="barcode-preview-title">
             <div>
                 <h2>Label Preview</h2>
-                <p>Print size: 50 mm × 30 mm · Printer rotation fix</p>
+                <p>Print size: 50 mm × 30 mm · One label only</p>
             </div>
 
             <span>Ready to print</span>
@@ -530,20 +530,20 @@ html{
     }
 }
 
-/* PRINT FIX FOR PRINTER THAT FORCES 30 × 50 MM PORTRAIT
-   The physical sticker is still 50 mm × 30 mm.
-   We send a 30 × 50 mm page and rotate the label 90 degrees
-   so it comes out horizontal at full size. */
+/* PRINT ONE LABEL ONLY — 50 mm wide × 30 mm high
+   No rotation and no extra blank labels. */
 @media print{
     @page{
-        size:30mm 50mm;
+        size:50mm 30mm;
         margin:0;
     }
 
     html,
     body{
-        width:30mm!important;
-        height:50mm!important;
+        width:50mm!important;
+        height:30mm!important;
+        min-width:50mm!important;
+        min-height:30mm!important;
         margin:0!important;
         padding:0!important;
         overflow:hidden!important;
@@ -563,26 +563,42 @@ html{
 
     .label-box{
         position:fixed!important;
-        left:30mm!important;
+        left:0!important;
         top:0!important;
-
         width:50mm!important;
         height:30mm!important;
         min-width:50mm!important;
         min-height:30mm!important;
-
+        max-width:50mm!important;
+        max-height:30mm!important;
         margin:0!important;
         padding:1.8mm 2.2mm!important;
         border:0!important;
         box-shadow:none!important;
-
-        transform-origin:top left!important;
-        transform:rotate(90deg)!important;
-
+        transform:none!important;
+        transform-origin:center!important;
+        overflow:hidden!important;
         page-break-before:avoid!important;
         page-break-after:avoid!important;
         page-break-inside:avoid!important;
+        break-before:avoid!important;
+        break-after:avoid!important;
         break-inside:avoid!important;
+    }
+
+    .barcode-page,
+    .barcode-card,
+    .barcode-label-stage{
+        width:50mm!important;
+        height:30mm!important;
+        min-width:50mm!important;
+        min-height:30mm!important;
+        margin:0!important;
+        padding:0!important;
+        border:0!important;
+        background:white!important;
+        box-shadow:none!important;
+        overflow:hidden!important;
     }
 
     .label-name{
