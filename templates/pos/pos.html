@@ -7077,7 +7077,11 @@ document.addEventListener("click", function(e){
 });
 
 /* ==================================================
-   FAST BARCODE SCAN — no page reload / no loading screen
+   RELIABLE FAST BARCODE SCAN
+   - Exact local match adds immediately.
+   - Unknown/local-filtered barcode is checked by Django across ALL item types.
+   - A second fast scan is queued instead of being ignored.
+   - Product-name search still works after an exact-barcode miss.
    ================================================== */
 const posBarcodeUrls = {};
 {% for item in items %}
@@ -7090,6 +7094,7 @@ const posBarcodeUrls = {};
 {% endfor %}
 
 let posScanBusy = false;
+let pendingBarcodeScans = [];
 
 function focusPOSSearchWithoutScroll(){
     if(!searchInput){ return; }
@@ -7101,84 +7106,157 @@ function focusPOSSearchWithoutScroll(){
     }
 }
 
-function fastAddBarcode(rawCode){
-    if(posScanBusy){ return; }
+function normalizeBarcodeValue(rawCode){
+    let code = String(rawCode || "")
+        .replace(/[\r\n\t]/g, "")
+        .trim();
 
-    let code = String(rawCode || "").trim();
     if(code.toUpperCase().startsWith("SKU:")){
         code = code.substring(4).trim();
     }
 
-    if(!code){ return; }
+    return code;
+}
 
-    const addUrl = posBarcodeUrls[code.toLowerCase()];
-
-    /* Not an exact barcode: instantly filter products already on the POS page. */
-    if(!addUrl){
-        loadPOSSearch(code);
-        return;
+function applyPOSCartAjaxData(data, oldX, oldY){
+    if(!data || data.success === false){
+        throw data || {message:"Cannot update cart."};
     }
 
-    posScanBusy = true;
-    const oldX = window.scrollX;
-    const oldY = window.scrollY;
+    const panel = document.getElementById("posCartPanel");
+    if(panel && data.cart_html){
+        panel.innerHTML = data.cart_html;
+    }
 
-    fetch(addUrl, {
-        method:"POST",
+    addRemoveButtonsToAttachedPetCards();
+    setPOSTotalsFromAjax(data);
+    syncSelectedItemsFromCart();
+    closeAllVariantModals();
+
+    if(searchInput){
+        searchInput.value = "";
+    }
+
+    filterPOSProducts("");
+    window.scrollTo(oldX, oldY);
+    focusPOSSearchWithoutScroll();
+}
+
+function finishBarcodeScan(){
+    posScanBusy = false;
+
+    if(pendingBarcodeScans.length){
+        const nextCode = pendingBarcodeScans.shift();
+        window.setTimeout(function(){
+            fastAddBarcode(nextCode);
+        }, 10);
+    }
+}
+
+function queueBarcodeScan(code){
+    if(!code){ return; }
+
+    /* Keep every scan. Do not silently lose a barcode while another request runs. */
+    pendingBarcodeScans.push(code);
+}
+
+function buildExactBarcodeURL(code){
+    const url = new URL(window.location.href);
+    url.search = "";
+    url.searchParams.set("q", code);
+
+    /* Deliberately do NOT include type/category. Barcode lookup must be global. */
+    return url.toString();
+}
+
+function fetchExactBarcodeFromServer(code, oldX, oldY){
+    return fetch(buildExactBarcodeURL(code), {
+        method:"GET",
         credentials:"same-origin",
+        cache:"no-store",
         headers:{
-            "X-CSRFToken":getPOSCSRFToken(),
-            "X-Requested-With":"XMLHttpRequest"
+            "X-Requested-With":"XMLHttpRequest",
+            "Accept":"application/json"
         }
     })
     .then(function(response){
-        return response.json().then(function(data){
-            if(!response.ok){ throw data; }
+        return response.json().catch(function(){
+            return {success:false, message:"Invalid barcode response."};
+        }).then(function(data){
+            if(!response.ok){
+                const error = data || {};
+                error.status = response.status;
+                throw error;
+            }
             return data;
         });
     })
     .then(function(data){
-        if(!data.success){ throw data; }
+        applyPOSCartAjaxData(data, oldX, oldY);
+        return true;
+    });
+}
 
-        const panel = document.getElementById("posCartPanel");
-        if(panel && data.cart_html){
-            panel.innerHTML = data.cart_html;
+function fastAddBarcode(rawCode){
+    const code = normalizeBarcodeValue(rawCode);
+    if(!code){ return; }
+
+    clearTimeout(posSearchTimer);
+
+    if(posScanBusy){
+        queueBarcodeScan(code);
+        if(searchInput){ searchInput.value = ""; }
+        return;
+    }
+
+    posScanBusy = true;
+
+    const oldX = window.scrollX;
+    const oldY = window.scrollY;
+    const normalized = code.toLowerCase();
+    const addUrl = posBarcodeUrls[normalized];
+
+    const request = addUrl
+        ? fetch(addUrl, {
+            method:"POST",
+            credentials:"same-origin",
+            cache:"no-store",
+            headers:{
+                "X-CSRFToken":getPOSCSRFToken(),
+                "X-Requested-With":"XMLHttpRequest",
+                "Accept":"application/json"
+            }
+        }).then(function(response){
+            return response.json().then(function(data){
+                if(!response.ok){ throw data; }
+                return data;
+            });
+        }).then(function(data){
+            applyPOSCartAjaxData(data, oldX, oldY);
+            return true;
+        })
+        : fetchExactBarcodeFromServer(code, oldX, oldY);
+
+    request
+    .catch(function(error){
+        /* A 404 means it is not an exact barcode. Continue as a normal product search. */
+        if(error && error.status === 404){
+            if(searchInput){ searchInput.value = code; }
+            loadPOSSearch(code, true);
+            return;
         }
 
-        addRemoveButtonsToAttachedPetCards();
-        setPOSTotalsFromAjax(data);
-        syncSelectedItemsFromCart();
-        closeAllVariantModals();
-
-        searchInput.value = "";
-        window.scrollTo(oldX, oldY);
-        focusPOSSearchWithoutScroll();
-    })
-    .catch(function(error){
         alert((error && error.message) ? error.message : "Cannot add this barcode.");
         window.scrollTo(oldX, oldY);
         focusPOSSearchWithoutScroll();
     })
-    .finally(function(){
-        posScanBusy = false;
-    });
+    .finally(finishBarcodeScan);
 }
 
 if(searchForm){
     searchForm.addEventListener("submit", function(e){
         e.preventDefault();
-
-        const code = searchInput ? searchInput.value.trim() : "";
-        const normalized = code.toUpperCase().startsWith("SKU:")
-            ? code.substring(4).trim().toLowerCase()
-            : code.toLowerCase();
-
-        if(normalized && posBarcodeUrls[normalized]){
-            fastAddBarcode(code);
-            return;
-        }
-
-        loadPOSSearch(code);
+        fastAddBarcode(searchInput ? searchInput.value : "");
     });
 }
 
@@ -7189,18 +7267,8 @@ if(searchInput){
         }
 
         e.preventDefault();
-
-        const code = searchInput.value.trim();
-        const normalized = code.toUpperCase().startsWith("SKU:")
-            ? code.substring(4).trim().toLowerCase()
-            : code.toLowerCase();
-
-        if(normalized && posBarcodeUrls[normalized]){
-            fastAddBarcode(code);
-            return;
-        }
-
-        loadPOSSearch(code);
+        e.stopPropagation();
+        fastAddBarcode(searchInput.value);
     });
 }
 
@@ -7301,7 +7369,7 @@ if(searchInput){
 let posSearchBusy = false;
 let posSearchController = null;
 
-function buildPOSSearchURL(query){
+function buildPOSSearchURL(query, keepSelectedType){
     const url = new URL(window.location.href);
     const selectedChip = document.querySelector(".type-chip.active");
     const selectedTypeURL = selectedChip ? new URL(selectedChip.href, window.location.origin) : null;
@@ -7313,7 +7381,7 @@ function buildPOSSearchURL(query){
         url.searchParams.set("q", query);
     }
 
-    if(selectedType){
+    if(keepSelectedType !== false && selectedType){
         url.searchParams.set("type", selectedType);
     }
 
@@ -7344,13 +7412,13 @@ function replacePOSProductsFromHTML(html, url){
     focusPOSSearchWithoutScroll();
 }
 
-function loadPOSSearch(query){
+function loadPOSSearch(query, keepSelectedType){
     if(posSearchBusy && posSearchController){
         posSearchController.abort();
     }
 
     const cleanQuery = String(query || "").trim();
-    const url = buildPOSSearchURL(cleanQuery);
+    const url = buildPOSSearchURL(cleanQuery, keepSelectedType);
     const productArea = document.querySelector(".product-area");
 
     posSearchBusy = true;
