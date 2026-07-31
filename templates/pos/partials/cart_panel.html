@@ -1,3 +1,16 @@
+<style id="bubu-free-button-style">
+#posCartPanel .cart-free-badge{display:inline-flex!important;align-items:center;gap:4px;width:max-content!important;margin-top:5px!important;padding:4px 9px!important;border-radius:999px!important;background:linear-gradient(135deg,#ff4d8d,#ff8a5b)!important;color:#fff!important;font-size:9px!important;font-weight:1000!important;box-shadow:0 5px 12px rgba(255,77,141,.22)!important}
+#posCartPanel .cart-free-action-row{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;margin-top:8px!important;flex-wrap:nowrap!important}
+#posCartPanel .cart-free-action-row .stock-alert,#posCartPanel .cart-free-action-row .stock-ok{margin:0!important;white-space:nowrap!important;flex:0 0 auto!important}
+#posCartPanel .cart-free-btn{flex:0 0 auto!important}
+#posCartPanel .cart-free-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:32px!important;padding:0 12px!important;border:0!important;border-radius:999px!important;background:linear-gradient(135deg,#ffb42b,#ff7b54)!important;color:#fff!important;font-size:10px!important;font-weight:1000!important;text-decoration:none!important;box-shadow:0 7px 16px rgba(255,123,84,.24)!important;transition:transform .1s ease,box-shadow .1s ease!important}
+#posCartPanel .cart-free-btn:hover{transform:translateY(-1px)!important;box-shadow:0 9px 20px rgba(255,123,84,.3)!important}
+#posCartPanel .cart-free-btn:active{transform:scale(.96)!important}
+#posCartPanel .cart-free-btn.active{background:linear-gradient(135deg,#19b979,#74d9a9)!important;color:#fff!important;box-shadow:0 7px 16px rgba(25,185,121,.24)!important}
+#posCartPanel .cart-unit-price.is-free{display:flex!important;align-items:center!important;gap:5px!important}
+#posCartPanel .cart-unit-price.is-free del{color:#9b8fa0!important;font-size:9px!important}
+#posCartPanel .cart-unit-price.is-free strong{color:#12a46c!important;font-size:12px!important;font-weight:1000!important}
+</style>
 <div class="cart-card">
     <div class="cart-head">
         <div>
@@ -37,14 +50,18 @@
                     {% if cart_item.item_type_name %}
                         <small class="cart-type-chip">{{ cart_item.item_type_name }}</small>
                     {% endif %}
+
+                    {% if cart_item.is_free %}
+                        <small class="cart-free-badge">🎁 FREE ITEM</small>
+                    {% endif %}
                 </div>
 
                 <div class="cart-item-bottom">
                     <div class="cart-img">
                         {% if cart_item.variant and cart_item.variant.image %}
-                            <img src="{{ cart_item.variant.image.url }}" alt="{{ cart_item.variant.label|default:cart_item.item.name }}">
+                            <img src="{{ cart_item.variant.image.url }}" alt="{{ cart_item.variant.label|default:cart_item.item.name }}" loading="lazy" decoding="async">
                         {% elif cart_item.item.image %}
-                            <img src="{{ cart_item.item.image.url }}" alt="{{ cart_item.item.name }}">
+                            <img src="{{ cart_item.item.image.url }}" alt="{{ cart_item.item.name }}" loading="lazy" decoding="async">
                         {% else %}
                             <div>🐾</div>
                         {% endif %}
@@ -52,7 +69,14 @@
 
                     <div class="cart-bottom-main">
                         <div class="cart-price-qty-row">
-                            <small class="cart-unit-price">${{ cart_item.price|default:cart_item.item.sale_price }}</small>
+                            <small class="cart-unit-price {% if cart_item.is_free %}is-free{% endif %}">
+                                {% if cart_item.is_free %}
+                                    <del>${{ cart_item.original_price|default:cart_item.item.sale_price }}</del>
+                                    <strong>$0.00</strong>
+                                {% else %}
+                                    ${{ cart_item.price|default:cart_item.item.sale_price }}
+                                {% endif %}
+                            </small>
 
                             <div class="qty-box">
                                 <a href="{% url 'pos_minus_cart' cart_item.cart_key %}" class="pos-cart-action">−</a>
@@ -75,13 +99,27 @@
                             </div>
                         </div>
 
-                        {% if not cart_item.is_service %}
-                            {% if cart_item.branch_stock < cart_item.quantity %}
-                                <small class="stock-alert">⚠ Stock in this shop: {{ cart_item.branch_stock }}</small>
-                            {% else %}
-                                <small class="stock-ok">Stock in this shop: {{ cart_item.branch_stock }}</small>
+                        <div class="cart-free-action-row">
+                            <a
+                                href="{% url 'pos_toggle_free_cart' cart_item.cart_key %}"
+                                class="cart-free-btn pos-cart-action {% if cart_item.is_free %}active{% endif %}"
+                                title="{% if cart_item.is_free %}Change back to normal price{% else %}Give this item free{% endif %}"
+                            >
+                                {% if cart_item.is_free %}
+                                    ✓ FREE — Restore Price
+                                {% else %}
+                                    🎁 Make Free
+                                {% endif %}
+                            </a>
+
+                            {% if not cart_item.is_service %}
+                                {% if cart_item.branch_stock < cart_item.quantity %}
+                                    <small class="stock-alert">⚠ Stock in this shop: {{ cart_item.branch_stock }}</small>
+                                {% else %}
+                                    <small class="stock-ok">Stock in this shop: {{ cart_item.branch_stock }}</small>
+                                {% endif %}
                             {% endif %}
-                        {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>

@@ -9980,3 +9980,66 @@ document.addEventListener("DOMContentLoaded", function(){
 </style>
 
 {% endblock content %}
+<style id="bubu-free-button-speed-fix">
+/* Free-item control and lightweight cart rendering. */
+#posCartPanel .cart-item{
+    content-visibility:auto;
+    contain-intrinsic-size:150px;
+}
+#posCartPanel .cart-img img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+#posCartPanel .cart-free-badge{
+    display:inline-flex!important;
+    width:max-content;
+    margin-top:5px;
+    padding:4px 8px;
+    border-radius:999px;
+    background:#eafff3;
+    color:#0b8a58;
+    font-size:9px;
+    font-weight:1000;
+}
+#posCartPanel .cart-unit-price.is-free{
+    display:flex;
+    align-items:center;
+    gap:5px;
+}
+#posCartPanel .cart-unit-price.is-free del{
+    color:#999;
+    font-size:9px;
+}
+#posCartPanel .cart-unit-price.is-free strong{
+    color:#0b8a58;
+    font-size:12px;
+}
+#posCartPanel .cart-free-action-row{
+    display:flex;
+    justify-content:flex-start;
+    margin-top:7px;
+}
+#posCartPanel .cart-free-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:30px;
+    padding:0 10px;
+    border:1px solid #e7d8ee;
+    border-radius:10px;
+    background:#fff8e8;
+    color:#a76400;
+    font-size:10px;
+    font-weight:1000;
+    text-decoration:none;
+    transition:transform .08s ease, background .12s ease;
+}
+#posCartPanel .cart-free-btn:hover{background:#fff0c8;}
+#posCartPanel .cart-free-btn:active{transform:scale(.97);}
+#posCartPanel .cart-free-btn.active{
+    border-color:#72d6aa;
+    background:#eafff3;
+    color:#08794e;
+}
+</style>
