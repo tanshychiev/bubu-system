@@ -5,6 +5,41 @@
 
 <div class="pos-page">
 
+<style>
+/* POS speed: do not fully paint off-screen product cards until they are near the viewport. */
+.product-card {
+    content-visibility: auto;
+    contain-intrinsic-size: 290px;
+}
+
+/* The product list should become usable before every image finishes downloading. */
+.product-card img,
+.variant-product img {
+    background: #f7f7f8;
+}
+
+
+.remove-attached-pet-btn{
+    border:0;
+    border-radius:999px;
+    padding:8px 12px;
+    background:#fff0f0;
+    color:#d92d20;
+    font-weight:800;
+    cursor:pointer;
+    white-space:nowrap;
+}
+.remove-attached-pet-btn:hover{
+    background:#ffe1e1;
+}
+.pet-item-actions{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+</style>
+
     <div class="pos-top">
         <div>
             <h1>BUBU Cashier POS 🐾</h1>
@@ -116,7 +151,7 @@
                     >
                         <div class="product-img-box">
                             {% if item.image %}
-                                <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                                <img src="{{ item.image.url }}" alt="{{ item.name }}" loading="lazy" decoding="async">
                             {% else %}
                                 <div class="no-img">🐾</div>
                             {% endif %}
@@ -157,7 +192,7 @@
 
                             <div class="variant-product">
                                 {% if item.image %}
-                                    <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                                    <img src="{{ item.image.url }}" alt="{{ item.name }}" loading="lazy" decoding="async">
                                 {% else %}
                                     <div class="variant-no-img">🐾</div>
                                 {% endif %}
@@ -319,6 +354,14 @@
             <input type="hidden" name="tax_value" id="tax_value_hidden" value="0">
             <input type="hidden" name="final_total" id="final_total_hidden" value="{{ total|default:'0.00' }}">
             <input type="hidden" name="selected_pet_sale_id" id="selected_pet_sale_id" value="{% if selected_pet_sale %}{{ selected_pet_sale.id }}{% endif %}">
+            {% if selected_pet_sale %}
+            <div
+                id="attachedPetCustomerData"
+                hidden
+                data-name="{{ selected_pet_customer_name|default:''|escape }}"
+                data-phone="{{ selected_pet_customer_phone|default:''|escape }}"
+            ></div>
+            {% endif %}
             <input type="hidden" name="checkout_action" id="checkout_action" value="complete">
             <input type="hidden" name="sale_type_hidden" id="sale_type_hidden" value="walk_in">
 
@@ -341,14 +384,14 @@
                 {% endif %}
             </div>
 
-            {% if selected_pet_sale %}
+            {% if selected_pet_sales %}
             <div class="selected-pet-sale-card">
                 <div class="selected-pet-head">
                     <div>
-                        <strong>🐶 Pet Sale Included</strong>
-                        <span>Pet Sale #{{ selected_pet_sale.id }} is combined with this POS payment.</span>
+                        <strong>🐶 Pet Sales Included</strong>
+                        <span>{{ selected_pet_sales|length }} pet(s) combined in this payment; warranties remain separate.</span>
                     </div>
-                    <a href="{% url 'pet_sale_detail' selected_pet_sale.id %}" target="_blank">View</a>
+                    <span>{{ selected_pet_sales|length }} selected</span>
                 </div>
 
                 <div class="selected-pet-grid">
@@ -486,15 +529,24 @@
                         </div>
                     {% endfor %}
 
-                    {% if selected_pet_sale %}
+                    {% for pet_sale in selected_pet_sales %}
                         <div class="selected-item-row pet-item-row">
                             <div class="selected-item-info">
-                                <strong>🐶 Pet Sale #{{ selected_pet_sale.id }}</strong>
-                                <small>Remaining amount for this sale</small>
+                                <strong>🐶 Pet Sale #{{ pet_sale.id }}</strong>
+                                <small>{{ pet_sale.breed_display|default:"Pet" }} · Separate warranty</small>
                             </div>
-                            <strong class="selected-item-price">${{ selected_pet_remaining|floatformat:2 }}</strong>
+                            <div class="pet-item-actions">
+                                <strong class="selected-item-price">${{ pet_sale.remaining_amount|floatformat:2 }}</strong>
+                                <button
+                                    type="button"
+                                    class="remove-attached-pet-btn"
+                                    onclick="removeAttachedPetSale({{ pet_sale.id }})"
+                                >
+                                    Remove
+                                </button>
+                            </div>
                         </div>
-                    {% endif %}
+                    {% endfor %}
                 </div>
 
                 <div class="selected-items-total">
@@ -7063,7 +7115,7 @@ function fastAddBarcode(rawCode){
 
     /* Not an exact barcode: instantly filter products already on the POS page. */
     if(!addUrl){
-        filterPOSProducts(code);
+        loadPOSSearch(code);
         return;
     }
 
@@ -7093,6 +7145,7 @@ function fastAddBarcode(rawCode){
             panel.innerHTML = data.cart_html;
         }
 
+        addRemoveButtonsToAttachedPetCards();
         setPOSTotalsFromAjax(data);
         syncSelectedItemsFromCart();
         closeAllVariantModals();
@@ -7125,7 +7178,7 @@ if(searchForm){
             return;
         }
 
-        filterPOSProducts(code);
+        loadPOSSearch(code);
     });
 }
 
@@ -7147,7 +7200,7 @@ if(searchInput){
             return;
         }
 
-        filterPOSProducts(code);
+        loadPOSSearch(code);
     });
 }
 
@@ -9630,6 +9683,137 @@ document.addEventListener("click", function(e){
 }, true);
 
 
+
+function removeAttachedPetSale(petSaleId){
+    if(!petSaleId){
+        return false;
+    }
+
+    if(!confirm("Remove this Pet Sale from POS? The Pet Sale record will not be deleted.")){
+        return false;
+    }
+
+    const urlTemplate = "{% url 'pos_remove_pet_sale' 999999 %}";
+    const url = urlTemplate.replace("999999", String(petSaleId));
+    return posCartAction(url);
+}
+
+
+function addRemoveButtonsToAttachedPetCards(){
+    const selectedPetIds = Array.from(
+        document.querySelectorAll(".remove-attached-pet-btn")
+    ).map(function(button){
+        const match = String(button.getAttribute("onclick") || "").match(/\d+/);
+        return match ? match[0] : "";
+    }).filter(Boolean);
+
+    if(!selectedPetIds.length){
+        const hiddenId = document.getElementById("selected_pet_sale_id");
+        if(hiddenId && hiddenId.value){
+            selectedPetIds.push(hiddenId.value);
+        }
+    }
+
+    if(!selectedPetIds.length){
+        return;
+    }
+
+    document.querySelectorAll("#posCartPanel *").forEach(function(element){
+        if(element.children.length > 8){
+            return;
+        }
+
+        const textValue = (element.textContent || "").trim();
+        if(!textValue.includes("Pet Sale Attached")){
+            return;
+        }
+
+        const card = element.closest(
+            ".pet-sale-card, .attached-pet-sale-card, .selected-pet-sale-card, .cart-card"
+        ) || element.parentElement;
+
+        if(!card || card.querySelector(".remove-attached-pet-cart-btn")){
+            return;
+        }
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "remove-attached-pet-btn remove-attached-pet-cart-btn";
+        button.textContent = "Remove Pet";
+        button.addEventListener("click", function(event){
+            event.preventDefault();
+            event.stopPropagation();
+            removeAttachedPetSale(selectedPetIds[0]);
+        });
+
+        const viewButton = Array.from(card.querySelectorAll("a, button")).find(function(candidate){
+            return (candidate.textContent || "").trim().toLowerCase() === "view";
+        });
+
+        if(viewButton && viewButton.parentElement){
+            viewButton.parentElement.appendChild(button);
+        }else{
+            card.appendChild(button);
+        }
+    });
+}
+
+
+function fillCustomerFromAttachedPetSale(){
+    const data = document.getElementById("attachedPetCustomerData");
+    const searchInput = document.getElementById("customerSearch");
+    const phoneHidden = document.getElementById("customerPhoneHidden");
+    const nameHidden = document.getElementById("customerNameHidden");
+
+    if(!data || !searchInput){
+        return;
+    }
+
+    const petName = (data.dataset.name || "").trim();
+    const petPhone = (data.dataset.phone || "").trim();
+
+    if(!petName && !petPhone){
+        return;
+    }
+
+    // Do not overwrite a value restored after a checkout validation error.
+    if(searchInput.value.trim()){
+        return;
+    }
+
+    searchInput.value = petPhone || petName;
+
+    const savedCustomer = findCustomerOption(searchInput.value.trim());
+    if(savedCustomer){
+        selectCustomerInfo(false);
+        return;
+    }
+
+    if(phoneHidden){
+        phoneHidden.value = petPhone;
+    }
+    if(nameHidden){
+        nameHidden.value = petName;
+    }
+
+    text("customerNameShow", petName || "Pet customer");
+    setCustomerBadge("old", "From Pet Sale");
+    text(
+        "customerPhoneShow",
+        petPhone ? "Phone: " + petPhone : "No phone"
+    );
+    text("customerPointsShow", "Customer from Pet Sale");
+    text("receiptCustomer", petName || petPhone || "Pet customer");
+
+    setDeliveryFieldsFromCustomer(
+        petName,
+        petPhone,
+        undefined,
+        "",
+        ""
+    );
+}
+
 function restorePOSCheckoutDraft(){
     const script = document.getElementById("posCheckoutDraftData");
     const errorBox = document.getElementById("posCheckoutError");
@@ -9713,9 +9897,86 @@ function restorePOSCheckoutDraft(){
 }
 
 document.addEventListener("DOMContentLoaded", function(){
-    setTimeout(restorePOSCheckoutDraft, 0);
+    setTimeout(function(){
+        restorePOSCheckoutDraft();
+        fillCustomerFromAttachedPetSale();
+        addRemoveButtonsToAttachedPetCards();
+    }, 0);
+
+    // Actual POS timing: visible in DevTools Console and Performance entries.
+    const nav = performance.getEntriesByType("navigation")[0];
+    if(nav){
+        const domReadyMs = Math.round(nav.domContentLoadedEventEnd);
+        console.info("BUBU POS ready in " + domReadyMs + " ms (DOM ready)");
+    }
 });
 
 </script>
+
+
+<style id="bubu-cart-final-fit-fix">
+/* Keep every cart action visible inside the narrow right panel. */
+#posCartPanel .cart-item,
+#posCartPanel .cart-item-bottom,
+#posCartPanel .cart-bottom-main,
+#posCartPanel .cart-price-qty-row{
+    min-width:0 !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+}
+
+#posCartPanel .cart-price-qty-row{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) auto auto !important;
+    column-gap:6px !important;
+    width:100% !important;
+}
+
+#posCartPanel .cart-unit-price{
+    display:none !important;
+}
+
+#posCartPanel .qty-box{
+    grid-column:1 !important;
+    justify-self:start !important;
+    margin:0 !important;
+    grid-template-columns:28px 30px 28px !important;
+}
+
+#posCartPanel .cart-total-actions{
+    grid-column:2 / 4 !important;
+    justify-self:end !important;
+    margin-left:0 !important;
+    gap:3px !important;
+    min-width:0 !important;
+}
+
+#posCartPanel .cart-total-actions .cart-line-total{
+    min-width:54px !important;
+    width:auto !important;
+    font-size:13px !important;
+}
+
+#posCartPanel .cart-total-actions .trash-btn{
+    width:30px !important;
+    min-width:30px !important;
+    height:32px !important;
+    min-height:32px !important;
+    margin-right:2px !important;
+}
+
+#posCartPanel .selected-pet-card-actions{
+    display:flex !important;
+    align-items:center !important;
+    gap:6px !important;
+    flex-wrap:wrap !important;
+    justify-content:flex-end !important;
+}
+
+#posCartPanel .remove-attached-pet-btn{
+    padding:7px 10px !important;
+    font-size:12px !important;
+}
+</style>
 
 {% endblock content %}
