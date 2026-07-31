@@ -57,9 +57,19 @@ urlpatterns = [
         name="pos_minus_cart",
     ),
     path(
+        "toggle-free/<str:cart_key>/",
+        views.pos_toggle_free_cart,
+        name="pos_toggle_free_cart",
+    ),
+    path(
         "remove/<str:cart_key>/",
         views.pos_remove_cart,
         name="pos_remove_cart",
+    ),
+    path(
+        "remove-pet-sale/<int:pet_sale_id>/",
+        views.pos_remove_pet_sale,
+        name="pos_remove_pet_sale",
     ),
     path(
         "clear/",

@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from django.conf import settings
@@ -337,6 +338,120 @@ def _sync_preorder_deposit_to_pos(request, sale, payment_method):
         "method_label": "Cash" if payment_method == "cash" else "ABA",
         "pos_sale": pos_sale,
     }
+
+
+
+
+# =========================================================
+# PET SALE PURCHASE GROUPS
+# =========================================================
+
+PET_SALE_GROUP_SECONDS = 8
+
+
+def _same_pet_purchase(left, right):
+    """Treat sales saved together as one customer purchase without a DB migration."""
+    if not left or not right:
+        return False
+
+    if (left.customer_name or "").strip().casefold() != (right.customer_name or "").strip().casefold():
+        return False
+
+    if (left.phone or "").strip() != (right.phone or "").strip():
+        return False
+
+    if left.created_by_id != right.created_by_id:
+        return False
+
+    if left.seller_id != right.seller_id:
+        return False
+
+    if not left.created_at or not right.created_at:
+        return False
+
+    seconds = abs((left.created_at - right.created_at).total_seconds())
+    return seconds <= PET_SALE_GROUP_SECONDS
+
+
+def _get_pet_sale_group(sale, queryset=None):
+    """
+    Return all pet-sale records created in the same multi-pet save.
+
+    Existing records do not have a group column, so grouping uses the shared
+    customer/staff values plus the very small creation-time window produced by
+    one atomic multi-pet save.
+    """
+    if not sale:
+        return []
+
+    source = queryset
+    if source is None:
+        start = sale.created_at - timedelta(seconds=PET_SALE_GROUP_SECONDS)
+        end = sale.created_at + timedelta(seconds=PET_SALE_GROUP_SECONDS)
+        source = (
+            PetSale.objects
+            .select_related("pet", "pet__breed_profile", "created_by", "seller")
+            .prefetch_related("photos")
+            .filter(
+                created_at__gte=start,
+                created_at__lte=end,
+                created_by_id=sale.created_by_id,
+                seller_id=sale.seller_id,
+            )
+            .order_by("created_at", "id")
+        )
+
+    group = [item for item in source if _same_pet_purchase(sale, item)]
+    if not any(item.id == sale.id for item in group):
+        group.append(sale)
+
+    return sorted(group, key=lambda item: (item.created_at, item.id))
+
+
+def _group_pet_sales_for_list(sales):
+    ordered = list(sales)
+    used_ids = set()
+    groups = []
+
+    for sale in ordered:
+        if sale.id in used_ids:
+            continue
+
+        members = [
+            candidate
+            for candidate in ordered
+            if candidate.id not in used_ids and _same_pet_purchase(sale, candidate)
+        ]
+
+        if not members:
+            members = [sale]
+
+        members = sorted(members, key=lambda item: (item.created_at, item.id))
+        used_ids.update(item.id for item in members)
+
+        available = [
+            item for item in members
+            if item.status not in ["completed", "cancelled", "refunded"]
+        ]
+
+        groups.append({
+            "primary": members[-1],
+            "sales": members,
+            "count": len(members),
+            "ids": [item.id for item in members],
+            "available_ids": [item.id for item in available],
+            "total_price": sum((item.sale_price for item in members), Decimal("0.00")),
+            "total_discount": sum((item.discount_amount for item in members), Decimal("0.00")),
+            "total_final": sum((item.final_price for item in members), Decimal("0.00")),
+            "total_paid": sum((item.paid_amount for item in members), Decimal("0.00")),
+            "total_balance": sum((item.remaining_amount for item in members), Decimal("0.00")),
+            "total_cost": sum((item.linked_cost_price for item in members), Decimal("0.00")),
+            "all_completed": all(item.status == "completed" for item in members),
+            "has_preorder": any(item.sale_kind == "preorder" for item in members),
+            "has_in_stock": any(item.sale_kind == "in_stock" for item in members),
+        })
+
+    return groups
 
 
 # =========================================================
@@ -1258,6 +1373,142 @@ def pet_breed_edit(request, pk):
     })
 
 
+
+
+def _pet_sale_multi_context(request, selected_pet=None):
+    pets = (
+        Pet.objects
+        .select_related("breed_profile", "branch")
+        .filter(status="in_stock")
+        .order_by("pet_type", "breed_profile__name", "breed", "name")
+    )
+    return {
+        "form": PetSaleForm(),
+        "pets": pets,
+        "sellers": _get_active_sellers(),
+        "selected_pet": selected_pet,
+        "sale": None,
+        "preorder_payment_method": "",
+        "multi_mode": True,
+        "posted_form_data": request.POST.dict() if request.method == "POST" else {},
+        "form_error_fields": [],
+    }
+
+
+def _pet_sale_create_multi(request):
+    """Create multiple independent PetSale records using one shared customer."""
+    try:
+        pet_count = max(1, min(int(request.POST.get("pet_count", "1")), 20))
+    except (TypeError, ValueError):
+        pet_count = 1
+
+    shared_customer_name = (request.POST.get("customer_name") or "").strip()
+    shared_phone = (request.POST.get("phone") or "").strip()
+    shared_address = (request.POST.get("address") or "").strip()
+    seller_id = request.POST.get("seller") or str(request.user.id)
+    customer_source = request.POST.get("customer_source") or "staff_chat"
+    lead_owner_id = request.POST.get("lead_owner") or str(request.user.id)
+    commission_mode = request.POST.get("commission_mode") or "seller"
+
+    errors = []
+    prepared_rows = []
+    selected_stock_pet_ids = set()
+
+    if not shared_customer_name:
+        errors.append("Customer name is required.")
+
+    for index in range(pet_count):
+        prefix = f"pets-{index}-"
+        if request.POST.get(prefix + "enabled", "1") != "1":
+            continue
+
+        sale_kind = (request.POST.get(prefix + "sale_kind") or "in_stock").strip()
+        row_data = {
+            "sale_kind": sale_kind,
+            "pet": request.POST.get(prefix + "pet") or "",
+            "preorder_pet_type": request.POST.get(prefix + "preorder_pet_type") or "dog",
+            "preorder_breed": request.POST.get(prefix + "preorder_breed") or "",
+            "preorder_gender": request.POST.get(prefix + "preorder_gender") or "",
+            "preorder_color": request.POST.get(prefix + "preorder_color") or "",
+            "preorder_special_type": request.POST.get(prefix + "preorder_special_type") or "",
+            "deadline": request.POST.get(prefix + "deadline") or "",
+            "customer_name": shared_customer_name,
+            "phone": shared_phone,
+            "address": shared_address,
+            "sale_price": request.POST.get(prefix + "sale_price") or "0.00",
+            "discount_amount": request.POST.get(prefix + "discount_amount") or "0.00",
+            "paid_amount": request.POST.get(prefix + "paid_amount") or "0.00",
+            "warranty_days": request.POST.get(prefix + "warranty_days") or "3",
+            "warranty_start_date": request.POST.get(prefix + "warranty_start_date") or "",
+            "note": request.POST.get(prefix + "note") or "",
+        }
+        form = PetSaleForm(row_data)
+        if not form.is_valid():
+            for field_name, field_errors in form.errors.items():
+                label = form.fields[field_name].label if field_name in form.fields else "Pet"
+                for error in field_errors:
+                    errors.append(f"Pet {index + 1} · {label}: {error}")
+            continue
+
+        sale = form.save(commit=False)
+        sale.created_by = request.user
+        sale.seller_id = int(seller_id) if str(seller_id).isdigit() else request.user.id
+        if hasattr(sale, "customer_source"):
+            sale.customer_source = customer_source
+        if hasattr(sale, "commission_mode"):
+            sale.commission_mode = commission_mode
+        if hasattr(sale, "lead_owner_id"):
+            sale.lead_owner_id = int(lead_owner_id) if str(lead_owner_id).isdigit() else None
+
+        if sale.sale_kind == "preorder":
+            sale.pet = None
+
+        paid_amount = _to_decimal(sale.paid_amount, "0.00")
+        payment_method = (request.POST.get(prefix + "preorder_payment_method") or "").strip().lower()
+
+        if sale.sale_kind == "in_stock" and paid_amount > 0:
+            errors.append(f"Pet {index + 1}: In-stock payment must be received through Add to POS. Set Paid / Deposit to $0.00.")
+            continue
+        if sale.sale_kind == "preorder" and paid_amount > 0 and payment_method not in ["cash", "aba"]:
+            errors.append(f"Pet {index + 1}: Choose Cash or ABA for the pre-order deposit.")
+            continue
+        if sale.pet_id:
+            if sale.pet_id in selected_stock_pet_ids:
+                errors.append(f"Pet {index + 1}: The same in-stock pet was selected more than once.")
+                continue
+            selected_stock_pet_ids.add(sale.pet_id)
+
+        prepared_rows.append((index, sale, payment_method))
+
+    if not prepared_rows and not errors:
+        errors.append("Add at least one pet.")
+
+    if errors:
+        for error in errors[:20]:
+            messages.error(request, error)
+        return render(request, "pets/pet_sale_form.html", _pet_sale_multi_context(request))
+
+    created_sales = []
+    for index, sale, payment_method in prepared_rows:
+        sale.save()
+        sync_sale_customer_only(request, sale)
+        prefix = f"pets-{index}-"
+        for photo in request.FILES.getlist(prefix + "sale_photos")[:6]:
+            PetSalePhoto.objects.create(sale=sale, photo=photo)
+        if sale.sale_kind == "preorder":
+            _sync_preorder_deposit_to_pos(request, sale, payment_method)
+        created_sales.append(sale)
+
+    for sale in created_sales:
+        send_pet_sale_telegram_alert(sale)
+
+    request.session["last_multi_pet_sale_ids"] = [sale.id for sale in created_sales]
+    request.session.modified = True
+    messages.success(request, f"{len(created_sales)} separate pet sales saved successfully.")
+    ids = ",".join(str(sale.id) for sale in created_sales)
+    return redirect(f"/pets/sales/multi-success/?ids={ids}")
+
+
 # =========================================================
 # PET SALE
 # =========================================================
@@ -1343,13 +1594,14 @@ def pet_available_for_sale(request):
     })
 
 
+
 @login_required
 def pet_sale_list(request):
     sales = (
         PetSale.objects
         .select_related("pet", "pet__breed_profile", "created_by", "seller")
         .prefetch_related("photos")
-        .order_by("-created_at")
+        .order_by("-created_at", "-id")
     )
 
     q = request.GET.get("q", "").strip()
@@ -1383,19 +1635,25 @@ def pet_sale_list(request):
     if status:
         sales = sales.filter(status=status)
 
-    total_sales = sales.count()
-    total_amount = sum((sale.sale_price for sale in sales), Decimal("0.00"))
-    total_discount = sum((getattr(sale, "discount_amount", Decimal("0.00")) for sale in sales), Decimal("0.00"))
-    total_final_amount = sum((getattr(sale, "final_price", sale.sale_price) for sale in sales), Decimal("0.00"))
-    total_paid = sum((sale.paid_amount for sale in sales), Decimal("0.00"))
-    total_balance = sum((sale.remaining_amount for sale in sales), Decimal("0.00"))
+    sale_rows = list(sales)
+    sale_groups = _group_pet_sales_for_list(sale_rows)
+
+    total_sales = len(sale_groups)
+    total_pets = len(sale_rows)
+    total_amount = sum((sale.sale_price for sale in sale_rows), Decimal("0.00"))
+    total_discount = sum((sale.discount_amount for sale in sale_rows), Decimal("0.00"))
+    total_final_amount = sum((sale.final_price for sale in sale_rows), Decimal("0.00"))
+    total_paid = sum((sale.paid_amount for sale in sale_rows), Decimal("0.00"))
+    total_balance = sum((sale.remaining_amount for sale in sale_rows), Decimal("0.00"))
 
     return render(request, "pets/pet_sale_list.html", {
-        "sales": sales,
+        "sales": sale_rows,
+        "sale_groups": sale_groups,
         "q": q,
         "sale_kind": sale_kind,
         "status": status,
         "total_sales": total_sales,
+        "total_pets": total_pets,
         "total_amount": total_amount,
         "total_discount": total_discount,
         "total_final_amount": total_final_amount,
@@ -1409,6 +1667,9 @@ def pet_sale_list(request):
 @login_required
 @transaction.atomic
 def pet_sale_create(request):
+    if request.method == "POST" and request.POST.get("multi_sale") == "1":
+        return _pet_sale_create_multi(request)
+
     selected_pet = None
     pet_id = request.GET.get("pet")
 
@@ -1511,6 +1772,9 @@ def pet_sale_create(request):
     else:
         initial = {
             "sale_kind": "in_stock",
+            "customer_name": (request.GET.get("customer_name") or "").strip(),
+            "phone": (request.GET.get("phone") or "").strip(),
+            "address": (request.GET.get("address") or "").strip(),
             "seller": request.user,
             "warranty_days": 3,
             "discount_amount": Decimal("0.00"),
@@ -1547,9 +1811,47 @@ def pet_sale_create(request):
         "selected_pet": selected_pet,
         "sale": None,
         "preorder_payment_method": preorder_payment_method,
+        # The create page always supports one or more pets.
+        "multi_mode": True,
         "posted_form_data": request.POST.dict() if request.method == "POST" else {},
         "form_error_fields": list(form.errors.keys()),
     })
+
+
+@login_required
+def pet_sale_multi_success(request):
+    raw_ids = (request.GET.get("ids") or "").split(",")
+    ids = [int(value) for value in raw_ids if value.strip().isdigit()]
+    sales = list(
+        PetSale.objects
+        .select_related("pet", "pet__breed_profile", "seller")
+        .prefetch_related("photos")
+        .filter(id__in=ids)
+    )
+    by_id = {sale.id: sale for sale in sales}
+    ordered_sales = [by_id[sale_id] for sale_id in ids if sale_id in by_id]
+    return render(request, "pets/pet_sale_multi_success.html", {"sales": ordered_sales, "ids": ",".join(map(str, ids))})
+
+
+@login_required
+def pet_sale_multi_add_to_pos(request):
+    raw_ids = (request.POST.get("ids") or request.GET.get("ids") or "").split(",")
+    ids = [int(value) for value in raw_ids if value.strip().isdigit()]
+    available = set(
+        PetSale.objects
+        .filter(id__in=ids)
+        .exclude(status__in=["completed", "cancelled", "refunded"])
+        .values_list("id", flat=True)
+    )
+    ordered_ids = [sale_id for sale_id in ids if sale_id in available]
+    if not ordered_ids:
+        messages.error(request, "No available pet sales were selected.")
+        return redirect("pet_sale_list")
+    request.session["selected_pet_sale_ids"] = ordered_ids
+    request.session["selected_pet_sale_id"] = ordered_ids[0]
+    request.session.modified = True
+    messages.success(request, f"{len(ordered_ids)} pet sales added to one POS checkout.")
+    return redirect("pos")
 
 
 @login_required
@@ -1681,6 +1983,7 @@ def pet_sale_edit(request, pk):
     })
 
 
+
 @login_required
 def pet_sale_detail(request, pk):
     sale = get_object_or_404(
@@ -1690,8 +1993,21 @@ def pet_sale_detail(request, pk):
         pk=pk,
     )
 
+    group_sales = _get_pet_sale_group(sale)
+    available_group_sales = [
+        item for item in group_sales
+        if item.status not in ["completed", "cancelled", "refunded"]
+    ]
+
     return render(request, "pets/pet_sale_detail.html", {
         "sale": sale,
+        "group_sales": group_sales,
+        "group_count": len(group_sales),
+        "group_total_price": sum((item.sale_price for item in group_sales), Decimal("0.00")),
+        "group_total_final": sum((item.final_price for item in group_sales), Decimal("0.00")),
+        "group_total_paid": sum((item.paid_amount for item in group_sales), Decimal("0.00")),
+        "group_total_balance": sum((item.remaining_amount for item in group_sales), Decimal("0.00")),
+        "group_available_count": len(available_group_sales),
         "copy_text": sale.build_copy_text(),
         "preorder_payment_method": _get_preorder_deposit_payment_method(sale),
         "can_view_cost_price": can_view_cost(request.user),
@@ -1764,17 +2080,37 @@ def pet_warranty_print(request, pk):
     })
 
 
+
 @login_required
 def pet_sale_receipt_print(request, pk):
     sale = get_object_or_404(
         PetSale.objects
-        .select_related("pet", "pet__breed_profile", "seller", "created_by")
+        .select_related(
+            "pet",
+            "pet__breed_profile",
+            "pet__branch",
+            "seller",
+            "created_by",
+        )
         .prefetch_related("photos"),
         pk=pk,
     )
 
+    # Print This Pet: one original receipt only.
+    if request.GET.get("single") == "1":
+        receipt_sales = [sale]
+    else:
+        # Print All: repeat the exact original receipt once for every pet
+        # created in the same purchase.
+        receipt_sales = _get_pet_sale_group(sale)
+
+    if not receipt_sales:
+        receipt_sales = [sale]
+
     return render(request, "pets/pet_sale_receipt_print.html", {
         "sale": sale,
+        "receipt_sales": receipt_sales,
+        "is_group_receipt": len(receipt_sales) > 1,
         "can_view_cost_price": can_view_cost(request.user),
         "can_edit_cost_price": can_edit_cost(request.user),
     })
@@ -1818,19 +2154,45 @@ def pet_warranty_claim_create(request, sale_id):
     })
 
 
+
 @login_required
 def pet_sale_add_to_pos(request, pk):
-    sale = get_object_or_404(PetSale, pk=pk)
+    sale = get_object_or_404(
+        PetSale.objects
+        .select_related("pet", "pet__breed_profile", "created_by", "seller"),
+        pk=pk,
+    )
 
-    if sale.status in ["completed", "cancelled", "refunded"]:
+    is_single = request.GET.get("single") == "1"
+
+    if is_single:
+        selected_sales = [sale]
+    else:
+        selected_sales = _get_pet_sale_group(sale)
+
+    available_sales = [
+        item for item in selected_sales
+        if item.status not in ["completed", "cancelled", "refunded"]
+    ]
+
+    if not available_sales:
         messages.error(request, "This pet sale cannot be added to POS.")
         return redirect("pet_sale_detail", sale.id)
 
-    request.session["selected_pet_sale_id"] = sale.id
+    selected_ids = [item.id for item in available_sales]
+    request.session["selected_pet_sale_ids"] = selected_ids
+    request.session["selected_pet_sale_id"] = selected_ids[0]
     request.session.modified = True
 
-    messages.success(
-        request,
-        f"Pet Sale #{sale.id} added to POS checkout. Customer can pay one total.",
-    )
+    if is_single:
+        messages.success(request, f"Pet Sale #{sale.id} added to POS.")
+    elif len(selected_ids) > 1:
+        messages.success(
+            request,
+            f"All {len(selected_ids)} available pets from this purchase were added to POS.",
+        )
+    else:
+        messages.success(request, f"Pet Sale #{sale.id} added to POS.")
+
     return redirect("pos")
+

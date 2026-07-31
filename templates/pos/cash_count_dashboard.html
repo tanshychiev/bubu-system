@@ -728,6 +728,292 @@
     .sales-table td:nth-child(8)::before{content:"Payments";}
     .sales-table td:nth-child(9)::before{content:"Action";}
 }
+
+.expense-card{margin-bottom:12px;padding:14px}
+.expense-form{display:grid;grid-template-columns:1fr 1fr 1fr 1.5fr auto;gap:8px;align-items:end}
+.expense-form label{display:grid;gap:5px;color:#695e73;font-size:9px;font-weight:1000;text-transform:uppercase}
+.expense-form select,.expense-form input{min-height:42px;border:1px solid #dfd4dc;border-radius:11px;padding:0 10px;background:#fff;color:#171238;font-size:12px;font-weight:900}
+.expense-summary{margin-top:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.expense-summary div{padding:10px;border-radius:12px;background:#fff7f3;border:1px solid #f1ddd1}
+.expense-summary span,.expense-summary strong{display:block}
+.expense-summary span{color:#8a7880;font-size:8px;font-weight:1000;text-transform:uppercase}
+.expense-summary strong{margin-top:3px;color:#d04b36;font-size:15px;font-weight:1000}
+.expense-list{margin-top:12px;display:grid;gap:7px}
+.expense-row{display:grid;grid-template-columns:95px 100px 110px minmax(0,1fr) auto;gap:8px;align-items:center;padding:9px 10px;border:1px solid #eee1da;border-radius:12px;background:#fff}
+.expense-row small{color:#857987;font-weight:900}
+.expense-row strong{color:#d04b36}
+.delete-expense{border:0;border-radius:9px;padding:7px 10px;background:#fff0ee;color:#d83a2d;font-weight:1000;cursor:pointer}
+.balance-formula{margin-top:10px;padding:10px;border-radius:12px;background:#f6f2ff;color:#564767;font-size:11px;font-weight:900}
+@media(max-width:800px){
+ .expense-form{grid-template-columns:1fr 1fr}
+ .expense-form .expense-note{grid-column:1/-1}
+ .expense-form button{grid-column:1/-1}
+ .expense-summary{grid-template-columns:1fr 1fr}
+ .expense-row{grid-template-columns:1fr auto}
+ .expense-row .expense-note-text{grid-column:1/-1}
+}
+
+
+/* ==============================
+   MODERN MOBILE SELECTORS
+   ============================== */
+.modern-select-btn{
+    width:100%;
+    min-height:52px;
+    padding:8px 12px;
+    border:1.5px solid #dfd4dc;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    color:#171238;
+    background:#fff;
+    cursor:pointer;
+    text-align:left;
+}
+.modern-select-main{display:flex;align-items:center;gap:10px;min-width:0}
+.modern-select-icon{
+    width:36px;height:36px;flex:0 0 36px;border-radius:11px;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,#f2edff,#fff3ee);font-size:18px;
+}
+.modern-select-main small,.modern-select-main strong{display:block}
+.modern-select-main small{color:#8a7f92;font-size:8px;font-weight:1000;text-transform:uppercase}
+.modern-select-main strong{margin-top:2px;color:#171238;font-size:12px;font-weight:1000}
+.modern-select-arrow{color:#7b5cff;font-size:24px;font-weight:900}
+.date-select-btn{min-width:190px}
+
+.modern-popup-backdrop{
+    display:none;position:fixed;inset:0;z-index:9500;
+    background:rgba(23,18,56,.42);backdrop-filter:blur(4px);
+}
+.modern-popup-backdrop.active{display:block}
+.modern-popup-sheet{
+    position:fixed;left:50%;top:50%;z-index:9501;
+    width:min(430px,calc(100% - 28px));max-height:86vh;overflow:auto;
+    transform:translate(-50%,-46%) scale(.96);opacity:0;pointer-events:none;
+    border-radius:26px;background:#fff;
+    box-shadow:0 28px 90px rgba(32,21,49,.3);
+    transition:.2s ease;
+}
+.modern-popup-sheet.active{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
+.modern-popup-handle{display:none}
+.modern-popup-head{
+    padding:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:linear-gradient(135deg,#7558ec,#ff8c6b);color:#fff;
+}
+.modern-popup-head small{font-size:10px;font-weight:900;opacity:.85}
+.modern-popup-head h3{margin:3px 0 0;font-size:21px;font-weight:1000}
+.modern-popup-head button{
+    width:42px;height:42px;border:0;border-radius:50%;
+    color:#fff;background:rgba(255,255,255,.22);font-weight:1000;cursor:pointer;
+}
+.modern-popup-options{display:grid;gap:9px;padding:14px}
+.modern-option-btn{
+    min-height:62px;padding:0 14px;border:1.5px solid #e7dfe8;border-radius:18px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    color:#171238;background:#fff;font-weight:1000;cursor:pointer;
+}
+.modern-option-left{display:flex;align-items:center;gap:11px}
+.modern-option-icon{
+    width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+    background:#f5f1ff;font-size:20px;
+}
+.modern-option-check{color:#7b5cff;font-size:20px}
+
+.date-quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:14px 14px 0}
+.date-quick-grid button{
+    min-height:52px;border:0;border-radius:16px;color:#fff;font-weight:1000;cursor:pointer;
+    background:linear-gradient(135deg,#7b5cff,#34c6ff);
+}
+.cash-date-native{
+    width:calc(100% - 28px);min-height:58px;margin:14px;padding:0 14px;
+    border:1.5px solid #dfd4dc;border-radius:16px;color:#171238;
+    background:#fff;font-size:17px;font-weight:1000;
+}
+.date-apply-btn{width:calc(100% - 28px);margin:0 14px 16px;min-height:54px}
+
+.modern-expense-card{
+    display:block!important;padding:14px!important;border-radius:17px!important;
+    background:linear-gradient(145deg,#fff,#fff9fb)!important;
+}
+.expense-card-main{display:flex;align-items:center;gap:10px}
+.expense-card-icon{
+    width:46px;height:46px;flex:0 0 46px;border-radius:15px;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,#fff0e9,#f1ebff);font-size:22px;
+}
+.expense-card-info strong,.expense-card-info small{display:block}
+.expense-card-info strong{color:#171238;font-size:14px}
+.expense-card-info small{margin-top:3px;color:#8a7f92;font-size:9px}
+.expense-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.expense-card-grid>div{padding:10px;border-radius:13px;background:#f8f5fb}
+.expense-card-grid span,.expense-card-grid strong{display:block}
+.expense-card-grid span{color:#8a7f92;font-size:8px;font-weight:1000;text-transform:uppercase}
+.expense-card-grid strong{margin-top:4px;color:#171238;font-size:12px}
+.expense-card-grid .expense-amount{color:#d04b36;font-size:15px}
+.expense-note-panel{margin-top:8px;padding:10px 12px;border-radius:13px;background:#fff7ef}
+.expense-note-panel span,.expense-note-panel strong{display:block}
+.expense-note-panel span{color:#9b765a;font-size:8px;font-weight:1000;text-transform:uppercase}
+.expense-note-panel strong{margin-top:4px;color:#5b4435;font-size:11px;line-height:1.45}
+.expense-card-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.expense-card-footer small{color:#887c91;font-size:9px;font-weight:900}
+.delete-expense{min-height:38px}
+
+.delete-expense-modal{
+    position:fixed;left:50%;top:50%;z-index:9502;
+    width:min(360px,calc(100% - 28px));padding:22px;
+    transform:translate(-50%,-46%) scale(.96);opacity:0;pointer-events:none;
+    border-radius:24px;background:#fff;text-align:center;
+    box-shadow:0 28px 90px rgba(32,21,49,.32);transition:.2s ease;
+}
+.delete-expense-modal.active{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
+.delete-modal-icon{font-size:42px}
+.delete-expense-modal h3{margin:10px 0 5px;color:#171238;font-size:21px}
+.delete-expense-modal p{margin:0;color:#83778c;font-size:11px;font-weight:850}
+.delete-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px}
+.danger-btn{color:#fff;background:linear-gradient(135deg,#ef4444,#fb7185)}
+
+@media(max-width:700px){
+    .modern-popup-sheet{
+        left:8px;right:8px;top:auto;bottom:8px;width:auto;max-height:88vh;
+        transform:translateY(110%);border-radius:28px;
+    }
+    .modern-popup-sheet.active{transform:translateY(0)}
+    .modern-popup-handle{
+        display:block;width:46px;height:5px;margin:9px auto 0;border-radius:99px;background:#ddd5e2;
+    }
+    .date-select-btn{min-width:0}
+    .modern-select-btn{min-height:56px}
+    .modern-option-btn{min-height:66px}
+    .expense-form{grid-template-columns:1fr!important}
+    .expense-form .expense-note,.expense-form button{grid-column:auto!important}
+    .expense-card-grid{grid-template-columns:1fr 1fr}
+}
+
+
+/* Compact expense history */
+.expense-list{
+    margin-top:10px;
+    display:grid;
+    gap:6px;
+}
+
+.compact-expense-row{
+    display:grid;
+    grid-template-columns:minmax(160px,1.1fr) minmax(115px,.75fr) 90px minmax(180px,1.5fr) 38px;
+    align-items:center;
+    gap:10px;
+    min-height:58px;
+    padding:8px 10px;
+    border:1px solid #eee1da;
+    border-radius:12px;
+    background:#fff;
+}
+
+.compact-expense-type{
+    min-width:0;
+    display:flex;
+    align-items:center;
+    gap:9px;
+}
+
+.compact-expense-icon{
+    width:34px;
+    height:34px;
+    flex:0 0 34px;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(135deg,#fff0e9,#f1ebff);
+    font-size:17px;
+}
+
+.compact-expense-type strong,
+.compact-expense-type small,
+.compact-expense-note span,
+.compact-expense-note small{
+    display:block;
+}
+
+.compact-expense-type strong{
+    color:#171238;
+    font-size:11px;
+    font-weight:1000;
+}
+
+.compact-expense-type small{
+    margin-top:2px;
+    color:#8a7f92;
+    font-size:8px;
+    font-weight:900;
+}
+
+.compact-expense-source{
+    color:#5f536a;
+    font-size:10px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+
+.compact-expense-amount{
+    color:#d04b36;
+    font-size:13px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+
+.compact-expense-note{
+    min-width:0;
+}
+
+.compact-expense-note span,
+.compact-expense-note small{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.compact-expense-note span{
+    color:#30263a;
+    font-size:10px;
+    font-weight:900;
+}
+
+.compact-expense-note small{
+    margin-top:3px;
+    color:#918595;
+    font-size:8px;
+    font-weight:850;
+}
+
+.compact-delete{
+    width:34px;
+    height:34px;
+    min-height:34px;
+    padding:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+@media(max-width:800px){
+    .compact-expense-row{
+        grid-template-columns:minmax(0,1fr) auto auto;
+        gap:7px;
+        min-height:54px;
+        padding:7px 8px;
+    }
+
+    .compact-expense-type{grid-column:1}
+    .compact-expense-source{grid-column:2;font-size:9px}
+    .compact-expense-amount{grid-column:3;font-size:12px;text-align:right}
+    .compact-expense-note{grid-column:1 / 3;padding-left:43px}
+    .expense-delete-form{grid-column:3;grid-row:2;justify-self:end}
+}
+
 </style>
 
 <div class="cash-page">
@@ -758,23 +1044,28 @@
             </div>
         </div>
 
-        <form method="get" class="date-form">
-            <input
-                type="date"
-                name="date"
-                value="{{ count_date|date:'Y-m-d' }}"
-                aria-label="Cash count date"
-            >
+        <form method="get" class="date-form" id="cashDateForm">
+            <input type="hidden" name="date" id="cashDateInput" value="{{ count_date|date:'Y-m-d' }}">
+            <button type="button" class="modern-select-btn date-select-btn" onclick="openCashDatePicker()">
+                <span class="modern-select-main">
+                    <span class="modern-select-icon">📅</span>
+                    <span>
+                        <small>Selected Date</small>
+                        <strong id="cashDateLabel">{{ count_date|date:"d M Y" }}</strong>
+                    </span>
+                </span>
+                <span class="modern-select-arrow">›</span>
+            </button>
             <button type="submit" class="btn primary">View</button>
         </form>
     </div>
 
-    <h2 class="section-title">Money Received</h2>
+    <h2 class="section-title">Money Balance After Expenses</h2>
 
     <div class="received-grid">
         <div class="received-card cash">
             <div class="received-head">
-                <strong>Cash Received</strong>
+                <strong>Cash Remaining</strong>
                 <span class="received-icon">💵</span>
             </div>
 
@@ -798,7 +1089,7 @@
 
         <div class="received-card aba">
             <div class="received-head">
-                <strong>ABA Received</strong>
+                <strong>ABA Remaining</strong>
                 <span class="received-icon">🏦</span>
             </div>
 
@@ -822,7 +1113,7 @@
 
         <div class="received-card total">
             <div class="received-head">
-                <strong>Total Received</strong>
+                <strong>Ending Balance</strong>
                 <span class="received-icon">🧾</span>
             </div>
 
@@ -840,10 +1131,137 @@
                 <strong>-${{ total_change|floatformat:2 }}</strong>
             </div>
 
+            <div class="total-sub">
+                <span>Daily expenses</span>
+                <strong>-${{ total_expenses_usd_equivalent|floatformat:2 }}</strong>
+            </div>
+
             <div class="equivalent">
                 <span>Net after change</span>
                 <strong>${{ net_received_after_change|floatformat:2 }}</strong>
             </div>
+        </div>
+    </div>
+
+
+    <div class="card expense-card">
+        <h2 class="section-title">Daily Expenses</h2>
+
+        <form method="post" class="expense-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_expense">
+            <input type="hidden" name="date" value="{{ count_date|date:'Y-m-d' }}">
+
+            <label>
+                Type
+                <input type="hidden" name="expense_category" id="expenseCategoryInput" value="grab">
+                <button type="button" class="modern-select-btn" onclick="openExpensePopup('category')">
+                    <span class="modern-select-main">
+                        <span class="modern-select-icon" id="expenseCategoryIcon">🚕</span>
+                        <span>
+                            <small>Expense Type</small>
+                            <strong id="expenseCategoryLabel">Grab</strong>
+                        </span>
+                    </span>
+                    <span class="modern-select-arrow">›</span>
+                </button>
+            </label>
+
+            <label>
+                Paid From
+                <input type="hidden" name="expense_source" id="expenseSource" value="cash_usd">
+                <button type="button" class="modern-select-btn" onclick="openExpensePopup('source')">
+                    <span class="modern-select-main">
+                        <span class="modern-select-icon" id="expenseSourceIcon">💵</span>
+                        <span>
+                            <small>Payment Source</small>
+                            <strong id="expenseSourceLabel">Cash USD</strong>
+                        </span>
+                    </span>
+                    <span class="modern-select-arrow">›</span>
+                </button>
+            </label>
+
+            <label>
+                Amount
+                <input type="number" name="expense_amount" step="0.01" min="0.01"
+                       placeholder="Example: 2 or 5000" required>
+            </label>
+
+            <label class="expense-note">
+                Note
+                <input type="text" name="expense_note"
+                       placeholder="Example: Grab delivery for customer">
+            </label>
+
+            <button type="submit" class="btn primary">− Add Expense</button>
+        </form>
+
+        <div class="expense-summary">
+            <div><span>Cash USD Used</span><strong>-${{ expense_cash_usd|floatformat:2 }}</strong></div>
+            <div><span>Cash KHR Used</span><strong>-{{ expense_cash_khr|floatformat:0 }}៛</strong></div>
+            <div><span>ABA USD Used</span><strong>-${{ expense_aba_usd|floatformat:2 }}</strong></div>
+            <div><span>ABA KHR Used</span><strong>-{{ expense_aba_khr|floatformat:0 }}៛</strong></div>
+        </div>
+
+        <div class="balance-formula">
+            Accurate ending money = Opening float + sales received − change given − daily expenses.
+        </div>
+
+        <div class="expense-list">
+            {% for expense in expenses %}
+                <div class="compact-expense-row">
+                    <div class="compact-expense-type">
+                        <span class="compact-expense-icon">
+                            {% if expense.category == "grab" %}🚕
+                            {% elif expense.category == "vet" %}🚚
+                            {% elif expense.category == "jt" %}📦
+                            {% elif expense.category == "delivery" %}🚛
+                            {% elif expense.category == "supplies" %}🛍️
+                            {% else %}📌{% endif %}
+                        </span>
+                        <div>
+                            <strong>{{ expense.get_category_display }}</strong>
+                            <small>{{ expense.created_at|date:"d M Y, H:i" }}</small>
+                        </div>
+                    </div>
+
+                    <div class="compact-expense-source">
+                        {% if expense.source == "cash_usd" %}💵 Cash USD
+                        {% elif expense.source == "cash_khr" %}💵 Cash KHR
+                        {% elif expense.source == "aba_usd" %}🏦 ABA USD
+                        {% else %}🏦 ABA KHR{% endif %}
+                    </div>
+
+                    <strong class="compact-expense-amount">
+                        {% if expense.source == "cash_khr" or expense.source == "aba_khr" %}
+                            {{ expense.amount|floatformat:0 }}៛
+                        {% else %}
+                            ${{ expense.amount|floatformat:2 }}
+                        {% endif %}
+                    </strong>
+
+                    <div class="compact-expense-note">
+                        <span>{{ expense.note|default:"No note" }}</span>
+                        <small>
+                            {% if expense.created_by %}
+                                👤 {{ expense.created_by.get_full_name|default:expense.created_by.username }}
+                            {% endif %}
+                        </small>
+                    </div>
+
+                    <form method="post" class="expense-delete-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_expense">
+                        <input type="hidden" name="expense_id" value="{{ expense.id }}">
+                        <input type="hidden" name="date" value="{{ count_date|date:'Y-m-d' }}">
+                        <button type="button" class="delete-expense compact-delete"
+                                onclick="openDeleteExpenseModal(this)">🗑</button>
+                    </form>
+                </div>
+            {% empty %}
+                <div class="saved-meta">No expense recorded for this day.</div>
+            {% endfor %}
         </div>
     </div>
 
@@ -875,6 +1293,8 @@
 
     <form method="post" class="card count-card">
         {% csrf_token %}
+        <input type="hidden" name="action" value="save_count">
+        <input type="hidden" name="date" value="{{ count_date|date:'Y-m-d' }}">
 
         <h2 class="section-title">Staff Count Physical Cash</h2>
 
@@ -894,7 +1314,7 @@
             <div class="count-box">
                 <label>Cash USD Counted</label>
                 <div class="expected-line">
-                    System expects ${{ system_cash_usd|floatformat:2 }}
+                    After expenses, system expects ${{ system_cash_usd|floatformat:2 }}
                 </div>
 
                 <input
@@ -919,7 +1339,7 @@
             <div class="count-box">
                 <label>Cash KHR Counted</label>
                 <div class="expected-line">
-                    Include float · System expects {{ expected_cash_khr|floatformat:0 }}៛
+                    Include float · After expenses expects {{ expected_cash_khr|floatformat:0 }}៛
                 </div>
 
                 <input
@@ -1050,5 +1470,173 @@
         </div>
     </div>
 </div>
+
+<!-- Modern Expense Selector -->
+<div class="modern-popup-backdrop" id="expensePopupBackdrop" onclick="closeExpensePopup()"></div>
+<div class="modern-popup-sheet" id="expensePopupSheet">
+    <div class="modern-popup-handle"></div>
+    <div class="modern-popup-head">
+        <div>
+            <small id="expensePopupSubtitle">Choose option</small>
+            <h3 id="expensePopupTitle">Select</h3>
+        </div>
+        <button type="button" onclick="closeExpensePopup()">✕</button>
+    </div>
+    <div class="modern-popup-options" id="expensePopupOptions"></div>
+</div>
+
+<!-- Modern Date Picker -->
+<div class="modern-popup-backdrop" id="cashDateBackdrop" onclick="closeCashDatePicker()"></div>
+<div class="modern-popup-sheet date-sheet" id="cashDateSheet">
+    <div class="modern-popup-handle"></div>
+    <div class="modern-popup-head">
+        <div>
+            <small>Cash Count Date</small>
+            <h3>Choose Date</h3>
+        </div>
+        <button type="button" onclick="closeCashDatePicker()">✕</button>
+    </div>
+    <div class="date-quick-grid">
+        <button type="button" onclick="setCashDateToday()">Today</button>
+        <button type="button" onclick="setCashDateYesterday()">Yesterday</button>
+    </div>
+    <input type="date" id="cashDateNative" class="cash-date-native" value="{{ count_date|date:'Y-m-d' }}">
+    <button type="button" class="btn primary date-apply-btn" onclick="applyCashDate()">Apply Date</button>
+</div>
+
+<!-- Delete Expense Modal -->
+<div class="modern-popup-backdrop" id="deleteExpenseBackdrop" onclick="closeDeleteExpenseModal()"></div>
+<div class="delete-expense-modal" id="deleteExpenseModal">
+    <div class="delete-modal-icon">🗑️</div>
+    <h3>Delete Expense?</h3>
+    <p>This expense record will be removed.</p>
+    <div class="delete-modal-actions">
+        <button type="button" class="btn" onclick="closeDeleteExpenseModal()">Cancel</button>
+        <button type="button" class="btn danger-btn" onclick="confirmDeleteExpense()">Delete</button>
+    </div>
+</div>
+
+
+<script>
+const expenseCategoryOptions = [
+    {value:"grab", label:"Grab", icon:"🚕"},
+    {value:"vet", label:"VET", icon:"🚚"},
+    {value:"jt", label:"J&T", icon:"📦"},
+    {value:"delivery", label:"Other Delivery", icon:"🚛"},
+    {value:"supplies", label:"Shop Supplies", icon:"🛍️"},
+    {value:"other", label:"Other", icon:"📌"}
+];
+
+const expenseSourceOptions = [
+    {value:"cash_usd", label:"Cash USD", icon:"💵"},
+    {value:"cash_khr", label:"Cash KHR", icon:"💵"},
+    {value:"aba_usd", label:"ABA USD", icon:"🏦"},
+    {value:"aba_khr", label:"ABA KHR", icon:"🏦"}
+];
+
+let currentExpensePopupType = "";
+let pendingDeleteExpenseForm = null;
+
+function openExpensePopup(type){
+    currentExpensePopupType = type;
+    const backdrop = document.getElementById("expensePopupBackdrop");
+    const sheet = document.getElementById("expensePopupSheet");
+    const title = document.getElementById("expensePopupTitle");
+    const subtitle = document.getElementById("expensePopupSubtitle");
+    const optionsBox = document.getElementById("expensePopupOptions");
+
+    const options = type === "category" ? expenseCategoryOptions : expenseSourceOptions;
+    const input = document.getElementById(type === "category" ? "expenseCategoryInput" : "expenseSource");
+    const selected = input ? input.value : "";
+
+    title.textContent = type === "category" ? "Expense Type" : "Paid From";
+    subtitle.textContent = "Tap one option";
+    optionsBox.innerHTML = options.map(option => `
+        <button type="button" class="modern-option-btn" onclick="selectExpenseOption('${type}','${option.value}','${option.label}','${option.icon}')">
+            <span class="modern-option-left">
+                <span class="modern-option-icon">${option.icon}</span>
+                <span>${option.label}</span>
+            </span>
+            <span class="modern-option-check">${selected === option.value ? "✓" : ""}</span>
+        </button>
+    `).join("");
+
+    backdrop.classList.add("active");
+    sheet.classList.add("active");
+}
+
+function closeExpensePopup(){
+    document.getElementById("expensePopupBackdrop").classList.remove("active");
+    document.getElementById("expensePopupSheet").classList.remove("active");
+}
+
+function selectExpenseOption(type, value, label, icon){
+    if(type === "category"){
+        document.getElementById("expenseCategoryInput").value = value;
+        document.getElementById("expenseCategoryLabel").textContent = label;
+        document.getElementById("expenseCategoryIcon").textContent = icon;
+    } else {
+        document.getElementById("expenseSource").value = value;
+        document.getElementById("expenseSourceLabel").textContent = label;
+        document.getElementById("expenseSourceIcon").textContent = icon;
+    }
+    closeExpensePopup();
+}
+
+function openCashDatePicker(){
+    document.getElementById("cashDateNative").value = document.getElementById("cashDateInput").value;
+    document.getElementById("cashDateBackdrop").classList.add("active");
+    document.getElementById("cashDateSheet").classList.add("active");
+}
+
+function closeCashDatePicker(){
+    document.getElementById("cashDateBackdrop").classList.remove("active");
+    document.getElementById("cashDateSheet").classList.remove("active");
+}
+
+function formatDateLabel(value){
+    if(!value) return "";
+    const date = new Date(value + "T00:00:00");
+    return new Intl.DateTimeFormat("en-GB", {day:"2-digit", month:"short", year:"numeric"}).format(date);
+}
+
+function setCashDateToday(){
+    const today = new Date();
+    const value = today.toISOString().slice(0,10);
+    document.getElementById("cashDateNative").value = value;
+}
+
+function setCashDateYesterday(){
+    const date = new Date();
+    date.setDate(date.getDate() - 1);
+    document.getElementById("cashDateNative").value = date.toISOString().slice(0,10);
+}
+
+function applyCashDate(){
+    const value = document.getElementById("cashDateNative").value;
+    if(!value) return;
+    document.getElementById("cashDateInput").value = value;
+    document.getElementById("cashDateLabel").textContent = formatDateLabel(value);
+    closeCashDatePicker();
+}
+
+function openDeleteExpenseModal(button){
+    pendingDeleteExpenseForm = button.closest("form");
+    document.getElementById("deleteExpenseBackdrop").classList.add("active");
+    document.getElementById("deleteExpenseModal").classList.add("active");
+}
+
+function closeDeleteExpenseModal(){
+    pendingDeleteExpenseForm = null;
+    document.getElementById("deleteExpenseBackdrop").classList.remove("active");
+    document.getElementById("deleteExpenseModal").classList.remove("active");
+}
+
+function confirmDeleteExpense(){
+    if(pendingDeleteExpenseForm){
+        pendingDeleteExpenseForm.submit();
+    }
+}
+</script>
 
 {% endblock %}

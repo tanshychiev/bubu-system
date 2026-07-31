@@ -211,6 +211,240 @@
         </p>
     </div>
 
+
+
+    {# ============================================================ #}
+    {# COMPACT GROUPED PURCHASE TABLE                               #}
+    {# ============================================================ #}
+    {% if purchase_groups %}
+        <section class="purchase-table-section">
+            <div class="purchase-table-heading">
+                <div>
+                    <span class="purchase-table-kicker">GROUPED PURCHASES</span>
+                    <h2>Customer Purchases</h2>
+                    <p>One row per checkout. Expand only when you need to see each pet.</p>
+                </div>
+
+                <div class="purchase-table-count">
+                    {{ purchase_groups|length }}
+                    Purchase{{ purchase_groups|length|pluralize }}
+                </div>
+            </div>
+
+            <div class="purchase-table-wrap">
+                <table class="purchase-table">
+                    <thead>
+                        <tr>
+                            <th class="expand-column"></th>
+                            <th>Purchase</th>
+                            <th>Customer</th>
+                            <th>Pets</th>
+                            <th>Total</th>
+                            <th>Paid</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                            <th class="purchase-actions-column">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for purchase in purchase_groups %}
+                            <tr class="purchase-main-row">
+                                <td class="expand-column">
+                                    <button
+                                        type="button"
+                                        class="purchase-expand-btn"
+                                        aria-expanded="false"
+                                        aria-controls="purchasePets{{ forloop.counter }}"
+                                        onclick="togglePurchasePets(this, 'purchasePets{{ forloop.counter }}')"
+                                    >
+                                        <span class="expand-arrow">›</span>
+                                    </button>
+                                </td>
+
+                                <td>
+                                    <a
+                                        href="{% url 'pet_sale_detail' purchase.primary_sale.id %}"
+                                        class="purchase-code-link"
+                                    >
+                                        {% if purchase.purchase_code %}
+                                            {{ purchase.purchase_code }}
+                                        {% else %}
+                                            BUBU-{{ purchase.primary_sale.id|stringformat:"06d" }}
+                                        {% endif %}
+                                    </a>
+                                    <small>{{ purchase.created_at|date:"d M Y H:i" }}</small>
+                                </td>
+
+                                <td>
+                                    <strong>{{ purchase.customer_name|default:"Walk-in Customer" }}</strong>
+                                    <small>{{ purchase.phone|default:"No phone" }}</small>
+                                </td>
+
+                                <td>
+                                    <span class="purchase-pet-count">
+                                        {{ purchase.pet_count|default:purchase.sales|length }}
+                                    </span>
+                                </td>
+
+                                <td class="money-cell">
+                                    ${{ purchase.total_amount|default:purchase.total_final|default:"0"|floatformat:2 }}
+                                </td>
+
+                                <td class="money-cell paid-cell">
+                                    ${{ purchase.total_paid|default:"0"|floatformat:2 }}
+                                </td>
+
+                                <td class="money-cell balance-cell">
+                                    ${{ purchase.total_balance|default:"0"|floatformat:2 }}
+                                </td>
+
+                                <td>
+                                    {% if purchase.all_completed %}
+                                        <span class="purchase-status completed">Completed</span>
+                                    {% elif purchase.total_paid >= purchase.total_amount %}
+                                        <span class="purchase-status completed">Paid</span>
+                                    {% elif purchase.total_paid > 0 %}
+                                        <span class="purchase-status partial">Partial</span>
+                                    {% else %}
+                                        <span class="purchase-status waiting">Deposit / Waiting</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="purchase-row-actions">
+                                    <a
+                                        href="{% url 'pet_sale_detail' purchase.primary_sale.id %}"
+                                        class="purchase-mini-btn view"
+                                        title="View purchase"
+                                    >
+                                        View
+                                    </a>
+
+                                    {% if purchase.can_add_to_pos %}
+                                        <a
+                                            href="{% url 'pet_sale_add_to_pos' purchase.primary_sale.id %}"
+                                            class="purchase-mini-btn pos"
+                                            title="Add all available pets to POS"
+                                        >
+                                            POS
+                                        </a>
+                                    {% endif %}
+
+                                    <a
+                                        href="{% url 'pet_sale_receipt_print' purchase.primary_sale.id %}"
+                                        class="purchase-mini-btn print"
+                                        title="Print all pets"
+                                    >
+                                        Print
+                                    </a>
+                                </td>
+                            </tr>
+
+                            <tr
+                                class="purchase-pets-row"
+                                id="purchasePets{{ forloop.counter }}"
+                                hidden
+                            >
+                                <td colspan="9">
+                                    <div class="purchase-pets-panel">
+                                        <div class="purchase-pets-head">
+                                            <strong>Pets in this purchase</strong>
+                                            <span>{{ purchase.sales|length }} record{{ purchase.sales|length|pluralize }}</span>
+                                        </div>
+
+                                        <div class="purchase-pets-table-wrap">
+                                            <table class="purchase-pets-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Pet</th>
+                                                        <th>Breed / Detail</th>
+                                                        <th>Price</th>
+                                                        <th>Paid</th>
+                                                        <th>Balance</th>
+                                                        <th>Status</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+
+                                                <tbody>
+                                                    {% for grouped_sale in purchase.sales %}
+                                                        <tr>
+                                                            <td>
+                                                                <div class="expanded-pet">
+                                                                    <div class="expanded-pet-photo">
+                                                                        {% if grouped_sale.pet and grouped_sale.pet.display_photo %}
+                                                                            <img
+                                                                                src="{{ grouped_sale.pet.display_photo.url }}?pet={{ grouped_sale.pet.updated_at|date:'U' }}"
+                                                                                alt="{{ grouped_sale.breed_display|default:'Pet' }}"
+                                                                            >
+                                                                        {% elif grouped_sale.sale_photo %}
+                                                                            <img
+                                                                                src="{{ grouped_sale.sale_photo.url }}?sale={{ grouped_sale.created_at|date:'U' }}"
+                                                                                alt="{{ grouped_sale.breed_display|default:'Pet' }}"
+                                                                            >
+                                                                        {% else %}
+                                                                            {% with first_group_photo=grouped_sale.photos.first %}
+                                                                                {% if first_group_photo and first_group_photo.photo %}
+                                                                                    <img
+                                                                                        src="{{ first_group_photo.photo.url }}?photo={{ first_group_photo.uploaded_at|date:'U' }}"
+                                                                                        alt="{{ grouped_sale.breed_display|default:'Pet' }}"
+                                                                                    >
+                                                                                {% else %}
+                                                                                    <span>🐾</span>
+                                                                                {% endif %}
+                                                                            {% endwith %}
+                                                                        {% endif %}
+                                                                    </div>
+
+                                                                    <div>
+                                                                        <strong>#{{ grouped_sale.id }}</strong>
+                                                                        <small>{{ grouped_sale.pet_type_display|default:"Pet" }}</small>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+
+                                                            <td>
+                                                                <strong>{{ grouped_sale.breed_display|default:"-" }}</strong>
+                                                                <small>
+                                                                    {% if grouped_sale.gender_display %}{{ grouped_sale.gender_display }}{% endif %}
+                                                                    {% if grouped_sale.color_display %} · {{ grouped_sale.color_display }}{% endif %}
+                                                                    {% if grouped_sale.special_type_display %} · {{ grouped_sale.special_type_display }}{% endif %}
+                                                                </small>
+                                                            </td>
+
+                                                            <td class="money-cell">${{ grouped_sale.final_price|floatformat:2 }}</td>
+                                                            <td class="money-cell">${{ grouped_sale.paid_amount|floatformat:2 }}</td>
+                                                            <td class="money-cell balance-cell">${{ grouped_sale.remaining_amount|floatformat:2 }}</td>
+
+                                                            <td>
+                                                                <span class="status status-{{ grouped_sale.status }}">
+                                                                    {{ grouped_sale.get_status_display }}
+                                                                </span>
+                                                            </td>
+
+                                                            <td>
+                                                                <a
+                                                                    href="{% url 'pet_sale_detail' grouped_sale.id %}"
+                                                                    class="purchase-mini-btn view"
+                                                                >
+                                                                    View
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    {% endif %}
+
     <div class="sale-table-card">
         <div class="desktop-table">
             <table>
@@ -2410,6 +2644,21 @@ document.addEventListener("DOMContentLoaded", function(){
     calculateResultSummary();
     markMobileFiltersActive();
 });
+
+function togglePurchasePets(button, rowId){
+    const row = document.getElementById(rowId);
+    if(!row) return;
+
+    const willOpen = row.hasAttribute("hidden");
+    if(willOpen){
+        row.removeAttribute("hidden");
+    }else{
+        row.setAttribute("hidden", "");
+    }
+
+    button.setAttribute("aria-expanded", willOpen ? "true" : "false");
+}
+
 </script>
 
 
@@ -2422,4 +2671,781 @@ document.addEventListener("DOMContentLoaded", function(){
 @media(max-width:650px){.cost-write-note{padding:7px 8px;border-radius:10px;font-size:9px}}
 </style>
 <style id="bubu-sale-cost-grid-style">@media(max-width:760px){.mobile-money{grid-template-columns:repeat(auto-fit,minmax(88px,1fr))!important}}</style>
+
+<style id="bubu-grouped-purchase-list-style">
+.grouped-purchase-section{
+    margin-bottom:20px;
+}
+
+.grouped-purchase-heading{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:12px;
+    padding:15px 17px;
+    border:2px solid #e6dcff;
+    border-radius:23px;
+    background:linear-gradient(135deg,#fbf8ff,#fff8f4);
+}
+
+.grouped-kicker{
+    display:inline-flex;
+    min-height:24px;
+    padding:0 9px;
+    border-radius:999px;
+    align-items:center;
+    color:#6f50d8;
+    background:#efe9ff;
+    font-size:9px;
+    font-weight:1000;
+}
+
+.grouped-purchase-heading h2{
+    margin:5px 0 0;
+    color:#080634;
+    font-size:23px;
+    font-weight:1000;
+}
+
+.grouped-purchase-heading p{
+    margin:4px 0 0;
+    color:#7b7288;
+    font-size:12px;
+    font-weight:900;
+}
+
+.grouped-count-pill{
+    padding:10px 14px;
+    border-radius:999px;
+    color:#6f50d8;
+    background:white;
+    border:1px solid #e4dbff;
+    font-size:12px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+
+.grouped-purchase-grid{
+    display:grid;
+    gap:13px;
+}
+
+.grouped-purchase-card{
+    padding:15px;
+    border:2px solid #f0e1ea;
+    border-radius:24px;
+    background:white;
+    box-shadow:0 13px 32px rgba(130,91,60,.06);
+}
+
+.grouped-card-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+}
+
+.grouped-purchase-id{
+    color:#7b5cff;
+    font-size:10px;
+    font-weight:1000;
+}
+
+.grouped-customer-wrap h3{
+    margin:4px 0 0;
+    color:#080634;
+    font-size:20px;
+    font-weight:1000;
+}
+
+.grouped-customer-wrap p{
+    margin:5px 0 0;
+    color:#7b7288;
+    font-size:11px;
+    font-weight:900;
+}
+
+.grouped-pet-count{
+    min-width:68px;
+    padding:9px 12px;
+    border-radius:17px;
+    text-align:center;
+    color:#6f50d8;
+    background:#f4f0ff;
+}
+
+.grouped-pet-count strong,
+.grouped-pet-count span{
+    display:block;
+}
+
+.grouped-pet-count strong{
+    font-size:20px;
+    line-height:1;
+}
+
+.grouped-pet-count span{
+    margin-top:3px;
+    font-size:9px;
+    font-weight:1000;
+}
+
+.grouped-pet-list{
+    display:grid;
+    gap:7px;
+    margin-top:13px;
+}
+
+.grouped-pet-item{
+    display:grid;
+    grid-template-columns:54px minmax(0,1fr) auto;
+    gap:10px;
+    align-items:center;
+    padding:8px;
+    border:1px solid #f1e5ef;
+    border-radius:15px;
+    color:#080634;
+    background:#fffafe;
+    transition:.15s;
+}
+
+.grouped-pet-item:hover{
+    border-color:#d9ccff;
+    transform:translateY(-1px);
+    box-shadow:0 8px 19px rgba(123,92,255,.09);
+}
+
+.grouped-pet-photo{
+    width:52px;
+    height:52px;
+    overflow:hidden;
+    border-radius:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:white;
+    font-size:25px;
+}
+
+.grouped-pet-photo img{
+    width:100%;
+    height:100%;
+    padding:3px;
+    object-fit:contain;
+}
+
+.grouped-pet-info{
+    min-width:0;
+}
+
+.grouped-pet-info strong,
+.grouped-pet-info small{
+    display:block;
+}
+
+.grouped-pet-info strong{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:13px;
+    font-weight:1000;
+}
+
+.grouped-pet-info small{
+    margin-top:3px;
+    overflow:hidden;
+    color:#7b7288;
+    font-size:10px;
+    font-weight:900;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.grouped-pet-money{
+    text-align:right;
+}
+
+.grouped-pet-money strong,
+.grouped-pet-money small{
+    display:block;
+}
+
+.grouped-pet-money strong{
+    color:#ff5d73;
+    font-size:15px;
+    font-weight:1000;
+}
+
+.grouped-pet-money small{
+    margin-top:4px;
+}
+
+.grouped-empty-pets{
+    padding:18px;
+    border:1px dashed #eaddec;
+    border-radius:14px;
+    color:#7b7288;
+    text-align:center;
+    font-weight:900;
+}
+
+.grouped-total-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:7px;
+    margin-top:11px;
+}
+
+.grouped-total-grid>div{
+    padding:10px;
+    border-radius:13px;
+    background:#f8f6ff;
+}
+
+.grouped-total-grid span,
+.grouped-total-grid strong{
+    display:block;
+}
+
+.grouped-total-grid span{
+    color:#7b7288;
+    font-size:9px;
+    font-weight:1000;
+}
+
+.grouped-total-grid strong{
+    margin-top:4px;
+    color:#080634;
+    font-size:17px;
+    font-weight:1000;
+}
+
+.grouped-total-grid .grouped-balance-box{
+    background:#fff1f3;
+}
+
+.grouped-total-grid .grouped-balance-box strong{
+    color:#d94e64;
+}
+
+.grouped-purchase-actions{
+    display:flex;
+    justify-content:flex-end;
+    flex-wrap:wrap;
+    gap:7px;
+    margin-top:11px;
+}
+
+.grouped-action-btn{
+    min-height:41px;
+    padding:0 13px;
+    border-radius:12px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:10px;
+    font-weight:1000;
+}
+
+.view-purchase-btn{
+    color:#6f50d8;
+    background:#f2edff;
+}
+
+.grouped-pos-btn{
+    color:white;
+    background:linear-gradient(135deg,#18aa62,#6d5bef);
+}
+
+.grouped-print-btn{
+    color:#2463b5;
+    background:#eaf4ff;
+}
+
+@media(max-width:760px){
+    .grouped-purchase-heading{
+        align-items:flex-start;
+    }
+
+    .grouped-count-pill{
+        padding:8px 10px;
+        font-size:10px;
+    }
+
+    .grouped-purchase-card{
+        padding:11px;
+        border-radius:19px;
+    }
+
+    .grouped-pet-item{
+        grid-template-columns:48px minmax(0,1fr) auto;
+    }
+
+    .grouped-pet-photo{
+        width:46px;
+        height:46px;
+    }
+
+    .grouped-total-grid{
+        grid-template-columns:1fr;
+    }
+
+    .grouped-purchase-actions{
+        display:grid;
+        grid-template-columns:1fr;
+    }
+
+    .grouped-action-btn{
+        width:100%;
+    }
+}
+
+@media(max-width:480px){
+    .grouped-purchase-heading{
+        display:block;
+    }
+
+    .grouped-count-pill{
+        width:max-content;
+        margin-top:9px;
+    }
+
+    .grouped-card-head{
+        display:block;
+    }
+
+    .grouped-pet-count{
+        width:max-content;
+        margin-top:8px;
+        display:flex;
+        align-items:center;
+        gap:5px;
+    }
+
+    .grouped-pet-count strong,
+    .grouped-pet-count span{
+        display:inline;
+        margin:0;
+    }
+
+    .grouped-pet-item{
+        grid-template-columns:44px minmax(0,1fr);
+    }
+
+    .grouped-pet-money{
+        grid-column:2;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        text-align:left;
+    }
+}
+
+/* =========================================================
+   COMPACT GROUPED PURCHASE TABLE
+========================================================= */
+.purchase-table-section{
+    margin:0 0 14px;
+    border:1px solid #eadfe9;
+    border-radius:16px;
+    overflow:hidden;
+    background:#fff;
+    box-shadow:0 7px 20px rgba(73,51,91,.05);
+}
+
+.purchase-table-heading{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:12px 14px;
+    border-bottom:1px solid #eee5ef;
+    background:linear-gradient(135deg,#fff,#fbf8ff);
+}
+
+.purchase-table-heading h2{
+    margin:3px 0 0;
+    color:#080634;
+    font-size:17px;
+    font-weight:1000;
+}
+
+.purchase-table-heading p{
+    margin:3px 0 0;
+    color:#82798c;
+    font-size:9px;
+    font-weight:800;
+}
+
+.purchase-table-kicker{
+    color:#7557dd;
+    font-size:7px;
+    font-weight:1000;
+    letter-spacing:.08em;
+}
+
+.purchase-table-count{
+    min-width:78px;
+    padding:7px 10px;
+    border-radius:999px;
+    color:#6f50d8;
+    background:#f1edff;
+    text-align:center;
+    font-size:9px;
+    font-weight:1000;
+}
+
+.purchase-table-wrap{
+    overflow-x:auto;
+}
+
+.purchase-table{
+    width:100%;
+    min-width:960px;
+    border-collapse:collapse;
+}
+
+.purchase-table th{
+    padding:9px 8px;
+    color:#62576d;
+    background:#fcfaff;
+    border-bottom:1px solid #ece4ef;
+    text-align:left;
+    font-size:8px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+
+.purchase-table td{
+    padding:9px 8px;
+    border-bottom:1px solid #f0e9f2;
+    color:#18122e;
+    font-size:9px;
+    font-weight:900;
+    vertical-align:middle;
+}
+
+.purchase-main-row:hover{
+    background:#fffdfd;
+}
+
+.purchase-table td small,
+.purchase-table td strong{
+    display:block;
+}
+
+.purchase-table td small{
+    margin-top:2px;
+    color:#8d8396;
+    font-size:7px;
+    font-weight:800;
+}
+
+.expand-column{
+    width:34px;
+    text-align:center!important;
+}
+
+.purchase-actions-column{
+    width:180px;
+}
+
+.purchase-expand-btn{
+    width:27px;
+    height:27px;
+    border:1px solid #e2d9ee;
+    border-radius:9px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:#7557dd;
+    background:#f7f4ff;
+    cursor:pointer;
+}
+
+.expand-arrow{
+    display:block;
+    font-size:19px;
+    line-height:1;
+    transition:transform .18s ease;
+}
+
+.purchase-expand-btn[aria-expanded="true"] .expand-arrow{
+    transform:rotate(90deg);
+}
+
+.purchase-code-link{
+    color:#6248ce;
+    font-weight:1000;
+}
+
+.purchase-pet-count{
+    min-width:28px;
+    height:28px;
+    padding:0 8px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:#6b4ed4;
+    background:#f0ebff;
+    font-weight:1000;
+}
+
+.money-cell{
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+}
+
+.paid-cell{
+    color:#13995a!important;
+}
+
+.balance-cell{
+    color:#ec4661!important;
+}
+
+.purchase-status{
+    padding:5px 8px;
+    border-radius:999px;
+    display:inline-flex;
+    font-size:7px;
+    font-weight:1000;
+    white-space:nowrap;
+}
+
+.purchase-status.completed{
+    color:#168a3a;
+    background:#e9fff0;
+}
+
+.purchase-status.partial{
+    color:#c77a00;
+    background:#fff6dc;
+}
+
+.purchase-status.waiting{
+    color:#e56a00;
+    background:#fff3e9;
+}
+
+.purchase-row-actions{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    white-space:nowrap;
+}
+
+.purchase-mini-btn{
+    min-height:28px;
+    padding:0 9px;
+    border-radius:8px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:7px;
+    font-weight:1000;
+}
+
+.purchase-mini-btn.view{
+    color:#694fd4;
+    background:#f0ebff;
+}
+
+.purchase-mini-btn.pos{
+    color:#fff;
+    background:linear-gradient(135deg,#19aa67,#6857e9);
+}
+
+.purchase-mini-btn.print{
+    color:#fff;
+    background:linear-gradient(135deg,#34aef1,#6d5bea);
+}
+
+.purchase-pets-row[hidden]{
+    display:none!important;
+}
+
+.purchase-pets-row td{
+    padding:0!important;
+    background:#fbf9ff;
+}
+
+.purchase-pets-panel{
+    padding:10px 42px 12px;
+}
+
+.purchase-pets-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:7px;
+    color:#594d63;
+    font-size:8px;
+}
+
+.purchase-pets-head span{
+    color:#8a8094;
+}
+
+.purchase-pets-table-wrap{
+    overflow-x:auto;
+    border:1px solid #e9dfec;
+    border-radius:11px;
+    background:#fff;
+}
+
+.purchase-pets-table{
+    width:100%;
+    min-width:760px;
+    border-collapse:collapse;
+}
+
+.purchase-pets-table th{
+    padding:7px;
+    background:#faf7ff;
+}
+
+.purchase-pets-table td{
+    padding:7px;
+    font-size:8px;
+}
+
+.expanded-pet{
+    display:flex;
+    align-items:center;
+    gap:7px;
+}
+
+.expanded-pet-photo{
+    width:34px;
+    height:34px;
+    overflow:hidden;
+    border-radius:9px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#f6f0ff;
+}
+
+.expanded-pet-photo img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+@media(max-width:700px){
+    .purchase-table-heading{
+        padding:10px;
+    }
+
+    .purchase-table-heading p{
+        display:none;
+    }
+
+    .purchase-table-wrap{
+        overflow:visible;
+    }
+
+    .purchase-table{
+        min-width:0;
+        display:block;
+    }
+
+    .purchase-table thead{
+        display:none;
+    }
+
+    .purchase-table tbody{
+        display:grid;
+        gap:7px;
+        padding:8px;
+    }
+
+    .purchase-main-row{
+        display:grid;
+        grid-template-columns:34px 1.2fr .9fr;
+        gap:5px;
+        padding:8px;
+        border:1px solid #e9e0ed;
+        border-radius:12px;
+        background:#fff;
+    }
+
+    .purchase-main-row td{
+        padding:4px!important;
+        border:0!important;
+        min-width:0;
+    }
+
+    .purchase-main-row td:nth-child(2),
+    .purchase-main-row td:nth-child(3){
+        align-self:center;
+    }
+
+    .purchase-main-row td:nth-child(4),
+    .purchase-main-row td:nth-child(5),
+    .purchase-main-row td:nth-child(6),
+    .purchase-main-row td:nth-child(7){
+        padding:6px!important;
+        border-radius:9px!important;
+        background:#faf7ff;
+    }
+
+    .purchase-main-row td:nth-child(4)::before{content:"Pets";display:block;color:#8a8094;font-size:7px}
+    .purchase-main-row td:nth-child(5)::before{content:"Total";display:block;color:#8a8094;font-size:7px}
+    .purchase-main-row td:nth-child(6)::before{content:"Paid";display:block;color:#8a8094;font-size:7px}
+    .purchase-main-row td:nth-child(7)::before{content:"Balance";display:block;color:#8a8094;font-size:7px}
+
+    .purchase-main-row td:nth-child(4){
+        grid-column:1/2;
+    }
+
+    .purchase-main-row td:nth-child(5){
+        grid-column:2/3;
+    }
+
+    .purchase-main-row td:nth-child(6){
+        grid-column:3/4;
+    }
+
+    .purchase-main-row td:nth-child(7){
+        grid-column:1/2;
+    }
+
+    .purchase-main-row td:nth-child(8){
+        grid-column:2/3;
+        align-self:center;
+    }
+
+    .purchase-main-row td:nth-child(9){
+        grid-column:1/-1;
+    }
+
+    .purchase-row-actions{
+        width:100%;
+        display:grid;
+        grid-template-columns:repeat(3,1fr);
+    }
+
+    .purchase-mini-btn{
+        min-height:34px;
+    }
+
+    .purchase-pets-row{
+        display:block;
+    }
+
+    .purchase-pets-row td{
+        display:block;
+    }
+
+    .purchase-pets-panel{
+        padding:0 8px 9px;
+    }
+}
+
+</style>
+
 {% endblock %}

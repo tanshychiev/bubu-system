@@ -797,6 +797,47 @@
             }
         }
 
+
+        /* MULTI-PET PRINT:
+           The original receipt artwork is unchanged.
+           Each pet repeats the same A5 receipt on its own page. */
+        .receipt-page-wrap {
+            width: 100%;
+        }
+
+        .receipt-page-wrap + .receipt-page-wrap {
+            margin-top: 18px;
+        }
+
+        @media print {
+            html,
+            body {
+                height: auto !important;
+                min-height: 0 !important;
+                overflow: visible !important;
+            }
+
+            .receipt-page-wrap {
+                width: 148mm !important;
+                height: 210mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            .receipt-page-wrap.last-receipt-page {
+                page-break-after: auto !important;
+                break-after: auto !important;
+            }
+
+            .receipt-page-wrap .a5-stage {
+                margin: 0 !important;
+            }
+        }
+
     </style>
 </head>
 
@@ -819,8 +860,12 @@
     </button>
 </div>
 
-<div class="a5-stage" id="a5Stage">
-<div class="invoice-page" id="a5InvoicePage">
+{% with print_sales=receipt_sales|default:None %}
+{% if print_sales %}
+    {% for receipt_sale in print_sales %}
+        <div class="receipt-page-wrap{% if forloop.last %} last-receipt-page{% endif %}">
+<div class="a5-stage" >
+<div class="invoice-page" >
 
     <div class="header">
         <div class="logo">
@@ -838,7 +883,7 @@
         <div class="invoice-title">
             <div class="invoice-title-kh">លិខិតធានាសុខភាពសត្វចិញ្ចឹម</div>
             <div class="invoice-title-en">PET HEALTH WARRANTY</div>
-            <div class="invoice-number">{{ sale.id|stringformat:"06d" }}</div>
+            <div class="invoice-number">{{ receipt_sale.id|stringformat:"06d" }}</div>
         </div>
 
         <div class="customer-area">
@@ -846,10 +891,10 @@
                 <div class="info-pill">
                     <span class="info-label">ឈ្មោះអតិថិជន:</span>
                     <span class="info-value">
-                        {% if sale.customer_name %}
-                            {{ sale.customer_name }}
-                        {% elif sale.customer and sale.customer.name %}
-                            {{ sale.customer.name }}
+                        {% if receipt_sale.customer_name %}
+                            {{ receipt_sale.customer_name }}
+                        {% elif receipt_sale.customer and receipt_sale.customer.name %}
+                            {{ receipt_sale.customer.name }}
                         {% else %}
                             -
                         {% endif %}
@@ -857,8 +902,8 @@
                 </div>
 
                 <div class="date-text">
-                    {% if sale.created_at %}
-                        ថ្ងៃទី {{ sale.created_at|date:"d" }} ខែ {{ sale.created_at|date:"m" }} ឆ្នាំ {{ sale.created_at|date:"Y" }}
+                    {% if receipt_sale.created_at %}
+                        ថ្ងៃទី {{ receipt_sale.created_at|date:"d" }} ខែ {{ receipt_sale.created_at|date:"m" }} ឆ្នាំ {{ receipt_sale.created_at|date:"Y" }}
                     {% else %}
                         ថ្ងៃទី .............. ខែ .............. ឆ្នាំ 202 .....
                     {% endif %}
@@ -869,10 +914,10 @@
                 <div class="info-pill">
                     <span class="info-label">លេខទូរស័ព្ទ:</span>
                     <span class="info-value">
-                        {% if sale.phone %}
-                            {{ sale.phone }}
-                        {% elif sale.customer and sale.customer.phone %}
-                            {{ sale.customer.phone }}
+                        {% if receipt_sale.phone %}
+                            {{ receipt_sale.phone }}
+                        {% elif receipt_sale.customer and receipt_sale.customer.phone %}
+                            {{ receipt_sale.customer.phone }}
                         {% else %}
                             -
                         {% endif %}
@@ -882,14 +927,14 @@
                 <div class="info-pill">
                     <span class="info-label">ទីតាំង:</span>
                     <span class="info-value">
-                        {% if sale.address %}
-                            {{ sale.address }}
-                        {% elif sale.location %}
-                            {{ sale.location }}
-                        {% elif sale.customer and sale.customer.location %}
-                            {{ sale.customer.location }}
-                        {% elif sale.customer and sale.customer.address %}
-                            {{ sale.customer.address }}
+                        {% if receipt_sale.address %}
+                            {{ receipt_sale.address }}
+                        {% elif receipt_sale.location %}
+                            {{ receipt_sale.location }}
+                        {% elif receipt_sale.customer and receipt_sale.customer.location %}
+                            {{ receipt_sale.customer.location }}
+                        {% elif receipt_sale.customer and receipt_sale.customer.address %}
+                            {{ receipt_sale.customer.address }}
                         {% else %}
                             -
                         {% endif %}
@@ -915,30 +960,30 @@
                 <tr>
                     <td>
                         <div class="pet-photo">
-                            {% with sale_photo=sale.photos.first %}
+                            {% with sale_photo=receipt_sale.photos.first %}
                                 {% if sale_photo and sale_photo.photo %}
                                     <img
                                         src="{{ sale_photo.photo.url }}?v={{ cache_bust }}&photo={{ sale_photo.id }}"
                                         alt="Pet Photo"
                                     >
-                                {% elif sale.sale_photo %}
+                                {% elif receipt_sale.sale_photo %}
                                     <img
-                                        src="{{ sale.sale_photo.url }}?v={{ cache_bust }}"
+                                        src="{{ receipt_sale.sale_photo.url }}?v={{ cache_bust }}"
                                         alt="Pet Photo"
                                     >
-                                {% elif sale.pet and sale.pet.display_photo %}
+                                {% elif receipt_sale.pet and receipt_sale.pet.display_photo %}
                                     <img
-                                        src="{{ sale.pet.display_photo.url }}?v={{ cache_bust }}"
+                                        src="{{ receipt_sale.pet.display_photo.url }}?v={{ cache_bust }}"
                                         alt="Pet Photo"
                                     >
-                                {% elif sale.pet and sale.pet.photo %}
+                                {% elif receipt_sale.pet and receipt_sale.pet.photo %}
                                     <img
-                                        src="{{ sale.pet.photo.url }}?v={{ cache_bust }}"
+                                        src="{{ receipt_sale.pet.photo.url }}?v={{ cache_bust }}"
                                         alt="Pet Photo"
                                     >
-                                {% elif sale.pet and sale.pet.breed_profile and sale.pet.breed_profile.photo %}
+                                {% elif receipt_sale.pet and receipt_sale.pet.breed_profile and receipt_sale.pet.breed_profile.photo %}
                                     <img
-                                        src="{{ sale.pet.breed_profile.photo.url }}?v={{ cache_bust }}"
+                                        src="{{ receipt_sale.pet.breed_profile.photo.url }}?v={{ cache_bust }}"
                                         alt="Pet Photo"
                                     >
                                 {% else %}
@@ -950,12 +995,12 @@
 
                     <td>
                         <div class="pet-kind">
-                            {% if sale.pet_type_display %}
-                                {{ sale.pet_type_display }}
-                            {% elif sale.pet and sale.pet.pet_type %}
-                                {{ sale.pet.pet_type|title }}
-                            {% elif sale.pet_type %}
-                                {{ sale.pet_type|title }}
+                            {% if receipt_sale.pet_type_display %}
+                                {{ receipt_sale.pet_type_display }}
+                            {% elif receipt_sale.pet and receipt_sale.pet.pet_type %}
+                                {{ receipt_sale.pet.pet_type|title }}
+                            {% elif receipt_sale.pet_type %}
+                                {{ receipt_sale.pet_type|title }}
                             {% else %}
                                 -
                             {% endif %}
@@ -964,40 +1009,40 @@
 
                     <td>
                         <div class="desc-text">
-                            {% if sale.pet_name_display %}
-                                Name: {{ sale.pet_name_display }}<br>
-                            {% elif sale.pet and sale.pet.name %}
-                                Name: {{ sale.pet.name }}<br>
+                            {% if receipt_sale.pet_name_display %}
+                                Name: {{ receipt_sale.pet_name_display }}<br>
+                            {% elif receipt_sale.pet and receipt_sale.pet.name %}
+                                Name: {{ receipt_sale.pet.name }}<br>
                             {% endif %}
 
-                            {% if sale.breed_display %}
-                                Breed: {{ sale.breed_display }}<br>
-                            {% elif sale.pet and sale.pet.breed %}
-                                Breed: {{ sale.pet.breed }}<br>
-                            {% elif sale.pet and sale.pet.breed_profile %}
-                                Breed: {{ sale.pet.breed_profile }}<br>
+                            {% if receipt_sale.breed_display %}
+                                Breed: {{ receipt_sale.breed_display }}<br>
+                            {% elif receipt_sale.pet and receipt_sale.pet.breed %}
+                                Breed: {{ receipt_sale.pet.breed }}<br>
+                            {% elif receipt_sale.pet and receipt_sale.pet.breed_profile %}
+                                Breed: {{ receipt_sale.pet.breed_profile }}<br>
                             {% endif %}
 
-                            {% if sale.color_display %}
-                                Color: {{ sale.color_display }}<br>
-                            {% elif sale.pet and sale.pet.color %}
-                                Color: {{ sale.pet.color }}<br>
+                            {% if receipt_sale.color_display %}
+                                Color: {{ receipt_sale.color_display }}<br>
+                            {% elif receipt_sale.pet and receipt_sale.pet.color %}
+                                Color: {{ receipt_sale.pet.color }}<br>
                             {% endif %}
 
-                            {% if sale.note %}
-                                Note: {{ sale.note }}
+                            {% if receipt_sale.note %}
+                                Note: {{ receipt_sale.note }}
                             {% endif %}
                         </div>
                     </td>
 
                     <td>
                         <div class="pet-sex">
-                            {% if sale.gender_display %}
-                                {{ sale.gender_display }}
-                            {% elif sale.pet and sale.pet.gender %}
-                                {{ sale.pet.gender|title }}
-                            {% elif sale.gender %}
-                                {{ sale.gender|title }}
+                            {% if receipt_sale.gender_display %}
+                                {{ receipt_sale.gender_display }}
+                            {% elif receipt_sale.pet and receipt_sale.pet.gender %}
+                                {{ receipt_sale.pet.gender|title }}
+                            {% elif receipt_sale.gender %}
+                                {{ receipt_sale.gender|title }}
                             {% else %}
                                 -
                             {% endif %}
@@ -1007,12 +1052,12 @@
                     <td>
                         <div class="price-text">
                             $
-                            {% if sale.total_price %}
-                                {{ sale.total_price }}
-                            {% elif sale.sale_price %}
-                                {{ sale.sale_price }}
-                            {% elif sale.final_total %}
-                                {{ sale.final_total }}
+                            {% if receipt_sale.total_price %}
+                                {{ receipt_sale.total_price }}
+                            {% elif receipt_sale.sale_price %}
+                                {{ receipt_sale.sale_price }}
+                            {% elif receipt_sale.final_total %}
+                                {{ receipt_sale.final_total }}
                             {% else %}
                                 0.00
                             {% endif %}
@@ -1025,12 +1070,12 @@
 
     <div
         class="warranty-bar"
-        id="receiptWarrantyRow"
-        data-start="{% if sale.created_at %}{{ sale.created_at|date:'Y-m-d' }}{% endif %}"
-        data-days="{{ sale.warranty_days|default:3 }}"
+        data-receipt-warranty
+        data-start="{% if receipt_sale.created_at %}{{ receipt_sale.created_at|date:'Y-m-d' }}{% endif %}"
+        data-days="{{ receipt_sale.warranty_days|default:3 }}"
     >
         <span>ថ្ងៃធានា <strong>(Warranty Date):</strong></span>
-        <span class="warranty-line" id="receiptWarrantyText">
+        <span class="warranty-line" data-receipt-warranty-text>
             &nbsp;
         </span>
     </div>
@@ -1065,12 +1110,12 @@
                 <strong>Total</strong>
                 <span class="summary-amount">
                     $
-                    {% if sale.total_price %}
-                        {{ sale.total_price }}
-                    {% elif sale.sale_price %}
-                        {{ sale.sale_price }}
-                    {% elif sale.final_total %}
-                        {{ sale.final_total }}
+                    {% if receipt_sale.total_price %}
+                        {{ receipt_sale.total_price }}
+                    {% elif receipt_sale.sale_price %}
+                        {{ receipt_sale.sale_price }}
+                    {% elif receipt_sale.final_total %}
+                        {{ receipt_sale.final_total }}
                     {% else %}
                         0.00
                     {% endif %}
@@ -1082,12 +1127,12 @@
                 <strong>Deposit</strong>
                 <span class="summary-amount">
                     $
-                    {% if sale.deposit_amount %}
-                        {{ sale.deposit_amount }}
-                    {% elif sale.deposit %}
-                        {{ sale.deposit }}
-                    {% elif sale.paid_amount %}
-                        {{ sale.paid_amount }}
+                    {% if receipt_sale.deposit_amount %}
+                        {{ receipt_sale.deposit_amount }}
+                    {% elif receipt_sale.deposit %}
+                        {{ receipt_sale.deposit }}
+                    {% elif receipt_sale.paid_amount %}
+                        {{ receipt_sale.paid_amount }}
                     {% else %}
                         0.00
                     {% endif %}
@@ -1099,20 +1144,20 @@
                 <strong>Final</strong>
                 <span class="summary-amount">
                     $
-                    {% if sale.remaining_amount %}
-                        {{ sale.remaining_amount }}
-                    {% elif sale.balance_amount %}
-                        {{ sale.balance_amount }}
-                    {% elif sale.final_amount %}
-                        {{ sale.final_amount }}
-                    {% elif sale.final_total %}
-                        {{ sale.final_total }}
+                    {% if receipt_sale.remaining_amount %}
+                        {{ receipt_sale.remaining_amount }}
+                    {% elif receipt_sale.balance_amount %}
+                        {{ receipt_sale.balance_amount }}
+                    {% elif receipt_sale.final_amount %}
+                        {{ receipt_sale.final_amount }}
+                    {% elif receipt_sale.final_total %}
+                        {{ receipt_sale.final_total }}
                     {% else %}
                         0.00
                     {% endif %}
                 </span>
 
-                {% if sale.is_paid or sale.payment_status == 'paid' or sale.status == 'paid' or sale.payment_type == 'paid' or sale.remaining_amount == 0 or sale.balance_amount == 0 %}
+                {% if receipt_sale.is_paid or receipt_sale.payment_status == 'paid' or receipt_sale.status == 'paid' or receipt_sale.payment_type == 'paid' or receipt_sale.remaining_amount == 0 or receipt_sale.balance_amount == 0 %}
                     <span class="paid-stamp">PAID</span>
                 {% endif %}
             </div>
@@ -1141,6 +1186,340 @@
 </div>
 </div>
 
+
+        </div>
+    {% endfor %}
+{% else %}
+    {% with receipt_sale=sale %}
+        <div class="receipt-page-wrap last-receipt-page">
+<div class="a5-stage" >
+<div class="invoice-page" >
+
+    <div class="header">
+        <div class="logo">
+            <img src="{% static 'img/bubu_logo.png' %}" alt="BUBU Logo"
+                 onerror="this.onerror=null; this.src='/static/img/bubu_logo.png';">
+        </div>
+
+        <div class="brand">
+            <div class="brand-kh">ប៊ូប៊ូ ផេត ស្ទ័រ</div>
+            <div class="brand-en">BUBU Pet Store</div>
+        </div>
+    </div>
+
+    <div class="top-area">
+        <div class="invoice-title">
+            <div class="invoice-title-kh">លិខិតធានាសុខភាពសត្វចិញ្ចឹម</div>
+            <div class="invoice-title-en">PET HEALTH WARRANTY</div>
+            <div class="invoice-number">{{ receipt_sale.id|stringformat:"06d" }}</div>
+        </div>
+
+        <div class="customer-area">
+            <div class="date-row">
+                <div class="info-pill">
+                    <span class="info-label">ឈ្មោះអតិថិជន:</span>
+                    <span class="info-value">
+                        {% if receipt_sale.customer_name %}
+                            {{ receipt_sale.customer_name }}
+                        {% elif receipt_sale.customer and receipt_sale.customer.name %}
+                            {{ receipt_sale.customer.name }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="date-text">
+                    {% if receipt_sale.created_at %}
+                        ថ្ងៃទី {{ receipt_sale.created_at|date:"d" }} ខែ {{ receipt_sale.created_at|date:"m" }} ឆ្នាំ {{ receipt_sale.created_at|date:"Y" }}
+                    {% else %}
+                        ថ្ងៃទី .............. ខែ .............. ឆ្នាំ 202 .....
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="phone-location-row">
+                <div class="info-pill">
+                    <span class="info-label">លេខទូរស័ព្ទ:</span>
+                    <span class="info-value">
+                        {% if receipt_sale.phone %}
+                            {{ receipt_sale.phone }}
+                        {% elif receipt_sale.customer and receipt_sale.customer.phone %}
+                            {{ receipt_sale.customer.phone }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="info-pill">
+                    <span class="info-label">ទីតាំង:</span>
+                    <span class="info-value">
+                        {% if receipt_sale.address %}
+                            {{ receipt_sale.address }}
+                        {% elif receipt_sale.location %}
+                            {{ receipt_sale.location }}
+                        {% elif receipt_sale.customer and receipt_sale.customer.location %}
+                            {{ receipt_sale.customer.location }}
+                        {% elif receipt_sale.customer and receipt_sale.customer.address %}
+                            {{ receipt_sale.customer.address }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table class="main-table">
+            <thead>
+                <tr>
+                    <th class="c-picture">រូបសត្វ <span class="en">(Picture)</span></th>
+                    <th class="c-kind">ប្រភេទសត្វ <span class="en">(Breed)</span></th>
+                    <th class="c-desc">ពិពណ៌នា <span class="en">(Description)</span></th>
+                    <th class="c-sex">ភេទ <span class="en">(Sex)</span></th>
+                    <th class="c-price">តម្លៃសរុប <span class="en">(Total Price)</span></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="pet-photo">
+                            {% with sale_photo=receipt_sale.photos.first %}
+                                {% if sale_photo and sale_photo.photo %}
+                                    <img
+                                        src="{{ sale_photo.photo.url }}?v={{ cache_bust }}&photo={{ sale_photo.id }}"
+                                        alt="Pet Photo"
+                                    >
+                                {% elif receipt_sale.sale_photo %}
+                                    <img
+                                        src="{{ receipt_sale.sale_photo.url }}?v={{ cache_bust }}"
+                                        alt="Pet Photo"
+                                    >
+                                {% elif receipt_sale.pet and receipt_sale.pet.display_photo %}
+                                    <img
+                                        src="{{ receipt_sale.pet.display_photo.url }}?v={{ cache_bust }}"
+                                        alt="Pet Photo"
+                                    >
+                                {% elif receipt_sale.pet and receipt_sale.pet.photo %}
+                                    <img
+                                        src="{{ receipt_sale.pet.photo.url }}?v={{ cache_bust }}"
+                                        alt="Pet Photo"
+                                    >
+                                {% elif receipt_sale.pet and receipt_sale.pet.breed_profile and receipt_sale.pet.breed_profile.photo %}
+                                    <img
+                                        src="{{ receipt_sale.pet.breed_profile.photo.url }}?v={{ cache_bust }}"
+                                        alt="Pet Photo"
+                                    >
+                                {% else %}
+                                    <div class="no-photo">PET<br>PHOTO</div>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="pet-kind">
+                            {% if receipt_sale.pet_type_display %}
+                                {{ receipt_sale.pet_type_display }}
+                            {% elif receipt_sale.pet and receipt_sale.pet.pet_type %}
+                                {{ receipt_sale.pet.pet_type|title }}
+                            {% elif receipt_sale.pet_type %}
+                                {{ receipt_sale.pet_type|title }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="desc-text">
+                            {% if receipt_sale.pet_name_display %}
+                                Name: {{ receipt_sale.pet_name_display }}<br>
+                            {% elif receipt_sale.pet and receipt_sale.pet.name %}
+                                Name: {{ receipt_sale.pet.name }}<br>
+                            {% endif %}
+
+                            {% if receipt_sale.breed_display %}
+                                Breed: {{ receipt_sale.breed_display }}<br>
+                            {% elif receipt_sale.pet and receipt_sale.pet.breed %}
+                                Breed: {{ receipt_sale.pet.breed }}<br>
+                            {% elif receipt_sale.pet and receipt_sale.pet.breed_profile %}
+                                Breed: {{ receipt_sale.pet.breed_profile }}<br>
+                            {% endif %}
+
+                            {% if receipt_sale.color_display %}
+                                Color: {{ receipt_sale.color_display }}<br>
+                            {% elif receipt_sale.pet and receipt_sale.pet.color %}
+                                Color: {{ receipt_sale.pet.color }}<br>
+                            {% endif %}
+
+                            {% if receipt_sale.note %}
+                                Note: {{ receipt_sale.note }}
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="pet-sex">
+                            {% if receipt_sale.gender_display %}
+                                {{ receipt_sale.gender_display }}
+                            {% elif receipt_sale.pet and receipt_sale.pet.gender %}
+                                {{ receipt_sale.pet.gender|title }}
+                            {% elif receipt_sale.gender %}
+                                {{ receipt_sale.gender|title }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="price-text">
+                            $
+                            {% if receipt_sale.total_price %}
+                                {{ receipt_sale.total_price }}
+                            {% elif receipt_sale.sale_price %}
+                                {{ receipt_sale.sale_price }}
+                            {% elif receipt_sale.final_total %}
+                                {{ receipt_sale.final_total }}
+                            {% else %}
+                                0.00
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div
+        class="warranty-bar"
+        data-receipt-warranty
+        data-start="{% if receipt_sale.created_at %}{{ receipt_sale.created_at|date:'Y-m-d' }}{% endif %}"
+        data-days="{{ receipt_sale.warranty_days|default:3 }}"
+    >
+        <span>ថ្ងៃធានា <strong>(Warranty Date):</strong></span>
+        <span class="warranty-line" data-receipt-warranty-text>
+            &nbsp;
+        </span>
+    </div>
+
+    <div class="lower">
+        <div class="terms">
+            <div class="term-item">
+                សូមអោយអតិថិជនបានជាវសត្វពីហាងយើងខ្ញុំ ត្រូវធ្វើតាមការណែនាំពីហាង
+                ពីការផ្តល់អាហារបំប៉ន និងរបបអាហារ។
+            </div>
+
+            <div class="term-item">
+                យើងខ្ញុំមានការធានាជូនសុខភាព រយៈពេល៣ថ្ងៃលើជំងឺ
+                Parvo &amp; Distemper គិតចាប់ពីថ្ងៃដែលភ្ញៀវបានយកចេញពីហាង។
+                ប្រសិនបើសត្វមានបញ្ហាក្នុងអំឡុងពេលធានារបស់ហាង ខាងហាងនឹងជួយព្យាបាល។
+            </div>
+
+            <div class="term-item">
+                សម្រាប់កូនៗមានបញ្ហាត្រូវទំនាក់ទំនងមកកាន់ហាងភ្លាមៗ។
+                ប្រសិនបើភ្ញៀវផ្តល់ដំណឹងហួសការធានា ខាងហាងមិនទទួលខុសត្រូវឡើយ។
+            </div>
+
+            <div class="term-item">
+                យើងមិនមានការទទួលខុសត្រូវទៅលើអតិថិជនដែលធ្វើខុសពីគោលការណ៍ហាង
+                ឬផ្តល់ដំណឹងយឺត ហួសអំឡុងពេលធានានោះទេ។
+            </div>
+        </div>
+
+        <div class="summary-side">
+            <div class="summary-box">
+                តម្លៃសរុប
+                <strong>Total</strong>
+                <span class="summary-amount">
+                    $
+                    {% if receipt_sale.total_price %}
+                        {{ receipt_sale.total_price }}
+                    {% elif receipt_sale.sale_price %}
+                        {{ receipt_sale.sale_price }}
+                    {% elif receipt_sale.final_total %}
+                        {{ receipt_sale.final_total }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="summary-box">
+                បង់រួច
+                <strong>Deposit</strong>
+                <span class="summary-amount">
+                    $
+                    {% if receipt_sale.deposit_amount %}
+                        {{ receipt_sale.deposit_amount }}
+                    {% elif receipt_sale.deposit %}
+                        {{ receipt_sale.deposit }}
+                    {% elif receipt_sale.paid_amount %}
+                        {{ receipt_sale.paid_amount }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="summary-box final">
+                ប្រាក់នៅខ្វះ
+                <strong>Final</strong>
+                <span class="summary-amount">
+                    $
+                    {% if receipt_sale.remaining_amount %}
+                        {{ receipt_sale.remaining_amount }}
+                    {% elif receipt_sale.balance_amount %}
+                        {{ receipt_sale.balance_amount }}
+                    {% elif receipt_sale.final_amount %}
+                        {{ receipt_sale.final_amount }}
+                    {% elif receipt_sale.final_total %}
+                        {{ receipt_sale.final_total }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </span>
+
+                {% if receipt_sale.is_paid or receipt_sale.payment_status == 'paid' or receipt_sale.status == 'paid' or receipt_sale.payment_type == 'paid' or receipt_sale.remaining_amount == 0 or receipt_sale.balance_amount == 0 %}
+                    <span class="paid-stamp">PAID</span>
+                {% endif %}
+            </div>
+
+            <div class="thanks">
+                សូមអរគុណសម្រាប់ការគាំទ្រ និងជ្រើសរើសកូនៗពីហាង
+                <span class="brand-red">BUBU PET STORE</span> យើងខ្ញុំ!
+                <img src="{% static 'img/bubu_icon.png' %}" alt="BUBU Dog"
+                     onerror="this.style.display='none';">
+            </div>
+        </div>
+    </div>
+
+    <div class="signatures">
+        <div class="signature-box">
+            <div class="signature-title">Seller Signature</div>
+            <div class="signature-line"></div>
+        </div>
+
+        <div class="signature-box">
+            <div class="signature-title">Customer Signature</div>
+            <div class="signature-line"></div>
+        </div>
+    </div>
+
+</div>
+</div>
+
+
+        </div>
+    {% endwith %}
+{% endif %}
+{% endwith %}
+
 <script>
     function parseReceiptDate(value) {
         if (!value) return null;
@@ -1161,60 +1540,58 @@
         return year + "-" + month + "-" + day;
     }
 
-    function updateReceiptWarrantyRow() {
-        var row = document.getElementById("receiptWarrantyRow");
-        var text = document.getElementById("receiptWarrantyText");
+    function updateAllReceiptWarrantyRows() {
+        document.querySelectorAll("[data-receipt-warranty]").forEach(function (row) {
+            var text = row.querySelector("[data-receipt-warranty-text]");
+            if (!text) return;
 
-        if (!row || !text) return;
+            var warrantyDays = parseInt(row.dataset.days || "3", 10) || 3;
+            var startDate = parseReceiptDate(row.dataset.start);
+            var endDate = null;
 
-        var warrantyDays = parseInt(row.dataset.days || "3", 10) || 3;
-        var startDate = parseReceiptDate(row.dataset.start);
-        var endDate = null;
+            if (startDate) {
+                endDate = new Date(startDate);
+                endDate.setDate(
+                    endDate.getDate() + Math.max(warrantyDays - 1, 0)
+                );
+            }
 
-        // Inclusive warranty counting:
-        // 1 July is day 1, 2 July is day 2, 3 July is day 3.
-        if (startDate) {
-            endDate = new Date(startDate);
-            endDate.setDate(
-                endDate.getDate() + Math.max(warrantyDays - 1, 0)
-            );
-        }
-
-        if (startDate && endDate) {
-            text.textContent =
-                formatReceiptDate(startDate) +
-                "  →  " +
-                formatReceiptDate(endDate) +
-                "  (" +
-                warrantyDays +
-                " days)";
-        } else {
-            text.textContent = "-";
-        }
+            if (startDate && endDate) {
+                text.textContent =
+                    formatReceiptDate(startDate) +
+                    "  →  " +
+                    formatReceiptDate(endDate) +
+                    "  (" +
+                    warrantyDays +
+                    " days)";
+            } else {
+                text.textContent = "-";
+            }
+        });
     }
 
-    function updateA5PreviewScale() {
-        var stage = document.getElementById("a5Stage");
-        var page = document.getElementById("a5InvoicePage");
+    function updateAllA5PreviewScales() {
+        document.querySelectorAll(".a5-stage").forEach(function (stage) {
+            var page = stage.querySelector(".invoice-page");
+            if (!page) return;
 
-        if (!stage || !page) return;
+            var pageWidth = page.offsetWidth;
+            if (!pageWidth) return;
 
-        var pageWidth = page.offsetWidth;
-        if (!pageWidth) return;
-
-        var scale = stage.clientWidth / pageWidth;
-        stage.style.setProperty("--a5-preview-scale", String(scale));
+            var scale = stage.clientWidth / pageWidth;
+            stage.style.setProperty("--a5-preview-scale", String(scale));
+        });
     }
 
     window.addEventListener("load", function () {
-        updateReceiptWarrantyRow();
-        updateA5PreviewScale();
+        updateAllReceiptWarrantyRows();
+        updateAllA5PreviewScales();
     });
 
-    window.addEventListener("resize", updateA5PreviewScale);
+    window.addEventListener("resize", updateAllA5PreviewScales);
 
     window.addEventListener("beforeprint", function () {
-        updateReceiptWarrantyRow();
+        updateAllReceiptWarrantyRows();
     });
 </script>
 

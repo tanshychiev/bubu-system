@@ -1,6 +1,7 @@
 import hashlib
 import json
 import requests
+import time
 from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
@@ -33,6 +34,7 @@ from .models import (
     CashCount,
     BranchCashFloat,
     CombinedPaymentSession,
+    DailyCashExpense,
 )
 
 
@@ -141,6 +143,53 @@ def _send_pet_sale_completed_telegram(pet_sale, sale, branch, cashier):
         return response.ok
     except Exception:
         return False
+
+
+def _selected_pet_sale_ids(request):
+    raw_ids = request.session.get("selected_pet_sale_ids", [])
+
+    if not raw_ids:
+        legacy_id = request.session.get("selected_pet_sale_id")
+        raw_ids = [legacy_id] if legacy_id else []
+
+    clean_ids = []
+    for value in raw_ids:
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            continue
+        if value not in clean_ids:
+            clean_ids.append(value)
+
+    return clean_ids
+
+
+def _selected_pet_sales(request, lock=False):
+    ids = _selected_pet_sale_ids(request)
+    if not ids:
+        return []
+
+    queryset = (
+        PetSale.objects
+        .select_related("pet", "pet__breed_profile")
+        .filter(id__in=ids)
+        .exclude(status__in=["completed", "cancelled", "refunded"])
+    )
+    if lock:
+        queryset = queryset.select_for_update()
+
+    sales_by_id = {sale.id: sale for sale in queryset}
+    return [sales_by_id[sale_id] for sale_id in ids if sale_id in sales_by_id]
+
+
+def _pet_sale_remaining(sale):
+    remaining = sale.remaining_amount or Decimal("0.00")
+    if remaining <= 0:
+        remaining = (
+            (sale.sale_price or Decimal("0.00"))
+            - (sale.paid_amount or Decimal("0.00"))
+        )
+    return max(remaining, Decimal("0.00"))
 
 
 # ==================================================
@@ -342,7 +391,9 @@ def _build_cart_items(cart, branch=None):
             except ItemVariant.DoesNotExist:
                 variant = None
 
-        price = _get_variant_price(item, variant)
+        original_price = _get_variant_price(item, variant)
+        is_free = bool(row.get("is_free", False))
+        price = Decimal("0.00") if is_free else original_price
         line_total = price * qty
         subtotal += line_total
 
@@ -373,6 +424,8 @@ def _build_cart_items(cart, branch=None):
             "image_url": image_url,
             "quantity": qty,
             "price": price,
+            "original_price": original_price,
+            "is_free": is_free,
             "total": line_total,
             "branch_stock": branch_stock,
             "is_service": is_service_item(item),
@@ -543,31 +596,28 @@ def _build_pos_cart_context(request):
         else:
             product_total += line_total
 
-    selected_pet_sale = None
-    selected_pet_full_price = Decimal("0.00")
-    selected_pet_paid = Decimal("0.00")
-    selected_pet_remaining = Decimal("0.00")
-
-    selected_pet_sale_id = request.session.get("selected_pet_sale_id")
-
-    if selected_pet_sale_id:
-        selected_pet_sale = (
-            PetSale.objects
-            .select_related("pet", "pet__breed_profile")
-            .filter(id=selected_pet_sale_id)
-            .first()
-        )
-
-        if selected_pet_sale:
-            selected_pet_full_price = selected_pet_sale.sale_price or Decimal("0.00")
-            selected_pet_paid = selected_pet_sale.paid_amount or Decimal("0.00")
-            selected_pet_remaining = selected_pet_sale.remaining_amount or Decimal("0.00")
-
-            if selected_pet_remaining <= 0:
-                selected_pet_remaining = selected_pet_full_price - selected_pet_paid
-
-            if selected_pet_remaining < 0:
-                selected_pet_remaining = Decimal("0.00")
+    selected_pet_sales = _selected_pet_sales(request)
+    selected_pet_sale = selected_pet_sales[0] if selected_pet_sales else None
+    selected_pet_customer_name = (
+        (getattr(selected_pet_sale, "customer_name", "") or "").strip()
+        if selected_pet_sale else ""
+    )
+    selected_pet_customer_phone = (
+        (getattr(selected_pet_sale, "phone", "") or "").strip()
+        if selected_pet_sale else ""
+    )
+    selected_pet_full_price = sum(
+        ((sale.sale_price or Decimal("0.00")) for sale in selected_pet_sales),
+        Decimal("0.00"),
+    )
+    selected_pet_paid = sum(
+        ((sale.paid_amount or Decimal("0.00")) for sale in selected_pet_sales),
+        Decimal("0.00"),
+    )
+    selected_pet_remaining = sum(
+        ((_pet_sale_remaining(sale)) for sale in selected_pet_sales),
+        Decimal("0.00"),
+    )
 
     final_total = subtotal + selected_pet_remaining
 
@@ -584,7 +634,10 @@ def _build_pos_cart_context(request):
         "has_grooming_items": has_grooming_items,
         "service_total": service_total,
         "pet_total": pet_total,
+        "selected_pet_sales": selected_pet_sales,
         "selected_pet_sale": selected_pet_sale,
+        "selected_pet_customer_name": selected_pet_customer_name,
+        "selected_pet_customer_phone": selected_pet_customer_phone,
         "selected_pet_full_price": selected_pet_full_price,
         "selected_pet_paid": selected_pet_paid,
         "selected_pet_remaining": selected_pet_remaining,
@@ -654,6 +707,7 @@ def pos_switch_branch(request):
 
 @login_required
 def pos(request):
+    pos_started_at = time.perf_counter()
     current_branch = get_pos_branch(request)
 
     if not current_branch:
@@ -689,7 +743,17 @@ def pos(request):
     )
 
     item_types = ItemType.objects.filter(is_active=True).order_by("name")
-    customers = Customer.objects.all().order_by("name", "phone")
+    customers = (
+        Customer.objects
+        .only(
+            "id",
+            "name",
+            "phone",
+            "points",
+            "address",
+        )
+        .order_by("name", "phone")
+    )
 
     # ==================================================
     # SCAN / SEARCH ADD TO CART
@@ -780,6 +844,16 @@ def pos(request):
     if type_id:
         items = items.filter(item_type_id=type_id)
 
+    # Evaluate the filtered item queryset once. It is reused for stock,
+    # coming-soon calculation, barcode map, and template rendering.
+    items = list(items)
+    item_ids = [item.id for item in items]
+    variant_ids = [
+        variant.id
+        for item in items
+        for variant in item.variants.all()
+    ]
+
     # ==================================================
     # STOCK MAP
     # ==================================================
@@ -790,7 +864,7 @@ def pos(request):
         BranchStock.objects
         .filter(
             branch=current_branch,
-            variant__item__in=items,
+            variant__item_id__in=item_ids,
             variant__is_active=True,
         )
         .select_related("variant", "variant__item")
@@ -810,9 +884,14 @@ def pos(request):
     try:
         from purchases.models import PurchaseItem
 
-        purchase_data = PurchaseItem.objects.values("variant_id").annotate(
-            ordered=Sum("ordered_qty"),
-            received=Sum("received_qty"),
+        purchase_data = (
+            PurchaseItem.objects
+            .filter(variant_id__in=variant_ids)
+            .values("variant_id")
+            .annotate(
+                ordered=Sum("ordered_qty"),
+                received=Sum("received_qty"),
+            )
         )
 
         coming_map = {}
@@ -878,32 +957,28 @@ def pos(request):
     # ==================================================
     # SELECTED PET SALE FROM PET MODULE
     # ==================================================
-    selected_pet_sale = None
-    selected_pet_full_price = Decimal("0.00")
-    selected_pet_paid = Decimal("0.00")
-    selected_pet_remaining = Decimal("0.00")
-
-    selected_pet_sale_id = request.session.get("selected_pet_sale_id")
-
-    if selected_pet_sale_id:
-        selected_pet_sale = (
-            PetSale.objects
-            .select_related("pet", "pet__breed_profile")
-            .filter(id=selected_pet_sale_id)
-            .first()
-        )
-
-        if selected_pet_sale:
-            selected_pet_full_price = selected_pet_sale.sale_price or Decimal("0.00")
-            selected_pet_paid = selected_pet_sale.paid_amount or Decimal("0.00")
-
-            selected_pet_remaining = selected_pet_sale.remaining_amount or Decimal("0.00")
-
-            if selected_pet_remaining <= 0:
-                selected_pet_remaining = selected_pet_full_price - selected_pet_paid
-
-            if selected_pet_remaining < 0:
-                selected_pet_remaining = Decimal("0.00")
+    selected_pet_sales = _selected_pet_sales(request)
+    selected_pet_sale = selected_pet_sales[0] if selected_pet_sales else None
+    selected_pet_customer_name = (
+        (getattr(selected_pet_sale, "customer_name", "") or "").strip()
+        if selected_pet_sale else ""
+    )
+    selected_pet_customer_phone = (
+        (getattr(selected_pet_sale, "phone", "") or "").strip()
+        if selected_pet_sale else ""
+    )
+    selected_pet_full_price = sum(
+        ((sale.sale_price or Decimal("0.00")) for sale in selected_pet_sales),
+        Decimal("0.00"),
+    )
+    selected_pet_paid = sum(
+        ((sale.paid_amount or Decimal("0.00")) for sale in selected_pet_sales),
+        Decimal("0.00"),
+    )
+    selected_pet_remaining = sum(
+        ((_pet_sale_remaining(sale)) for sale in selected_pet_sales),
+        Decimal("0.00"),
+    )
 
     final_total = subtotal + selected_pet_remaining
 
@@ -911,7 +986,7 @@ def pos(request):
     pos_checkout_error = request.session.pop("pos_checkout_error", "")
     pos_checkout_error_field = request.session.pop("pos_checkout_error_field", "")
 
-    return render(request, "pos/pos.html", {
+    response = render(request, "pos/pos.html", {
         "items": items,
         "item_types": item_types,
         "cart_items": cart_items,
@@ -927,7 +1002,10 @@ def pos(request):
         "service_total": service_total,
         "pet_total": pet_total,
 
+        "selected_pet_sales": selected_pet_sales,
         "selected_pet_sale": selected_pet_sale,
+        "selected_pet_customer_name": selected_pet_customer_name,
+        "selected_pet_customer_phone": selected_pet_customer_phone,
         "selected_pet_full_price": selected_pet_full_price,
         "selected_pet_paid": selected_pet_paid,
         "selected_pet_remaining": selected_pet_remaining,
@@ -943,6 +1021,11 @@ def pos(request):
         "pos_checkout_error": pos_checkout_error,
         "pos_checkout_error_field": pos_checkout_error_field,
     })
+
+    generation_ms = (time.perf_counter() - pos_started_at) * 1000
+    response["Server-Timing"] = f"pos;dur={generation_ms:.1f}"
+    response["X-BUBU-POS-Generation-MS"] = f"{generation_ms:.1f}"
+    return response
 
 # ==================================================
 # CART ACTIONS
@@ -1083,6 +1166,25 @@ def pos_minus_cart(request, cart_key):
     return redirect("pos")
 
 
+
+@login_required
+def pos_toggle_free_cart(request, cart_key):
+    cart = _get_cart(request)
+
+    if cart_key in cart:
+        cart[cart_key]["is_free"] = not bool(cart[cart_key].get("is_free", False))
+        _save_cart(request, cart)
+
+    if _is_ajax(request):
+        state = bool(cart.get(cart_key, {}).get("is_free", False))
+        return _cart_ajax_response(
+            request,
+            message="Item marked FREE." if state else "Item changed back to normal price.",
+        )
+
+    return redirect("pos")
+
+
 @login_required
 def pos_remove_cart(request, cart_key):
     cart = _get_cart(request)
@@ -1096,13 +1198,54 @@ def pos_remove_cart(request, cart_key):
 
 
 @login_required
-def pos_clear_cart(request):
-    _save_cart(request, {})
+def pos_remove_pet_sale(request, pet_sale_id):
+    """
+    Remove a wrongly attached Pet Sale from the current POS session only.
+
+    This does not delete or change the PetSale record. It only removes the
+    selected Pet Sale from this cashier's current POS transaction.
+    """
+    selected_ids = _selected_pet_sale_ids(request)
+    selected_ids = [sale_id for sale_id in selected_ids if sale_id != int(pet_sale_id)]
+
+    if selected_ids:
+        request.session["selected_pet_sale_ids"] = selected_ids
+        request.session["selected_pet_sale_id"] = selected_ids[0]
+    else:
+        request.session.pop("selected_pet_sale_ids", None)
+        request.session.pop("selected_pet_sale_id", None)
+
+    request.session.modified = True
 
     if _is_ajax(request):
-        return _cart_ajax_response(request, message="Cart cleared.")
+        return _cart_ajax_response(
+            request,
+            message="Pet Sale removed from POS. The Pet Sale record was not deleted.",
+        )
 
-    messages.success(request, "Cart cleared.")
+    messages.success(
+        request,
+        "Pet Sale removed from POS. The Pet Sale record was not deleted.",
+    )
+    return redirect("pos")
+
+
+@login_required
+def pos_clear_cart(request):
+    # Clear normal cart items and every Pet Sale attached to this POS session.
+    # PetSale database records are not deleted or changed.
+    _save_cart(request, {})
+    request.session.pop("selected_pet_sale_id", None)
+    request.session.pop("selected_pet_sale_ids", None)
+    request.session.modified = True
+
+    if _is_ajax(request):
+        return _cart_ajax_response(
+            request,
+            message="Cart and attached Pet Sales cleared.",
+        )
+
+    messages.success(request, "Cart and attached Pet Sales cleared.")
     return redirect("pos")
 
 
@@ -1128,37 +1271,14 @@ def pos_checkout(request):
     cart = _get_cart(request)
     cart_items, cart_subtotal = _build_cart_items(cart, branch)
 
-    selected_pet_sale = None
-    selected_pet_remaining = Decimal("0.00")
-
-    selected_pet_sale_id = (
-        request.POST.get("selected_pet_sale_id")
-        or request.session.get("selected_pet_sale_id")
+    selected_pet_sales = _selected_pet_sales(request, lock=True)
+    selected_pet_sale = selected_pet_sales[0] if selected_pet_sales else None
+    selected_pet_remaining = sum(
+        ((_pet_sale_remaining(pet_sale)) for pet_sale in selected_pet_sales),
+        Decimal("0.00"),
     )
 
-    if selected_pet_sale_id:
-        selected_pet_sale = (
-            PetSale.objects
-            .select_for_update()
-            .select_related("pet")
-            .filter(id=selected_pet_sale_id)
-            .first()
-        )
-
-        if selected_pet_sale:
-            selected_pet_remaining = selected_pet_sale.remaining_amount or Decimal("0.00")
-
-            if selected_pet_remaining <= 0:
-                selected_pet_remaining = (
-                    selected_pet_sale.sale_price or Decimal("0.00")
-                ) - (
-                    selected_pet_sale.paid_amount or Decimal("0.00")
-                )
-
-            if selected_pet_remaining < 0:
-                selected_pet_remaining = Decimal("0.00")
-
-    if not cart_items and not selected_pet_sale:
+    if not cart_items and not selected_pet_sales:
         return _remember_pos_checkout_error(
             request,
             "Cart is empty.",
@@ -1462,22 +1582,23 @@ def pos_checkout(request):
     # - add the pet-sale points to this final POS customer
     # - create/update CustomerPet under this final POS customer (pet owner)
     # - keep the POS receipt linked to the same customer
-    if selected_pet_sale and customer:
-        pet_customer_update_fields = []
-
+    if selected_pet_sales and customer:
         final_customer_name = (customer.name or customer_name or "").strip()
         final_customer_phone = (customer.phone or customer_phone or "").strip()
 
-        if (selected_pet_sale.customer_name or "").strip() != final_customer_name:
-            selected_pet_sale.customer_name = final_customer_name
-            pet_customer_update_fields.append("customer_name")
+        for pet_sale in selected_pet_sales:
+            update_fields = []
 
-        if (selected_pet_sale.phone or "").strip() != final_customer_phone:
-            selected_pet_sale.phone = final_customer_phone
-            pet_customer_update_fields.append("phone")
+            if (pet_sale.customer_name or "").strip() != final_customer_name:
+                pet_sale.customer_name = final_customer_name
+                update_fields.append("customer_name")
 
-        if pet_customer_update_fields:
-            selected_pet_sale.save(update_fields=pet_customer_update_fields)
+            if (pet_sale.phone or "").strip() != final_customer_phone:
+                pet_sale.phone = final_customer_phone
+                update_fields.append("phone")
+
+            if update_fields:
+                pet_sale.save(update_fields=update_fields)
 
     # ==================================================
     # CREATE POS SALE
@@ -1506,7 +1627,7 @@ def pos_checkout(request):
     #
     # CombinedPaymentSession already has all required fields, so no migration
     # or model change is needed.
-    if selected_pet_sale:
+    if selected_pet_sales:
         pet_snapshot_status = CombinedPaymentSession.STATUS_PAID
 
         if paid_amount < final_total:
@@ -1549,6 +1670,8 @@ def pos_checkout(request):
         variant = cart_item["variant"]
         quantity = int(cart_item["quantity"])
         price = cart_item["price"]
+        original_price = cart_item.get("original_price", price)
+        is_free = bool(cart_item.get("is_free", False))
 
         SaleItem.objects.create(
             sale=sale,
@@ -1557,6 +1680,8 @@ def pos_checkout(request):
             variant=variant,
             quantity=quantity,
             price=price,
+            original_price=original_price,
+            is_free=is_free,
         )
 
         if not is_service_item(item):
@@ -1677,103 +1802,71 @@ def pos_checkout(request):
     pet_sale_partial_now = False
     telegram_sent = False
 
-    if selected_pet_sale:
-        old_paid = selected_pet_sale.paid_amount or Decimal("0.00")
-        old_remaining = selected_pet_remaining
-
-        if old_remaining < 0:
-            old_remaining = Decimal("0.00")
-
-        # If this whole POS checkout is fully paid, complete the pet sale.
-        # If partial paid, product/cart money is covered first, then leftover goes to pet sale.
+    if selected_pet_sales:
+        money_available_for_pets = paid_amount - cart_subtotal
         if paid_amount >= final_total:
-            pet_pay_amount = old_remaining
-        else:
-            money_available_for_pet = paid_amount - cart_subtotal
+            money_available_for_pets = selected_pet_remaining
+        if money_available_for_pets < 0:
+            money_available_for_pets = Decimal("0.00")
 
-            if money_available_for_pet < 0:
-                money_available_for_pet = Decimal("0.00")
+        for pet_sale in selected_pet_sales:
+            old_paid = pet_sale.paid_amount or Decimal("0.00")
+            old_remaining = _pet_sale_remaining(pet_sale)
+            pet_pay_amount = min(old_remaining, money_available_for_pets)
+            money_available_for_pets -= pet_pay_amount
 
-            pet_pay_amount = min(old_remaining, money_available_for_pet)
+            if pet_pay_amount >= old_remaining and old_remaining > 0:
+                try:
+                    from pets.views import complete_pet_sale, send_pet_sale_telegram_alert
 
-        if pet_pay_amount < 0:
-            pet_pay_amount = Decimal("0.00")
-
-        if pet_pay_amount >= old_remaining and old_remaining > 0:
-            try:
-                from pets.views import complete_pet_sale, send_pet_sale_telegram_alert
-
-                complete_pet_sale(
-                    request=request,
-                    sale=selected_pet_sale,
-                    extra_paid=pet_pay_amount,
-                    warranty_days=selected_pet_sale.warranty_days or 3,
-                )
-
-                send_pet_sale_telegram_alert(
-                    selected_pet_sale,
-                    complete_only=True,
-                    first_paid_amount=old_paid,
-                    final_paid_amount=pet_pay_amount,
-                )
-
-                pet_sale_completed_now = True
-                telegram_sent = True
-
-            except Exception:
-                # Fallback if importing pets.views has any issue.
-                selected_pet_sale.paid_amount = old_paid + pet_pay_amount
-                selected_pet_sale.remaining_amount = Decimal("0.00")
-                selected_pet_sale.status = "completed"
-
-                if hasattr(selected_pet_sale, "completed_at"):
-                    selected_pet_sale.completed_at = timezone.now()
-
-                today = timezone.localdate()
-
-                if hasattr(selected_pet_sale, "warranty_start_date"):
-                    selected_pet_sale.warranty_start_date = today
-
-                if hasattr(selected_pet_sale, "warranty_expire_date"):
-                    selected_pet_sale.warranty_expire_date = today + timezone.timedelta(
-                        days=selected_pet_sale.warranty_days or 3
+                    complete_pet_sale(
+                        request=request,
+                        sale=pet_sale,
+                        extra_paid=pet_pay_amount,
+                        warranty_days=pet_sale.warranty_days or 3,
                     )
-
-                selected_pet_sale.save()
-
-                if selected_pet_sale.pet:
-                    selected_pet_sale.pet.status = "sold"
-                    selected_pet_sale.pet.save(update_fields=["status"])
-
-                pet_sale_completed_now = True
-                telegram_sent = False
-
-        else:
-            selected_pet_sale.paid_amount = old_paid + pet_pay_amount
-            sale_price = selected_pet_sale.sale_price or Decimal("0.00")
-            selected_pet_sale.remaining_amount = sale_price - selected_pet_sale.paid_amount
-
-            if selected_pet_sale.remaining_amount < 0:
-                selected_pet_sale.remaining_amount = Decimal("0.00")
-
-            if selected_pet_sale.remaining_amount <= 0:
-                selected_pet_sale.status = "completed"
-
-                if hasattr(selected_pet_sale, "completed_at"):
-                    selected_pet_sale.completed_at = timezone.now()
-
-                if selected_pet_sale.pet:
-                    selected_pet_sale.pet.status = "sold"
-                    selected_pet_sale.pet.save(update_fields=["status"])
+                    send_pet_sale_telegram_alert(
+                        pet_sale,
+                        complete_only=True,
+                        first_paid_amount=old_paid,
+                        final_paid_amount=pet_pay_amount,
+                    )
+                    telegram_sent = True
+                except Exception:
+                    pet_sale.paid_amount = old_paid + pet_pay_amount
+                    pet_sale.remaining_amount = Decimal("0.00")
+                    pet_sale.status = "completed"
+                    pet_sale.completed_at = timezone.now()
+                    today = timezone.localdate()
+                    pet_sale.warranty_start_date = today
+                    pet_sale.warranty_expire_date = today + timezone.timedelta(
+                        days=pet_sale.warranty_days or 3
+                    )
+                    pet_sale.save()
+                    if pet_sale.pet:
+                        pet_sale.pet.status = "sold"
+                        pet_sale.pet.save(update_fields=["status"])
 
                 pet_sale_completed_now = True
             else:
-                selected_pet_sale.status = "deposit"
-                pet_sale_partial_now = True
-
-            selected_pet_sale.save()
+                pet_sale.paid_amount = old_paid + pet_pay_amount
+                pet_sale.remaining_amount = max(
+                    (pet_sale.sale_price or Decimal("0.00")) - pet_sale.paid_amount,
+                    Decimal("0.00"),
+                )
+                pet_sale.status = "completed" if pet_sale.remaining_amount <= 0 else "deposit"
+                if pet_sale.status == "completed":
+                    pet_sale.completed_at = timezone.now()
+                    if pet_sale.pet:
+                        pet_sale.pet.status = "sold"
+                        pet_sale.pet.save(update_fields=["status"])
+                    pet_sale_completed_now = True
+                else:
+                    pet_sale_partial_now = True
+                pet_sale.save()
 
         request.session.pop("selected_pet_sale_id", None)
+        request.session.pop("selected_pet_sale_ids", None)
         request.session.modified = True
 
     # ==================================================
@@ -2196,38 +2289,78 @@ def pos_exchange_rate(request):
 
 @login_required
 def cash_count_dashboard(request):
-    """
-    Simple daily money summary for one branch.
-
-    Staff only counts physical cash:
-    - Cash USD in drawer
-    - Cash KHR in drawer, including the opening float
-
-    ABA is read directly from recorded POS payments and is shown as
-    a read-only received total. This keeps the page easy and avoids asking
-    staff to "count" bank money like physical cash.
-    """
-    selected_date = (request.GET.get("date") or "").strip()
-
-    if selected_date:
-        count_date = parse_date(selected_date)
-    else:
-        count_date = timezone.localdate()
-
+    """Daily cash/ABA reconciliation with same-day operating expenses."""
+    selected_date = (request.GET.get("date") or request.POST.get("date") or "").strip()
+    count_date = parse_date(selected_date) if selected_date else timezone.localdate()
     if not count_date:
         count_date = timezone.localdate()
 
     current_branch = get_pos_branch(request)
-
     if not current_branch:
-        messages.error(
-            request,
-            "No branch assigned. Please ask admin to set your shop.",
-        )
+        messages.error(request, "No branch assigned. Please ask admin to set your shop.")
         return redirect("pos")
 
-    # Cash count only includes POS walk-in sales.
-    # Prepare Delivery sales are handled from the Delivery workflow.
+    # Add/delete expense first, then reload the same selected day.
+    if request.method == "POST":
+        action = (request.POST.get("action") or "save_count").strip()
+
+        if action == "add_expense":
+            category = (request.POST.get("expense_category") or "other").strip()
+            source = (request.POST.get("expense_source") or "cash_usd").strip()
+            note = (request.POST.get("expense_note") or "").strip()
+            raw_amount = (request.POST.get("expense_amount") or "").strip()
+
+            valid_categories = {value for value, _ in DailyCashExpense.CATEGORY_CHOICES}
+            valid_sources = {value for value, _ in DailyCashExpense.SOURCE_CHOICES}
+
+            try:
+                amount = Decimal(raw_amount.replace(",", ""))
+            except (InvalidOperation, TypeError, ValueError):
+                amount = Decimal("0")
+
+            if category not in valid_categories:
+                category = "other"
+
+            if source not in valid_sources:
+                source = "cash_usd"
+
+            if amount <= 0:
+                messages.error(request, "Expense amount must be greater than zero.")
+            else:
+                if source in ["cash_khr", "aba_khr"]:
+                    amount = amount.quantize(Decimal("1"))
+                else:
+                    amount = amount.quantize(Decimal("0.01"))
+
+                DailyCashExpense.objects.create(
+                    branch=current_branch,
+                    date=count_date,
+                    category=category,
+                    source=source,
+                    amount=amount,
+                    note=note,
+                    created_by=request.user,
+                )
+                messages.success(request, "Expense added and cash balance recalculated.")
+
+            return redirect(f"{request.path}?date={count_date}")
+
+        if action == "delete_expense":
+            expense_id = request.POST.get("expense_id")
+            expense = DailyCashExpense.objects.filter(
+                id=expense_id,
+                branch=current_branch,
+                date=count_date,
+            ).first()
+
+            if expense:
+                expense.delete()
+                messages.success(request, "Expense removed and balance recalculated.")
+            else:
+                messages.error(request, "Expense record was not found.")
+
+            return redirect(f"{request.path}?date={count_date}")
+
     sales = (
         Sale.objects
         .filter(
@@ -2247,82 +2380,31 @@ def cash_count_dashboard(request):
     )
 
     khr_rate = get_khr_rate()
-
     if not khr_rate or khr_rate <= 0:
         khr_rate = Decimal("4100")
-
     change_rate = Decimal("4000")
 
-    gross_cash_usd = (
-        payments
-        .filter(method="cash_usd")
-        .aggregate(total=Sum("amount"))["total"]
-        or Decimal("0")
-    )
+    def payment_total(method):
+        return (
+            payments.filter(method=method).aggregate(total=Sum("amount"))["total"]
+            or Decimal("0")
+        )
 
-    gross_cash_khr = (
-        payments
-        .filter(method="cash_khr")
-        .aggregate(total=Sum("amount"))["total"]
-        or Decimal("0")
-    )
-
-    gross_aba_usd = (
-        payments
-        .filter(method="aba_usd")
-        .aggregate(total=Sum("amount"))["total"]
-        or Decimal("0")
-    )
-
-    gross_aba_khr = (
-        payments
-        .filter(method="aba_khr")
-        .aggregate(total=Sum("amount"))["total"]
-        or Decimal("0")
-    )
-
-    recorded_change_usd = (
-        payments
-        .filter(method="change_usd")
-        .aggregate(total=Sum("amount"))["total"]
-        or Decimal("0")
-    )
-
-    recorded_change_khr = (
-        payments
-        .filter(method="change_khr")
-        .aggregate(total=Sum("amount"))["total"]
-        or Decimal("0")
-    )
-
-    recorded_change_aba_usd = (
-        payments
-        .filter(method="change_aba_usd")
-        .aggregate(total=Sum("amount"))["total"]
-        or Decimal("0")
-    )
-
-    recorded_change_aba_khr = (
-        payments
-        .filter(method="change_aba_khr")
-        .aggregate(total=Sum("amount"))["total"]
-        or Decimal("0")
-    )
+    gross_cash_usd = payment_total("cash_usd")
+    gross_cash_khr = payment_total("cash_khr")
+    gross_aba_usd = payment_total("aba_usd")
+    gross_aba_khr = payment_total("aba_khr")
+    recorded_change_usd = payment_total("change_usd")
+    recorded_change_khr = payment_total("change_khr")
+    recorded_change_aba_usd = payment_total("change_aba_usd")
+    recorded_change_aba_khr = payment_total("change_aba_khr")
 
     sales_with_change_records = payments.filter(
-        method__in=[
-            "change_usd",
-            "change_khr",
-            "change_aba_usd",
-            "change_aba_khr",
-        ]
+        method__in=["change_usd", "change_khr", "change_aba_usd", "change_aba_khr"]
     ).values_list("sale_id", flat=True)
 
-    # Older receipts only stored Sale.change_amount. Treat that legacy value
-    # as USD change so old cash counts remain correct after this update.
     legacy_change_usd = (
-        sales
-        .exclude(id__in=sales_with_change_records)
+        sales.exclude(id__in=sales_with_change_records)
         .aggregate(total=Sum("change_amount"))["total"]
         or Decimal("0")
     )
@@ -2330,23 +2412,35 @@ def cash_count_dashboard(request):
     change_given_usd = recorded_change_usd + legacy_change_usd
     change_given_khr = recorded_change_khr
 
-    system_cash_usd = gross_cash_usd - change_given_usd
-    system_cash_khr = gross_cash_khr - change_given_khr
-    system_aba_usd = gross_aba_usd - recorded_change_aba_usd
-    system_aba_khr = gross_aba_khr - recorded_change_aba_khr
+    sales_cash_usd = gross_cash_usd - change_given_usd
+    sales_cash_khr = gross_cash_khr - change_given_khr
+    sales_aba_usd = gross_aba_usd - recorded_change_aba_usd
+    sales_aba_khr = gross_aba_khr - recorded_change_aba_khr
 
-    # Net cash or ABA can be negative when a refund/change comes from opening
-    # money or from a different payment channel. Keep the real value.
+    expenses = DailyCashExpense.objects.filter(
+        branch=current_branch,
+        date=count_date,
+    ).select_related("created_by")
 
-    total_sales = (
-        sales.aggregate(total=Sum("total_amount"))["total"]
-        or Decimal("0")
-    )
+    def expense_total(source):
+        return (
+            expenses.filter(source=source).aggregate(total=Sum("amount"))["total"]
+            or Decimal("0")
+        )
 
-    total_paid = (
-        sales.aggregate(total=Sum("paid_amount"))["total"]
-        or Decimal("0")
-    )
+    expense_cash_usd = expense_total("cash_usd")
+    expense_cash_khr = expense_total("cash_khr")
+    expense_aba_usd = expense_total("aba_usd")
+    expense_aba_khr = expense_total("aba_khr")
+
+    # These are the true balances after money was used for daily expenses.
+    system_cash_usd = sales_cash_usd - expense_cash_usd
+    system_cash_khr = sales_cash_khr - expense_cash_khr
+    system_aba_usd = sales_aba_usd - expense_aba_usd
+    system_aba_khr = sales_aba_khr - expense_aba_khr
+
+    total_sales = sales.aggregate(total=Sum("total_amount"))["total"] or Decimal("0")
+    total_paid = sales.aggregate(total=Sum("paid_amount"))["total"] or Decimal("0")
 
     total_change = (
         change_given_usd
@@ -2355,29 +2449,23 @@ def cash_count_dashboard(request):
         + (recorded_change_aba_khr / change_rate)
     )
 
-    cash_received_usd_equivalent = (
-        system_cash_usd
-        + (system_cash_khr / khr_rate)
+    total_expenses_usd_equivalent = (
+        expense_cash_usd
+        + expense_aba_usd
+        + (expense_cash_khr / khr_rate)
+        + (expense_aba_khr / khr_rate)
     )
 
-    aba_received_usd_equivalent = (
-        system_aba_usd
-        + (system_aba_khr / khr_rate)
-    )
-
+    cash_received_usd_equivalent = system_cash_usd + (system_cash_khr / khr_rate)
+    aba_received_usd_equivalent = system_aba_usd + (system_aba_khr / khr_rate)
     total_received_usd_equivalent = (
-        cash_received_usd_equivalent
-        + aba_received_usd_equivalent
+        cash_received_usd_equivalent + aba_received_usd_equivalent
     )
-
-    # Cash values above are already net of the actual change given.
     net_received_after_change = total_received_usd_equivalent
 
     branch_float, _ = BranchCashFloat.objects.get_or_create(
         branch=current_branch,
-        defaults={
-            "default_change_khr": Decimal("100000"),
-        },
+        defaults={"default_change_khr": Decimal("100000")},
     )
 
     cash_count, _created = CashCount.objects.get_or_create(
@@ -2392,34 +2480,18 @@ def cash_count_dashboard(request):
     )
 
     if request.method == "POST":
+        # Only save count when action is save_count.
         cash_count.opening_change_khr = money(
             request.POST.get("opening_change_khr"),
-            str(
-                branch_float.default_change_khr
-                or Decimal("100000")
-            ),
+            str(branch_float.default_change_khr or Decimal("100000")),
         )
-
-        cash_count.counted_cash_usd = money(
-            request.POST.get("counted_cash_usd")
-        )
-
-        cash_count.counted_cash_khr = money(
-            request.POST.get("counted_cash_khr")
-        )
-
-        # ABA is read from POS payment records, so staff does not need
-        # to enter it manually on this simplified page.
+        cash_count.counted_cash_usd = money(request.POST.get("counted_cash_usd"))
+        cash_count.counted_cash_khr = money(request.POST.get("counted_cash_khr"))
         cash_count.counted_aba_usd = system_aba_usd
-
-        cash_count.note = (
-            request.POST.get("note") or ""
-        ).strip()
-
+        cash_count.note = (request.POST.get("note") or "").strip()
         cash_count.counted_by = request.user
         cash_count.counted_at = timezone.now()
 
-    # Always refresh the saved system totals from the payment records.
     cash_count.system_cash_usd = system_cash_usd
     cash_count.system_cash_khr = system_cash_khr
     cash_count.system_aba_usd = system_aba_usd
@@ -2429,33 +2501,16 @@ def cash_count_dashboard(request):
         or branch_float.default_change_khr
         or Decimal("100000")
     )
-
-    expected_cash_khr = (
-        opening_change_khr
-        + system_cash_khr
-    )
-
+    expected_cash_khr = opening_change_khr + system_cash_khr
     cash_count.expected_cash_khr = expected_cash_khr
     cash_count.save()
 
     if request.method == "POST":
-        messages.success(
-            request,
-            "Daily cash count saved.",
-        )
-        return redirect(
-            f"{request.path}?date={count_date}"
-        )
+        messages.success(request, "Daily cash count saved.")
+        return redirect(f"{request.path}?date={count_date}")
 
-    diff_usd = (
-        cash_count.counted_cash_usd
-        - system_cash_usd
-    )
-
-    diff_khr = (
-        cash_count.counted_cash_khr
-        - expected_cash_khr
-    )
+    diff_usd = cash_count.counted_cash_usd - system_cash_usd
+    diff_khr = cash_count.counted_cash_khr - expected_cash_khr
 
     return render(
         request,
@@ -2465,10 +2520,22 @@ def cash_count_dashboard(request):
             "current_branch": current_branch,
             "sales": sales,
             "cash_count": cash_count,
+            "expenses": expenses,
 
             "total_sales": total_sales,
             "total_paid": total_paid,
             "total_change": total_change,
+            "total_expenses_usd_equivalent": total_expenses_usd_equivalent,
+
+            "sales_cash_usd": sales_cash_usd,
+            "sales_cash_khr": sales_cash_khr,
+            "sales_aba_usd": sales_aba_usd,
+            "sales_aba_khr": sales_aba_khr,
+
+            "expense_cash_usd": expense_cash_usd,
+            "expense_cash_khr": expense_cash_khr,
+            "expense_aba_usd": expense_aba_usd,
+            "expense_aba_khr": expense_aba_khr,
 
             "system_cash_usd": system_cash_usd,
             "system_cash_khr": system_cash_khr,
@@ -2479,24 +2546,15 @@ def cash_count_dashboard(request):
             "system_aba_usd": system_aba_usd,
             "system_aba_khr": system_aba_khr,
 
-            "cash_received_usd_equivalent": (
-                cash_received_usd_equivalent
-            ),
-            "aba_received_usd_equivalent": (
-                aba_received_usd_equivalent
-            ),
-            "total_received_usd_equivalent": (
-                total_received_usd_equivalent
-            ),
-            "net_received_after_change": (
-                net_received_after_change
-            ),
+            "cash_received_usd_equivalent": cash_received_usd_equivalent,
+            "aba_received_usd_equivalent": aba_received_usd_equivalent,
+            "total_received_usd_equivalent": total_received_usd_equivalent,
+            "net_received_after_change": net_received_after_change,
             "khr_rate": khr_rate,
 
             "branch_float": branch_float,
             "opening_change_khr": opening_change_khr,
             "expected_cash_khr": expected_cash_khr,
-
             "diff_usd": diff_usd,
             "diff_khr": diff_khr,
         },

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static cost_tags %}
+{% load static %}
 
 {% block content %}
 
@@ -22,6 +22,11 @@
 
     <form method="post" enctype="multipart/form-data" class="form-card" id="petForm" novalidate>
         {% csrf_token %}
+        <div id="petValidationError" class="pet-validation-error" hidden>
+            <strong>Please check the red field.</strong>
+            <span id="petValidationErrorText"></span>
+        </div>
+
 
         {% if form.errors %}
             <div class="error-box">
@@ -271,19 +276,13 @@
                             </button>
                         </label>
 
-                        {% if can_edit_cost_price %}
+                        {% if perms.auth.view_user %}
                             <label class="{% if form.cost_price.errors %}field-error{% endif %}">
                                 Cost Price
-                                {% if not can_view_cost_price %}
-                                <div class="cost-write-note">
-                                    <strong class="{% if form.cost_status == 'No Cost' %}no-cost{% endif %}">{{ form.cost_status|default:"No Cost" }}</strong>
-                                    <span>Saved amount is hidden. Enter only to add or replace cost.</span>
-                                </div>
-                                {% endif %}
-                                <input type="number" min="0" step="0.01" name="cost_price" id="costPriceInput"
-                                       value="{% if can_view_cost_price %}{{ pet.cost_price|default:'0.00' }}{% endif %}"
-                                       placeholder="{% if can_view_cost_price %}0.00{% else %}Enter new cost{% endif %}" autocomplete="off">
+                                <input type="number" step="0.01" name="cost_price" id="costPriceInput" value="{{ pet.cost_price|default:'0.00' }}">
                             </label>
+                        {% else %}
+                            <input type="hidden" name="cost_price" id="costPriceInput" value="{{ pet.cost_price|default:'0.00' }}">
                         {% endif %}
 
                         <label class="{% if form.sale_price.errors %}field-error{% endif %}">
@@ -618,19 +617,13 @@
                             <input type="number" name="quantity" id="bulkQuantityInput" min="1" max="30" value="2">
                         </label>
 
-                        {% if can_edit_cost_price %}
+                        {% if perms.auth.view_user %}
                             <label>
                                 Cost Price
-                                {% if not can_view_cost_price %}
-                                <div class="cost-write-note">
-                                    <strong class="no-cost">No Cost</strong>
-                                    <span>Enter a shared cost, or leave blank.</span>
-                                </div>
-                                {% endif %}
-                                <input type="number" min="0" step="0.01" name="cost_price" id="bulkCostPriceInput"
-                                       value="{% if can_view_cost_price %}0.00{% endif %}"
-                                       placeholder="{% if can_view_cost_price %}0.00{% else %}Enter new cost{% endif %}" autocomplete="off">
+                                <input type="number" step="0.01" name="cost_price" id="bulkCostPriceInput" value="0.00">
                             </label>
+                        {% else %}
+                            <input type="hidden" name="cost_price" id="bulkCostPriceInput" value="0.00">
                         {% endif %}
 
                         <label>
@@ -679,7 +672,7 @@
     <input type="text" id="breedSearchInput" class="popup-search" placeholder="Search breed..." oninput="filterBreedButtons('breedOptionList', 'breedSearchInput')">
 
     <div class="breed-option-list" id="breedOptionList">
-        <button type="button" class="breed-select-card breed-option" data-search="no breed manual old data" onclick="chooseBreed('', 'Choose Breed Master', '', '', '', '', 'No Cost')">
+        <button type="button" class="breed-select-card breed-option" data-search="no breed manual old data" onclick="chooseBreed('', 'Choose Breed Master', '', '', '', '')">
             <div class="breed-icon">🐾</div>
             <div class="breed-info">
                 <strong>No Breed Master</strong>
@@ -694,12 +687,11 @@
                 data-breed-id="{{ breed.id }}"
                 data-breed-label="{{ breed.get_pet_type_display|escape }} - {{ breed.name|escape }}"
                 data-pet-type="{{ breed.pet_type }}"
-                data-cost="{% if can_view_cost_price %}{{ breed.default_cost_price }}{% endif %}"
-                data-cost-status="{{ breed.cost_status }}"
+                data-cost="{{ breed.default_cost_price }}"
                 data-sale="{{ breed.default_sale_price }}"
                 data-breed-name="{{ breed.name|escape }}"
                 data-search="{{ breed.get_pet_type_display }} {{ breed.name }} {{ breed.color_options }} {{ breed.special_type_options }}"
-                onclick="chooseBreed('{{ breed.id }}', '{{ breed.get_pet_type_display }} - {{ breed.name|escapejs }}', '{{ breed.pet_type }}', '{% if can_view_cost_price %}{{ breed.default_cost_price }}{% endif %}', '{{ breed.default_sale_price }}', '{{ breed.name|escapejs }}', '{{ breed.cost_status|escapejs }}')"
+                onclick="chooseBreed('{{ breed.id }}', '{{ breed.get_pet_type_display }} - {{ breed.name|escapejs }}', '{{ breed.pet_type }}', '{{ breed.default_cost_price }}', '{{ breed.default_sale_price }}', '{{ breed.name|escapejs }}')"
             >
                 <div class="breed-photo">
                     {% if breed.photo %}
@@ -712,7 +704,6 @@
                 <div class="breed-info">
                     <strong>{{ breed.name }}</strong>
                     <span>{{ breed.get_pet_type_display }}</span>
-                    <span class="cost-status-text">Cost: {% cost_display breed.default_cost_price %}</span>
                 </div>
             </button>
         {% endfor %}
@@ -736,12 +727,11 @@
                 data-breed-id="{{ breed.id }}"
                 data-breed-label="{{ breed.get_pet_type_display|escape }} - {{ breed.name|escape }}"
                 data-pet-type="{{ breed.pet_type }}"
-                data-cost="{% if can_view_cost_price %}{{ breed.default_cost_price }}{% endif %}"
-                data-cost-status="{{ breed.cost_status }}"
+                data-cost="{{ breed.default_cost_price }}"
                 data-sale="{{ breed.default_sale_price }}"
                 data-breed-name="{{ breed.name|escape }}"
                 data-search="{{ breed.get_pet_type_display }} {{ breed.name }} {{ breed.color_options }} {{ breed.special_type_options }}"
-                onclick="chooseBulkBreed('{{ breed.id }}', '{{ breed.get_pet_type_display }} - {{ breed.name|escapejs }}', '{{ breed.pet_type }}', '{% if can_view_cost_price %}{{ breed.default_cost_price }}{% endif %}', '{{ breed.default_sale_price }}', '{{ breed.name|escapejs }}', '{{ breed.cost_status|escapejs }}')"
+                onclick="chooseBulkBreed('{{ breed.id }}', '{{ breed.get_pet_type_display }} - {{ breed.name|escapejs }}', '{{ breed.pet_type }}', '{{ breed.default_cost_price }}', '{{ breed.default_sale_price }}', '{{ breed.name|escapejs }}')"
             >
                 <div class="breed-photo">
                     {% if breed.photo %}
@@ -754,7 +744,6 @@
                 <div class="breed-info">
                     <strong>{{ breed.name }}</strong>
                     <span>{{ breed.get_pet_type_display }}</span>
-                    <span class="cost-status-text">Cost: {% cost_display breed.default_cost_price %}</span>
                 </div>
             </button>
         {% endfor %}
@@ -2756,10 +2745,17 @@ document.addEventListener("DOMContentLoaded", function(){
 
     if(form){
         form.addEventListener("submit", function(e){
-            if(!validatePetForm()){
+            if(!validatePetForm(e)){
                 e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                stopPetFormLoading();
+                return false;
             }
-        });
+
+            hidePetValidationError();
+            return true;
+        }, true);
     }
 });
 
@@ -2848,82 +2844,202 @@ function switchStockMode(){
     }
 }
 
+function stopPetFormLoading(){
+    /*
+     * The base layout may show its full-page loading screen as soon as a
+     * submit starts. When validation fails, remove every common loading state
+     * immediately without refreshing the page or clearing any entered data.
+     */
+    document.body.classList.remove(
+        "loading",
+        "page-loading",
+        "is-loading",
+        "form-submitting",
+        "submitting"
+    );
+
+    [
+        "#pageLoader",
+        "#globalLoader",
+        "#loadingOverlay",
+        "#loaderOverlay",
+        ".page-loader",
+        ".global-loader",
+        ".loading-overlay",
+        ".loader-overlay",
+        ".bubu-loader"
+    ].forEach(function(selector){
+        document.querySelectorAll(selector).forEach(function(loader){
+            loader.style.display = "none";
+            loader.classList.remove("active", "show", "visible");
+            loader.setAttribute("aria-hidden", "true");
+        });
+    });
+
+    const saveBtn = document.getElementById("saveBtn");
+    if(saveBtn){
+        saveBtn.disabled = false;
+        const checked = document.querySelector('input[name="stock_mode"]:checked');
+        const mode = checked ? checked.value : "single";
+        saveBtn.innerText = mode === "bulk" ? "💾 Save All Pets" : "💾 Save Pet";
+    }
+}
+
+function showPetValidationError(message, element){
+    const box = document.getElementById("petValidationError");
+    const textBox = document.getElementById("petValidationErrorText");
+
+    if(textBox){
+        textBox.textContent = message;
+    }
+
+    if(box){
+        box.hidden = false;
+    }
+
+    if(element){
+        const wrap = element.closest("label") || element.closest(".bulk-pet-card") || element.parentElement;
+        if(wrap){
+            wrap.classList.add("field-error");
+        }
+
+        element.classList.add("invalid-input");
+
+        try{
+            element.scrollIntoView({behavior:"smooth", block:"center"});
+        }catch(error){
+            element.scrollIntoView();
+        }
+
+        setTimeout(function(){
+            try{ element.focus({preventScroll:true}); }catch(error){ element.focus(); }
+        }, 250);
+    }
+
+    stopPetFormLoading();
+    return false;
+}
+
+function hidePetValidationError(){
+    const box = document.getElementById("petValidationError");
+    if(box){
+        box.hidden = true;
+    }
+}
+
 function markInvalid(elementId){
     const el = document.getElementById(elementId);
-    if(!el) return;
+    if(!el) return null;
 
     const wrap = el.closest("label") || el.parentElement;
     if(wrap){
         wrap.classList.add("field-error");
-        wrap.scrollIntoView({behavior:"smooth", block:"center"});
     }
+
+    el.classList.add("invalid-input");
+    return el;
 }
 
 function clearInvalid(){
     document.querySelectorAll(".field-error").forEach(function(el){
         el.classList.remove("field-error");
     });
+
+    document.querySelectorAll(".invalid-input").forEach(function(el){
+        el.classList.remove("invalid-input");
+    });
+
+    hidePetValidationError();
 }
 
-function validatePetForm(){
+function validatePetForm(event){
     clearInvalid();
 
     const checked = document.querySelector('input[name="stock_mode"]:checked');
     const mode = checked ? checked.value : "single";
 
     if(mode === "bulk"){
-        const breedId = document.getElementById("bulkBreedProfileInput").value.trim();
-        const qty = Number(document.getElementById("bulkQuantityInput").value || 0);
-        const salePrice = Number(document.getElementById("bulkSalePriceInput").value || 0);
-        const cardCount = document.querySelectorAll(".bulk-pet-card").length;
+        const breedField = document.getElementById("bulkBreedProfileInput");
+        const quantityField = document.getElementById("bulkQuantityInput");
+        const sharedSaleField = document.getElementById("bulkSalePriceInput");
+
+        const breedId = (breedField?.value || "").trim();
+        const qty = Number(quantityField?.value || 0);
+        const cards = Array.from(document.querySelectorAll(".bulk-pet-card"));
 
         if(!breedId){
-            alert("Please choose breed for bulk stock-in.");
-            markInvalid("bulkBreedProfileInput");
-            return false;
+            return showPetValidationError(
+                "Please choose breed for bulk stock-in.",
+                markInvalid("bulkBreedProfileInput")
+            );
         }
 
         if(qty <= 0){
-            alert("Please fill quantity.");
-            markInvalid("bulkQuantityInput");
-            return false;
+            return showPetValidationError(
+                "Please fill quantity.",
+                markInvalid("bulkQuantityInput")
+            );
         }
 
-        if(salePrice <= 0){
-            alert("Please fill sale price.");
-            markInvalid("bulkSalePriceInput");
-            return false;
+        if(cards.length !== qty){
+            return showPetValidationError(
+                "Please click Generate Pet Cards before saving.",
+                quantityField
+            );
         }
 
-        if(cardCount !== qty){
-            alert("Please click Generate Pet Cards before save.");
-            return false;
+        /*
+         * Do not require the shared/default sale price after cards are
+         * generated. Staff may fill a different sale price inside each pet
+         * card. Validate every actual pet card instead.
+         */
+        for(let index = 0; index < cards.length; index++){
+            const card = cards[index];
+            const saleInput = card.querySelector(
+                'input[name^="sale_price_"], input[data-field="sale_price"]'
+            );
+            const salePrice = Number(saleInput?.value || 0);
+
+            if(salePrice <= 0){
+                return showPetValidationError(
+                    "Please fill Sale Price for Pet " + (index + 1) + ".",
+                    saleInput || sharedSaleField
+                );
+            }
         }
 
         return true;
     }
 
-    const breedProfile = document.getElementById("breedProfileInput").value.trim();
-    const manualBreed = document.getElementById("manualBreedInput").value.trim();
-    const age = Number(document.getElementById("ageMonthsInput").value || 0);
-    const salePrice = Number(document.getElementById("salePriceInput").value || 0);
+    const breedProfileField = document.getElementById("breedProfileInput");
+    const manualBreedField = document.getElementById("manualBreedInput");
+    const ageField = document.getElementById("ageMonthsInput");
+    const salePriceField = document.getElementById("salePriceInput");
+
+    const breedProfile = (breedProfileField?.value || "").trim();
+    const manualBreed = (manualBreedField?.value || "").trim();
+    const age = Number(ageField?.value || 0);
+    const salePrice = Number(salePriceField?.value || 0);
 
     if(!breedProfile && !manualBreed){
-        alert("Please choose Breed Master or fill Manual Breed.");
-        markInvalid("breedProfileInput");
-        return false;
+        return showPetValidationError(
+            "Please choose Breed Master or fill Manual Breed.",
+            markInvalid("breedProfileInput")
+        );
     }
 
     if(age < 0){
-        alert("Age cannot be negative.");
-        markInvalid("ageMonthsInput");
-        return false;
+        return showPetValidationError(
+            "Age cannot be negative.",
+            markInvalid("ageMonthsInput")
+        );
     }
 
     if(salePrice <= 0){
-        alert("Please fill Sale Price.");
-        markInvalid("salePriceInput");
-        return false;
+        return showPetValidationError(
+            "Please fill Sale Price.",
+            markInvalid("salePriceInput")
+        );
     }
 
     return true;
@@ -2966,7 +3082,7 @@ function chooseOption(inputId, labelId, value, label){
     closeOptionPopups();
 }
 
-function chooseBreed(id, label, petType, costPrice, salePrice, breedName, costStatus){
+function chooseBreed(id, label, petType, costPrice, salePrice, breedName){
     document.getElementById("breedProfileInput").value = id;
     document.getElementById("breedProfileLabel").innerText = label;
 
@@ -2979,8 +3095,8 @@ function chooseBreed(id, label, petType, costPrice, salePrice, breedName, costSt
             manualBreed.value = breedName || "";
         }
 
-        if(costInput && costPrice !== "" && Number(costInput.value || 0) <= 0){
-            costInput.value = Number(costPrice).toFixed(2);
+        if(costInput && Number(costInput.value || 0) <= 0){
+            costInput.value = Number(costPrice || 0).toFixed(2);
         }
 
         if(saleInput && Number(saleInput.value || 0) <= 0){
@@ -2999,7 +3115,7 @@ function chooseBreed(id, label, petType, costPrice, salePrice, breedName, costSt
     closeOptionPopups();
 }
 
-function chooseBulkBreed(id, label, petType, costPrice, salePrice, breedName, costStatus){
+function chooseBulkBreed(id, label, petType, costPrice, salePrice, breedName){
     document.getElementById("bulkBreedProfileInput").value = id;
     document.getElementById("bulkBreedProfileLabel").innerText = label;
 
@@ -3017,8 +3133,8 @@ function chooseBulkBreed(id, label, petType, costPrice, salePrice, breedName, co
     const costInput = document.getElementById("bulkCostPriceInput");
     const saleInput = document.getElementById("bulkSalePriceInput");
 
-    if(costInput && costPrice !== "" && Number(costInput.value || 0) <= 0){
-        costInput.value = Number(costPrice).toFixed(2);
+    if(costInput && Number(costInput.value || 0) <= 0){
+        costInput.value = Number(costPrice || 0).toFixed(2);
     }
 
     if(saleInput && Number(saleInput.value || 0) <= 0){
@@ -3080,8 +3196,7 @@ function generateBulkCards(){
     const sharedBranchLabel = document.getElementById("bulkBranchLabel").innerText || "No Branch";
 
     const sharedAge = document.getElementById("bulkAgeInput").value || "0";
-    const sharedCostInput = document.getElementById("bulkCostPriceInput");
-    const sharedCost = sharedCostInput ? sharedCostInput.value : "";
+    const sharedCost = document.getElementById("bulkCostPriceInput").value || "0.00";
     const sharedSale = document.getElementById("bulkSalePriceInput").value || "0.00";
 
     let breedName = breedLabel;
@@ -3145,13 +3260,13 @@ function generateBulkCards(){
                     </div>
                 </label>
 
-                {% if can_edit_cost_price %}
+                {% if perms.auth.view_user %}
                 <label>
                     Cost Price
-                    {% if not can_view_cost_price %}<span class="cost-status-pill no-cost">No Cost</span>{% endif %}
-                    <input type="number" min="0" step="0.01" name="cost_price_${i}" value="${sharedCost}"
-                           placeholder="{% if can_view_cost_price %}0.00{% else %}Enter new cost{% endif %}" autocomplete="off">
+                    <input type="number" step="0.01" name="cost_price_${i}" value="${sharedCost}">
                 </label>
+                {% else %}
+                <input type="hidden" name="cost_price_${i}" value="${sharedCost}">
                 {% endif %}
 
                 <label>
@@ -3725,12 +3840,12 @@ function applyBreedFromQuery(){
     if(!button){ return; }
 
     const d = button.dataset;
-    chooseBreed(d.breedId, d.breedLabel, d.petType, d.cost, d.sale, d.breedName, d.costStatus);
+    chooseBreed(d.breedId, d.breedLabel, d.petType, d.cost, d.sale, d.breedName);
 
     const bulkButton = document.querySelector('#bulkBreedOptionList [data-breed-id="' + breedId + '"]');
     if(bulkButton){
         const b = bulkButton.dataset;
-        chooseBulkBreed(b.breedId, b.breedLabel, b.petType, b.cost, b.sale, b.breedName, b.costStatus);
+        chooseBulkBreed(b.breedId, b.breedLabel, b.petType, b.cost, b.sale, b.breedName);
     }
 }
 
@@ -3820,13 +3935,51 @@ document.addEventListener("DOMContentLoaded", setupCompactPetFormMobile);
 </script>
 
 
+<style>
+.pet-validation-error{
+    position:sticky;
+    top:10px;
+    z-index:8500;
+    margin:0 0 14px;
+    padding:14px 18px;
+    border:2px solid #ff9a9a;
+    border-radius:18px;
+    background:#fff0f0;
+    color:#d92d3a;
+    box-shadow:0 12px 28px rgba(217,45,58,.14);
+    font-weight:900;
+}
 
-<style id="bubu-two-role-cost-style">
-.cost-write-note{margin:0 0 8px;padding:9px 11px;border:1px solid #dfd3f4;border-radius:13px;display:flex;align-items:center;justify-content:space-between;gap:8px;color:#665a74;background:#faf7ff;font-size:10px;font-weight:900;line-height:1.35}
-.cost-write-note strong,.cost-status-pill{display:inline-flex;align-items:center;justify-content:center;min-height:26px;padding:4px 8px;border-radius:999px;color:#6f50d8!important;background:#eee7ff;font-size:9px!important;font-weight:1000!important;white-space:nowrap}
-.cost-write-note strong.no-cost,.cost-status-pill.no-cost{color:#b86600!important;background:#fff0d4}
-.cost-status-text{color:#6f50d8!important;font-weight:1000!important}
-@media(max-width:650px){.cost-write-note{padding:7px 8px;border-radius:10px;font-size:9px}}
+.pet-validation-error[hidden]{
+    display:none!important;
+}
+
+.pet-validation-error strong{
+    display:block;
+    margin-bottom:4px;
+    font-size:15px;
+}
+
+.pet-validation-error span{
+    display:block;
+    font-size:13px;
+}
+
+.field-error input,
+.field-error select,
+.field-error textarea,
+.field-error .touch-select,
+.field-error .touch-date-btn,
+.invalid-input{
+    border-color:#ef4444!important;
+    background:#fff7f7!important;
+    box-shadow:0 0 0 4px rgba(239,68,68,.14)!important;
+}
+
+.bulk-pet-card.field-error{
+    border-color:#ef4444!important;
+    box-shadow:0 0 0 4px rgba(239,68,68,.10)!important;
+}
 </style>
 
 {% endblock %}

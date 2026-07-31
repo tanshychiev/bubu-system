@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db import models
 from django.core.exceptions import ValidationError
 
@@ -136,6 +137,13 @@ class SaleItem(models.Model):
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
+    )
+
+    is_free = models.BooleanField(default=False)
+    original_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
     )
 
     @property
@@ -375,6 +383,77 @@ class CashCount(models.Model):
         branch_name = self.branch.name if self.branch else "No Branch"
         return f"Cash Count {branch_name} - {self.date}"
     
+
+class DailyCashExpense(models.Model):
+    SOURCE_CHOICES = [
+        ("cash_usd", "Cash USD"),
+        ("cash_khr", "Cash KHR"),
+        ("aba_usd", "ABA USD"),
+        ("aba_khr", "ABA KHR"),
+    ]
+
+    CATEGORY_CHOICES = [
+        ("grab", "Grab"),
+        ("vet", "VET"),
+        ("jt", "J&T"),
+        ("delivery", "Other Delivery"),
+        ("supplies", "Shop Supplies"),
+        ("refund", "Customer Refund"),
+        ("other", "Other"),
+    ]
+
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.PROTECT,
+        related_name="daily_cash_expenses",
+    )
+    date = models.DateField()
+    category = models.CharField(
+        max_length=30,
+        choices=CATEGORY_CHOICES,
+        default="other",
+    )
+    source = models.CharField(
+        max_length=20,
+        choices=SOURCE_CHOICES,
+        default="cash_usd",
+    )
+    amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+    )
+    note = models.CharField(max_length=255, blank=True, default="")
+    created_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="daily_cash_expenses_created",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=["branch", "date"]),
+        ]
+
+    def clean(self):
+        if self.amount <= 0:
+            raise ValidationError("Expense amount must be greater than zero.")
+
+        if self.source in ["cash_khr", "aba_khr"]:
+            self.amount = self.amount.quantize(Decimal("1"))
+        else:
+            self.amount = self.amount.quantize(Decimal("0.01"))
+
+    def __str__(self):
+        return (
+            f"{self.get_category_display()} - "
+            f"{self.get_source_display()} {self.amount}"
+        )
+
 
 class ABAPaymentSession(models.Model):
     STATUS_WAITING = "waiting"

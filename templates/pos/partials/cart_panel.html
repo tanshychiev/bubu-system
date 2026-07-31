@@ -12,8 +12,8 @@
                 🖥️ Open Customer Display
             </button>
 
-            {% if cart_items %}
-                <a href="{% url 'pos_clear_cart' %}" class="clear-btn pos-safe-nav pos-cart-action">Clear</a>
+            {% if cart_items or selected_pet_sales %}
+                <a href="{% url 'pos_clear_cart' %}" class="clear-btn pos-safe-nav pos-cart-action" title="Clear products and attached pets">Clear All</a>
             {% endif %}
         </div>
     </div>
@@ -97,7 +97,14 @@
                 <strong>🐶 Pet Sale Attached</strong>
                 <span>Pet Sale #{{ selected_pet_sale.id }} will be paid together with POS.</span>
             </div>
-            <a href="{% url 'pet_sale_detail' selected_pet_sale.id %}" target="_blank">View</a>
+            <div class="selected-pet-card-actions">
+                <a href="{% url 'pet_sale_detail' selected_pet_sale.id %}" target="_blank">View</a>
+                <button
+                    type="button"
+                    class="remove-attached-pet-btn"
+                    onclick="removeAttachedPetSale({{ selected_pet_sale.id }})"
+                >Remove</button>
+            </div>
         </div>
 
         <div class="selected-pet-grid">

@@ -13,7 +13,7 @@ SECRET_KEY = os.environ.get(
     "CHANGE-THIS-TO-A-LONG-RANDOM-SECRET-KEY",
 )
 
-DEBUG = os.environ.get("DJANGO_DEBUG", "False").lower() == "true"
+DEBUG = True
 
 ALLOWED_HOSTS = [
     "5.223.90.183",

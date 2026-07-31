@@ -47,6 +47,9 @@
         {{ form_error_fields|json_script:"petSaleErrorFields" }}
 
         <input type="hidden" name="submit_action" id="submitAction" value="save">
+        <input type="hidden" name="multi_sale" value="1">
+        <input type="hidden" name="pet_count" id="petCountInput" value="1">
+
 
         <div class="mode-tabs">
             <label class="mode-card" id="modeInStock">
@@ -82,7 +85,7 @@
                 <div class="box">
                     <h2>Customer Info</h2>
 
-                    <div class="grid2">
+                    <div class="customer-main-row">
                         <label>
                             Customer Name
                             <input
@@ -94,11 +97,20 @@
                         </label>
 
                         <label>
-                            Phone
+                            Phone Number
                             <input
                                 name="phone"
                                 id="customerPhone"
                                 value="{{ sale.phone|default:'' }}"
+                            >
+                        </label>
+
+                        <label>
+                            Location <small class="optional-label">(Optional)</small>
+                            <input
+                                name="address"
+                                id="customerAddress"
+                                value="{{ sale.address|default:'' }}"
                             >
                         </label>
                     </div>
@@ -210,10 +222,7 @@
                         </label>
                     </div>
 
-                    <label>
-                        Location
-                        <textarea name="address" id="customerAddress">{{ sale.address|default:'' }}</textarea>
-                    </label>
+
                 </div>
 
                 <div class="box" id="inStockBox">
@@ -591,15 +600,405 @@
                     </div>
                     {% endif %}
 
+                    {% if sale %}
                     <button type="submit" class="save-btn" onclick="return submitAction('save')">
-                        💾 Save Pet Sale
+                        💾 Save All Pet Sales
                     </button>
+                    {% endif %}
                 </div>
             </div>
+
         </div>
+
+        {% if not sale %}
+        <div class="more-pets-area">
+            <div id="additionalPetsContainer"></div>
+
+            <button type="button" class="add-another-pet-btn" onclick="addAnotherPet()">
+                ＋ Add Another Pet
+                <small>Use only when this same customer buys another pet.</small>
+            </button>
+
+            <div class="save-all-pets-bar">
+                <div>
+                    <strong>Save this customer and every pet above</strong>
+                    <small>Each pet creates a separate Pet Sale, warranty and receipt.</small>
+                </div>
+                <button type="submit" class="save-all-pets-btn" onclick="return submitAction('save')">
+                    💾 Save All Pet Sales
+                </button>
+            </div>
+        </div>
+        {% endif %}
     </form>
 </div>
 
+
+
+{% if not sale %}
+<template id="additionalPetTemplate">
+    <section class="additional-pet-card" data-extra-index="__INDEX__">
+        <div class="additional-pet-head">
+            <div>
+                <small>ADDITIONAL PET</small>
+                <h2>Pet __NUMBER__</h2>
+            </div>
+            <button type="button" class="remove-additional-pet" onclick="removeAdditionalPet(this)">🗑 Remove</button>
+        </div>
+
+        <div class="mode-tabs extra-mode-tabs">
+            <label class="mode-card active">
+                <input type="radio"
+                       name="pets-__INDEX__-sale_kind"
+                       value="in_stock"
+                       checked
+                       onchange="switchAdditionalPetMode(this)">
+                <span>🐾</span>
+                <strong>Sell In-stock Pet</strong>
+                <small>Select real dog/cat from stock and sell now.</small>
+            </label>
+
+            <label class="mode-card">
+                <input type="radio"
+                       name="pets-__INDEX__-sale_kind"
+                       value="preorder"
+                       onchange="switchAdditionalPetMode(this)">
+                <span>📝</span>
+                <strong>Create Pre-order</strong>
+                <small>No pet stock yet. Save deposit + deadline.</small>
+            </label>
+        </div>
+
+        <div class="sale-layout additional-sale-layout">
+            <div class="left">
+                <div class="box extra-instock-box">
+                    <h2>Choose In-stock Dog / Cat</h2>
+
+                    <input type="hidden"
+                           name="pets-__INDEX__-pet"
+                           class="extra-pet-id"
+                           value="">
+
+                    <button type="button"
+                            class="pet-popup-btn extra-pet-popup-btn"
+                            onclick="openAdditionalPetPicker(this)">
+                        <div>
+                            <strong class="extra-pet-name">Choose pet</strong>
+                            <small class="extra-pet-spec">Choose one in-stock pet.</small>
+                        </div>
+                        <span class="extra-pet-price">$0.00</span>
+                    </button>
+                </div>
+
+                <div class="box extra-preorder-box" hidden>
+                    <h2>Pre-order Dog / Cat Info</h2>
+
+                    <div class="grid2">
+                        <div class="touch-field">
+                            <span>Pet Type</span>
+                            <input type="hidden"
+                                   name="pets-__INDEX__-preorder_pet_type"
+                                   value="dog"
+                                   class="extra-pet-type">
+
+                            <button type="button"
+                                    class="touch-btn"
+                                    onclick="openAdditionalChoice(this,'pet_type')">
+                                <strong>Dog</strong><em>⌄</em>
+                            </button>
+                        </div>
+
+                        <label>
+                            Breed
+                            <input name="pets-__INDEX__-preorder_breed"
+                                   placeholder="Example: Poodle">
+                        </label>
+                    </div>
+
+                    <div class="grid2">
+                        <div class="touch-field">
+                            <span>Sex</span>
+                            <input type="hidden"
+                                   name="pets-__INDEX__-preorder_gender"
+                                   value=""
+                                   class="extra-gender">
+
+                            <button type="button"
+                                    class="touch-btn"
+                                    onclick="openAdditionalChoice(this,'gender')">
+                                <strong>Choose Sex</strong><em>⌄</em>
+                            </button>
+                        </div>
+
+                        <div class="touch-field">
+                            <span>Waiting Deadline</span>
+                            <input type="hidden"
+                                   name="pets-__INDEX__-deadline"
+                                   class="extra-deadline-input"
+                                   value="">
+
+                            <button type="button"
+                                    class="touch-btn date-open-btn"
+                                    onclick="openAdditionalCalendar(this)">
+                                <strong class="extra-deadline-label">Choose waiting date</strong>
+                                <em>📅</em>
+                            </button>
+
+                            <div class="deadline-line">
+                                <button type="button" onclick="setAdditionalDeadlineDays(this,5)">+5 days</button>
+                                <button type="button" onclick="setAdditionalDeadlineDays(this,6)">+6 days</button>
+                                <button type="button" onclick="setAdditionalDeadlineDays(this,7)">+7 days</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid2">
+                        <label>
+                            Color Wanted
+                            <input name="pets-__INDEX__-preorder_color"
+                                   placeholder="Example: Cream">
+                        </label>
+
+                        <label>
+                            Special Type
+                            <input name="pets-__INDEX__-preorder_special_type"
+                                   placeholder="Example: Teacup">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="box">
+                    <h2>Sale / Pre-order Photos</h2>
+
+                    <div class="photo-preview extra-photo-preview">
+                        <div class="extra-photo-empty">📸</div>
+                        <img class="extra-photo-image" src="" style="display:none">
+                    </div>
+
+                    <label class="upload-btn">
+                        Upload Photos
+                        <input type="file"
+                               name="pets-__INDEX__-sale_photos"
+                               accept="image/*"
+                               multiple
+                               onchange="previewAdditionalPetPhoto(this)">
+                    </label>
+
+                    <small class="photo-help">Upload up to 6 photos for this pet.</small>
+                </div>
+            </div>
+
+            <div class="right">
+                <div class="box sticky">
+                    <h2>Payment</h2>
+
+                    <div class="money-grid">
+                        <label>
+                            Full Price
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   name="pets-__INDEX__-sale_price"
+                                   value="0.00"
+                                   oninput="updateAdditionalPetSummary(this)">
+                        </label>
+
+                        <label>
+                            Discount
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   name="pets-__INDEX__-discount_amount"
+                                   value="0.00"
+                                   oninput="updateAdditionalPetSummary(this)">
+                        </label>
+
+                        <label>
+                            Paid / Deposit
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   name="pets-__INDEX__-paid_amount"
+                                   value="0.00"
+                                   oninput="updateAdditionalPetSummary(this)">
+                        </label>
+                    </div>
+
+                    <div class="extra-preorder-payment" hidden>
+                        <div class="preorder-payment-title">
+                            <strong>Pre-order Deposit Method</strong>
+                            <small>Required only when deposit is more than $0.</small>
+                        </div>
+
+                        <div class="preorder-payment-options">
+                            <label class="preorder-payment-card">
+                                <input type="radio"
+                                       name="pets-__INDEX__-preorder_payment_method"
+                                       value="cash">
+                                <span>💵</span>
+                                <strong>Cash</strong>
+                                <small>Count in physical cash</small>
+                            </label>
+
+                            <label class="preorder-payment-card">
+                                <input type="radio"
+                                       name="pets-__INDEX__-preorder_payment_method"
+                                       value="aba">
+                                <span>🏦</span>
+                                <strong>ABA</strong>
+                                <small>Count in ABA total</small>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="result">
+                        <div><span>Full Price</span><strong class="extra-full-show">$0.00</strong></div>
+                        <div><span>Discount</span><strong class="extra-discount-show">$0.00</strong></div>
+                        <div><span>Final Price</span><strong class="extra-final-show">$0.00</strong></div>
+                        <div><span>Paid / Deposit</span><strong class="extra-paid-show">$0.00</strong></div>
+                        <div class="remain-left">
+                            <span>Remaining</span>
+                            <strong class="extra-remain-show">$0.00</strong>
+                        </div>
+                    </div>
+
+                    <h2>Warranty</h2>
+
+                    <div class="grid2">
+                        <label>
+                            Warranty Days
+                            <input type="number"
+                                   min="0"
+                                   name="pets-__INDEX__-warranty_days"
+                                   value="3">
+                        </label>
+
+                        <label>
+                            Warranty Start
+                            <input type="date"
+                                   name="pets-__INDEX__-warranty_start_date">
+                        </label>
+                    </div>
+
+                    <label>
+                        Remark
+                        <textarea name="pets-__INDEX__-note"></textarea>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </section>
+</template>
+
+<div class="popup-backdrop" id="additionalChoiceBackdrop" onclick="closeAdditionalChoice()"></div>
+<div class="select-popup" id="additionalChoicePopup">
+    <div class="popup-head">
+        <h3 id="additionalChoiceTitle">Choose</h3>
+        <button type="button" onclick="closeAdditionalChoice()">✕</button>
+    </div>
+    <div class="popup-list simple-popup-list" id="additionalChoiceList"></div>
+</div>
+
+
+<div class="calendar-backdrop" id="additionalCalendarBackdrop" onclick="closeAdditionalCalendar()"></div>
+<div class="calendar-popup" id="additionalCalendarPopup">
+    <div class="calendar-header">
+        <div class="calendar-header-top">Choose waiting date</div>
+        <div class="calendar-selected" id="additionalCalendarSelectedText">Select Date</div>
+    </div>
+
+    <div class="calendar-body">
+        <div class="calendar-quick-actions">
+            <button type="button" class="quick-btn quick-green" onclick="additionalCalendarQuickPick(0)">Today</button>
+            <button type="button" class="quick-btn quick-purple" onclick="additionalCalendarQuickPick(1)">Tomorrow</button>
+            <button type="button" class="quick-btn quick-blue" onclick="additionalCalendarQuickPick(5)">+5 Days</button>
+            <button type="button" class="quick-btn quick-orange" onclick="additionalCalendarQuickPick(6)">+6 Days</button>
+            <button type="button" class="quick-btn quick-blue" onclick="additionalCalendarQuickPick(7)">+7 Days</button>
+            <button type="button" class="quick-btn quick-orange" onclick="additionalCalendarQuickPick(14)">+14 Days</button>
+        </div>
+
+        <div class="calendar-month-nav">
+            <div class="calendar-month-title" id="additionalCalendarMonthTitle">Month Year</div>
+            <div class="calendar-arrows">
+                <button type="button" onclick="changeAdditionalCalendarMonth(-1)">‹</button>
+                <button type="button" onclick="changeAdditionalCalendarMonth(1)">›</button>
+            </div>
+        </div>
+
+        <div class="calendar-weekdays">
+            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span>
+            <span>Th</span><span>Fr</span><span>Sa</span>
+        </div>
+
+        <div class="calendar-grid" id="additionalCalendarGrid"></div>
+
+        <div class="calendar-bottom-actions">
+            <button type="button" class="calendar-clear-btn" onclick="clearAdditionalCalendarValue()">Clear</button>
+            <button type="button" class="calendar-ok-btn" onclick="applyAdditionalCalendarValue()">OK</button>
+        </div>
+    </div>
+</div>
+
+<div class="popup-backdrop" id="additionalPetBackdrop" onclick="closeAdditionalPetPicker()"></div>
+<div class="pet-select-popup" id="additionalPetPopup">
+    <div class="pet-popup-head">
+        <h3>Select Pet</h3>
+        <button type="button" onclick="closeAdditionalPetPicker()">×</button>
+    </div>
+
+    <input type="text"
+           id="additionalPetSearchInput"
+           class="popup-search"
+           placeholder="Search pet, breed, color..."
+           oninput="filterAdditionalPetPicker()">
+
+    <div class="pet-option-list">
+        {% for pet in pets %}
+        <button type="button"
+                class="pet-select-card additional-pet-option"
+                data-search="{{ pet.get_pet_type_display }} {{ pet.breed_name }} {{ pet.name }} {{ pet.gender }} {{ pet.color }} {{ pet.special_type }} {{ pet.current_age_display }}"
+                data-id="{{ pet.id }}"
+                data-label="{{ pet.get_pet_type_display|escape }} · {{ pet.breed_name|escape }}{% if pet.name %} · {{ pet.name|escape }}{% endif %}"
+                data-spec="Sex: {{ pet.gender|default:'-'|escape }} · Color: {{ pet.color|default:'-'|escape }} · Type: {{ pet.special_type|default:'-'|escape }} · Age: {{ pet.current_age_display|escape }}"
+                data-price="{{ pet.sale_price }}"
+                onclick="selectAdditionalPet(this)">
+            <div class="pet-popup-photo">
+                {% if pet.display_photo %}
+                    <img src="{{ pet.display_photo.url }}" alt="{{ pet.breed_name }}">
+                {% else %}
+                    <span>{% if pet.pet_type == "cat" %}🐱{% elif pet.pet_type == "dog" %}🐶{% else %}🐾{% endif %}</span>
+                {% endif %}
+            </div>
+
+            <div class="pet-popup-info">
+                <strong>{{ pet.breed_name }}{% if pet.name %} · {{ pet.name }}{% endif %}</strong>
+                <span>
+                    {{ pet.get_pet_type_display }}
+                    {% if pet.gender %} · {{ pet.gender }}{% endif %}
+                    {% if pet.color %} · {{ pet.color }}{% endif %}
+                </span>
+                <div class="pet-popup-tags">
+                    {% if pet.special_type %}<em>{{ pet.special_type }}</em>{% endif %}
+                    <em>Age: {{ pet.current_age_display }}</em>
+                    <em>Cost: {% cost_display pet.cost_price %}</em>
+                </div>
+            </div>
+
+            <div class="pet-popup-price">
+                ${{ pet.sale_price|floatformat:2 }}
+                <small>In Stock</small>
+            </div>
+        </button>
+        {% empty %}
+        <div class="pet-empty">
+            <div>🐾</div>
+            <strong>No in-stock pet</strong>
+            <p>Please stock in pet first.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 
 <!-- MOBILE SALE ACTIONS -->
 <div class="mobile-sale-actions one-action" aria-label="Pet sale actions">
@@ -633,6 +1032,7 @@
             <button
                 type="button"
                 class="pet-select-card pet-option"
+                data-pet-id="{{ pet.id }}"
                 data-search="{{ pet.get_pet_type_display }} {{ pet.breed_name }} {{ pet.name }} {{ pet.gender }} {{ pet.color }} {{ pet.special_type }} {{ pet.current_age_display }}"
                 onclick="selectPetFromPopup(
                     '{{ pet.id }}',
@@ -2991,13 +3391,34 @@ function calcSale(){
     updatePreorderPaymentMethod();
 }
 
+function selectedPetIds(exceptCard){
+    const ids = new Set();
+
+    const firstPetId = (document.getElementById("petSelect")?.value || "").trim();
+    if(firstPetId && exceptCard !== "pet1"){
+        ids.add(firstPetId);
+    }
+
+    document.querySelectorAll(".additional-pet-card").forEach(function(card){
+        if(card === exceptCard){ return; }
+        const id = (card.querySelector(".extra-pet-id")?.value || "").trim();
+        if(id){ ids.add(id); }
+    });
+
+    return ids;
+}
+
 function openPetPopup(){
     document.getElementById("petPopup")?.classList.add("active");
     document.getElementById("petBackdrop")?.classList.add("active");
     setSalePopupState(true);
 
     const search = document.getElementById("petSearchInput");
-    if(search){ setTimeout(function(){ search.focus(); }, 100); }
+    if(search){
+        search.value = "";
+        filterPetPopup();
+        setTimeout(function(){ search.focus(); }, 100);
+    }
 }
 
 function closePetPopup(){
@@ -3007,6 +3428,13 @@ function closePetPopup(){
 }
 
 function selectPetFromPopup(id, name, gender, color, special, age, price, costDisplay){
+    const unavailable = selectedPetIds("pet1");
+    if(unavailable.has(String(id))){
+        showPetSaleError("This pet is already selected for another pet card.", document.getElementById("petSelect"));
+        closePetPopup();
+        return;
+    }
+
     const petInput = document.getElementById("petSelect");
     const nameShow = document.getElementById("petNameShow");
     const specShow = document.getElementById("petSpecShow");
@@ -3029,16 +3457,22 @@ function selectPetFromPopup(id, name, gender, color, special, age, price, costDi
 
     calcSale();
     updateCopyBox();
+    savePetSaleDraft();
     closePetPopup();
 }
 
 function filterPetPopup(){
     const input = document.getElementById("petSearchInput");
     const q = input ? input.value.toLowerCase().trim() : "";
+    const unavailable = selectedPetIds("pet1");
 
     document.querySelectorAll(".pet-option").forEach(function(btn){
         const text = (btn.dataset.search || "").toLowerCase();
-        btn.style.display = (!q || text.includes(q)) ? "grid" : "none";
+        const petId = String(btn.dataset.petId || "");
+        const matchesSearch = !q || text.includes(q);
+        const alreadySelected = unavailable.has(petId);
+
+        btn.style.display = (matchesSearch && !alreadySelected) ? "grid" : "none";
     });
 }
 
@@ -3996,6 +4430,887 @@ document.addEventListener("DOMContentLoaded", setupMobileSaleForm);
 .cost-write-note strong.no-cost,.cost-status-pill.no-cost{color:#b86600!important;background:#fff0d4}
 .cost-status-text{color:#6f50d8!important;font-weight:1000!important}
 @media(max-width:650px){.cost-write-note{padding:7px 8px;border-radius:10px;font-size:9px}}
+</style>
+
+
+<style>
+.more-pets-area{margin-top:18px}
+.add-another-pet-btn{
+    width:100%;
+    min-height:70px;
+    border:2px dashed #9b7cf6;
+    border-radius:24px;
+    background:#f7f3ff;
+    color:#6f50d8;
+    font-size:18px;
+    font-weight:1000;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+}
+.add-another-pet-btn small{
+    color:#7b7288;
+    font-size:12px;
+    font-weight:900;
+}
+.additional-pet-card{
+    margin-bottom:20px;
+    padding:22px;
+    border:2px solid #f5e0d8;
+    border-radius:30px;
+    background:#fff;
+    box-shadow:0 18px 40px rgba(130,91,60,.08);
+}
+.additional-pet-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:16px;
+}
+.additional-pet-head small{
+    color:#7b5cff;
+    font-weight:1000;
+}
+.additional-pet-head h2{
+    margin:4px 0 0;
+    color:#080634;
+}
+.remove-additional-pet{
+    min-height:44px;
+    padding:0 15px;
+    border:0;
+    border-radius:14px;
+    background:#fff0f0;
+    color:#e03131;
+    font-weight:1000;
+    cursor:pointer;
+}
+.extra-mode-tabs .mode-card.active{
+    border-color:#9b7cf6;
+    background:linear-gradient(135deg,#fbf7ff,#fff3ee);
+    box-shadow:0 14px 30px rgba(155,124,246,.14);
+}
+.extra-preorder-payment{
+    margin:12px 0;
+    padding:14px;
+    border:2px solid #eaddec;
+    border-radius:20px;
+    background:#fffafe;
+}
+.extra-photo-preview img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    padding:10px;
+}
+@media(max-width:900px){
+    .additional-sale-layout{grid-template-columns:1fr}
+}
+@media(max-width:650px){
+    .additional-pet-card{padding:14px;border-radius:22px}
+    .additional-pet-head{align-items:flex-start}
+    .extra-mode-tabs{grid-template-columns:1fr 1fr}
+}
+</style>
+
+<script>
+let additionalPetCount = 1;
+let activeAdditionalPetButton = null;
+let activeAdditionalChoiceButton = null;
+
+function ensureFirstPetMultiFields(){
+    const form = document.getElementById("petSaleForm");
+    if(!form){ return; }
+
+    const mappings = {
+        "sale_kind": "pets-0-sale_kind",
+        "pet": "pets-0-pet",
+        "preorder_pet_type": "pets-0-preorder_pet_type",
+        "preorder_breed": "pets-0-preorder_breed",
+        "preorder_gender": "pets-0-preorder_gender",
+        "preorder_color": "pets-0-preorder_color",
+        "preorder_special_type": "pets-0-preorder_special_type",
+        "deadline": "pets-0-deadline",
+        "sale_price": "pets-0-sale_price",
+        "discount_amount": "pets-0-discount_amount",
+        "paid_amount": "pets-0-paid_amount",
+        "preorder_payment_method": "pets-0-preorder_payment_method",
+        "warranty_days": "pets-0-warranty_days",
+        "warranty_start_date": "pets-0-warranty_start_date",
+        "note": "pets-0-note"
+    };
+
+    Object.keys(mappings).forEach(function(sourceName){
+        const targetName = mappings[sourceName];
+        form.querySelectorAll('input[type="hidden"][data-first-pet-copy="'+targetName+'"]').forEach(function(node){
+            node.remove();
+        });
+
+        let value = "";
+        const checked = form.querySelector('[name="'+sourceName+'"]:checked');
+        const field = checked || form.querySelector('[name="'+sourceName+'"]');
+        if(field){ value = field.value || ""; }
+
+        const hidden = document.createElement("input");
+        hidden.type = "hidden";
+        hidden.name = targetName;
+        hidden.value = value;
+        hidden.dataset.firstPetCopy = targetName;
+        form.appendChild(hidden);
+    });
+
+    const firstPhoto = document.getElementById("salePhotoInput");
+    if(firstPhoto){
+        firstPhoto.name = "pets-0-sale_photos";
+    }
+}
+
+function refreshPetCount(){
+    const count = 1 + document.querySelectorAll(".additional-pet-card").length;
+    additionalPetCount = count;
+    const field = document.getElementById("petCountInput");
+    if(field){ field.value = String(count); }
+
+    document.querySelectorAll(".additional-pet-card").forEach(function(card, position){
+        const number = card.querySelector(".additional-pet-head h2");
+        if(number){ number.textContent = "Pet " + (position + 2); }
+    });
+}
+
+function addAnotherPet(){
+    const template = document.getElementById("additionalPetTemplate");
+    const container = document.getElementById("additionalPetsContainer");
+    if(!template || !container){ return; }
+
+    const index = 1 + container.querySelectorAll(".additional-pet-card").length;
+    const html = template.innerHTML
+        .replaceAll("__INDEX__", String(index))
+        .replaceAll("__NUMBER__", String(index + 1));
+
+    const holder = document.createElement("div");
+    holder.innerHTML = html.trim();
+    const card = holder.firstElementChild;
+    container.appendChild(card);
+    refreshPetCount();
+    card.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function removeAdditionalPet(button){
+    const card = button.closest(".additional-pet-card");
+    if(card){ card.remove(); }
+    renumberAdditionalPets();
+    savePetSaleDraft();
+}
+
+function renumberAdditionalPets(){
+    const cards = Array.from(document.querySelectorAll(".additional-pet-card"));
+    cards.forEach(function(card, newPosition){
+        const oldIndex = card.dataset.extraIndex;
+        const newIndex = String(newPosition + 1);
+        card.dataset.extraIndex = newIndex;
+
+        card.querySelectorAll("[name]").forEach(function(field){
+            field.name = field.name.replace("pets-" + oldIndex + "-", "pets-" + newIndex + "-");
+        });
+    });
+    refreshPetCount();
+}
+
+function switchAdditionalPetMode(radio){
+    const card = radio.closest(".additional-pet-card");
+    if(!card){ return; }
+    const preorder = radio.value === "preorder";
+
+    card.querySelectorAll(".extra-mode-tabs .mode-card").forEach(function(label){
+        label.classList.toggle("active", !!label.querySelector("input:checked"));
+    });
+
+    const inStock = card.querySelector(".extra-instock-box");
+    const preorderBox = card.querySelector(".extra-preorder-box");
+    const payment = card.querySelector(".extra-preorder-payment");
+
+    if(inStock){ inStock.hidden = preorder; }
+    if(preorderBox){ preorderBox.hidden = !preorder; }
+    if(payment){ payment.hidden = !preorder; }
+}
+
+function openAdditionalPetPicker(button){
+    activeAdditionalPetButton = button;
+    document.getElementById("additionalPetBackdrop")?.classList.add("active");
+    document.getElementById("additionalPetPopup")?.classList.add("active");
+
+    const search = document.getElementById("additionalPetSearchInput");
+    if(search){
+        search.value = "";
+        filterAdditionalPetPicker();
+        setTimeout(function(){ search.focus(); }, 50);
+    }
+}
+
+function closeAdditionalPetPicker(){
+    document.getElementById("additionalPetBackdrop")?.classList.remove("active");
+    document.getElementById("additionalPetPopup")?.classList.remove("active");
+    activeAdditionalPetButton = null;
+}
+
+function filterAdditionalPetPicker(){
+    const query = (document.getElementById("additionalPetSearchInput")?.value || "").toLowerCase().trim();
+    const currentCard = activeAdditionalPetButton?.closest(".additional-pet-card") || null;
+    const unavailable = selectedPetIds(currentCard);
+
+    document.querySelectorAll(".additional-pet-option").forEach(function(option){
+        const petId = String(option.dataset.id || "");
+        const matchesSearch = (option.dataset.search || "").toLowerCase().includes(query);
+        const alreadySelected = unavailable.has(petId);
+
+        option.style.display = (matchesSearch && !alreadySelected) ? "grid" : "none";
+    });
+}
+
+function selectAdditionalPet(option){
+    if(!activeAdditionalPetButton){ return; }
+    const card = activeAdditionalPetButton.closest(".additional-pet-card");
+    if(!card){ return; }
+
+    const selectedId = String(option.dataset.id || "");
+    const unavailable = selectedPetIds(card);
+
+    if(unavailable.has(selectedId)){
+        showPetSaleError(
+            "This pet is already selected in Pet 1 or another pet card.",
+            activeAdditionalPetButton
+        );
+        closeAdditionalPetPicker();
+        return;
+    }
+
+    card.querySelector(".extra-pet-id").value = selectedId;
+    card.querySelector(".extra-pet-name").textContent = option.dataset.label || "Pet";
+    card.querySelector(".extra-pet-spec").textContent = option.dataset.spec || "";
+    card.querySelector(".extra-pet-price").textContent = "$" + Number(option.dataset.price || 0).toFixed(2);
+
+    const priceInput = card.querySelector('[name$="-sale_price"]');
+    if(priceInput){
+        priceInput.value = Number(option.dataset.price || 0).toFixed(2);
+        updateAdditionalPetSummary(priceInput);
+    }
+
+    savePetSaleDraft();
+    closeAdditionalPetPicker();
+}
+
+function openAdditionalChoice(button, type){
+    activeAdditionalChoiceButton = button;
+    const popup = document.getElementById("additionalChoicePopup");
+    const backdrop = document.getElementById("additionalChoiceBackdrop");
+    const list = document.getElementById("additionalChoiceList");
+    const title = document.getElementById("additionalChoiceTitle");
+    if(!popup || !backdrop || !list || !title){ return; }
+
+    const choices = type === "pet_type"
+        ? [["dog","🐶 Dog"],["cat","🐱 Cat"],["other","✨ Other"]]
+        : [["","- No select"],["Male","♂ Male"],["Female","♀ Female"]];
+
+    title.textContent = type === "pet_type" ? "Choose Pet Type" : "Choose Sex";
+    list.innerHTML = "";
+
+    choices.forEach(function(choice){
+        const option = document.createElement("button");
+        option.type = "button";
+        option.textContent = choice[1];
+        option.onclick = function(){
+            const card = activeAdditionalChoiceButton.closest(".additional-pet-card");
+            const hidden = type === "pet_type"
+                ? card.querySelector(".extra-pet-type")
+                : card.querySelector(".extra-gender");
+            if(hidden){ hidden.value = choice[0]; }
+            activeAdditionalChoiceButton.querySelector("strong").textContent = choice[1];
+            closeAdditionalChoice();
+        };
+        list.appendChild(option);
+    });
+
+    backdrop.classList.add("active");
+    popup.classList.add("active");
+}
+
+function closeAdditionalChoice(){
+    document.getElementById("additionalChoiceBackdrop")?.classList.remove("active");
+    document.getElementById("additionalChoicePopup")?.classList.remove("active");
+    activeAdditionalChoiceButton = null;
+}
+
+function previewAdditionalPetPhoto(input){
+    const card = input.closest(".additional-pet-card");
+    const image = card?.querySelector(".extra-photo-image");
+    const empty = card?.querySelector(".extra-photo-empty");
+    const file = input.files && input.files[0];
+    if(!file || !image || !empty){ return; }
+
+    const reader = new FileReader();
+    reader.onload = function(event){
+        image.src = event.target.result;
+        image.style.display = "block";
+        empty.style.display = "none";
+    };
+    reader.readAsDataURL(file);
+}
+
+function updateAdditionalPetSummary(input){
+    const card = input.closest(".additional-pet-card");
+    if(!card){ return; }
+
+    const full = Number(card.querySelector('[name$="-sale_price"]')?.value || 0);
+    const discount = Number(card.querySelector('[name$="-discount_amount"]')?.value || 0);
+    const paid = Number(card.querySelector('[name$="-paid_amount"]')?.value || 0);
+    const finalPrice = Math.max(0, full - discount);
+    const remaining = Math.max(0, finalPrice - paid);
+
+    card.querySelector(".extra-full-show").textContent = "$" + full.toFixed(2);
+    card.querySelector(".extra-discount-show").textContent = "$" + discount.toFixed(2);
+    card.querySelector(".extra-final-show").textContent = "$" + finalPrice.toFixed(2);
+    card.querySelector(".extra-paid-show").textContent = "$" + paid.toFixed(2);
+    card.querySelector(".extra-remain-show").textContent = "$" + remaining.toFixed(2);
+}
+
+function stopPetSaleLoading(){
+    document.body.classList.remove(
+        "loading",
+        "page-loading",
+        "is-loading",
+        "form-submitting",
+        "submitting"
+    );
+
+    [
+        "#pageLoader",
+        "#globalLoader",
+        "#loadingOverlay",
+        "#loaderOverlay",
+        ".page-loader",
+        ".global-loader",
+        ".loading-overlay",
+        ".loader-overlay",
+        ".bubu-loader"
+    ].forEach(function(selector){
+        document.querySelectorAll(selector).forEach(function(loader){
+            loader.style.display = "none";
+            loader.classList.remove("active", "show", "visible");
+            loader.setAttribute("aria-hidden", "true");
+        });
+    });
+
+    document.querySelectorAll(
+        "#petSaleForm button[type='submit'], #petSaleForm input[type='submit']"
+    ).forEach(function(button){
+        button.disabled = false;
+    });
+}
+
+function copySharedCustomerToEveryPet(){
+    const form = document.getElementById("petSaleForm");
+    if(!form){ return; }
+
+    const sharedValues = {
+        customer_name: document.getElementById("customerName")?.value || "",
+        phone: document.getElementById("customerPhone")?.value || "",
+        address: document.getElementById("customerAddress")?.value || "",
+        seller: document.getElementById("sellerInput")?.value || "",
+        customer_source: document.getElementById("customerSourceInput")?.value || "",
+        lead_owner: document.getElementById("leadOwnerInput")?.value || "",
+        commission_mode: document.getElementById("commissionModeInput")?.value || ""
+    };
+
+    const petCount = Number(document.getElementById("petCountInput")?.value || 1);
+
+    form.querySelectorAll("[data-shared-pet-copy='1']").forEach(function(node){
+        node.remove();
+    });
+
+    for(let index = 0; index < petCount; index++){
+        Object.entries(sharedValues).forEach(function(entry){
+            const field = document.createElement("input");
+            field.type = "hidden";
+            field.name = "pets-" + index + "-" + entry[0];
+            field.value = entry[1];
+            field.dataset.sharedPetCopy = "1";
+            form.appendChild(field);
+        });
+    }
+}
+
+function validateEveryPetSaleCard(){
+    clearPetSaleErrors();
+
+    const customerName = document.getElementById("customerName");
+    if(!customerName || !customerName.value.trim()){
+        stopPetSaleLoading();
+        return showPetSaleError("Customer name is required.", customerName);
+    }
+
+    /*
+     * Validate Pet 1 using the original validation function.
+     * It keeps all entered values because the form is not submitted.
+     */
+    if(!submitAction("save")){
+        stopPetSaleLoading();
+        return false;
+    }
+
+    const extraCards = Array.from(document.querySelectorAll(".additional-pet-card"));
+
+    for(let position = 0; position < extraCards.length; position++){
+        const card = extraCards[position];
+        const number = position + 2;
+        const mode = card.querySelector(
+            'input[name$="-sale_kind"]:checked'
+        )?.value || "in_stock";
+
+        if(mode === "in_stock"){
+            const petField = card.querySelector(".extra-pet-id");
+            if(!petField || !petField.value){
+                stopPetSaleLoading();
+                return showPetSaleError(
+                    "Please choose an in-stock pet for Pet " + number + ".",
+                    card.querySelector(".extra-pet-popup-btn")
+                );
+            }
+        }else{
+            const breed = card.querySelector('input[name$="-preorder_breed"]');
+            const deadline = card.querySelector(".extra-deadline-input");
+
+            if(!breed || !breed.value.trim()){
+                stopPetSaleLoading();
+                return showPetSaleError(
+                    "Please fill the pre-order breed for Pet " + number + ".",
+                    breed
+                );
+            }
+
+            if(!deadline || !deadline.value){
+                stopPetSaleLoading();
+                return showPetSaleError(
+                    "Please choose the waiting deadline for Pet " + number + ".",
+                    card.querySelector(".date-open-btn")
+                );
+            }
+        }
+
+        const fullPrice = card.querySelector('input[name$="-sale_price"]');
+        const discount = card.querySelector('input[name$="-discount_amount"]');
+        const paid = card.querySelector('input[name$="-paid_amount"]');
+
+        const fullValue = Number(fullPrice?.value || 0);
+        const discountValue = Number(discount?.value || 0);
+        const paidValue = Number(paid?.value || 0);
+        const finalValue = Math.max(fullValue - discountValue, 0);
+
+        if(fullValue <= 0){
+            stopPetSaleLoading();
+            return showPetSaleError(
+                "Please fill the full price for Pet " + number + ".",
+                fullPrice
+            );
+        }
+
+        if(discountValue > fullValue){
+            stopPetSaleLoading();
+            return showPetSaleError(
+                "Discount cannot be greater than the full price for Pet " + number + ".",
+                discount
+            );
+        }
+
+        if(paidValue > finalValue){
+            stopPetSaleLoading();
+            return showPetSaleError(
+                "Paid amount cannot be greater than the final price for Pet " + number + ".",
+                paid
+            );
+        }
+
+        if(mode === "preorder" && paidValue > 0){
+            const method = card.querySelector(
+                'input[name$="-preorder_payment_method"]:checked'
+            );
+            if(!method){
+                stopPetSaleLoading();
+                return showPetSaleError(
+                    "Choose Cash or ABA for the Pet " + number + " deposit.",
+                    card.querySelector(".extra-preorder-payment")
+                );
+            }
+        }
+    }
+
+    return true;
+}
+
+function savePetSaleDraft(){
+    const form = document.getElementById("petSaleForm");
+    if(!form){ return; }
+
+    const draft = {};
+    form.querySelectorAll("input:not([type='file']), textarea, select").forEach(function(field){
+        if(!field.name){ return; }
+
+        if(field.type === "radio" || field.type === "checkbox"){
+            if(field.checked){ draft[field.name] = field.value; }
+        }else{
+            draft[field.name] = field.value;
+        }
+    });
+
+    try{
+        sessionStorage.setItem("bubu_pet_sale_draft", JSON.stringify(draft));
+    }catch(error){}
+}
+
+function restorePetSaleDraft(){
+    let draft = null;
+    try{
+        draft = JSON.parse(sessionStorage.getItem("bubu_pet_sale_draft") || "null");
+    }catch(error){
+        draft = null;
+    }
+
+    if(!draft){ return; }
+
+    Object.entries(draft).forEach(function(entry){
+        const name = entry[0];
+        const value = entry[1];
+        const fields = document.querySelectorAll('[name="' + CSS.escape(name) + '"]');
+
+        fields.forEach(function(field){
+            if(field.type === "radio" || field.type === "checkbox"){
+                field.checked = field.value === value;
+            }else if(!field.value){
+                field.value = value;
+            }
+        });
+    });
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+    const form = document.getElementById("petSaleForm");
+    if(!form){ return; }
+
+    restorePetSaleDraft();
+
+    form.addEventListener("input", savePetSaleDraft);
+    form.addEventListener("change", savePetSaleDraft);
+
+    /*
+     * Capture phase runs before the global loader and before other submit
+     * handlers. Invalid data never leaves this page.
+     */
+    form.addEventListener("submit", function(event){
+        refreshPetCount();
+        ensureFirstPetMultiFields();
+        copySharedCustomerToEveryPet();
+
+        if(!validateEveryPetSaleCard()){
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            savePetSaleDraft();
+            stopPetSaleLoading();
+            return false;
+        }
+
+        sessionStorage.removeItem("bubu_pet_sale_draft");
+        return true;
+    }, true);
+});
+</script>
+
+
+<style>
+.customer-main-row{
+    display:grid;
+    grid-template-columns:1.15fr .95fr 1.25fr;
+    gap:12px;
+    align-items:end;
+}
+
+.optional-label{
+    color:#8a8092;
+    font-size:11px;
+    font-weight:900;
+}
+
+.customer-main-row input{
+    width:100%;
+}
+
+.customer-live-box{
+    margin-top:10px;
+}
+
+.seller-line{
+    margin-top:10px;
+}
+
+@media(max-width:900px){
+    .customer-main-row{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .customer-main-row label:last-child{
+        grid-column:1 / -1;
+    }
+}
+
+@media(max-width:650px){
+    .customer-main-row{
+        grid-template-columns:1fr;
+    }
+
+    .customer-main-row label:last-child{
+        grid-column:auto;
+    }
+}
+</style>
+
+
+<style>
+.save-all-pets-bar{
+    margin-top:14px;
+    padding:16px;
+    border:2px solid #f5e0d8;
+    border-radius:24px;
+    background:#fff;
+    box-shadow:0 18px 40px rgba(130,91,60,.08);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+}
+
+.save-all-pets-bar strong{
+    display:block;
+    color:#080634;
+    font-size:17px;
+    font-weight:1000;
+}
+
+.save-all-pets-bar small{
+    display:block;
+    margin-top:4px;
+    color:#7b7288;
+    font-size:12px;
+    font-weight:900;
+}
+
+.save-all-pets-btn{
+    min-width:240px;
+    min-height:60px;
+    border:0;
+    border-radius:20px;
+    background:linear-gradient(135deg,#13a85f,#7b5cff);
+    color:#fff;
+    font-size:16px;
+    font-weight:1000;
+    cursor:pointer;
+}
+
+@media(max-width:650px){
+    .save-all-pets-bar{
+        display:grid;
+        padding:14px;
+        border-radius:20px;
+    }
+
+    .save-all-pets-btn{
+        width:100%;
+        min-width:0;
+    }
+}
+</style>
+
+
+<script>
+let activeAdditionalCalendarButton = null;
+let additionalCalendarViewDate = new Date();
+let additionalCalendarSelectedDate = null;
+
+function formatAdditionalISO(date){
+    const y = date.getFullYear();
+    const m = String(date.getMonth()+1).padStart(2,"0");
+    const d = String(date.getDate()).padStart(2,"0");
+    return y + "-" + m + "-" + d;
+}
+
+function formatAdditionalDisplay(date){
+    return date.toLocaleDateString("en-GB", {
+        day:"2-digit",
+        month:"short",
+        year:"numeric"
+    });
+}
+
+function openAdditionalCalendar(button){
+    activeAdditionalCalendarButton = button;
+    const card = button.closest(".additional-pet-card");
+    const input = card?.querySelector(".extra-deadline-input");
+
+    if(input && input.value){
+        const parts = input.value.split("-").map(Number);
+        additionalCalendarSelectedDate = new Date(parts[0], parts[1]-1, parts[2]);
+        additionalCalendarViewDate = new Date(parts[0], parts[1]-1, 1);
+    }else{
+        additionalCalendarSelectedDate = null;
+        const now = new Date();
+        additionalCalendarViewDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
+
+    renderAdditionalCalendar();
+    document.getElementById("additionalCalendarBackdrop")?.classList.add("active");
+    document.getElementById("additionalCalendarPopup")?.classList.add("active");
+}
+
+function closeAdditionalCalendar(){
+    document.getElementById("additionalCalendarBackdrop")?.classList.remove("active");
+    document.getElementById("additionalCalendarPopup")?.classList.remove("active");
+    activeAdditionalCalendarButton = null;
+}
+
+function renderAdditionalCalendar(){
+    const title = document.getElementById("additionalCalendarMonthTitle");
+    const grid = document.getElementById("additionalCalendarGrid");
+    const selectedText = document.getElementById("additionalCalendarSelectedText");
+    if(!title || !grid || !selectedText){ return; }
+
+    title.textContent = additionalCalendarViewDate.toLocaleDateString("en-US", {
+        month:"long",
+        year:"numeric"
+    });
+
+    selectedText.textContent = additionalCalendarSelectedDate
+        ? formatAdditionalDisplay(additionalCalendarSelectedDate)
+        : "Select Date";
+
+    grid.innerHTML = "";
+
+    const year = additionalCalendarViewDate.getFullYear();
+    const month = additionalCalendarViewDate.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+
+    for(let i=0;i<firstDay;i++){
+        const blank = document.createElement("span");
+        blank.className = "calendar-empty";
+        grid.appendChild(blank);
+    }
+
+    for(let day=1;day<=daysInMonth;day++){
+        const date = new Date(year, month, day);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = String(day);
+
+        if(
+            additionalCalendarSelectedDate &&
+            formatAdditionalISO(date) === formatAdditionalISO(additionalCalendarSelectedDate)
+        ){
+            button.classList.add("selected");
+        }
+
+        const today = new Date();
+        if(formatAdditionalISO(date) === formatAdditionalISO(today)){
+            button.classList.add("today");
+        }
+
+        button.onclick = function(){
+            additionalCalendarSelectedDate = date;
+            renderAdditionalCalendar();
+        };
+        grid.appendChild(button);
+    }
+}
+
+function changeAdditionalCalendarMonth(offset){
+    additionalCalendarViewDate = new Date(
+        additionalCalendarViewDate.getFullYear(),
+        additionalCalendarViewDate.getMonth() + offset,
+        1
+    );
+    renderAdditionalCalendar();
+}
+
+function additionalCalendarQuickPick(days){
+    const date = new Date();
+    date.setHours(0,0,0,0);
+    date.setDate(date.getDate() + Number(days || 0));
+    additionalCalendarSelectedDate = date;
+    additionalCalendarViewDate = new Date(date.getFullYear(), date.getMonth(), 1);
+    renderAdditionalCalendar();
+}
+
+function applyAdditionalCalendarValue(){
+    if(!activeAdditionalCalendarButton || !additionalCalendarSelectedDate){
+        closeAdditionalCalendar();
+        return;
+    }
+
+    const card = activeAdditionalCalendarButton.closest(".additional-pet-card");
+    const input = card?.querySelector(".extra-deadline-input");
+    const label = activeAdditionalCalendarButton.querySelector(".extra-deadline-label");
+
+    if(input){ input.value = formatAdditionalISO(additionalCalendarSelectedDate); }
+    if(label){ label.textContent = formatAdditionalDisplay(additionalCalendarSelectedDate); }
+    closeAdditionalCalendar();
+}
+
+function clearAdditionalCalendarValue(){
+    if(activeAdditionalCalendarButton){
+        const card = activeAdditionalCalendarButton.closest(".additional-pet-card");
+        const input = card?.querySelector(".extra-deadline-input");
+        const label = activeAdditionalCalendarButton.querySelector(".extra-deadline-label");
+        if(input){ input.value = ""; }
+        if(label){ label.textContent = "Choose waiting date"; }
+    }
+    additionalCalendarSelectedDate = null;
+    closeAdditionalCalendar();
+}
+
+function setAdditionalDeadlineDays(button, days){
+    const card = button.closest(".additional-pet-card");
+    const input = card?.querySelector(".extra-deadline-input");
+    const label = card?.querySelector(".extra-deadline-label");
+    const date = new Date();
+    date.setHours(0,0,0,0);
+    date.setDate(date.getDate() + Number(days || 0));
+
+    if(input){ input.value = formatAdditionalISO(date); }
+    if(label){ label.textContent = formatAdditionalDisplay(date); }
+}
+</script>
+
+
+<style>
+#petSaleForm .field-error,
+#petSaleForm input.field-error,
+#petSaleForm textarea.field-error,
+#petSaleForm select.field-error,
+#petSaleForm button.field-error{
+    border-color:#ef4444!important;
+    background:#fff7f7!important;
+    box-shadow:0 0 0 5px rgba(239,68,68,.14)!important;
+}
+
+#petSaleForm .field-error input,
+#petSaleForm .field-error textarea,
+#petSaleForm .field-error select,
+#petSaleForm .field-error button{
+    border-color:#ef4444!important;
+    background:#fff7f7!important;
+    box-shadow:0 0 0 5px rgba(239,68,68,.14)!important;
+}
 </style>
 
 {% endblock %}

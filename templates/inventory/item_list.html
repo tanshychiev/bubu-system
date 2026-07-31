@@ -354,6 +354,8 @@ a { text-decoration:none !important; }
 }
 
 .product-card {
+    content-visibility:auto;
+    contain-intrinsic-size:360px;
     background:linear-gradient(180deg,#fff,#fffaf7);
     border:1px solid #f1ddd1;
     border-radius:22px;
@@ -2359,8 +2361,9 @@ body.inventory-detail-open{
                             src="{{ item.image.url }}"
                             data-media-src="{{ item.image.url }}"
                             alt="{{ item.name }}"
-                            loading="eager"
+                            loading="lazy"
                             decoding="async"
+                            fetchpriority="low"
                             onerror="inventoryImageError(this)"
                         >
                     {% else %}
@@ -2405,11 +2408,9 @@ body.inventory-detail-open{
 
                         {% if can_manage_inventory %}
                             <a
-                                href="{% url 'variant_barcode_label' variant.id %}"
+                                href="{% url 'variant_barcode_label' variant.id %}?next={{ request.get_full_path|urlencode }}"
                                 class="variant-print-btn"
                                 title="Print {{ variant.display_name }} label"
-                                target="_blank"
-                                rel="noopener"
                             >
                                 🖨️
                             </a>
@@ -2484,8 +2485,9 @@ body.inventory-detail-open{
                             src="{{ item.image.url }}"
                             data-media-src="{{ item.image.url }}"
                             alt="{{ item.name }}"
-                            loading="eager"
+                            loading="lazy"
                             decoding="async"
+                            fetchpriority="low"
                             onerror="inventoryImageError(this)"
                         >
                     {% else %}

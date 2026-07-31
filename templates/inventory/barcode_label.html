@@ -3,9 +3,9 @@
 {% block content %}
 
 <div class="barcode-page">
-    <a href="{% url 'item_detail' item.id %}" class="barcode-back">
+    <button type="button" class="barcode-back" onclick="returnToBarcodeSource()">
         ← Back
-    </a>
+    </button>
 
     <section class="barcode-card">
         <div class="barcode-head">
@@ -99,19 +99,18 @@
             -->
             <a
                 href="{% url 'variant_barcode_print' variant.id %}"
-                target="_blank"
-                rel="noopener"
                 class="barcode-print-btn"
             >
                 🖨️ Print Barcode
             </a>
 
-            <a
-                href="{% url 'item_detail' item.id %}"
+            <button
+                type="button"
                 class="barcode-cancel-btn"
+                onclick="returnToBarcodeSource()"
             >
                 Cancel
-            </a>
+            </button>
         </div>
     </section>
 </div>
@@ -134,6 +133,8 @@ a {
 }
 
 .barcode-back {
+    appearance: none;
+    cursor: pointer;
     min-height: 42px;
     margin-bottom: 10px;
     padding: 0 14px;
@@ -490,6 +491,19 @@ a {
 </style>
 
 <script>
+function returnToBarcodeSource() {
+    const fallbackUrl = "{{ barcode_return_url|default:'/inventory/'|escapejs }}";
+
+    // When this page was opened from Inventory List, return to that exact
+    // list position, branch, search and item-type filter.
+    if (window.history.length > 1 && document.referrer) {
+        window.history.back();
+        return;
+    }
+
+    window.location.href = fallbackUrl;
+}
+
 async function copyBarcodeCode() {
     const codeElement = document.getElementById("barcodeCodeText");
     const button = document.getElementById("copyCodeButton");

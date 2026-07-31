@@ -26,29 +26,127 @@
                     ✏️ Edit
                 </a>
             </div>
-
-            {% if sale.status != "completed" and sale.status != "cancelled" and sale.status != "refunded" %}
-                <div class="action-group sale-group">
-                    <a href="{% url 'pet_sale_add_to_pos' sale.id %}" class="action-btn pos-top">
-                        <span class="pos-icon">🛒</span>
-                        <span>
-                            <strong>Add to POS</strong>
-                            <small>Pet + products</small>
-                        </span>
-                    </a>
-                </div>
-            {% endif %}
-
-            <div class="action-group document-group">
-                <a
-                    href="{% url 'pet_sale_receipt_print' sale.id %}"
-                    class="action-btn warranty"
-                >
-                    🛡️ Warranty
-                </a>
-            </div>
         </div>
     </header>
+
+
+    {# ============================================================ #}
+    {# GROUPED MULTI-PET PURCHASE SUMMARY                           #}
+    {# purchase_sales should contain every pet in the same checkout.#}
+    {# The existing individual sale detail below remains untouched. #}
+    {# ============================================================ #}
+    {% if purchase_sales and purchase_sales|length > 1 %}
+        <section class="purchase-family-card">
+            <div class="purchase-family-head">
+                <div>
+                    <span class="purchase-family-kicker">MULTI-PET PURCHASE</span>
+                    <h2>
+                        {{ purchase_sales|length }}
+                        pets bought together
+                    </h2>
+                    <p>
+                        One customer checkout. Each pet keeps its own pet record,
+                        warranty record and sale detail.
+                    </p>
+                </div>
+
+                <div class="purchase-family-total">
+                    <span>Combined Total</span>
+                    <strong>
+                        ${{ purchase_total_amount|default:purchase_total_final|default:"0"|floatformat:2 }}
+                    </strong>
+                </div>
+            </div>
+
+            <div class="purchase-family-list">
+                {% for purchase_sale in purchase_sales %}
+                    <a
+                        href="{% url 'pet_sale_detail' purchase_sale.id %}"
+                        class="purchase-family-pet {% if purchase_sale.id == sale.id %}active{% endif %}"
+                    >
+                        <div class="purchase-family-photo">
+                            {% if purchase_sale.pet and purchase_sale.pet.display_photo %}
+                                <img
+                                    src="{{ purchase_sale.pet.display_photo.url }}?pet={{ purchase_sale.pet.updated_at|date:'U' }}"
+                                    alt="{{ purchase_sale.breed_display|default:'Pet' }}"
+                                >
+                            {% elif purchase_sale.sale_photo %}
+                                <img
+                                    src="{{ purchase_sale.sale_photo.url }}?sale={{ purchase_sale.created_at|date:'U' }}"
+                                    alt="{{ purchase_sale.breed_display|default:'Pet' }}"
+                                >
+                            {% else %}
+                                {% with purchase_photo=purchase_sale.photos.first %}
+                                    {% if purchase_photo and purchase_photo.photo %}
+                                        <img
+                                            src="{{ purchase_photo.photo.url }}?photo={{ purchase_photo.uploaded_at|date:'U' }}"
+                                            alt="{{ purchase_sale.breed_display|default:'Pet' }}"
+                                        >
+                                    {% else %}
+                                        <span>🐾</span>
+                                    {% endif %}
+                                {% endwith %}
+                            {% endif %}
+                        </div>
+
+                        <div class="purchase-family-info">
+                            <strong>
+                                Pet #{{ purchase_sale.id }}
+                                · {{ purchase_sale.breed_display|default:"Pet" }}
+                            </strong>
+
+                            <small>
+                                {{ purchase_sale.pet_type_display|default:"Pet" }}
+                                {% if purchase_sale.gender_display %}
+                                    · {{ purchase_sale.gender_display }}
+                                {% endif %}
+                                {% if purchase_sale.color_display %}
+                                    · {{ purchase_sale.color_display }}
+                                {% endif %}
+                            </small>
+                        </div>
+
+                        <div class="purchase-family-price">
+                            <strong>
+                                {% if purchase_sale.final_price != None %}
+                                    ${{ purchase_sale.final_price|floatformat:2 }}
+                                {% else %}
+                                    ${{ purchase_sale.sale_price|floatformat:2 }}
+                                {% endif %}
+                            </strong>
+
+                            <small class="status-pill status-{{ purchase_sale.status }}">
+                                {{ purchase_sale.get_status_display }}
+                            </small>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+
+            <div class="purchase-family-money">
+                <div>
+                    <span>Total Price</span>
+                    <strong>
+                        ${{ purchase_total_amount|default:purchase_total_final|default:"0"|floatformat:2 }}
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Total Paid</span>
+                    <strong>
+                        ${{ purchase_total_paid|default:"0"|floatformat:2 }}
+                    </strong>
+                </div>
+
+                <div class="purchase-family-balance">
+                    <span>Total Balance</span>
+                    <strong>
+                        ${{ purchase_total_balance|default:"0"|floatformat:2 }}
+                    </strong>
+                </div>
+            </div>
+        </section>
+    {% endif %}
 
     <section class="status-strip">
         <div class="status-box">
@@ -275,23 +373,46 @@
                     <h2>Actions</h2>
 
                     {% if sale.status != "completed" and sale.status != "cancelled" and sale.status != "refunded" %}
-                        <a href="{% url 'pet_sale_add_to_pos' sale.id %}" class="add-pos-btn">
+                        <a
+                            href="{% url 'pet_sale_add_to_pos' sale.id %}?single=1"
+                            class="add-pos-btn"
+                        >
                             <span class="big-pos-icon">🛒</span>
                             <span>
-                                <strong>Add Sale to POS</strong>
-                                <small>Combine pet, food, accessories or service</small>
+                                <strong>
+                                    {% if purchase_sales and purchase_sales|length > 1 %}
+                                        Add This Pet to POS
+                                    {% else %}
+                                        Add to POS
+                                    {% endif %}
+                                </strong>
+                                <small>
+                                    {% if purchase_sales and purchase_sales|length > 1 %}
+                                        Add only this selected pet
+                                    {% else %}
+                                        Add this pet sale to checkout
+                                    {% endif %}
+                                </small>
                             </span>
                             <b>→</b>
                         </a>
                     {% endif %}
 
                     <div class="normal-actions">
-                        <a href="{% url 'pet_sale_edit' sale.id %}" class="edit-btn">
-                            ✏️ Edit Sale
-                        </a>
+                        {% if purchase_sales and purchase_sales|length > 1 %}
+                            <a
+                                href="{% url 'pet_sale_receipt_print' sale.id %}"
+                                class="edit-btn"
+                            >
+                                🖨 Print All Pets
+                            </a>
+                        {% endif %}
 
-                        <a href="{% url 'pet_sale_receipt_print' sale.id %}" class="warranty-btn-side">
-                            🛡️ Warranty
+                        <a
+                            href="{% url 'pet_sale_receipt_print' sale.id %}?single=1"
+                            class="warranty-btn-side"
+                        >
+                            🖨 Print This Pet
                         </a>
                     </div>
 
@@ -304,41 +425,41 @@
 
                     {% if sale.status != "completed" and sale.status != "cancelled" and sale.status != "refunded" %}
                         <div class="pos-required-note">
-                            💳 Final payment must be completed through <strong>Add Sale to POS</strong> so Cash/ABA and change are counted correctly.
+                            💳 Final payment must be completed through POS so Cash/ABA and change are counted correctly.
                         </div>
                     {% endif %}
 
-                    <a href="{% url 'pet_warranty_claim_create' sale.id %}" class="claim-btn">⚕️ Warranty Claim</a>
+                    <details class="rare-actions">
+                        <summary>More actions</summary>
 
-                    {% if sale.status != "completed" and sale.status != "cancelled" and sale.status != "refunded" %}
-                        <details class="rare-actions">
-                            <summary>More actions</summary>
+                        <div class="rare-content">
+                            <a href="{% url 'pet_sale_edit' sale.id %}" class="edit-btn">
+                                ✏️ Edit Sale
+                            </a>
 
-                            <div class="rare-content">
-                                {% if sale.status != "cancelled" and sale.status != "completed" and sale.status != "refunded" %}
-                                    <form method="post" action="{% url 'pet_sale_cancel' sale.id %}" class="rare-form" onsubmit="return confirmCancelSale()">
-                                        {% csrf_token %}
-                                        <label>
-                                            Cancel Reason
-                                            <textarea name="cancel_reason" id="cancelReason" placeholder="Write cancel reason..." required></textarea>
-                                        </label>
-                                        <button class="cancel-btn" type="submit">❌ Cancel Sale</button>
-                                    </form>
-                                {% endif %}
+                            {% if sale.status != "cancelled" and sale.status != "completed" and sale.status != "refunded" %}
+                                <form method="post" action="{% url 'pet_sale_cancel' sale.id %}" class="rare-form" onsubmit="return confirmCancelSale()">
+                                    {% csrf_token %}
+                                    <label>
+                                        Cancel Reason
+                                        <textarea name="cancel_reason" id="cancelReason" placeholder="Write cancel reason..." required></textarea>
+                                    </label>
+                                    <button class="cancel-btn" type="submit">❌ Cancel Sale</button>
+                                </form>
+                            {% endif %}
 
-                                {% if sale.status != "refunded" and sale.status != "cancelled" %}
-                                    <form method="post" action="{% url 'pet_sale_refund' sale.id %}" class="rare-form" onsubmit="return confirmRefundSale()">
-                                        {% csrf_token %}
-                                        <label>
-                                            Refund Reason
-                                            <textarea name="refund_reason" id="refundReason" placeholder="Write refund reason..." required></textarea>
-                                        </label>
-                                        <button class="refund-btn" type="submit">↩️ Refund</button>
-                                    </form>
-                                {% endif %}
-                            </div>
-                        </details>
-                    {% endif %}
+                            {% if sale.status != "refunded" and sale.status != "cancelled" %}
+                                <form method="post" action="{% url 'pet_sale_refund' sale.id %}" class="rare-form" onsubmit="return confirmRefundSale()">
+                                    {% csrf_token %}
+                                    <label>
+                                        Refund Reason
+                                        <textarea name="refund_reason" id="refundReason" placeholder="Write refund reason..." required></textarea>
+                                    </label>
+                                    <button class="refund-btn" type="submit">↩️ Refund</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </details>
                 </div>
             </section>
         </aside>
@@ -1477,4 +1598,291 @@ document.addEventListener("DOMContentLoaded", renderWarrantyRange);
 <style>
 .pos-required-note{margin-top:12px;padding:12px 14px;border:1px solid #f0d29b;border-radius:14px;color:#9a5b00;background:#fff8e8;font-size:11px;font-weight:900;line-height:1.45}
 </style>
+
+<style id="bubu-grouped-purchase-detail-style">
+.purchase-family-card{
+    margin-bottom:11px;
+    padding:14px;
+    border:2px solid #e4d8ff;
+    border-radius:20px;
+    background:linear-gradient(135deg,#fbf8ff,#fff8f4);
+    box-shadow:0 10px 25px rgba(123,92,255,.07);
+}
+
+.purchase-family-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+}
+
+.purchase-family-kicker{
+    display:inline-flex;
+    min-height:23px;
+    padding:0 8px;
+    border-radius:999px;
+    align-items:center;
+    color:#6f50d8;
+    background:#efe9ff;
+    font-size:8px;
+    font-weight:1000;
+}
+
+.purchase-family-head h2{
+    margin:5px 0 0;
+    color:#080634;
+    font-size:20px;
+    font-weight:1000;
+}
+
+.purchase-family-head p{
+    margin:4px 0 0;
+    color:#7b7288;
+    font-size:10px;
+    font-weight:900;
+    line-height:1.4;
+}
+
+.purchase-family-total{
+    min-width:145px;
+    padding:10px 12px;
+    border:1px solid #eadfff;
+    border-radius:14px;
+    text-align:right;
+    background:white;
+}
+
+.purchase-family-total span,
+.purchase-family-total strong{
+    display:block;
+}
+
+.purchase-family-total span{
+    color:#7b7288;
+    font-size:8px;
+    font-weight:1000;
+}
+
+.purchase-family-total strong{
+    margin-top:4px;
+    color:#ff5d73;
+    font-size:20px;
+    font-weight:1000;
+}
+
+.purchase-family-list{
+    display:grid;
+    gap:6px;
+    margin-top:11px;
+}
+
+.purchase-family-pet{
+    display:grid;
+    grid-template-columns:48px minmax(0,1fr) auto;
+    gap:9px;
+    align-items:center;
+    padding:7px;
+    border:2px solid transparent;
+    border-radius:13px;
+    color:#080634;
+    background:white;
+    transition:.15s;
+}
+
+.purchase-family-pet:hover{
+    border-color:#d9ccff;
+    transform:translateY(-1px);
+}
+
+.purchase-family-pet.active{
+    border-color:#8f73f5;
+    background:#f4f0ff;
+    box-shadow:0 8px 18px rgba(123,92,255,.09);
+}
+
+.purchase-family-photo{
+    width:46px;
+    height:46px;
+    overflow:hidden;
+    border-radius:11px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fff8f4;
+    font-size:23px;
+}
+
+.purchase-family-photo img{
+    width:100%;
+    height:100%;
+    padding:2px;
+    object-fit:contain;
+}
+
+.purchase-family-info{
+    min-width:0;
+}
+
+.purchase-family-info strong,
+.purchase-family-info small{
+    display:block;
+}
+
+.purchase-family-info strong{
+    overflow:hidden;
+    color:#080634;
+    font-size:11px;
+    font-weight:1000;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.purchase-family-info small{
+    margin-top:3px;
+    overflow:hidden;
+    color:#7b7288;
+    font-size:8px;
+    font-weight:900;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.purchase-family-price{
+    text-align:right;
+}
+
+.purchase-family-price strong,
+.purchase-family-price small{
+    display:block;
+}
+
+.purchase-family-price strong{
+    color:#ff5d73;
+    font-size:14px;
+    font-weight:1000;
+}
+
+.purchase-family-price small{
+    margin-top:4px;
+}
+
+.purchase-family-money{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:6px;
+    margin-top:9px;
+}
+
+.purchase-family-money>div{
+    padding:9px;
+    border-radius:11px;
+    background:white;
+}
+
+.purchase-family-money span,
+.purchase-family-money strong{
+    display:block;
+}
+
+.purchase-family-money span{
+    color:#7b7288;
+    font-size:8px;
+    font-weight:1000;
+}
+
+.purchase-family-money strong{
+    margin-top:3px;
+    color:#080634;
+    font-size:15px;
+    font-weight:1000;
+}
+
+.purchase-family-money .purchase-family-balance{
+    background:#fff1f3;
+}
+
+.purchase-family-money .purchase-family-balance strong{
+    color:#d94e64;
+}
+
+.purchase-family-actions{
+    display:flex;
+    justify-content:flex-end;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:9px;
+}
+
+.purchase-family-action{
+    min-height:39px;
+    padding:0 11px;
+    border-radius:11px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-size:9px;
+    font-weight:1000;
+}
+
+.family-pos-action{
+    color:white;
+    background:linear-gradient(135deg,#18aa62,#6d5bef);
+}
+
+.family-print-all-action{
+    color:white;
+    background:linear-gradient(135deg,#37bdf2,#7359ef);
+}
+
+.family-print-one-action{
+    color:#2463b5;
+    background:#eaf4ff;
+}
+
+@media(max-width:700px){
+    .purchase-family-head{
+        display:block;
+    }
+
+    .purchase-family-total{
+        width:100%;
+        margin-top:9px;
+        text-align:left;
+    }
+
+    .purchase-family-money{
+        grid-template-columns:1fr;
+    }
+
+    .purchase-family-actions{
+        display:grid;
+        grid-template-columns:1fr;
+    }
+
+    .purchase-family-action{
+        width:100%;
+    }
+}
+
+@media(max-width:430px){
+    .purchase-family-pet{
+        grid-template-columns:43px minmax(0,1fr);
+    }
+
+    .purchase-family-photo{
+        width:41px;
+        height:41px;
+    }
+
+    .purchase-family-price{
+        grid-column:2;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        text-align:left;
+    }
+}
+</style>
+
 {% endblock %}
