@@ -905,8 +905,7 @@
                                 name="change_given"
                                 id="changeGiven"
                                 value="0.00"
-                                readonly
-                                oninput="validateChangeRecord(false)"
+                                oninput="this.dataset.userEdited='1'; validateChangeRecord(false)"
                             >
                         </label>
                     </div>
@@ -989,21 +988,23 @@
 
             <div class="payment-actions two-actions">
                 <button
-                    type="submit"
+                    type="button"
                     class="complete-btn complete-only-btn"
                     id="primarySubmitBtn"
                     name="checkout_button"
                     value="complete"
+                    onclick="submitPOSCheckout(event, 'complete')"
                 >
                     Complete Sale
                 </button>
 
                 <button
-                    type="submit"
+                    type="button"
                     class="complete-print-btn"
                     id="secondarySubmitBtn"
                     name="checkout_button"
                     value="complete_print"
+                    onclick="submitPOSCheckout(event, 'complete_print')"
                 >
                     Complete + Print Receipt
                 </button>
@@ -7704,6 +7705,7 @@ function syncSelectedItemsFromCart(){
 }
 
 function openPaymentModal(){
+    resetPOSCheckoutButtons();
     document.getElementById("paymentModal").style.display = "flex";
     syncSelectedItemsFromCart();
     setCurrentSaleType();
@@ -7767,10 +7769,28 @@ function valueOf(id){
     return el.value || "";
 }
 
+function resetPOSCheckoutButtons(){
+    posIsSubmittingCheckout = false;
+
+    const primaryBtn = document.getElementById("primarySubmitBtn");
+    const secondaryBtn = document.getElementById("secondarySubmitBtn");
+
+    [primaryBtn, secondaryBtn].forEach(function(btn){
+        if(!btn){ return; }
+        btn.disabled = false;
+        btn.style.opacity = "";
+        btn.style.pointerEvents = "";
+    });
+
+    setCurrentSaleType();
+}
+
 function showPOSCheckoutError(message, target){
     if(typeof window.hideBubuLoader === "function"){
         window.hideBubuLoader(true);
     }
+
+    resetPOSCheckoutButtons();
 
     const form = document.getElementById("paymentForm");
     if(!form){ return false; }
@@ -9170,6 +9190,12 @@ function setChangeMode(mode){
 }
 
 function setChangeCurrency(currency){
+    const changeGivenInput = document.getElementById("changeGiven");
+    if(changeGivenInput){
+        changeGivenInput.dataset.userEdited = "";
+        changeGivenInput.dataset.calculationKey = "";
+    }
+
     const input = document.getElementById("changeCurrency");
 
     if(input){
@@ -9231,10 +9257,18 @@ function updateChangeRecord(changeUsd, force){
         }
 
         input.inputMode = currency === "khr" ? "numeric" : "decimal";
-        input.readOnly = true;
-        input.value = currency === "khr"
+        input.readOnly = false;
+
+        const automaticValue = currency === "khr"
             ? Math.round(changeUsd * changeRate).toString()
             : changeUsd.toFixed(2);
+        const calculationKey = currency + ":" + changeUsd.toFixed(6);
+
+        if(force || input.dataset.calculationKey !== calculationKey || !input.dataset.userEdited){
+            input.value = automaticValue;
+            input.dataset.userEdited = "";
+            input.dataset.calculationKey = calculationKey;
+        }
 
         if(help){
             help.textContent = currency === "khr"
@@ -9589,7 +9623,7 @@ function submitPOSCheckout(e, action){
         return false;
     }
 
-    const submitButtons = form.querySelectorAll("button[type='submit']");
+    const submitButtons = form.querySelectorAll("#primarySubmitBtn, #secondarySubmitBtn");
 
     submitButtons.forEach(function(btn){
         btn.disabled = true;
@@ -9619,6 +9653,14 @@ function submitPOSCheckout(e, action){
     HTMLFormElement.prototype.submit.call(form);
     return false;
 }
+
+
+window.addEventListener("pageshow", function(){
+    resetPOSCheckoutButtons();
+    if(typeof window.hideBubuLoader === "function"){
+        window.hideBubuLoader(true);
+    }
+});
 
 document.addEventListener("keydown", function(e){
     if(e.key === "Escape"){
