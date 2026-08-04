@@ -285,6 +285,14 @@ class PetVaccine(models.Model):
 
 
 class PetSale(models.Model):
+    CUSTOMER_SOURCE_CHOICES = [
+        ("walk_in", "Walk-in"),
+        ("staff_chat", "Staff Chat"),
+        ("page_chat", "Page Chat"),
+        ("delivery", "Delivery"),
+        ("referral", "Referral"),
+    ]
+
     SALE_KIND_CHOICES = [
         ("in_stock", "In-stock Pet Sale"),
         ("preorder", "Pre-order Pet"),
@@ -308,6 +316,13 @@ class PetSale(models.Model):
         max_length=30,
         choices=SALE_KIND_CHOICES,
         default="in_stock",
+    )
+
+    customer_source = models.CharField(
+        max_length=30,
+        choices=CUSTOMER_SOURCE_CHOICES,
+        default="staff_chat",
+        help_text="How the customer contacted the shop, such as chat or walk-in.",
     )
 
     pet = models.ForeignKey(

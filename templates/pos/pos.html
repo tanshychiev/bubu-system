@@ -332,7 +332,7 @@
             <button type="button" onclick="closePaymentModal()">×</button>
         </div>
 
-        <form method="post" action="{% url 'pos_checkout' %}" id="paymentForm">
+        <form method="post" action="{% url 'pos_checkout' %}" id="paymentForm" data-no-loader>
             {% csrf_token %}
 
             {% if pos_checkout_error %}
@@ -7768,6 +7768,10 @@ function valueOf(id){
 }
 
 function showPOSCheckoutError(message, target){
+    if(typeof window.hideBubuLoader === "function"){
+        window.hideBubuLoader(true);
+    }
+
     const form = document.getElementById("paymentForm");
     if(!form){ return false; }
 
@@ -9606,6 +9610,10 @@ function submitPOSCheckout(e, action){
 
     posIsSubmittingCheckout = true;
     posIsNormalNavigation = true;
+
+    if(typeof window.showBubuLoader === "function"){
+        window.showBubuLoader();
+    }
 
     // Avoid recursion and avoid any field named "submit" masking form.submit().
     HTMLFormElement.prototype.submit.call(form);

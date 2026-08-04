@@ -2649,15 +2649,24 @@ html.bubu-loading body{
     document.addEventListener("submit",function(event){
         const form = event.target;
 
-        if(!(form instanceof HTMLFormElement) || form.dataset.noLoader !== undefined){
+        if(!(form instanceof HTMLFormElement)){
             return;
         }
 
-        if(form.target === "_blank"){
+        if(form.dataset.noLoader !== undefined || form.target === "_blank"){
             return;
         }
 
-        showBubuLoader();
+        /*
+         * Let page-specific submit validation run first.
+         * If another handler cancels the submit, do not leave the full-page
+         * loader covering the form and its validation errors.
+         */
+        window.setTimeout(function(){
+            if(!event.defaultPrevented){
+                showBubuLoader();
+            }
+        },0);
     });
 
     window.addEventListener("beforeunload",function(){

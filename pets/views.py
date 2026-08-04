@@ -409,6 +409,7 @@ def _get_pet_sale_group(sale, queryset=None):
 
 
 def _group_pet_sales_for_list(sales):
+    """Build one row per customer pet-sale order for the list page."""
     ordered = list(sales)
     used_ids = set()
     groups = []
@@ -428,27 +429,99 @@ def _group_pet_sales_for_list(sales):
 
         members = sorted(members, key=lambda item: (item.created_at, item.id))
         used_ids.update(item.id for item in members)
+        primary = members[-1]
 
         available = [
             item for item in members
             if item.status not in ["completed", "cancelled", "refunded"]
         ]
 
+        # Combine the same breed, for example Polo x2. Different breeds remain
+        # on separate lines, for example Polo x1 and Poodle x1.
+        pet_counts = {}
+        for item in members:
+            breed = (item.breed_display or item.pet_type_display or "Pet").strip()
+            pet_counts[breed] = pet_counts.get(breed, 0) + 1
+
+        pet_summary = [
+            {"name": name, "qty": qty}
+            for name, qty in pet_counts.items()
+        ]
+
+        total_final = sum((item.final_price for item in members), Decimal("0.00"))
+        total_paid = sum((item.paid_amount for item in members), Decimal("0.00"))
+        total_balance = sum((item.remaining_amount for item in members), Decimal("0.00"))
+
+        statuses = {item.status for item in members}
+        if statuses and statuses.issubset({"cancelled"}):
+            payment_status = "Cancelled"
+            payment_status_class = "cancelled"
+        elif statuses and statuses.issubset({"refunded"}):
+            payment_status = "Refunded"
+            payment_status_class = "refunded"
+        elif all(item.status == "completed" for item in members):
+            payment_status = "Completed"
+            payment_status_class = "completed"
+        elif total_paid > 0 and total_balance > 0:
+            payment_status = "Partial"
+            payment_status_class = "partial"
+        elif total_paid >= total_final and total_final > 0:
+            payment_status = "Paid"
+            payment_status_class = "completed"
+        else:
+            payment_status = "Deposit / Waiting"
+            payment_status_class = "waiting"
+
+        has_preorder = any(item.sale_kind == "preorder" for item in members)
+        has_in_stock = any(item.sale_kind == "in_stock" for item in members)
+        if has_preorder and has_in_stock:
+            sale_type_display = "Mixed"
+            sale_type_class = "mixed"
+        elif has_preorder:
+            sale_type_display = "Pre-order"
+            sale_type_class = "preorder"
+        else:
+            sale_type_display = "In-stock"
+            sale_type_class = "instock"
+
+        source_values = {
+            get_customer_source_display_safe(item)
+            for item in members
+        }
+        source_display = ", ".join(sorted(source_values)) if source_values else "Staff Chat"
+
+        seller_names = {
+            item.seller_display
+            for item in members
+            if item.seller_display and item.seller_display != "-"
+        }
+        seller_display = ", ".join(sorted(seller_names)) if seller_names else "-"
+
         groups.append({
-            "primary": members[-1],
+            "primary": primary,
             "sales": members,
             "count": len(members),
             "ids": [item.id for item in members],
             "available_ids": [item.id for item in available],
+            "pet_summary": pet_summary,
+            "customer_name": primary.customer_name,
+            "phone": primary.phone,
+            "created_at": members[0].created_at,
+            "seller_display": seller_display,
+            "source_display": source_display,
             "total_price": sum((item.sale_price for item in members), Decimal("0.00")),
             "total_discount": sum((item.discount_amount for item in members), Decimal("0.00")),
-            "total_final": sum((item.final_price for item in members), Decimal("0.00")),
-            "total_paid": sum((item.paid_amount for item in members), Decimal("0.00")),
-            "total_balance": sum((item.remaining_amount for item in members), Decimal("0.00")),
-            "total_cost": sum((item.linked_cost_price for item in members), Decimal("0.00")),
+            "total_final": total_final,
+            "total_paid": total_paid,
+            "total_balance": total_balance,
+            "payment_status": payment_status,
+            "payment_status_class": payment_status_class,
+            "sale_type_display": sale_type_display,
+            "sale_type_class": sale_type_class,
             "all_completed": all(item.status == "completed" for item in members),
-            "has_preorder": any(item.sale_kind == "preorder" for item in members),
-            "has_in_stock": any(item.sale_kind == "in_stock" for item in members),
+            "has_preorder": has_preorder,
+            "has_in_stock": has_in_stock,
+            "can_add_to_pos": bool(available),
         })
 
     return groups
@@ -1649,6 +1722,7 @@ def pet_sale_list(request):
     return render(request, "pets/pet_sale_list.html", {
         "sales": sale_rows,
         "sale_groups": sale_groups,
+        "purchase_groups": sale_groups,
         "q": q,
         "sale_kind": sale_kind,
         "status": status,
@@ -2195,4 +2269,3 @@ def pet_sale_add_to_pos(request, pk):
         messages.success(request, f"Pet Sale #{sale.id} added to POS.")
 
     return redirect("pos")
-
