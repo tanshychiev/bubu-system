@@ -273,6 +273,11 @@
                         <span>Completed</span>
                         <strong>{{ sale.completed_at|date:"d M Y H:i"|default:"-" }}</strong>
                     </div>
+
+                    <div class="info-row">
+                        <span>Issue Date</span>
+                        <strong>{{ sale.warranty_issue_date|date:"d M Y"|default:"Not set" }}</strong>
+                    </div>
                 </section>
             </div>
 
@@ -340,26 +345,30 @@
                 </div>
 
                 <div
-                    class="warranty-range-card"
+                    class="warranty-range-card {% if not sale.warranty_issue_date %}needs-issue-date{% endif %}"
                     id="warrantyRangeCard"
-                    data-start="{{ sale.created_at|date:'Y-m-d' }}"
+                    data-start="{{ sale.warranty_start_date|date:'Y-m-d' }}"
+                    data-end="{{ sale.warranty_expire_date|date:'Y-m-d' }}"
                     data-days="{{ sale.warranty_days|default:3 }}"
                 >
                     <div class="warranty-card-head">
                         <span class="shield">🛡️</span>
-                        <div>
-                            <small>Warranty Period</small>
+                        <div class="warranty-heading-copy">
+                            <small>Issue Date / Warranty Period</small>
                             <strong id="warrantyRangeText">Loading…</strong>
                         </div>
+                        <button type="button" class="issue-date-edit-btn" onclick="openIssueDateModal()">
+                            {% if sale.warranty_issue_date %}✏️ Edit{% else %}📅 Set Date{% endif %}
+                        </button>
                     </div>
 
                     <div class="warranty-mini-grid">
                         <div>
-                            <span>Start</span>
+                            <span>Issue Date</span>
                             <strong id="warrantyStartText">-</strong>
                         </div>
                         <div>
-                            <span>End</span>
+                            <span>Warranty End</span>
                             <strong id="warrantyEndText">-</strong>
                         </div>
                         <div>
@@ -367,6 +376,10 @@
                             <strong id="warrantyDaysText">3 days</strong>
                         </div>
                     </div>
+
+                    {% if not sale.warranty_issue_date %}
+                        <p class="issue-date-warning">Set the Issue Date before printing the receipt.</p>
+                    {% endif %}
                 </div>
 
                 <div class="action-section">
@@ -463,6 +476,45 @@
                 </div>
             </section>
         </aside>
+    </div>
+</div>
+
+
+<div class="issue-date-modal" id="issueDateModal" aria-hidden="true">
+    <div class="issue-date-backdrop" onclick="closeIssueDateModal()"></div>
+    <div class="issue-date-dialog" role="dialog" aria-modal="true" aria-labelledby="issueDateTitle">
+        <div class="issue-date-grabber"></div>
+        <button type="button" class="issue-date-close" onclick="closeIssueDateModal()" aria-label="Close">×</button>
+        <div class="issue-date-top">
+            <span class="issue-date-icon">📅</span>
+            <div>
+                <h2 id="issueDateTitle">Set Issue Date</h2>
+                <p>Choose the date the customer received the pet.</p>
+            </div>
+        </div>
+        <form method="post" class="issue-date-form" id="issueDateForm">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="set_issue_date">
+            <input id="warrantyIssueDate" type="hidden" name="warranty_issue_date"
+                value="{% if sale.warranty_issue_date %}{{ sale.warranty_issue_date|date:'Y-m-d' }}{% else %}{% now 'Y-m-d' %}{% endif %}" required>
+            <div class="selected-date-card">
+                <span class="selected-date-label">Selected date</span>
+                <strong id="selectedDateText">-</strong>
+            </div>
+            <div class="cute-calendar" id="cuteCalendar">
+                <div class="calendar-head">
+                    <button type="button" class="calendar-nav" onclick="changeCalendarMonth(-1)">‹</button>
+                    <strong id="calendarMonthTitle">Month Year</strong>
+                    <button type="button" class="calendar-nav" onclick="changeCalendarMonth(1)">›</button>
+                </div>
+                <div class="calendar-weekdays"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+                <div class="calendar-days" id="calendarDays"></div>
+            </div>
+            <div class="calendar-quick-actions">
+                <button type="button" class="calendar-today-btn" onclick="selectTodayDate()">Today</button>
+                <button type="submit" class="calendar-save-btn">Save Issue Date</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -965,6 +1017,51 @@ input[type="number"]::-webkit-outer-spin-button{
     border-radius:12px;
     background:#eefbf4;
 }
+
+.warranty-range-card.needs-issue-date{
+    border-color:#f1c27d;
+    background:#fff8e8;
+}
+
+.warranty-heading-copy{
+    min-width:0;
+    flex:1;
+}
+
+.issue-date-edit-btn{
+    min-height:31px;
+    padding:0 9px;
+    border:0;
+    border-radius:9px;
+    color:#166d43;
+    background:white;
+    font-size:8px;
+    font-weight:1000;
+    cursor:pointer;
+    white-space:nowrap;
+}
+
+.issue-date-warning{
+    margin:7px 0 0;
+    color:#a15d00;
+    font-size:8px;
+    font-weight:1000;
+    text-align:center;
+}
+
+.issue-date-modal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:18px}
+.issue-date-modal.open{display:flex}
+.issue-date-backdrop{position:absolute;inset:0;background:rgba(20,18,45,.52);backdrop-filter:blur(7px)}
+.issue-date-dialog{position:relative;width:min(390px,100%);padding:22px;overflow:hidden;border:1px solid rgba(255,255,255,.75);border-radius:26px;background:linear-gradient(180deg,#fff 0%,#fbf9ff 100%);box-shadow:0 30px 90px rgba(24,18,66,.30);text-align:left}
+.issue-date-grabber{display:none}
+.issue-date-close{position:absolute;top:13px;right:13px;width:34px;height:34px;border:0;border-radius:12px;color:#756d86;background:#f3eff8;font-size:22px;font-weight:800;cursor:pointer}
+.issue-date-top{display:flex;align-items:center;gap:12px;padding-right:36px}
+.issue-date-icon{display:flex;width:52px;height:52px;flex:0 0 52px;align-items:center;justify-content:center;border-radius:17px;background:linear-gradient(145deg,#eafff2,#f2edff);font-size:25px}
+.issue-date-dialog h2{margin:0;color:#11103b;font-size:20px;line-height:1.15}.issue-date-dialog p{margin:4px 0 0;color:#837a91;font-size:10px;font-weight:800;line-height:1.4}.issue-date-form{margin-top:16px}
+.selected-date-card{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;padding:11px 13px;border:1px solid #e8e0f0;border-radius:15px;background:#fff}.selected-date-label{color:#8a8195;font-size:9px;font-weight:1000;text-transform:uppercase;letter-spacing:.5px}.selected-date-card strong{color:#6d5bef;font-size:14px;font-weight:1000}
+.cute-calendar{padding:14px;border:1px solid #eee8f5;border-radius:20px;background:#fff;box-shadow:0 12px 32px rgba(92,74,146,.08)}.calendar-head{display:grid;grid-template-columns:38px 1fr 38px;align-items:center;gap:8px;margin-bottom:13px}.calendar-head strong{color:#18163f;font-size:15px;font-weight:1000;text-align:center}.calendar-nav{width:38px;height:38px;border:0;border-radius:13px;color:#745eea;background:#f4f0ff;font-size:25px;line-height:1;cursor:pointer}.calendar-weekdays,.calendar-days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.calendar-weekdays{margin-bottom:6px}.calendar-weekdays span{color:#948ba2;font-size:9px;font-weight:1000;text-align:center}.calendar-day{aspect-ratio:1;min-width:0;border:0;border-radius:50%;color:#17163b;background:transparent;font-size:10px;font-weight:1000;cursor:pointer}.calendar-day:hover{background:#f3efff}.calendar-day.outside{color:#d1cadb}.calendar-day.today{box-shadow:inset 0 0 0 1.5px #c9bfff}.calendar-day.selected{color:#fff;background:linear-gradient(135deg,#8b5cf6,#5b6df6);box-shadow:0 8px 18px rgba(102,87,238,.34),0 0 0 4px #efeaff}.calendar-quick-actions{display:grid;grid-template-columns:92px 1fr;gap:8px;margin-top:12px}.calendar-today-btn,.calendar-save-btn{min-height:44px;border:0;border-radius:14px;font-size:11px;font-weight:1000;cursor:pointer}.calendar-today-btn{color:#6d5bef;background:#f0ecff}.calendar-save-btn{color:#fff;background:linear-gradient(135deg,#18aa62,#6d5bef);box-shadow:0 10px 22px rgba(77,91,221,.20)}
+@media(max-width:600px){.issue-date-modal{align-items:flex-end;padding:0}.issue-date-dialog{width:100%;max-height:92dvh;overflow-y:auto;padding:16px 15px calc(16px + env(safe-area-inset-bottom));border-radius:26px 26px 0 0;animation:issueDateSheetIn .22s ease-out}.issue-date-grabber{display:block;width:44px;height:5px;margin:0 auto 13px;border-radius:999px;background:#ded7e8}.issue-date-close{top:18px;right:14px;width:32px;height:32px}.issue-date-top{padding-right:40px}.issue-date-icon{width:46px;height:46px;flex-basis:46px;border-radius:15px;font-size:22px}.issue-date-dialog h2{font-size:18px}.issue-date-dialog p{font-size:9px}.cute-calendar{padding:12px;border-radius:18px}.calendar-head{grid-template-columns:36px 1fr 36px;margin-bottom:10px}.calendar-nav{width:36px;height:36px}.calendar-day{font-size:11px}.calendar-quick-actions{position:sticky;bottom:0;padding-top:10px;background:linear-gradient(180deg,rgba(251,249,255,0),#fbf9ff 26%)}}
+@keyframes issueDateSheetIn{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
 
 .warranty-card-head{
     display:flex;
@@ -1521,14 +1618,7 @@ function renderWarrantyRange(){
 
     const days = parseInt(card.dataset.days || "3", 10) || 3;
     const start = parseWarrantyDate(card.dataset.start);
-    let end = null;
-
-    // Inclusive warranty counting:
-    // 1 July is day 1, so a 3-day warranty ends on 3 July.
-    if(start){
-        end = new Date(start);
-        end.setDate(end.getDate() + Math.max(days - 1, 0));
-    }
+    const end = parseWarrantyDate(card.dataset.end);
 
     const startText = document.getElementById("warrantyStartText");
     const endText = document.getElementById("warrantyEndText");
@@ -1553,6 +1643,21 @@ function renderWarrantyRange(){
         }
     }
 }
+
+let issueCalendarView=null,issueCalendarSelected=null;
+function parseIsoDate(v){if(!v)return null;const p=v.split("-").map(Number);if(p.length!==3||p.some(Number.isNaN))return null;return new Date(p[0],p[1]-1,p[2])}
+function toIsoDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+function sameCalendarDay(a,b){return a&&b&&a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()}
+function updateSelectedDateDisplay(){const t=document.getElementById("selectedDateText"),i=document.getElementById("warrantyIssueDate");if(!t||!i||!issueCalendarSelected)return;i.value=toIsoDate(issueCalendarSelected);t.textContent=issueCalendarSelected.toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})}
+function renderCuteCalendar(){const title=document.getElementById("calendarMonthTitle"),box=document.getElementById("calendarDays");if(!title||!box||!issueCalendarView)return;title.textContent=issueCalendarView.toLocaleDateString("en-US",{month:"long",year:"numeric"});box.innerHTML="";const y=issueCalendarView.getFullYear(),m=issueCalendarView.getMonth(),first=new Date(y,m,1),start=new Date(y,m,1-first.getDay()),today=new Date();today.setHours(0,0,0,0);for(let x=0;x<42;x++){const d=new Date(start);d.setDate(start.getDate()+x);const b=document.createElement("button");b.type="button";b.className="calendar-day";b.textContent=d.getDate();if(d.getMonth()!==m)b.classList.add("outside");if(sameCalendarDay(d,today))b.classList.add("today");if(sameCalendarDay(d,issueCalendarSelected))b.classList.add("selected");b.onclick=function(){issueCalendarSelected=new Date(d);issueCalendarView=new Date(d.getFullYear(),d.getMonth(),1);updateSelectedDateDisplay();renderCuteCalendar()};box.appendChild(b)}}
+function changeCalendarMonth(a){if(!issueCalendarView)return;issueCalendarView=new Date(issueCalendarView.getFullYear(),issueCalendarView.getMonth()+a,1);renderCuteCalendar()}
+function selectTodayDate(){const d=new Date();d.setHours(0,0,0,0);issueCalendarSelected=d;issueCalendarView=new Date(d.getFullYear(),d.getMonth(),1);updateSelectedDateDisplay();renderCuteCalendar()}
+function openIssueDateModal(){const m=document.getElementById("issueDateModal"),i=document.getElementById("warrantyIssueDate");if(!m||!i)return;issueCalendarSelected=parseIsoDate(i.value)||new Date();issueCalendarSelected.setHours(0,0,0,0);issueCalendarView=new Date(issueCalendarSelected.getFullYear(),issueCalendarSelected.getMonth(),1);updateSelectedDateDisplay();renderCuteCalendar();m.classList.add("open");m.setAttribute("aria-hidden","false");document.body.style.overflow="hidden"}
+function closeIssueDateModal(){const m=document.getElementById("issueDateModal");if(!m)return;m.classList.remove("open");m.setAttribute("aria-hidden","true");document.body.style.overflow=""}
+
+document.addEventListener("keydown", function(event){
+    if(event.key === "Escape") closeIssueDateModal();
+});
 
 function confirmCompleteSale(){
     return confirm("Complete this sale? This will mark the pet as sold.");

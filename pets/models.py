@@ -357,6 +357,7 @@ class PetSale(models.Model):
     remaining_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     warranty_days = models.PositiveIntegerField(default=3)
+    warranty_issue_date = models.DateField(null=True, blank=True)
     warranty_start_date = models.DateField(null=True, blank=True)
     warranty_expire_date = models.DateField(null=True, blank=True)
 
@@ -481,11 +482,20 @@ class PetSale(models.Model):
         return self.remaining_amount
 
     def set_warranty_dates(self):
-        if not self.warranty_start_date:
-            self.warranty_start_date = timezone.localdate()
+        """Calculate warranty dates from the fixed warranty issue date."""
+        if not self.warranty_issue_date:
+            return
 
+        self.warranty_start_date = self.warranty_issue_date
         days = self.warranty_days or 3
-        self.warranty_expire_date = self.warranty_start_date + timedelta(days=days)
+        self.warranty_expire_date = self.warranty_issue_date + timedelta(days=days)
+
+    def issue_warranty(self, issue_date=None):
+        """Issue the warranty once. Reprinting does not extend the warranty."""
+        if not self.warranty_issue_date:
+            self.warranty_issue_date = issue_date or timezone.localdate()
+
+        self.set_warranty_dates()
 
     def build_copy_text(self):
         deadline_text = self.deadline.strftime("%d/%m/%Y") if self.deadline else "-"
@@ -536,7 +546,6 @@ class PetSale(models.Model):
         if self.status == "completed":
             if not self.completed_at:
                 self.completed_at = timezone.now()
-            self.set_warranty_dates()
 
         elif self.status in ["cancelled", "refunded", "arrived"]:
             pass
@@ -548,7 +557,6 @@ class PetSale(models.Model):
                 if not self.completed_at:
                     self.completed_at = timezone.now()
 
-                self.set_warranty_dates()
             else:
                 self.status = "deposit"
 

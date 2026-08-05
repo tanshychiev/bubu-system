@@ -799,7 +799,6 @@ def complete_pet_sale(request, sale, extra_paid=None, warranty_days=None):
 
     sale.status = "completed"
     sale.completed_at = timezone.now()
-    sale.set_warranty_dates()
     sale.save()
 
     if sale.sale_kind == "in_stock" and sale.pet:
@@ -2059,6 +2058,7 @@ def pet_sale_edit(request, pk):
 
 
 @login_required
+@transaction.atomic
 def pet_sale_detail(request, pk):
     sale = get_object_or_404(
         PetSale.objects
@@ -2068,6 +2068,37 @@ def pet_sale_detail(request, pk):
     )
 
     group_sales = _get_pet_sale_group(sale)
+
+    if request.method == "POST" and request.POST.get("action") == "set_issue_date":
+        issue_date_text = (request.POST.get("warranty_issue_date") or "").strip()
+        issue_date = parse_date(issue_date_text)
+
+        if not issue_date:
+            messages.error(request, "Please choose a valid Issue Date.")
+            return redirect("pet_sale_detail", sale.id)
+
+        # All pets created in the same checkout use the same customer handover date.
+        sales_to_update = group_sales or [sale]
+        for item in sales_to_update:
+            item.warranty_issue_date = issue_date
+            item.set_warranty_dates()
+            item.save(update_fields=[
+                "warranty_issue_date",
+                "warranty_start_date",
+                "warranty_expire_date",
+            ])
+
+            CustomerPet.objects.filter(pet_sale=item).update(
+                warranty_start_date=item.warranty_start_date,
+                warranty_expire_date=item.warranty_expire_date,
+            )
+
+        messages.success(
+            request,
+            f"Issue Date saved as {issue_date.strftime('%d %b %Y')}. Receipt warranty dates are updated.",
+        )
+        return redirect("pet_sale_detail", sale.id)
+
     available_group_sales = [
         item for item in group_sales
         if item.status not in ["completed", "cancelled", "refunded"]
@@ -2147,6 +2178,16 @@ def pet_warranty_print(request, pk):
         pk=pk,
     )
 
+    # The first time this warranty page is issued, lock the issue date.
+    # Reprinting later will keep the original issue date and will not extend warranty.
+    if not sale.warranty_issue_date:
+        sale.issue_warranty(timezone.localdate())
+        sale.save(update_fields=[
+            "warranty_issue_date",
+            "warranty_start_date",
+            "warranty_expire_date",
+        ])
+
     return render(request, "pets/pet_warranty_print.html", {
         "sale": sale,
         "can_view_cost_price": can_view_cost(request.user),
@@ -2180,6 +2221,14 @@ def pet_sale_receipt_print(request, pk):
 
     if not receipt_sales:
         receipt_sales = [sale]
+
+    missing_issue_date = [item for item in receipt_sales if not item.warranty_issue_date]
+    if missing_issue_date:
+        messages.error(
+            request,
+            "Set the Issue Date on the Pet Sale detail page before printing the receipt.",
+        )
+        return redirect("pet_sale_detail", sale.id)
 
     return render(request, "pets/pet_sale_receipt_print.html", {
         "sale": sale,
