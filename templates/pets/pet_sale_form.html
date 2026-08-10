@@ -47,6 +47,7 @@
         {{ form_error_fields|json_script:"petSaleErrorFields" }}
 
         <input type="hidden" name="submit_action" id="submitAction" value="save">
+        <input type="hidden" name="submission_token" id="submissionToken" value="{{ submission_token|default:'' }}">
         <input type="hidden" name="multi_sale" value="1">
         <input type="hidden" name="pet_count" id="petCountInput" value="1">
 
@@ -5008,7 +5009,18 @@ document.addEventListener("DOMContentLoaded", function(){
      * Capture phase runs before the global loader and before other submit
      * handlers. Invalid data never leaves this page.
      */
+    let petSaleSubmitting = false;
+
     form.addEventListener("submit", function(event){
+        // A slow connection can leave the page visible long enough for a second
+        // tap/click. Never allow a second browser submit for the same form.
+        if(petSaleSubmitting){
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            return false;
+        }
+
         refreshPetCount();
         ensureFirstPetMultiFields();
         copySharedCustomerToEveryPet();
@@ -5021,6 +5033,21 @@ document.addEventListener("DOMContentLoaded", function(){
             stopPetSaleLoading();
             return false;
         }
+
+        petSaleSubmitting = true;
+        form.dataset.submitting = "1";
+
+        form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach(function(button){
+            button.disabled = true;
+            button.setAttribute("aria-disabled", "true");
+            if(button.tagName === "BUTTON"){
+                button.dataset.originalText = button.innerHTML;
+                button.innerHTML = "⏳ Saving...";
+            }else{
+                button.dataset.originalValue = button.value;
+                button.value = "Saving...";
+            }
+        });
 
         sessionStorage.removeItem("bubu_pet_sale_draft");
         return true;

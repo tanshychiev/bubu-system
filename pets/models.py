@@ -385,8 +385,24 @@ class PetSale(models.Model):
         help_text="Real seller/staff who sold this pet.",
     )
 
+
+    # Idempotency fields: the same browser/server retry must not create the
+    # same pet-sale row twice. Existing rows keep an empty token.
+    submission_token = models.CharField(max_length=64, blank=True, default="", db_index=True)
+    submission_index = models.PositiveSmallIntegerField(default=0)
+
     completed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["submission_token", "submission_index"],
+                condition=~models.Q(submission_token=""),
+                name="uniq_pet_sale_submission_item",
+            ),
+        ]
 
     @property
     def seller_display(self):

@@ -1726,7 +1726,7 @@ body.inventory-form-popup-open{
                         <div id="variantRows" class="variant-rows"></div>
 
                         <div class="variant-builder-note">
-                            The first row is the <strong>Main / Default SKU</strong>. Drag to reorder on computer or use ▲ and ▼ on phone. Existing rows are never deleted here; turn them Inactive to keep stock history safe.
+                            The first row is the <strong>Main / Default SKU</strong>. Drag to reorder on computer or use ▲ and ▼ on phone. Existing variants can only be hidden by deliberately changing <strong>Variant Status</strong>; the ✕ button is only for new unsaved variants.
                         </div>
                     </div>
                 </div>
@@ -2209,7 +2209,7 @@ function variantRowMarkup(key, data = {}){
             <div class="variant-row-actions">
                 <button type="button" class="variant-move-btn" onclick="moveVariantRow(this,-1)" title="Move up">▲</button>
                 <button type="button" class="variant-move-btn" onclick="moveVariantRow(this,1)" title="Move down">▼</button>
-                <button type="button" class="variant-remove-btn" onclick="removeVariantRow(this)" title="${existing ? "Make inactive" : "Remove"}">${existing ? "⏸" : "✕"}</button>
+                ${existing ? "" : '<button type="button" class="variant-remove-btn" onclick="removeVariantRow(this)" title="Remove unsaved variant">✕</button>'}
             </div>
         </div>
     `;
@@ -2248,13 +2248,10 @@ function removeVariantRow(button){
         return;
     }
 
+    // Existing inventory variants must never be deactivated by the remove action.
+    // Their stock/history is preserved and status can only be changed deliberately
+    // with the Variant Status button.
     if(row.dataset.existing === "1"){
-        const activeButton = row.querySelector(".variant-active-btn");
-        const activeValue = row.querySelector(".variant-active-value");
-        if(activeValue && activeValue.value !== "0"){
-            toggleVariantActive(activeButton);
-        }
-        row.scrollIntoView({behavior:"smooth", block:"center"});
         return;
     }
 
@@ -2276,6 +2273,18 @@ function toggleVariantActive(button){
     }
 
     const active = hidden.value !== "1";
+
+    // Deactivating an existing variant removes it from Purchase/POS selectors.
+    // Require an explicit confirmation so a touch/mis-click cannot hide stock.
+    if(!active && row.dataset.existing === "1"){
+        const ok = window.confirm(
+            "Make this variant Inactive?\n\nIt will be hidden from Purchase and POS until you activate it again."
+        );
+        if(!ok){
+            return;
+        }
+    }
+
     hidden.value = active ? "1" : "0";
     button.classList.toggle("active", active);
     button.querySelector(".variant-active-icon").textContent = active ? "✅" : "⏸";

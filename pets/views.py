@@ -1,11 +1,12 @@
 from datetime import timedelta
 from decimal import Decimal
+from uuid import uuid4
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -29,6 +30,25 @@ def _to_decimal(value, default="0.00"):
         return Decimal(str(value or default))
     except Exception:
         return Decimal(default)
+
+
+
+
+def _pet_sale_submission_token(request):
+    """Keep one stable token for one create-form submission/retry."""
+    posted = (request.POST.get("submission_token") or "").strip()
+    return posted or uuid4().hex
+
+
+def _find_existing_submission_sale(token, index):
+    if not token:
+        return None
+    return (
+        PetSale.objects
+        .filter(submission_token=token, submission_index=index)
+        .order_by("id")
+        .first()
+    )
 
 
 def _get_pet_photo_model():
@@ -1448,6 +1468,7 @@ def pet_breed_edit(request, pk):
 
 
 def _pet_sale_multi_context(request, selected_pet=None):
+    submission_token = _pet_sale_submission_token(request)
     pets = (
         Pet.objects
         .select_related("breed_profile", "branch")
@@ -1464,11 +1485,13 @@ def _pet_sale_multi_context(request, selected_pet=None):
         "multi_mode": True,
         "posted_form_data": request.POST.dict() if request.method == "POST" else {},
         "form_error_fields": [],
+        "submission_token": submission_token,
     }
 
 
 def _pet_sale_create_multi(request):
     """Create multiple independent PetSale records using one shared customer."""
+    submission_token = _pet_sale_submission_token(request)
     try:
         pet_count = max(1, min(int(request.POST.get("pet_count", "1")), 20))
     except (TypeError, ValueError):
@@ -1561,8 +1584,26 @@ def _pet_sale_create_multi(request):
         return render(request, "pets/pet_sale_form.html", _pet_sale_multi_context(request))
 
     created_sales = []
+    newly_created_sales = []
+    duplicate_retry = False
+
     for index, sale, payment_method in prepared_rows:
-        sale.save()
+        sale.submission_token = submission_token
+        sale.submission_index = index
+
+        try:
+            # Inner savepoint keeps the outer request transaction usable if a
+            # concurrent/retried POST hits the database unique constraint.
+            with transaction.atomic():
+                sale.save()
+        except IntegrityError:
+            existing = _find_existing_submission_sale(submission_token, index)
+            if existing is None:
+                raise
+            duplicate_retry = True
+            created_sales.append(existing)
+            continue
+
         sync_sale_customer_only(request, sale)
         prefix = f"pets-{index}-"
         for photo in request.FILES.getlist(prefix + "sale_photos")[:6]:
@@ -1570,13 +1611,17 @@ def _pet_sale_create_multi(request):
         if sale.sale_kind == "preorder":
             _sync_preorder_deposit_to_pos(request, sale, payment_method)
         created_sales.append(sale)
+        newly_created_sales.append(sale)
 
-    for sale in created_sales:
+    for sale in newly_created_sales:
         send_pet_sale_telegram_alert(sale)
 
     request.session["last_multi_pet_sale_ids"] = [sale.id for sale in created_sales]
     request.session.modified = True
-    messages.success(request, f"{len(created_sales)} separate pet sales saved successfully.")
+    if duplicate_retry and not newly_created_sales:
+        messages.info(request, "This pet sale was already saved. Duplicate request blocked.")
+    else:
+        messages.success(request, f"{len(created_sales)} separate pet sales saved successfully.")
     ids = ",".join(str(sale.id) for sale in created_sales)
     return redirect(f"/pets/sales/multi-success/?ids={ids}")
 
@@ -1740,6 +1785,8 @@ def pet_sale_list(request):
 @login_required
 @transaction.atomic
 def pet_sale_create(request):
+    submission_token = _pet_sale_submission_token(request)
+
     if request.method == "POST" and request.POST.get("multi_sale") == "1":
         return _pet_sale_create_multi(request)
 
@@ -1812,19 +1859,36 @@ def pet_sale_create(request):
                 form_is_valid = False
 
         if form_is_valid and sale is not None:
-            sale.save()
-            sync_sale_customer_only(request, sale)
-            _save_pet_sale_photos(request, sale)
+            sale.submission_token = submission_token
+            sale.submission_index = 0
+            duplicate_retry = False
 
-            deposit_record = _sync_preorder_deposit_to_pos(
-                request,
-                sale,
-                preorder_payment_method,
-            )
+            try:
+                with transaction.atomic():
+                    sale.save()
+            except IntegrityError:
+                existing = _find_existing_submission_sale(submission_token, 0)
+                if existing is None:
+                    raise
+                sale = existing
+                duplicate_retry = True
 
-            send_pet_sale_telegram_alert(sale)
+            deposit_record = None
+            if not duplicate_retry:
+                sync_sale_customer_only(request, sale)
+                _save_pet_sale_photos(request, sale)
 
-            if deposit_record:
+                deposit_record = _sync_preorder_deposit_to_pos(
+                    request,
+                    sale,
+                    preorder_payment_method,
+                )
+
+                send_pet_sale_telegram_alert(sale)
+
+            if duplicate_retry:
+                messages.info(request, "This pet sale was already saved. Duplicate request blocked.")
+            elif deposit_record:
                 messages.success(
                     request,
                     (
@@ -1888,6 +1952,7 @@ def pet_sale_create(request):
         "multi_mode": True,
         "posted_form_data": request.POST.dict() if request.method == "POST" else {},
         "form_error_fields": list(form.errors.keys()),
+        "submission_token": submission_token,
     })
 
 
