@@ -22,6 +22,18 @@ from .models import (
 from .forms import PurchaseForm, PurchaseItemFormSet
 
 
+def can_view_purchase_cost(user):
+    """Only Owner/Admin can see purchase cost information."""
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    return (
+        user.groups.filter(name__iexact="admin").exists()
+        or user.groups.filter(name__iexact="owner").exists()
+    )
+
+
 def _to_int(value, default=0):
     try:
         return int(value)
@@ -219,6 +231,7 @@ def purchase_list(request):
     from datetime import datetime, time
 
     today = timezone.localdate()
+    can_view_cost = can_view_purchase_cost(request.user)
 
     # Default:
     # From = empty = all old purchases
@@ -291,25 +304,27 @@ def purchase_list(request):
     # =========================
     total_purchases = filtered_purchases.count()
 
-    total_spent = (
-        filtered_purchases.aggregate(total=Sum("total_amount"))["total"]
-        or 0
-    )
+    total_spent = None
+    this_month = None
+
+    if can_view_cost:
+        total_spent = (
+            filtered_purchases.aggregate(total=Sum("total_amount"))["total"]
+            or 0
+        )
+
+        month_start = today.replace(day=1)
+        this_month = (
+            Purchase.objects.filter(
+                created_at__date__gte=month_start,
+                created_at__date__lte=today,
+            ).aggregate(total=Sum("total_amount"))["total"]
+            or 0
+        )
 
     pending_orders = filtered_purchases.filter(
         status__in=["ordered", "partial"]
     ).count()
-
-    # This Month total, separate from current filter
-    month_start = today.replace(day=1)
-
-    this_month = (
-        Purchase.objects.filter(
-            created_at__date__gte=month_start,
-            created_at__date__lte=today,
-        ).aggregate(total=Sum("total_amount"))["total"]
-        or 0
-    )
 
     return render(request, "purchases/purchase_list.html", {
         "purchases": filtered_purchases,
@@ -322,6 +337,7 @@ def purchase_list(request):
         "date_from": date_from,
         "date_to": date_to,
         "status_filter": status_filter,
+        "can_view_cost": can_view_cost,
     })
 
 
@@ -345,6 +361,7 @@ def purchase_detail(request, pk):
     return render(request, "purchases/purchase_detail.html", {
         "purchase": purchase,
         "branches": branches,
+        "can_view_cost": can_view_purchase_cost(request.user),
     })
 
 
@@ -353,10 +370,15 @@ def purchase_detail(request, pk):
 def purchase_create(request):
     purchase = Purchase()
     branches = Branch.objects.filter(is_active=True).order_by("name")
+    can_view_cost = can_view_purchase_cost(request.user)
 
     if request.method == "POST":
-        form = PurchaseForm(request.POST, instance=purchase)
-        formset = PurchaseItemFormSet(request.POST, instance=purchase)
+        form = PurchaseForm(request.POST, instance=purchase, can_view_cost=can_view_cost)
+        formset = PurchaseItemFormSet(
+            request.POST,
+            instance=purchase,
+            form_kwargs={"can_view_cost": can_view_cost},
+        )
 
         if form.is_valid() and formset.is_valid():
             for item_form in formset.forms:
@@ -379,6 +401,7 @@ def purchase_create(request):
                         "formset": formset,
                         "branches": branches,
                         "title": "Create Purchase",
+                        "can_view_cost": can_view_cost,
                     })
 
             purchase = form.save()
@@ -414,11 +437,12 @@ def purchase_create(request):
         messages.error(request, "Purchase create failed. Please check item rows.")
 
     else:
-        form = PurchaseForm(instance=purchase)
+        form = PurchaseForm(instance=purchase, can_view_cost=can_view_cost)
         formset = PurchaseItemFormSet(
             instance=purchase,
             queryset=PurchaseItem.objects.none(),
             initial=[{}],
+            form_kwargs={"can_view_cost": can_view_cost},
         )
 
     return render(request, "purchases/purchase_form.html", {
@@ -426,6 +450,7 @@ def purchase_create(request):
         "formset": formset,
         "branches": branches,
         "title": "Create Purchase",
+        "can_view_cost": can_view_cost,
     })
 
 
@@ -434,6 +459,7 @@ def purchase_create(request):
 def purchase_update(request, pk):
     purchase = get_object_or_404(Purchase, pk=pk)
     branches = Branch.objects.filter(is_active=True).order_by("name")
+    can_view_cost = can_view_purchase_cost(request.user)
 
     old_purchase = Purchase.objects.get(pk=pk)
 
@@ -451,8 +477,12 @@ def purchase_update(request, pk):
         }
 
     if request.method == "POST":
-        form = PurchaseForm(request.POST, instance=purchase)
-        formset = PurchaseItemFormSet(request.POST, instance=purchase)
+        form = PurchaseForm(request.POST, instance=purchase, can_view_cost=can_view_cost)
+        formset = PurchaseItemFormSet(
+            request.POST,
+            instance=purchase,
+            form_kwargs={"can_view_cost": can_view_cost},
+        )
 
         if form.is_valid() and formset.is_valid():
             for item_form in formset.forms:
@@ -476,12 +506,14 @@ def purchase_update(request, pk):
                         "branches": branches,
                         "title": "Edit Purchase",
                         "purchase": purchase,
+                        "can_view_cost": can_view_cost,
                     })
 
             purchase = form.save()
 
             log_purchase_change(purchase, request.user, "Edit Purchase", "supplier", old_purchase.supplier, purchase.supplier)
-            log_purchase_change(purchase, request.user, "Edit Purchase", "total_amount", old_purchase.total_amount, purchase.total_amount)
+            if can_view_cost:
+                log_purchase_change(purchase, request.user, "Edit Purchase", "total_amount", old_purchase.total_amount, purchase.total_amount)
             log_purchase_change(purchase, request.user, "Edit Purchase", "shipping_note", old_purchase.shipping_note, purchase.shipping_note)
             log_purchase_change(purchase, request.user, "Edit Purchase", "note", old_purchase.note, purchase.note)
 
@@ -522,7 +554,8 @@ def purchase_update(request, pk):
                 elif old:
                     log_purchase_change(purchase, request.user, "Edit Item", "variant", old["variant"], item.variant)
                     log_purchase_change(purchase, request.user, "Edit Item", "ordered_qty", old["ordered_qty"], item.ordered_qty)
-                    log_purchase_change(purchase, request.user, "Edit Item", "cost_price", old["cost_price"], item.cost_price)
+                    if can_view_cost:
+                        log_purchase_change(purchase, request.user, "Edit Item", "cost_price", old["cost_price"], item.cost_price)
                     log_purchase_change(purchase, request.user, "Edit Item", "note", old["note"], item.note)
 
                 old_plan_text = old["plans"] if old else ""
@@ -557,8 +590,11 @@ def purchase_update(request, pk):
         messages.error(request, "Purchase update failed. Please check item rows.")
 
     else:
-        form = PurchaseForm(instance=purchase)
-        formset = PurchaseItemFormSet(instance=purchase)
+        form = PurchaseForm(instance=purchase, can_view_cost=can_view_cost)
+        formset = PurchaseItemFormSet(
+            instance=purchase,
+            form_kwargs={"can_view_cost": can_view_cost},
+        )
 
     return render(request, "purchases/purchase_form.html", {
         "form": form,
@@ -566,6 +602,7 @@ def purchase_update(request, pk):
         "branches": branches,
         "title": "Edit Purchase",
         "purchase": purchase,
+        "can_view_cost": can_view_cost,
     })
 
 

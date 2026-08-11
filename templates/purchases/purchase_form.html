@@ -339,8 +339,6 @@ button{touch-action:manipulation}
     min-height:50px;
     display:flex;
     align-items:center;
-    justify-content:space-between;
-    gap:8px;
     padding:10px 12px;
     border:2px solid var(--line);
     border-radius:14px;
@@ -349,35 +347,9 @@ button{touch-action:manipulation}
     font-size:13px;
     font-weight:1000;
     overflow:hidden;
+    text-overflow:ellipsis;
     white-space:nowrap;
 }
-
-.plan-shop > span{
-    min-width:0;
-    overflow:hidden;
-    text-overflow:ellipsis;
-}
-
-.plan-auto-label{
-    display:none;
-    flex:0 0 auto;
-    padding:3px 7px;
-    border-radius:999px;
-    color:var(--green);
-    background:#e8faef;
-    font-size:9px;
-    font-weight:1000;
-}
-
-.plan-row.auto-balanced .plan-auto-label{
-    display:inline-flex;
-}
-
-.plan-row.auto-balanced .plan-qty{
-    border-color:#bde9d0!important;
-    background:#f3fff8!important;
-}
-
 .plan-qty{min-height:50px!important;height:50px!important;padding:8px 10px!important;text-align:center}
 .plan-remove{
     width:46px;
@@ -388,6 +360,11 @@ button{touch-action:manipulation}
     color:var(--pink);
     font-weight:1000;
     cursor:pointer;
+}
+
+.info-grid.no-cost-info{grid-template-columns:1fr;}
+.item-grid.no-cost-grid{
+    grid-template-columns:minmax(280px,1.8fr) 120px minmax(170px,1fr);
 }
 
 .add-row-btn{
@@ -657,6 +634,8 @@ button{touch-action:manipulation}
     .purchase-wrap{max-width:100%;padding:22px 22px 100px}
     .item-grid{grid-template-columns:minmax(280px,1fr) 115px 125px}
     .item-grid>div:nth-child(4){grid-column:1/-1}
+    .item-grid.no-cost-grid{grid-template-columns:minmax(280px,1fr) 115px}
+    .item-grid.no-cost-grid .note-field{grid-column:1/-1}
 }
 
 @media(max-width:767px){
@@ -868,6 +847,10 @@ button{touch-action:manipulation}
     .item-grid{
         grid-template-columns:minmax(0,1fr) 74px 74px;
         gap:5px;
+    }
+
+    .item-grid.no-cost-grid{
+        grid-template-columns:minmax(0,1fr) 74px;
     }
 
     .variant-field{
@@ -1169,21 +1152,6 @@ button{touch-action:manipulation}
         font-size:10px;
     }
 }
-/* Prevent iPhone Safari from zooming when a form field receives focus.
-   iOS auto-zooms controls whose computed font-size is below 16px. */
-@media(max-width:767px){
-    input,
-    textarea,
-    select{
-        font-size:16px!important;
-    }
-
-    .plan-qty,
-    .modal-head input{
-        font-size:16px!important;
-    }
-}
-
 </style>
 
 <div class="purchase-wrap">
@@ -1208,15 +1176,17 @@ button{touch-action:manipulation}
 
         <div class="form-card">
             <div class="card-heading"><h3>📦 Purchase Info</h3></div>
-            <div class="info-grid">
+            <div class="info-grid{% if not can_view_cost %} no-cost-info{% endif %}">
                 <div class="field-box">
                     <label>Supplier</label>
                     {{ form.supplier }}{{ form.supplier.errors }}
                 </div>
+                {% if can_view_cost %}
                 <div class="field-box">
                     <label>Total Amount</label>
                     {{ form.total_amount }}{{ form.total_amount.errors }}
                 </div>
+                {% endif %}
 
                 <details class="optional-info" {% if form.shipping_note.value or form.note.value %}open{% endif %}>
                     <summary>Shipping note & purchase note</summary>
@@ -1275,7 +1245,7 @@ button{touch-action:manipulation}
                         </div>
                     </div>
 
-                    <div class="item-grid">
+                    <div class="item-grid{% if not can_view_cost %} no-cost-grid{% endif %}">
                         <div class="variant-field">
                             <div class="item-label">Variant</div>
                             <select name="{{ item_form.variant.html_name }}" id="{{ item_form.variant.id_for_label }}" class="hidden-select variant-select">
@@ -1308,10 +1278,12 @@ button{touch-action:manipulation}
                             {{ item_form.ordered_qty }}{{ item_form.ordered_qty.errors }}
                         </div>
 
+                        {% if can_view_cost %}
                         <div>
                             <div class="item-label">Cost</div>
                             {{ item_form.cost_price }}{{ item_form.cost_price.errors }}
                         </div>
+                        {% endif %}
 
                         <div class="note-field">
                             <div class="item-label">Item Note</div>
@@ -1339,10 +1311,7 @@ button{touch-action:manipulation}
                                 {% for plan in item_form.instance.branch_plans.all %}
                                 <div class="plan-row">
                                     <input type="hidden" name="{{ item_form.prefix }}-plan_branch[]" value="{{ plan.branch.id }}">
-                                    <div class="plan-shop">
-                                        <span>🏪 {{ plan.branch.name }}</span>
-                                        <small class="plan-auto-label">Auto</small>
-                                    </div>
+                                    <div class="plan-shop">🏪 {{ plan.branch.name }}</div>
                                     <input class="plan-qty" type="number" inputmode="numeric" name="{{ item_form.prefix }}-plan_qty[]" min="0" value="{{ plan.qty }}">
                                     <button type="button" class="plan-remove" onclick="removePlan(this)" aria-label="Remove shop">✕</button>
                                 </div>
@@ -1383,6 +1352,7 @@ button{touch-action:manipulation}
                 </thead>
                 <tbody>
                     {% for log in purchase.edit_logs.all %}
+                    {% if can_view_cost or log.field_name != "cost_price" and log.field_name != "total_amount" %}
                     <tr>
                         <td>{{ log.created_at|date:"Y-m-d H:i" }}</td>
                         <td>{{ log.action }}</td>
@@ -1391,6 +1361,7 @@ button{touch-action:manipulation}
                         <td class="new-value">{{ log.new_value|default:"-" }}</td>
                         <td>{{ log.user|default:"-" }}</td>
                     </tr>
+                    {% endif %}
                     {% endfor %}
                 </tbody>
             </table>
@@ -1424,7 +1395,7 @@ button{touch-action:manipulation}
             </div>
         </div>
 
-        <div class="item-grid">
+        <div class="item-grid{% if not can_view_cost %} no-cost-grid{% endif %}">
             <div class="variant-field">
                 <div class="item-label">Variant</div>
                 <select name="{{ formset.empty_form.variant.html_name }}" id="{{ formset.empty_form.variant.id_for_label }}" class="hidden-select variant-select">
@@ -1451,7 +1422,7 @@ button{touch-action:manipulation}
             </div>
 
             <div><div class="item-label">Qty</div>{{ formset.empty_form.ordered_qty }}</div>
-            <div><div class="item-label">Cost</div>{{ formset.empty_form.cost_price }}</div>
+            {% if can_view_cost %}<div><div class="item-label">Cost</div>{{ formset.empty_form.cost_price }}</div>{% endif %}
             <div class="note-field"><div class="item-label">Item Note</div>{{ formset.empty_form.note }}</div>
         </div>
 
@@ -1540,137 +1511,11 @@ function createPlanRow(itemRow, branchId, branchName, qtyValue = "", isAuto = fa
     const qty = qtyValue === "" ? "" : Number(qtyValue);
     div.innerHTML = `
         <input type="hidden" name="${prefix}-plan_branch[]" value="${safeText(branchId)}">
-        <div class="plan-shop">
-            <span>🏪 ${safeText(branchName)}</span>
-            <small class="plan-auto-label">Auto</small>
-        </div>
+        <div class="plan-shop">🏪 ${safeText(branchName)}</div>
         <input class="plan-qty" type="number" inputmode="numeric" name="${prefix}-plan_qty[]" min="0" value="${qty}" placeholder="Qty">
         <button type="button" class="plan-remove" onclick="removePlan(this)" aria-label="Remove shop">✕</button>
     `;
     return div;
-}
-
-function getPlanInt(value){
-    return Math.max(parseInt(value || "0", 10) || 0, 0);
-}
-
-function getPlanQtyInputs(itemRow){
-    return Array.from(itemRow.querySelectorAll(".plan-qty"));
-}
-
-function markPlanAutoInput(itemRow, autoInput){
-    getPlanQtyInputs(itemRow).forEach(input => {
-        const isAuto = input === autoInput;
-        input.dataset.autoBalance = isAuto ? "1" : "0";
-        input.closest(".plan-row")?.classList.toggle(
-            "auto-balanced",
-            isAuto
-        );
-    });
-}
-
-function initializePlanAuto(itemRow){
-    const inputs = getPlanQtyInputs(itemRow);
-
-    if(inputs.length < 2){
-        markPlanAutoInput(itemRow, null);
-        return null;
-    }
-
-    let autoInput = inputs.find(
-        input => input.dataset.autoBalance === "1"
-    );
-
-    if(!autoInput){
-        autoInput = inputs[inputs.length - 1];
-    }
-
-    markPlanAutoInput(itemRow, autoInput);
-    return autoInput;
-}
-
-function choosePlanAutoInput(itemRow, editedInput){
-    const inputs = getPlanQtyInputs(itemRow);
-    if(inputs.length < 2){return null;}
-
-    const existingAuto = inputs.find(
-        input => input.dataset.autoBalance === "1"
-    );
-
-    // Keep the current automatic shop unless staff edits that exact shop.
-    if(existingAuto && existingAuto !== editedInput){
-        return existingAuto;
-    }
-
-    // When staff edits the automatic shop, another shop becomes automatic.
-    return inputs.find(input => input !== editedInput) || null;
-}
-
-function balancePlanQuantities(editedInput){
-    const itemRow = editedInput.closest(".item-row");
-    if(!itemRow){return;}
-
-    const qtyInput = itemRow.querySelector(
-        'input[name$="-ordered_qty"]'
-    );
-    const orderedQty = getPlanInt(qtyInput?.value);
-    const inputs = getPlanQtyInputs(itemRow);
-
-    itemRow.dataset.autoSplit = "false";
-
-    if(inputs.length < 2){
-        markPlanAutoInput(itemRow, null);
-        updatePurchaseTotals();
-        return;
-    }
-
-    const autoInput = choosePlanAutoInput(itemRow, editedInput);
-    if(!autoInput){
-        updatePurchaseTotals();
-        return;
-    }
-
-    markPlanAutoInput(itemRow, autoInput);
-
-    let manualTotal = 0;
-    inputs.forEach(input => {
-        if(input !== autoInput){
-            manualTotal += getPlanInt(input.value);
-        }
-    });
-
-    autoInput.value = Math.max(orderedQty - manualTotal, 0);
-    updatePurchaseTotals();
-}
-
-function rebalancePlanFromOrderedQty(itemRow){
-    const inputs = getPlanQtyInputs(itemRow);
-
-    if(inputs.length < 2){
-        updatePurchaseTotals();
-        return;
-    }
-
-    const qtyInput = itemRow.querySelector(
-        'input[name$="-ordered_qty"]'
-    );
-    const orderedQty = getPlanInt(qtyInput?.value);
-    const autoInput = initializePlanAuto(itemRow);
-
-    if(!autoInput){
-        updatePurchaseTotals();
-        return;
-    }
-
-    let manualTotal = 0;
-    inputs.forEach(input => {
-        if(input !== autoInput){
-            manualTotal += getPlanInt(input.value);
-        }
-    });
-
-    autoInput.value = Math.max(orderedQty - manualTotal, 0);
-    updatePurchaseTotals();
 }
 
 function autoSplitRow(itemRow, force = false){
@@ -1692,8 +1537,6 @@ function autoSplitRow(itemRow, force = false){
         const branchQty = baseQty + (index < remainder ? 1 : 0);
         planList.appendChild(createPlanRow(itemRow, branch.id, branch.name, branchQty, true));
     });
-
-    initializePlanAuto(itemRow);
 }
 
 function resetEqualSplit(button){
@@ -1987,8 +1830,6 @@ function addPlanRow(branchId, branchName){
     itemRow.dataset.autoSplit = "false";
     const row = createPlanRow(itemRow, branchId, branchName, "", false);
     activePlanBox.appendChild(row);
-    initializePlanAuto(itemRow);
-    rebalancePlanFromOrderedQty(itemRow);
     closeShopModal();
     updatePurchaseTotals();
     row.querySelector(".plan-qty")?.focus();
@@ -1996,19 +1837,9 @@ function addPlanRow(branchId, branchName){
 
 function removePlan(button){
     const itemRow = button.closest(".item-row");
-
-    if(itemRow){
-        itemRow.dataset.autoSplit = "false";
-    }
-
+    if(itemRow){itemRow.dataset.autoSplit = "false";}
     button.closest(".plan-row")?.remove();
-
-    if(itemRow){
-        initializePlanAuto(itemRow);
-        rebalancePlanFromOrderedQty(itemRow);
-    }else{
-        updatePurchaseTotals();
-    }
+    updatePurchaseTotals();
 }
 
 document.addEventListener("click", function(event){
@@ -2100,7 +1931,6 @@ document.addEventListener("DOMContentLoaded", function(){
             autoSplitRow(itemRow, true);
         }else{
             itemRow.dataset.autoSplit = "false";
-            initializePlanAuto(itemRow);
         }
     });
 
@@ -2109,19 +1939,11 @@ document.addEventListener("DOMContentLoaded", function(){
         const itemRow = target.closest?.(".item-row");
 
         if(itemRow && target.matches('input[name$="-ordered_qty"]')){
-            if(itemRow.dataset.autoSplit === "true"){
-                autoSplitRow(itemRow);
-            }else{
-                rebalancePlanFromOrderedQty(itemRow);
-            }
-            return;
+            autoSplitRow(itemRow);
         }
-
         if(itemRow && target.classList.contains("plan-qty")){
-            balancePlanQuantities(target);
-            return;
+            itemRow.dataset.autoSplit = "false";
         }
-
         updatePurchaseTotals();
     });
 

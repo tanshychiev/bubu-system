@@ -31,6 +31,17 @@ class PurchaseForm(forms.ModelForm):
             }),
         }
 
+    def __init__(self, *args, **kwargs):
+        can_view_cost = kwargs.pop("can_view_cost", True)
+        super().__init__(*args, **kwargs)
+
+        # Staff must never receive the saved purchase total in the form HTML.
+        # Removing the ModelForm field also prevents a crafted POST from
+        # overwriting an existing total amount. New staff-created purchases
+        # safely use the model default (0.00).
+        if not can_view_cost:
+            self.fields.pop("total_amount", None)
+
 
 class PurchaseItemForm(forms.ModelForm):
     class Meta:
@@ -58,6 +69,7 @@ class PurchaseItemForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.can_view_cost = kwargs.pop("can_view_cost", True)
         super().__init__(*args, **kwargs)
 
         self.fields["variant"].queryset = (
@@ -71,8 +83,15 @@ class PurchaseItemForm(forms.ModelForm):
         # ✅ important: empty extra row will NOT block save
         self.fields["variant"].required = False
         self.fields["ordered_qty"].required = False
-        self.fields["cost_price"].required = False
         self.fields["note"].required = False
+
+        if self.can_view_cost:
+            self.fields["cost_price"].required = False
+        else:
+            # Important: do not merely hide the widget. Remove the field so
+            # the saved cost is not included in HTML and cannot be changed by
+            # a manually crafted staff POST. Existing cost stays untouched.
+            self.fields.pop("cost_price", None)
 
     def clean(self):
         cleaned = super().clean()
@@ -82,11 +101,11 @@ class PurchaseItemForm(forms.ModelForm):
 
         variant = cleaned.get("variant")
         qty = cleaned.get("ordered_qty")
-        cost = cleaned.get("cost_price")
+        cost = cleaned.get("cost_price") if self.can_view_cost else None
         note = (cleaned.get("note") or "").strip()
 
         # ✅ empty row = ignore
-        if not variant and not qty and cost in [None, ""] and not note:
+        if not variant and not qty and (not self.can_view_cost or cost in [None, ""]) and not note:
             cleaned["EMPTY_ROW"] = True
             return cleaned
 
@@ -97,7 +116,7 @@ class PurchaseItemForm(forms.ModelForm):
         if not qty or qty <= 0:
             self.add_error("ordered_qty", "Qty is required.")
 
-        if cost is None:
+        if self.can_view_cost and cost is None:
             self.add_error("cost_price", "Cost is required.")
 
         return cleaned

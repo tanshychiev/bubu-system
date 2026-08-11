@@ -170,6 +170,10 @@ button,input{font:inherit}
     margin-bottom:20px;
 }
 
+.summary-card.staff-summary{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+}
+
 .summary-item{
     min-width:0;
     padding:16px;
@@ -1071,23 +1075,6 @@ button,input{font:inherit}
         -webkit-overflow-scrolling:touch;
     }
 }
-/* Prevent iPhone Safari from zooming when a form control receives focus.
-   iOS auto-zooms controls whose computed font size is below 16px. */
-@media (max-width: 767px) {
-    input,
-    textarea,
-    select {
-        font-size: 16px !important;
-    }
-
-    input[type="date"],
-    input[type="number"],
-    input[type="text"],
-    input[type="search"] {
-        font-size: 16px !important;
-    }
-}
-
 </style>
 
 <div class="purchase-page">
@@ -1178,7 +1165,7 @@ button,input{font:inherit}
         </div>
     </details>
 
-    <div class="summary-card">
+    <div class="summary-card{% if not can_view_cost %} staff-summary{% endif %}">
         <div class="summary-item">
             <div class="summary-icon orange">📦</div>
             <div>
@@ -1197,6 +1184,7 @@ button,input{font:inherit}
             </div>
         </div>
 
+        {% if can_view_cost %}
         <div class="summary-item mobile-secondary">
             <div class="summary-icon green">💵</div>
             <div>
@@ -1214,6 +1202,7 @@ button,input{font:inherit}
                 <div class="summary-sub">Current month</div>
             </div>
         </div>
+        {% endif %}
     </div>
 
     <div class="purchase-panel">
@@ -1299,10 +1288,12 @@ button,input{font:inherit}
                     {% endif %}
                 </div>
 
+                {% if can_view_cost %}
                 <div class="amount-row">
                     <span class="amount-label">Batch cost</span>
                     <span class="amount">${{ purchase.total_amount|floatformat:2 }}</span>
                 </div>
+                {% endif %}
 
                 <div class="card-actions">
                     <a href="{% url 'purchase_detail' purchase.id %}" class="view-btn">
