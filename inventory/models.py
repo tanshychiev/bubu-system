@@ -475,6 +475,134 @@ class BranchStock(models.Model):
     def __str__(self):
         return f"{self.branch} - {self.variant} - {self.quantity}"
 
+
+
+# =========================================================
+# SAME-PRODUCT UNIT CONVERSION
+# Example: 1 Box = 10 Pills. Both units are ItemVariant children
+# of the same Item, and stock remains branch-specific.
+# =========================================================
+
+class ItemUnitConversion(models.Model):
+    item = models.ForeignKey(
+        Item,
+        on_delete=models.CASCADE,
+        related_name="unit_conversions",
+    )
+    parent_variant = models.ForeignKey(
+        ItemVariant,
+        on_delete=models.PROTECT,
+        related_name="unit_conversion_parent_rules",
+        help_text="Larger unit, e.g. Box.",
+    )
+    child_variant = models.ForeignKey(
+        ItemVariant,
+        on_delete=models.PROTECT,
+        related_name="unit_conversion_child_rules",
+        help_text="Smaller unit, e.g. Pill.",
+    )
+    child_quantity = models.PositiveIntegerField(
+        default=1,
+        help_text="How many child units are inside one parent unit.",
+    )
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_inventory_unit_conversions",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["parent_variant__sort_order", "parent_variant_id", "child_variant_id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["item", "parent_variant", "child_variant"],
+                name="unique_item_parent_child_unit_conversion",
+            ),
+        ]
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        errors = {}
+        if self.parent_variant_id and self.parent_variant.item_id != self.item_id:
+            errors["parent_variant"] = "Parent unit must belong to this product."
+        if self.child_variant_id and self.child_variant.item_id != self.item_id:
+            errors["child_variant"] = "Child unit must belong to this product."
+        if self.parent_variant_id and self.parent_variant_id == self.child_variant_id:
+            errors["child_variant"] = "Parent and child unit must be different."
+        if self.child_quantity is not None and self.child_quantity < 2:
+            errors["child_quantity"] = "Conversion quantity must be at least 2."
+        if errors:
+            raise ValidationError(errors)
+
+    def __str__(self):
+        return (
+            f"{self.item.name}: 1 {self.parent_variant.display_name()} = "
+            f"{self.child_quantity} {self.child_variant.display_name()}"
+        )
+
+
+class UnitConversionHistory(models.Model):
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.PROTECT,
+        related_name="unit_conversion_histories",
+    )
+    item = models.ForeignKey(
+        Item,
+        on_delete=models.PROTECT,
+        related_name="unit_conversion_histories",
+    )
+    rule = models.ForeignKey(
+        ItemUnitConversion,
+        on_delete=models.PROTECT,
+        related_name="histories",
+    )
+    source_variant = models.ForeignKey(
+        ItemVariant,
+        on_delete=models.PROTECT,
+        related_name="unit_conversion_source_histories",
+    )
+    target_variant = models.ForeignKey(
+        ItemVariant,
+        on_delete=models.PROTECT,
+        related_name="unit_conversion_target_histories",
+    )
+    source_quantity = models.PositiveIntegerField()
+    target_quantity = models.PositiveIntegerField()
+    source_before_quantity = models.IntegerField(default=0)
+    source_after_quantity = models.IntegerField(default=0)
+    target_before_quantity = models.IntegerField(default=0)
+    target_after_quantity = models.IntegerField(default=0)
+    conversion_rate = models.PositiveIntegerField(default=1)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="inventory_unit_conversion_histories",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=["branch", "item", "created_at"]),
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.branch} - {self.item.name}: "
+            f"{self.source_quantity} {self.source_variant.display_name()} -> "
+            f"{self.target_quantity} {self.target_variant.display_name()}"
+        )
+
+
 # =========================================================
 # MOBILE STOCK COUNT
 # =========================================================

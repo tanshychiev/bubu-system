@@ -2385,7 +2385,9 @@ body.inventory-detail-open{
 
             <div class="brand">{{ item.brand|default:"No brand" }}</div>
 
-            {% if item.branch_stock_total <= 0 %}
+            {% if item.has_unit_conversion %}
+                <div class="stock">Unit stock shown below</div>
+            {% elif item.branch_stock_total <= 0 %}
                 <div class="stock zero">
                     Out of Stock: {{ item.branch_stock_total }} {{ item.get_unit_display }}
                 </div>
@@ -2510,7 +2512,7 @@ body.inventory-detail-open{
                     <div class="inventory-detail-stats">
                         <div>
                             <small>Stock</small>
-                            <strong>{{ item.branch_stock_total }} {{ item.get_unit_display }}</strong>
+                            {% if item.has_unit_conversion %}<strong>See unit stock</strong>{% else %}<strong>{{ item.branch_stock_total }} {{ item.get_unit_display }}</strong>{% endif %}
                         </div>
 
                         <div>

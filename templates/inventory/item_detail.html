@@ -1073,6 +1073,7 @@ button,input,select,textarea{font-family:inherit}
                 <a href="{% url 'item_edit' item.id %}" class="action-btn">✎ Edit Item</a>
                 <a href="{% url 'item_variant_create' item.id %}" class="action-btn primary">＋ Variant</a>
                 <a href="{% url 'stock_batch_in' %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}" class="action-btn green">📦 Stock In</a>
+                <a href="{% url 'item_unit_conversion' item.id %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}" class="action-btn primary">🔄 Convert Unit</a>
             {% endif %}
         </div>
     </header>
@@ -1102,7 +1103,11 @@ button,input,select,textarea{font-family:inherit}
                 <div class="summary-grid">
                     <div class="summary-box">
                         <span>Shop Stock</span>
-                        <strong>{{ item.branch_stock_total }} {{ item.get_unit_display }}</strong>
+                        {% if item.has_unit_conversion %}
+                            <strong>See unit stock →</strong>
+                        {% else %}
+                            <strong>{{ item.branch_stock_total }} {{ item.get_unit_display }}</strong>
+                        {% endif %}
                     </div>
 
                     <div class="summary-box">

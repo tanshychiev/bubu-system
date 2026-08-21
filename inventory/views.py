@@ -19,11 +19,13 @@ from openpyxl.utils import get_column_letter
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.files.base import ContentFile
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
 from django.db.models import Prefetch, Q, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
 from core.cost_access import can_edit_cost, can_view_cost, is_owner
@@ -43,6 +45,8 @@ from .models import (
     Item,
     ItemType,
     ItemVariant,
+    ItemUnitConversion,
+    UnitConversionHistory,
     StockMovement,
     VariantEditHistory,
     ItemEditHistory,
@@ -387,6 +391,12 @@ def item_list(request):
     # The old version ran one stock query per item and another query per variant.
     items = list(items)
 
+    conversion_item_ids = set(
+        ItemUnitConversion.objects
+        .filter(item_id__in=[item.id for item in items], is_active=True)
+        .values_list("item_id", flat=True)
+    ) if items else set()
+
     item_stock_map = {}
     variant_stock_map = {}
 
@@ -410,6 +420,7 @@ def item_list(request):
 
     for item in items:
         item.branch_stock_total = item_stock_map.get(item.id, 0)
+        item.has_unit_conversion = item.id in conversion_item_ids
 
         for variant in item.variants.all():
             variant.branch_stock_qty = variant_stock_map.get(variant.id, 0)
@@ -1255,6 +1266,10 @@ def item_detail(request, pk):
     )
 
     item.branch_stock_total = get_item_branch_qty(item, current_branch)
+    item.has_unit_conversion = ItemUnitConversion.objects.filter(
+        item=item,
+        is_active=True,
+    ).exists()
 
     for variant in item.variants.all():
         variant.branch_stock_qty = get_variant_branch_qty(
@@ -1400,6 +1415,229 @@ def item_delete(request, pk):
         )
 
     return redirect("item_list")
+
+
+# ==================================================
+# SAME-PRODUCT UNIT CONVERSION
+# Example: Box <-> Pill. Uses ItemVariant as child units.
+# ==================================================
+
+def _conversion_variant_name(variant):
+    return variant.display_name() or variant.sku or f"Unit #{variant.id}"
+
+
+def _unit_conversion_redirect(item, branch=None):
+    url = reverse("item_unit_conversion", kwargs={"pk": item.pk})
+    if branch:
+        url += f"?branch={branch.pk}"
+    return url
+
+
+@login_required
+def item_unit_conversion(request, pk):
+    if not can_manage_inventory(request.user):
+        messages.error(request, "You do not have permission.")
+        return redirect("item_list")
+
+    item = get_object_or_404(
+        Item.objects.prefetch_related(
+            Prefetch("variants", queryset=ItemVariant.objects.filter(is_active=True).order_by("sort_order", "id"))
+        ),
+        pk=pk,
+    )
+    selected_branch = get_selected_branch(request)
+    if not selected_branch:
+        messages.error(request, "No shop assigned. Please ask admin to set your shop.")
+        return redirect("item_detail", pk=item.pk)
+
+    variants = list(item.variants.all())
+    rules = list(
+        ItemUnitConversion.objects
+        .filter(item=item, is_active=True)
+        .select_related("parent_variant", "child_variant")
+        .order_by("parent_variant__sort_order", "id")
+    )
+
+    # Current selected-shop quantities, shown to staff before conversion.
+    stock_rows = {
+        row.variant_id: int(row.quantity or 0)
+        for row in BranchStock.objects.filter(branch=selected_branch, variant__item=item)
+    }
+    for variant in variants:
+        variant.branch_stock_qty = stock_rows.get(variant.id, 0)
+
+    can_setup_rule = is_owner(request.user) or request.user.is_superuser
+
+    if request.method == "POST":
+        action = request.POST.get("action", "convert").strip()
+
+        # Owner/Admin sets the relationship once; staff never types the rate.
+        if action == "save_rule":
+            if not can_setup_rule:
+                messages.error(request, "Only Owner/Admin can set unit conversion rules.")
+                return redirect(_unit_conversion_redirect(item, selected_branch))
+
+            try:
+                parent_id = int(request.POST.get("parent_variant") or 0)
+                child_id = int(request.POST.get("child_variant") or 0)
+                child_quantity = int(request.POST.get("child_quantity") or 0)
+            except (TypeError, ValueError):
+                messages.error(request, "Please choose both units and enter a valid quantity.")
+                return redirect(_unit_conversion_redirect(item, selected_branch))
+
+            parent_variant = get_object_or_404(ItemVariant, pk=parent_id, item=item, is_active=True)
+            child_variant = get_object_or_404(ItemVariant, pk=child_id, item=item, is_active=True)
+
+            if parent_variant.id == child_variant.id:
+                messages.error(request, "Parent unit and child unit cannot be the same.")
+                return redirect(_unit_conversion_redirect(item, selected_branch))
+            if child_quantity < 2:
+                messages.error(request, "Child quantity must be at least 2.")
+                return redirect(_unit_conversion_redirect(item, selected_branch))
+
+            rule, created = ItemUnitConversion.objects.get_or_create(
+                item=item,
+                parent_variant=parent_variant,
+                child_variant=child_variant,
+                defaults={
+                    "child_quantity": child_quantity,
+                    "created_by": request.user,
+                    "is_active": True,
+                },
+            )
+            if not created:
+                rule.child_quantity = child_quantity
+                rule.is_active = True
+                rule.save(update_fields=["child_quantity", "is_active", "updated_at"])
+
+            messages.success(
+                request,
+                f"Saved: 1 {_conversion_variant_name(parent_variant)} = "
+                f"{child_quantity} {_conversion_variant_name(child_variant)}.",
+            )
+            return redirect(_unit_conversion_redirect(item, selected_branch))
+
+        if action == "delete_rule":
+            if not can_setup_rule:
+                messages.error(request, "Only Owner/Admin can remove unit conversion rules.")
+                return redirect(_unit_conversion_redirect(item, selected_branch))
+            rule = get_object_or_404(ItemUnitConversion, pk=request.POST.get("rule_id"), item=item)
+            rule.is_active = False
+            rule.save(update_fields=["is_active", "updated_at"])
+            messages.success(request, "Unit conversion rule removed.")
+            return redirect(_unit_conversion_redirect(item, selected_branch))
+
+        # Staff conversion. The rate comes only from an active Owner/Admin rule.
+        try:
+            rule_id = int(request.POST.get("rule_id") or 0)
+            source_variant_id = int(request.POST.get("source_variant") or 0)
+            source_quantity = int(request.POST.get("source_quantity") or 0)
+        except (TypeError, ValueError):
+            messages.error(request, "Please choose a conversion and enter a valid quantity.")
+            return redirect(_unit_conversion_redirect(item, selected_branch))
+
+        rule = get_object_or_404(
+            ItemUnitConversion.objects.select_related("parent_variant", "child_variant"),
+            pk=rule_id,
+            item=item,
+            is_active=True,
+        )
+        if source_quantity <= 0:
+            messages.error(request, "Quantity must be greater than 0.")
+            return redirect(_unit_conversion_redirect(item, selected_branch))
+
+        rate = int(rule.child_quantity)
+        if source_variant_id == rule.parent_variant_id:
+            source_variant = rule.parent_variant
+            target_variant = rule.child_variant
+            target_quantity = source_quantity * rate
+            target_cost = (source_variant.display_cost / Decimal(rate)) if rate else Decimal("0")
+        elif source_variant_id == rule.child_variant_id:
+            source_variant = rule.child_variant
+            target_variant = rule.parent_variant
+            if source_quantity % rate != 0:
+                messages.error(
+                    request,
+                    f"To make {_conversion_variant_name(target_variant)}, enter a multiple of {rate} "
+                    f"{_conversion_variant_name(source_variant)}.",
+                )
+                return redirect(_unit_conversion_redirect(item, selected_branch))
+            target_quantity = source_quantity // rate
+            target_cost = source_variant.display_cost * Decimal(rate)
+        else:
+            messages.error(request, "Invalid source unit for this conversion.")
+            return redirect(_unit_conversion_redirect(item, selected_branch))
+
+        with transaction.atomic():
+            source_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+                branch=selected_branch,
+                variant=source_variant,
+                defaults={"quantity": 0},
+            )
+            target_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+                branch=selected_branch,
+                variant=target_variant,
+                defaults={"quantity": 0},
+            )
+
+            source_before = int(source_stock.quantity or 0)
+            target_before = int(target_stock.quantity or 0)
+
+            if source_before < source_quantity:
+                messages.error(
+                    request,
+                    f"Not enough {_conversion_variant_name(source_variant)} stock. "
+                    f"Available: {source_before}.",
+                )
+                return redirect(_unit_conversion_redirect(item, selected_branch))
+
+            source_stock.quantity = source_before - source_quantity
+            target_stock.quantity = target_before + target_quantity
+            source_stock.save(update_fields=["quantity"])
+            target_stock.save(update_fields=["quantity"])
+
+            # Keep target unit cost consistent with the physical conversion.
+            if target_cost >= 0:
+                target_variant.cost_price = target_cost.quantize(Decimal("0.01"))
+                target_variant.save(update_fields=["cost_price"])
+
+            UnitConversionHistory.objects.create(
+                branch=selected_branch,
+                item=item,
+                rule=rule,
+                source_variant=source_variant,
+                target_variant=target_variant,
+                source_quantity=source_quantity,
+                target_quantity=target_quantity,
+                source_before_quantity=source_before,
+                source_after_quantity=source_stock.quantity,
+                target_before_quantity=target_before,
+                target_after_quantity=target_stock.quantity,
+                conversion_rate=rate,
+                created_by=request.user,
+            )
+
+        messages.success(
+            request,
+            f"Converted {source_quantity} {_conversion_variant_name(source_variant)} → "
+            f"{target_quantity} {_conversion_variant_name(target_variant)}.",
+        )
+        return redirect(_unit_conversion_redirect(item, selected_branch))
+
+    histories = (
+        UnitConversionHistory.objects
+        .filter(item=item, branch=selected_branch)
+        .select_related("source_variant", "target_variant", "created_by")[:30]
+    )
+
+    return render(request, "inventory/unit_conversion.html", {
+        "item": item,
+        "current_branch": selected_branch,
+        "variants": variants,
+        "rules": rules,
+        "histories": histories,
+        "can_setup_rule": can_setup_rule,
+    })
 
 
 # ==================================================

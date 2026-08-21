@@ -104,6 +104,7 @@ urlpatterns = [
     # ==================================================
     # ITEM — keep at bottom
     # ==================================================
+    path("<int:pk>/convert-unit/", views.item_unit_conversion, name="item_unit_conversion"),
     path("<int:pk>/", views.item_detail, name="item_detail"),
     path("<int:pk>/edit/", views.item_edit, name="item_edit"),
     path("<int:pk>/delete/", views.item_delete, name="item_delete"),

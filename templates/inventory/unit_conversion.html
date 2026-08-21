@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<style>
+*{box-sizing:border-box} a{text-decoration:none}
+.convert-page{width:min(980px,100%);margin:0 auto;padding:18px 20px 40px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.top h1{margin:0;color:#100d35;font-size:30px;font-weight:1000}.top p{margin:4px 0 0;color:#81778c;font-size:11px;font-weight:850}
+.btn{min-height:42px;padding:0 14px;border-radius:12px;border:1px solid #eaddec;background:#fff;color:#40384c;font-weight:1000;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.btn.primary{border:0;color:#fff;background:linear-gradient(135deg,#8e63ff,#ff8c6b)}
+.card{background:#fff;border:1px solid #efdfd7;border-radius:22px;padding:16px;box-shadow:0 10px 30px rgba(130,91,60,.07);margin-bottom:12px}
+.shop{display:flex;justify-content:space-between;gap:10px;align-items:center;background:linear-gradient(135deg,#fff8fb,#fbf8ff)}
+.shop strong{color:#100d35}.shop span{color:#81778c;font-size:10px;font-weight:900}
+.stock-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.stock-box{padding:11px;border-radius:14px;background:#f8f5fb;border:1px solid #eee4f3}.stock-box b,.stock-box span{display:block}.stock-box b{color:#100d35;font-size:13px}.stock-box span{margin-top:4px;color:#15915f;font-size:11px;font-weight:1000}
+.rule{padding:14px;border:1px solid #eaddec;border-radius:17px;margin-top:10px;background:linear-gradient(180deg,#fff,#fffaf7)}
+.rule-title{font-size:15px;color:#100d35;font-weight:1000;margin-bottom:10px}.direction-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.direction{position:relative}.direction input{position:absolute;opacity:0;pointer-events:none}.direction label{min-height:54px;padding:8px 10px;border:2px solid #eaddec;border-radius:14px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;font-weight:1000;cursor:pointer;background:#fff}.direction input:checked+label{color:#fff;border-color:transparent;background:linear-gradient(135deg,#8e63ff,#ff8c6b)}
+.qty-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:9px}.qty-row input,.setup-grid select,.setup-grid input{width:100%;min-height:48px;border:1px solid #ded2ea;border-radius:12px;padding:0 12px;font-size:16px;font-weight:900;background:#fff}.preview{margin-top:8px;padding:10px;border-radius:12px;background:#eafff4;color:#157b55;font-size:11px;font-weight:1000}.setup-grid{display:grid;grid-template-columns:1fr 1fr 160px auto;gap:8px;align-items:end}.field label{display:block;margin-bottom:5px;font-size:9px;color:#81778c;font-weight:1000}.danger{border:0;background:#fff0ef;color:#dc4c4c}
+.history{display:grid;gap:7px}.history-row{padding:10px 11px;border:1px solid #eee4f3;border-radius:12px;display:flex;justify-content:space-between;gap:10px;align-items:center}.history-row strong{font-size:11px;color:#100d35}.history-row span{font-size:9px;color:#81778c;font-weight:850;text-align:right}
+.empty{padding:20px;text-align:center;color:#81778c;font-weight:900}
+@media(max-width:700px){.convert-page{padding:8px 7px 25px}.top h1{font-size:21px}.card{padding:10px;border-radius:14px;box-shadow:none}.stock-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.direction-grid{grid-template-columns:1fr}.qty-row{grid-template-columns:1fr}.setup-grid{grid-template-columns:1fr}.btn{width:100%}.history-row{display:block}.history-row span{display:block;margin-top:4px;text-align:left}}
+</style>
+
+<div class="convert-page">
+    <div class="top">
+        <div><h1>🔄 Convert Unit</h1><p>{{ item.name }} · same product, different unit</p></div>
+        <a class="btn" href="{% url 'item_detail' item.id %}{% if request.user.is_superuser and current_branch %}?branch={{ current_branch.id }}{% endif %}">← Back to Item</a>
+    </div>
+
+    <section class="card shop">
+        <div><span>Current shop</span><br><strong>🏪 {{ current_branch.name }}</strong></div>
+        <div><span>Rule</span><br><strong>Source deducts · Target adds</strong></div>
+    </section>
+
+    <section class="card">
+        <strong>Current Stock</strong>
+        <div class="stock-grid">
+            {% for variant in variants %}
+                <div class="stock-box"><b>{{ variant.display_name }}</b><span>{{ variant.branch_stock_qty }} in stock</span></div>
+            {% empty %}<div class="empty">No child units/variants yet.</div>{% endfor %}
+        </div>
+    </section>
+
+    <section class="card">
+        <strong>Convert Stock</strong>
+        {% for rule in rules %}
+        <form method="post" class="rule conversion-form" data-rate="{{ rule.child_quantity }}" data-parent-name="{{ rule.parent_variant.display_name }}" data-child-name="{{ rule.child_variant.display_name }}">
+            {% csrf_token %}<input type="hidden" name="action" value="convert"><input type="hidden" name="rule_id" value="{{ rule.id }}">
+            <div class="rule-title">1 {{ rule.parent_variant.display_name }} = {{ rule.child_quantity }} {{ rule.child_variant.display_name }}</div>
+            <div class="direction-grid">
+                <div class="direction"><input checked type="radio" id="p{{ rule.id }}" name="source_variant" value="{{ rule.parent_variant.id }}"><label for="p{{ rule.id }}">📦 {{ rule.parent_variant.display_name }} → {{ rule.child_variant.display_name }}</label></div>
+                <div class="direction"><input type="radio" id="c{{ rule.id }}" name="source_variant" value="{{ rule.child_variant.id }}"><label for="c{{ rule.id }}">↩ {{ rule.child_variant.display_name }} → {{ rule.parent_variant.display_name }}</label></div>
+            </div>
+            <div class="qty-row"><input required min="1" step="1" type="number" name="source_quantity" placeholder="Enter quantity"><button class="btn primary" type="submit">Confirm Convert</button></div>
+            <div class="preview">Enter quantity to see the result.</div>
+        </form>
+        {% empty %}<div class="empty">No conversion rule yet. Owner/Admin needs to set one below.</div>{% endfor %}
+    </section>
+
+    {% if can_setup_rule %}
+    <section class="card">
+        <strong>⚙️ Owner/Admin Setup</strong>
+        <p style="color:#81778c;font-size:10px;font-weight:850">Set once. Staff will only choose direction and quantity.</p>
+        <form method="post" class="setup-grid">
+            {% csrf_token %}<input type="hidden" name="action" value="save_rule">
+            <div class="field"><label>Parent / bigger unit</label><select name="parent_variant" required><option value="">Choose</option>{% for variant in variants %}<option value="{{ variant.id }}">{{ variant.display_name }}</option>{% endfor %}</select></div>
+            <div class="field"><label>Child / smaller unit</label><select name="child_variant" required><option value="">Choose</option>{% for variant in variants %}<option value="{{ variant.id }}">{{ variant.display_name }}</option>{% endfor %}</select></div>
+            <div class="field"><label>Children in 1 parent</label><input type="number" name="child_quantity" min="2" step="1" placeholder="10" required></div>
+            <button class="btn primary" type="submit">Save Rule</button>
+        </form>
+        {% for rule in rules %}
+        <form method="post" style="margin-top:7px;display:flex;justify-content:space-between;gap:8px;align-items:center">
+            {% csrf_token %}<input type="hidden" name="action" value="delete_rule"><input type="hidden" name="rule_id" value="{{ rule.id }}">
+            <span style="font-size:10px;font-weight:900">1 {{ rule.parent_variant.display_name }} = {{ rule.child_quantity }} {{ rule.child_variant.display_name }}</span>
+            <button class="btn danger" type="submit">Remove</button>
+        </form>
+        {% endfor %}
+    </section>
+    {% endif %}
+
+    <section class="card"><strong>Recent Conversion</strong><div class="history" style="margin-top:9px">
+        {% for row in histories %}<div class="history-row"><strong>{{ row.source_quantity }} {{ row.source_variant.display_name }} → {{ row.target_quantity }} {{ row.target_variant.display_name }}</strong><span>{{ row.created_at|date:"d M Y H:i" }}{% if row.created_by %} · {{ row.created_by.username }}{% endif %}</span></div>
+        {% empty %}<div class="empty">No conversion history yet.</div>{% endfor %}
+    </div></section>
+</div>
+<script>
+document.querySelectorAll('.conversion-form').forEach(form=>{
+ const qty=form.querySelector('input[name="source_quantity"]'), preview=form.querySelector('.preview'), rate=Number(form.dataset.rate||1), parent=form.dataset.parentName, child=form.dataset.childName;
+ function refresh(){const n=Number(qty.value||0), source=Number(form.querySelector('input[name="source_variant"]:checked')?.value||0), parentId=Number(form.querySelector('input[name="source_variant"]')?.value||0); if(!n){preview.textContent='Enter quantity to see the result.';return;} if(source===parentId){preview.textContent=`${n} ${parent} → ${n*rate} ${child}`;}else if(n%rate===0){preview.textContent=`${n} ${child} → ${n/rate} ${parent}`;}else{preview.textContent=`Need a multiple of ${rate} ${child} to make whole ${parent}.`;}}
+ qty.addEventListener('input',refresh);form.querySelectorAll('input[name="source_variant"]').forEach(x=>x.addEventListener('change',refresh));
+});
+</script>
+{% endblock %}

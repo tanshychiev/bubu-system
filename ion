@@ -1,0 +1,318 @@
+warning: in the working copy of 'inventory/models.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'inventory/urls.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'inventory/views.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'templates/inventory/item_detail.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'templates/inventory/item_list.html', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/inventory/__pycache__/models.cpython-314.pyc b/inventory/__pycache__/models.cpython-314.pyc[m
+[1mindex c9e96d9..df89104 100644[m
+Binary files a/inventory/__pycache__/models.cpython-314.pyc and b/inventory/__pycache__/models.cpython-314.pyc differ
+[1mdiff --git a/inventory/__pycache__/urls.cpython-314.pyc b/inventory/__pycache__/urls.cpython-314.pyc[m
+[1mindex dcb36d5..d98a34a 100644[m
+Binary files a/inventory/__pycache__/urls.cpython-314.pyc and b/inventory/__pycache__/urls.cpython-314.pyc differ
+[1mdiff --git a/inventory/__pycache__/views.cpython-314.pyc b/inventory/__pycache__/views.cpython-314.pyc[m
+[1mindex 7dcc4e7..a9f73c9 100644[m
+Binary files a/inventory/__pycache__/views.cpython-314.pyc and b/inventory/__pycache__/views.cpython-314.pyc differ
+[1mdiff --git a/inventory/models.py b/inventory/models.py[m
+[1mindex 3ead70b..6988a2e 100644[m
+[1m--- a/inventory/models.py[m
+[1m+++ b/inventory/models.py[m
+[36m@@ -475,6 +475,134 @@[m [mclass BranchStock(models.Model):[m
+     def __str__(self):[m
+         return f"{self.branch} - {self.variant} - {self.quantity}"[m
+ [m
+[32m+[m
+[32m+[m
+[32m+[m[32m# =========================================================[m
+[32m+[m[32m# SAME-PRODUCT UNIT CONVERSION[m
+[32m+[m[32m# Example: 1 Box = 10 Pills. Both units are ItemVariant children[m
+[32m+[m[32m# of the same Item, and stock remains branch-specific.[m
+[32m+[m[32m# =========================================================[m
+[32m+[m
+[32m+[m[32mclass ItemUnitConversion(models.Model):[m
+[32m+[m[32m    item = models.ForeignKey([m
+[32m+[m[32m        Item,[m
+[32m+[m[32m        on_delete=models.CASCADE,[m
+[32m+[m[32m        related_name="unit_conversions",[m
+[32m+[m[32m    )[m
+[32m+[m[32m    parent_variant = models.ForeignKey([m
+[32m+[m[32m        ItemVariant,[m
+[32m+[m[32m        on_delete=models.PROTECT,[m
+[32m+[m[32m        related_name="unit_conversion_parent_rules",[m
+[32m+[m[32m        help_text="Larger unit, e.g. Box.",[m
+[32m+[m[32m    )[m
+[32m+[m[32m    child_variant = models.ForeignKey([m
+[32m+[m[32m        ItemVariant,[m
+[32m+[m[32m        on_delete=models.PROTECT,[m
+[32m+[m[32m        related_name="unit_conversion_child_rules",[m
+[32m+[m[32m        help_text="Smaller unit, e.g. Pill.",[m
+[32m+[m[32m    )[m
+[32m+[m[32m    child_quantity = models.PositiveIntegerField([m
+[32m+[m[32m        default=1,[m
+[32m+[m[32m        help_text="How many child units are inside one parent unit.",[m
+[32m+[m[32m    )[m
+[32m+[m[32m    is_active = models.BooleanField(default=True)[m
+[32m+[m[32m    created_by = models.ForeignKey([m
+[32m+[m[32m        User,[m
+[32m+[m[32m        on_delete=models.SET_NULL,[m
+[32m+[m[32m        null=True,[m
+[32m+[m[32m        blank=True,[m
+[32m+[m[32m        related_name="created_inventory_unit_conversions",[m
+[32m+[m[32m    )[m
+[32m+[m[32m    created_at = models.DateTimeField(auto_now_add=True)[m
+[32m+[m[32m    updated_at = models.DateTimeField(auto_now=True)[m
+[32m+[m
+[32m+[m[32m    class Meta:[m
+[32m+[m[32m        ordering = ["parent_variant__sort_order", "parent_variant_id", "child_variant_id"][m
+[32m+[m[32m        constraints = [[m
+[32m+[m[32m            models.UniqueConstraint([m
+[32m+[m[32m                fields=["item", "parent_variant", "child_variant"],[m
+[32m+[m[32m                name="unique_item_parent_child_unit_conversion",[m
+[32m+[m[32m            ),[m
+[32m+[m[32m        ][m
+[32m+[m
+[32m+[m[32m    def clean(self):[m
+[32m+[m[32m        from django.core.exceptions import ValidationError[m
+[32m+[m
+[32m+[m[32m        errors = {}[m
+[32m+[m[32m        if self.parent_variant_id and self.parent_variant.item_id != self.item_id:[m
+[32m+[m[32m            errors["parent_variant"] = "Parent unit must belong to this product."[m
+[32m+[m[32m        if self.child_variant_id and self.child_variant.item_id != self.item_id:[m
+[32m+[m[32m            errors["child_variant"] = "Child unit must belong to this product."[m
+[32m+[m[32m        if self.parent_variant_id and self.parent_variant_id == self.child_variant_id:[m
+[32m+[m[32m            errors["child_variant"] = "Parent and child unit must be different."[m
+[32m+[m[32m        if self.child_quantity is not None and self.child_quantity < 2:[m
+[32m+[m[32m            errors["child_quantity"] = "Conversion quantity must be at least 2."[m
+[32m+[m[32m        if errors:[m
+[32m+[m[32m            raise ValidationError(errors)[m
+[32m+[m
+[32m+[m[32m    def __str__(self):[m
+[32m+[m[32m        return ([m
+[32m+[m[32m            f"{self.item.name}: 1 {self.parent_variant.display_name()} = "[m
+[32m+[m[32m            f"{self.child_quantity} {self.child_variant.display_name()}"[m
+[32m+[m[32m        )[m
+[32m+[m
+[32m+[m
+[32m+[m[32mclass UnitConversionHistory(models.Model):[m
+[32m+[m[32m    branch = models.ForeignKey([m
+[32m+[m[32m        Branch,[m
+[32m+[m[32m        on_delete=models.PROTECT,[m
+[32m+[m[32m        related_name="unit_conversion_histories",[m
+[32m+[m[32m    )[m
+[32m+[m[32m    item = models.ForeignKey([m
+[32m+[m[32m        Item,[m
+[32m+[m[32m        on_delete=models.PROTECT,[m
+[32m+[m[32m        related_name="unit_conversion_histories",[m
+[32m+[m[32m    )[m
+[32m+[m[32m    rule = models.ForeignKey([m
+[32m+[m[32m        ItemUnitConversion,[m
+[32m+[m[32m        on_delete=models.PROTECT,[m
+[32m+[m[32m        related_name="histories",[m
+[32m+[m[32m    )[m
+[32m+[m[32m    source_variant = models.ForeignKey([m
+[32m+[m[32m        ItemVariant,[m
+[32m+[m[32m        on_delete=models.PROTECT,[m
+[32m+[m[32m        related_name="unit_conversion_source_histories",[m
+[32m+[m[32m    )[m
+[32m+[m[32m    target_variant = models.ForeignKey([m
+[32m+[m[32m        ItemVariant,[m
+[32m+[m[32m        on_delete=models.PROTECT,[m
+[32m+[m[32m        related_name="unit_conversion_target_histories",[m
+[32m+[m[32m    )[m
+[32m+[m[32m    source_quantity = models.PositiveIntegerField()[m
+[32m+[m[32m    target_quantity = models.PositiveIntegerField()[m
+[32m+[m[32m    source_before_quantity = models.IntegerField(default=0)[m
+[32m+[m[32m    source_after_quantity = models.IntegerField(default=0)[m
+[32m+[m[32m    target_before_quantity = models.IntegerField(default=0)[m
+[32m+[m[32m    target_after_quantity = models.IntegerField(default=0)[m
+[32m+[m[32m    conversion_rate = models.PositiveIntegerField(default=1)[m
+[32m+[m[32m    created_by = models.ForeignKey([m
+[32m+[m[32m        User,[m
+[32m+[m[32m        on_delete=models.SET_NULL,[m
+[32m+[m[32m        null=True,[m
+[32m+[m[32m        blank=True,[m
+[32m+[m[32m        related_name="inventory_unit_conversion_histories",[m
+[32m+[m[32m    )[m
+[32m+[m[32m    created_at = models.DateTimeField(auto_now_add=True)[m
+[32m+[m
+[32m+[m[32m    class Meta:[m
+[32m+[m[32m        ordering = ["-created_at", "-id"][m
+[32m+[m[32m        indexes = [[m
+[32m+[m[32m            models.Index(fields=["branch", "item", "created_at"]),[m
+[32m+[m[32m        ][m
+[32m+[m
+[32m+[m[32m    def __str__(self):[m
+[32m+[m[32m        return ([m
+[32m+[m[32m            f"{self.branch} - {self.item.name}: "[m
+[32m+[m[32m            f"{self.source_quantity} {self.source_variant.display_name()} -> "[m
+[32m+[m[32m            f"{self.target_quantity} {self.target_variant.display_name()}"[m
+[32m+[m[32m        )[m
+[32m+[m
+[32m+[m
+ # =========================================================[m
+ # MOBILE STOCK COUNT[m
+ # =========================================================[m
+[1mdiff --git a/inventory/urls.py b/inventory/urls.py[m
+[1mindex 104f899..4c98bdc 100644[m
+[1m--- a/inventory/urls.py[m
+[1m+++ b/inventory/urls.py[m
+[36m@@ -104,6 +104,7 @@[m [murlpatterns = [[m
+     # ==================================================[m
+     # ITEM — keep at bottom[m
+     # ==================================================[m
+[32m+[m[32m    path("<int:pk>/convert-unit/", views.item_unit_conversion, name="item_unit_conversion"),[m
+     path("<int:pk>/", views.item_detail, name="item_detail"),[m
+     path("<int:pk>/edit/", views.item_edit, name="item_edit"),[m
+     path("<int:pk>/delete/", views.item_delete, name="item_delete"),[m
+[1mdiff --git a/inventory/views.py b/inventory/views.py[m
+[1mindex 279d82d..e90b1c5 100644[m
+[1m--- a/inventory/views.py[m
+[1m+++ b/inventory/views.py[m
+[36m@@ -19,11 +19,13 @@[m [mfrom openpyxl.utils import get_column_letter[m
+ from django.contrib import messages[m
+ from django.contrib.auth.decorators import login_required[m
+ from django.core.files.base import ContentFile[m
+[32m+[m[32mfrom django.core.exceptions import ValidationError[m
+ from django.db import transaction[m
+ from django.db.models.deletion import ProtectedError[m
+ from django.db.models import Prefetch, Q, Sum[m
+ from django.http import HttpResponse, JsonResponse[m
+ from django.shortcuts import get_object_or_404, redirect, render[m
+[32m+[m[32mfrom django.urls import reverse[m
+ from django.views.decorators.http import require_GET, require_POST[m
+ [m
+ from core.cost_access import can_edit_cost, can_view_cost, is_owner[m
+[36m@@ -43,6 +45,8 @@[m [mfrom .models import ([m
+     Item,[m
+     ItemType,[m
+     ItemVariant,[m
+[32m+[m[32m    ItemUnitConversion,[m
+[32m+[m[32m    UnitConversionHistory,[m
+     StockMovement,[m
+     VariantEditHistory,[m
+     ItemEditHistory,[m
+[36m@@ -387,6 +391,12 @@[m [mdef item_list(request):[m
+     # The old version ran one stock query per item and another query per variant.[m
+     items = list(items)[m
+ [m
+[32m+[m[32m    conversion_item_ids = set([m
+[32m+[m[32m        ItemUnitConversion.objects[m
+[32m+[m[32m        .filter(item_id__in=[item.id for item in items], is_active=True)[m
+[32m+[m[32m        .values_list("item_id", flat=True)[m
+[32m+[m[32m    ) if items else set()[m
+[32m+[m
+     item_stock_map = {}[m
+     variant_stock_map = {}[m
+ [m
+[36m@@ -410,6 +420,7 @@[m [mdef item_list(request):[m
+ [m
+     for item in items:[m
+         item.branch_stock_total = item_stock_map.get(item.id, 0)[m
+[32m+[m[32m        item.has_unit_conversion = item.id in conversion_item_ids[m
+ [m
+         for variant in item.variants.all():[m
+             variant.branch_stock_qty = variant_stock_map.get(variant.id, 0)[m
+[36m@@ -1255,6 +1266,10 @@[m [mdef item_detail(request, pk):[m
+     )[m
+ [m
+     item.branch_stock_total = get_item_branch_qty(item, current_branch)[m
+[32m+[m[32m    item.has_unit_conversion = ItemUnitConversion.objects.filter([m
+[32m+[m[32m        item=item,[m
+[32m+[m[32m        is_active=True,[m
+[32m+[m[32m    ).exists()[m
+ [m
+     for variant in item.variants.all():[m
+         variant.branch_stock_qty = get_variant_branch_qty([m
+[36m@@ -1402,6 +1417,229 @@[m [mdef item_delete(request, pk):[m
+     return redirect("item_list")[m
+ [m
+ [m
+[32m+[m[32m# ==================================================[m
+[32m+[m[32m# SAME-PRODUCT UNIT CONVERSION[m
+[32m+[m[32m# Example: Box <-> Pill. Uses ItemVariant as child units.[m
+[32m+[m[32m# ==================================================[m
+[32m+[m
+[32m+[m[32mdef _conversion_variant_name(variant):[m
+[32m+[m[32m    return variant.display_name() or variant.sku or f"Unit #{variant.id}"[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef _unit_conversion_redirect(item, branch=None):[m
+[32m+[m[32m    url = reverse("item_unit_conversion", kwargs={"pk": item.pk})[m
+[32m+[m[32m    if branch:[m
+[32m+[m[32m        url += f"?branch={branch.pk}"[m
+[32m+[m[32m    return url[m
+[32m+[m
+[32m+[m
+[32m+[m[32m@login_required[m
+[32m+[m[32mdef item_unit_conversion(request, pk):[m
+[32m+[m[32m    if not can_manage_inventory(request.user):[m
+[32m+[m[32m        messages.error(request, "You do not have permission.")[m
+[32m+[m[32m        return redirect("item_list")[m
+[32m+[m
+[32m+[m[32m    item = get_object_or_404([m
+[32m+[m[32m        Item.objects.prefetch_related([m
+[32m+[m[32m            Prefetch("variants", queryset=ItemVariant.objects.filter(is_active=True).order_by("sort_order", "id"))[m
+[32m+[m[32m        ),[m
+[32m+[m[32m        pk=pk,[m
+[32m+[m[32m    )[m
+[32m+[m[32m    selected_branch = get_selected_branch(request)[m
+[32m+[m[32m    if not selected_branch:[m
+[32m+[m[32m        messages.error(request, "No shop assigned. Please ask admin to set your shop.")[m
+[32m+[m[32m        return redirect("item_detail", pk=item.pk)[m
+[32m+[m
+[32m+[m[32m    variants = list(item.variants.all())[m
+[32m+[m[32m    rules = list([m
+[32m+[m[32m        ItemUnitConversion.objects[m
+[32m+[m[32m        .filter(item=item, is_active=True)[m
+[32m+[m[32m        .select_related("parent_variant", "child_variant")[m
+[32m+[m[32m        .order_by("parent_variant__sort_order", "id")[m
+[32m+[m[32m    )[m
+[32m+[m
+[32m+[m[32m    # Current selected-shop quantities, shown to staff before conversion.[m
+[32m+[m[32m    stock_rows = {[m
+[32m+[m[32m        row.variant_id: int(row.quantity or 0)[m
+[32m+[m[32m        for row in BranchStock.objects.filter(branch=selected_branch, variant__item=item)[m
+[32m+[m[32m    }[m
+[32m+[m[32m    for variant in variants:[m
+[32m+[m[32m        variant.branch_stock_qty = stock_rows.get(variant.id, 0)[m
+[32m+[m
+[32m+[m[32m    can_setup_rule = is_owner(request.user) or request.user.is_superuser[m
+[32m+[m
+[32m+[m[32m    if request.method == "POST":[m
+[32m+[m[32m        action = request.POST.get("action", "convert").strip()[m
+[32m+[m
+[32m+[m[32m        # Owner/Admin sets the relationship once; staff never types the rate.[m
+[32m+[m[32m        if action == "save_rule":[m
+[32m+[m[32m            if not can_setup_rule:[m
+[32m+[m[32m                messages.error(request, "Only Owner/Admin can set unit conversion rules.")[m
+[32m+[m[32m                return redirect(_unit_conversion_redirect(item, selected_branch))[m
+[32m+[m
+[32m+[m[32m            try:[m
+[32m+[m[32m                parent_id = int(request.POST.get("parent_variant") or 0)[m
+[32m+[m[32m                child_id = int(request.POST.get("child_variant") or 0)[m
+[32m+[m[32m                child_quantity = int(request.POST.get("child_quantity") or 0)[m
+[32m+[m[32m            except (TypeError, ValueError):[m
+[32m+[m[32m                messages.error(request, "Please choose both units and enter a valid quantity.")[m
+[32m+[m[32m                return redirect(_unit_conversion_redirect(item, selected_branch))[m
+[32m+[m
+[32m+[m[32m            parent_variant = get_object_or_404(ItemVariant, pk=parent_id, item=item, is_active=True)[m
+[32m+[m[32m            child_variant = get_object_or_404(ItemVariant, pk=child_id, item=item, is_active=True)[m
+[32m+[m
+[32m+[m[32m            if parent_variant.id == child_variant.id:[m
+[32m+[m[32m                messages.error(request, "Parent unit and child unit cannot be the same.")[m
+[32m+[m[32m                return redirect(_unit_conversion_redirect(item, selected_branch))[m
+[32m+[m[32m            if child_quantity < 2:[m
+[32m+[m[32m                messages.error(request, "Child quantity must be at least 2.")[m
+[32m+[m[32m                return redirect(_unit_conversion_redirect(item, selected_branch))[m
+[32m+[m
+[32m+[m[32m            rule, created = ItemUnitConversion.objects.get_or_create([m
+[32m+[m[32m                item=item,[m
+[32m+[m[32m                parent_variant=parent_variant,[m
+[32m+[m[32m                child_variant=child_variant,[m
+[32m+[m[32m                defaults={[m
+[32m+[m[32m                    "child_quantity": child_quantity,[m
+[32m+[m[32m                    "created_by": request.user,[m
+[32m+[m[32m                    "is_active": True,[m
+[32m+[m[32m                },[m
+[32m+[m[32m            )[m
+[32m+[m[32m            if not created:[m
+[32m+[m[32m                rule.child_quantity = child_
