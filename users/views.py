@@ -261,33 +261,101 @@ def generate_user_login_qr(request, pk):
         "staff_options": User.objects.filter(is_active=True, is_superuser=False).order_by("username"),
     })
     response["Cache-Control"] = "no-store"
-    # A same-origin policy preserves Django CSRF Origin checks on the admin POST.
-    # The QR login credential is encoded inside the image, not in this page URL.
     response["Referrer-Policy"] = "same-origin"
     return response
 
 
 def redeem_login_qr(request, token):
-    # Token is not consumed by GET (link previews/camera previews are safe).
     token_hash = sha256(token.encode("utf-8")).hexdigest()
+
+    def _token_context(record):
+        now = timezone.now()
+        if record is None:
+            return {
+                "is_valid": False,
+                "status_label": "Invalid QR",
+                "reason": "This login QR could not be found.",
+            }
+        if record.user.is_superuser:
+            return {
+                "is_valid": False,
+                "status_label": "Unavailable",
+                "reason": "This QR code cannot be used for this account.",
+            }
+        if not record.user.is_active:
+            return {
+                "is_valid": False,
+                "status_label": "Inactive Account",
+                "reason": "This staff account is not active.",
+            }
+        if record.revoked_at is not None:
+            return {
+                "is_valid": False,
+                "status_label": "Replaced QR",
+                "reason": "A newer login QR has already been generated for this staff account.",
+            }
+        if record.used_at is not None:
+            return {
+                "is_valid": False,
+                "status_label": "Already Used",
+                "reason": "This login QR has already been used successfully.",
+            }
+        if record.expires_at <= now:
+            return {
+                "is_valid": False,
+                "status_label": "Expired",
+                "reason": "This login QR has expired. Please ask the admin to generate a new one.",
+            }
+
+        remaining = record.expires_at - now
+        total_seconds = max(0, int(remaining.total_seconds()))
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        if hours and minutes:
+            remaining_text = f"{hours}h {minutes}m left"
+        elif hours:
+            remaining_text = f"{hours}h left"
+        else:
+            remaining_text = f"{max(1, minutes)}m left"
+
+        display_name = (record.user.get_full_name() or record.user.username).strip()
+        return {
+            "is_valid": True,
+            "status_label": "Ready to Login",
+            "reason": "",
+            "target_user": record.user,
+            "display_name": display_name,
+            "expires_at": record.expires_at,
+            "remaining_text": remaining_text,
+            "issued_by": record.created_by,
+        }
+
+    record = LoginQRToken.objects.select_related("user", "created_by").filter(token_hash=token_hash).first()
+
     if request.method == "GET":
-        response = render(request, "users/login_qr_redeem.html", {"token": token})
+        ctx = {"token": token, **_token_context(record)}
+        response = render(request, "users/login_qr_redeem.html", ctx)
         response["Cache-Control"] = "no-store"
-        response["Referrer-Policy"] = "no-referrer"
+        response["Referrer-Policy"] = "same-origin"
         return response
+
     if request.method != "POST":
         return HttpResponseNotAllowed(["GET", "POST"])
+
     with transaction.atomic():
-        record = (LoginQRToken.objects.select_for_update()
-                  .select_related("user").filter(token_hash=token_hash).first())
-        if (record is None or record.used_at is not None or record.revoked_at is not None
-                or record.expires_at <= timezone.now() or not record.user.is_active):
-            return render(request, "users/login_qr_invalid.html", status=400)
-        if record.user.is_superuser:
-            return render(request, "users/login_qr_invalid.html", status=403)
+        record = (
+            LoginQRToken.objects.select_for_update()
+            .select_related("user", "created_by")
+            .filter(token_hash=token_hash)
+            .first()
+        )
+        ctx = _token_context(record)
+        if not ctx.get("is_valid"):
+            return render(request, "users/login_qr_invalid.html", ctx, status=400)
         record.used_at = timezone.now()
         record.save(update_fields=["used_at"])
         user = record.user
+
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
     request.session.set_expiry(365 * 24 * 60 * 60)
     return redirect("dashboard")

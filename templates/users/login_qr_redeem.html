@@ -1,3 +1,82 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Secure Staff Login | BUBU Pet Store POS</title><style>
-:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(circle at 8% 5%,#ffe5d6,transparent 43%),radial-gradient(circle at 95% 5%,#eadbff,transparent 45%),linear-gradient(165deg,#fff9f6,#f9f1ff 80%);font-family:ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;color:#29213c}.shell{width:min(100%,470px);background:#fff;border-radius:30px;overflow:hidden;box-shadow:0 22px 65px #5e456021;border:1px solid #f4e6ee}.hero{padding:25px 26px 34px;text-align:center;background:linear-gradient(125deg,#fff0e9,#f4e8ff)}.brand{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:900;font-size:24px;letter-spacing:.02em}.brand-mark{display:grid;place-items:center;width:47px;height:47px;border-radius:17px;background:#fff8fa;box-shadow:0 5px 14px #9464771e;font-size:26px}.sub{color:#877789;font-size:12px;margin:4px 0 0;font-weight:700}.inner{padding:24px 27px 28px;text-align:center}.bubble{width:65px;height:65px;margin:-55px auto 12px;position:relative;background:linear-gradient(135deg,#f2dfff,#ffe6e0);border:5px solid white;border-radius:23px;display:grid;place-items:center;font-size:28px;box-shadow:0 8px 22px #886a9b25}h1{margin:6px 0 7px;font-size:25px;font-weight:900}p{line-height:1.55;color:#7d7185;font-size:14px;margin:6px 0 18px}.staff{background:#fcf8ff;border:1px solid #eee2fa;padding:12px;border-radius:16px;margin-bottom:16px;font-size:13px;color:#83758d}.staff strong{display:block;font-size:18px;color:#3c2f56;margin-top:3px}.qr-box{display:inline-block;padding:14px;border-radius:21px;background:#fff;border:2px solid #eedfff;box-shadow:0 8px 25px #b899d522}.qr-box img{display:block;width:min(255px,70vw);height:auto;aspect-ratio:1;object-fit:contain}.pill{display:inline-flex;align-items:center;gap:7px;background:#f8ecff;color:#7851bb;border-radius:999px;padding:9px 15px;font-size:12px;font-weight:800;margin:15px auto 7px}.note{background:#fff8f3;border:1px solid #fbe3d7;color:#826f71;text-align:left;padding:13px 15px;font-size:12px;line-height:1.55;border-radius:16px;margin:16px 0}.button{display:block;width:100%;appearance:none;text-decoration:none;cursor:pointer;padding:14px 18px;border:0;color:white;font-weight:900;font-size:14px;border-radius:15px;background:linear-gradient(105deg,#9762ee,#f58b87);box-shadow:0 9px 18px #e38fa93b}.button:focus-visible{outline:3px solid #7441cf;outline-offset:3px}.secondary{display:inline-block;color:#9167c7;font-size:13px;text-decoration:none;font-weight:800;margin-top:17px}.foot{font-size:11px;color:#ac9cac;margin:16px 0 0}.small{font-size:12px}.warn{background:#fff3f5;border-color:#ffdee6;color:#a04d68}@media(max-width:440px){body{padding:14px}.inner{padding:22px 19px 24px}.hero{padding:22px 20px 33px}h1{font-size:23px}}</style></head><body><main class="shell"><header class="hero"><div class="brand"><span class="brand-mark">🐾</span><span>BUBU</span></div><div class="sub">Pet Store POS · Secure Staff Access</div></header><section class="inner"><div class="bubble" aria-hidden="true">🐶</div><h1>Welcome to BUBU!</h1><p>You’re about to sign in on this device. Only continue if this is your own phone.</p><form id="redeem" method="post">{% csrf_token %}<button class="button" type="submit">🐾 Continue to BUBU</button></form><div class="note">🔒 This login QR works once. If the page does not continue automatically, tap the button above.</div><script>window.addEventListener("DOMContentLoaded",function(){var form=document.getElementById("redeem");if(form){if(form.requestSubmit){form.requestSubmit()}else{form.submit()}}});</script><div class="foot">© 2026 BUBU Pet Store POS</div></section></main></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="same-origin">
+  <title>Login QR | BUBU Pet Store POS</title>
+  <style>
+    :root{color-scheme:light}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;padding:18px;background:radial-gradient(circle at 8% 5%,#ffe5d6,transparent 43%),radial-gradient(circle at 95% 5%,#eadbff,transparent 45%),linear-gradient(165deg,#fff9f6,#f9f1ff 80%);font-family:ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;color:#29213c}
+    .shell{width:min(100%,490px);background:#fff;border-radius:30px;overflow:hidden;box-shadow:0 22px 65px #5e456021;border:1px solid #f4e6ee}
+    .hero{padding:24px 24px 34px;text-align:center;background:linear-gradient(125deg,#fff0e9,#f4e8ff)}
+    .brand{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:900;font-size:24px;letter-spacing:.02em}
+    .brand-mark{display:grid;place-items:center;width:47px;height:47px;border-radius:17px;background:#fff8fa;box-shadow:0 5px 14px #9464771e;font-size:26px}
+    .sub{color:#877789;font-size:12px;margin:4px 0 0;font-weight:700}
+    .inner{padding:24px 24px 28px;text-align:center}
+    .bubble{width:66px;height:66px;margin:-56px auto 14px;background:linear-gradient(135deg,#f2dfff,#ffe6e0);border:5px solid white;border-radius:23px;display:grid;place-items:center;font-size:29px;box-shadow:0 8px 22px #886a9b25}
+    h1{margin:6px 0 6px;font-size:28px;font-weight:900;color:#26184a}
+    .lead{line-height:1.58;color:#7d7185;font-size:14px;margin:8px 0 18px}
+    .card{background:#fcf8ff;border:1px solid #eee2fa;border-radius:18px;padding:14px 14px;margin-bottom:14px;text-align:left}
+    .label{font-size:12px;font-weight:800;color:#8d7e97;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+    .value{font-size:24px;font-weight:900;color:#2f2252;line-height:1.2}
+    .meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .mini{background:#fff;border:1px solid #efe3fb;border-radius:16px;padding:12px;text-align:center}
+    .mini strong{display:block;font-size:16px;color:#593f96;margin-top:4px}
+    .pill{display:inline-flex;align-items:center;gap:7px;background:#f8ecff;color:#7851bb;border-radius:999px;padding:9px 15px;font-size:12px;font-weight:800;margin:2px auto 12px}
+    .note{background:#fff8f3;border:1px solid #fbe3d7;color:#826f71;text-align:left;padding:13px 15px;font-size:12px;line-height:1.55;border-radius:16px;margin:16px 0}
+    .warn{background:#fff3f5;border:1px solid #ffd8e4;color:#9a4a66}
+    .button{display:block;width:100%;appearance:none;text-decoration:none;cursor:pointer;padding:15px 18px;border:0;color:white;font-weight:900;font-size:15px;border-radius:16px;background:linear-gradient(105deg,#9762ee,#f58b87);box-shadow:0 9px 18px #e38fa93b}
+    .button-secondary{display:block;width:100%;margin-top:10px;appearance:none;text-decoration:none;cursor:pointer;padding:13px 18px;border:1px solid #ead9ff;color:#7a56b4;font-weight:900;font-size:14px;border-radius:16px;background:#fff}
+    .foot{font-size:11px;color:#ac9cac;margin:16px 0 0}
+    @media(max-width:440px){body{padding:10px}.inner{padding:22px 18px 24px}.hero{padding:22px 20px 33px}h1{font-size:24px}.value{font-size:21px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="brand"><span class="brand-mark">🐾</span><span>BUBU</span></div>
+      <div class="sub">Pet Store POS · Secure Staff Access</div>
+    </header>
+    <section class="inner">
+      <div class="bubble" aria-hidden="true">📱</div>
+      {% if is_valid %}
+        <h1>Staff Login QR</h1>
+        <p class="lead">This is a one-time device login for a staff member. Please continue only if this is the correct phone.</p>
+        <div class="card">
+          <div class="label">Login QR for</div>
+          <div class="value">{{ display_name }}</div>
+          <div class="meta">
+            <div class="mini">
+              <div class="label">Status</div>
+              <strong>{{ status_label }}</strong>
+            </div>
+            <div class="mini">
+              <div class="label">Expires</div>
+              <strong>{{ remaining_text }}</strong>
+            </div>
+          </div>
+        </div>
+        <div class="pill">⏳ Valid for 24 hours · One successful use only</div>
+        <div class="note">🔒 This QR is for <strong>{{ display_name }}</strong>. After successful sign-in, the code cannot be used again. If this is not your account, do not continue.</div>
+        <form method="post">
+          {% csrf_token %}
+          <button class="button" type="submit">🐾 Continue Login for {{ display_name }}</button>
+        </form>
+        <a class="button-secondary" href="javascript:history.back()">← Cancel</a>
+      {% else %}
+        <h1>QR Not Available</h1>
+        <p class="lead">This login QR cannot be used.</p>
+        <div class="card warn">
+          <div class="label">Status</div>
+          <div class="value" style="font-size:22px;color:#8a3155;">{{ status_label|default:"Unavailable" }}</div>
+          {% if reason %}<p style="margin:10px 0 0;color:#8a566c;font-size:14px;">{{ reason }}</p>{% endif %}
+        </div>
+        <a class="button-secondary" href="javascript:history.back()">← Go Back</a>
+      {% endif %}
+      <div class="foot">© 2026 BUBU Pet Store POS</div>
+    </section>
+  </main>
+</body>
+</html>
