@@ -8,7 +8,7 @@ from django.db import transaction
 from django.http import HttpResponseForbidden, HttpResponseNotAllowed
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods
 from datetime import timedelta
 from io import BytesIO
 from hashlib import sha256
@@ -236,31 +236,64 @@ def permission_list(request):
 
 @login_required
 @permission_required("auth.change_user", raise_exception=True)
-@require_POST
+@require_http_methods(["GET", "POST"])
 def generate_user_login_qr(request, pk):
+    """POST issues one token; GET displays it without generating a replacement."""
     if not request.user.is_superuser:
         return HttpResponseForbidden("Only administrators may issue QR logins.")
     target = get_object_or_404(User, pk=pk, is_active=True)
     if target.is_superuser:
         return HttpResponseForbidden("QR enrollment is not allowed for superuser accounts.")
-    raw = secrets.token_urlsafe(32)
-    hashed = sha256(raw.encode("utf-8")).hexdigest()
-    with transaction.atomic():
-        LoginQRToken.objects.filter(user=target, used_at__isnull=True, revoked_at__isnull=True).update(revoked_at=timezone.now())
-        LoginQRToken.objects.create(
-            user=target, token_hash=hashed, created_by=request.user,
-            expires_at=timezone.now() + timedelta(hours=24),
-        )
+
+    session_key = "bubu_last_issued_login_qr"
+    if request.method == "POST":
+        raw = secrets.token_urlsafe(32)
+        hashed = sha256(raw.encode("utf-8")).hexdigest()
+        with transaction.atomic():
+            LoginQRToken.objects.filter(
+                user=target, used_at__isnull=True, revoked_at__isnull=True
+            ).update(revoked_at=timezone.now())
+            LoginQRToken.objects.create(
+                user=target,
+                token_hash=hashed,
+                created_by=request.user,
+                expires_at=timezone.now() + timedelta(hours=24),
+            )
+        # Django's server-side session holds the temporary token only for the
+        # issuing admin. This enables safe refresh without creating another QR.
+        request.session[session_key] = {"staff_id": target.pk, "token": raw}
+        return redirect("generate_user_login_qr", pk=target.pk)
+
+    issued = request.session.get(session_key) or {}
+    raw = issued.get("token", "")
+    if issued.get("staff_id") != target.pk or not isinstance(raw, str) or not raw:
+        messages.info(request, "Generate a QR from the Users page first.")
+        return redirect("user_list")
+
+    record = LoginQRToken.objects.filter(
+        user=target, token_hash=sha256(raw.encode("utf-8")).hexdigest()
+    ).first()
+    if (record is None or record.used_at is not None or record.revoked_at is not None
+            or record.expires_at <= timezone.now()):
+        request.session.pop(session_key, None)
+        messages.warning(request, "This QR is no longer valid. Generate a new QR.")
+        return redirect("user_list")
+
     url = request.build_absolute_uri(reverse("redeem_login_qr", args=[raw]))
     img = qrcode.make(url)
     buffer = BytesIO()
     img.save(buffer, format="PNG")
     qr_image = base64.b64encode(buffer.getvalue()).decode("ascii")
     response = render(request, "users/login_qr_issued.html", {
-        "target": target, "qr_image": qr_image, "login_url": url,
-        "staff_options": User.objects.filter(is_active=True, is_superuser=False).order_by("username"),
+        "target": target,
+        "qr_image": qr_image,
+        "login_url": url,
+        "expires_at": record.expires_at,
+        "staff_options": User.objects.filter(
+            is_active=True, is_superuser=False
+        ).order_by("username"),
     })
-    response["Cache-Control"] = "no-store"
+    response["Cache-Control"] = "private, no-store"
     response["Referrer-Policy"] = "same-origin"
     return response
 
