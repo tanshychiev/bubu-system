@@ -10,8 +10,6 @@ def send_staff_telegram_message(text):
     bot_token = getattr(settings, "STAFF_TELEGRAM_BOT_TOKEN", "")
     chat_id = getattr(settings, "STAFF_TELEGRAM_CHAT_ID", "")
 
-    print("STAFF BOT TOKEN EXISTS:", bool(bot_token))
-    print("STAFF CHAT ID:", chat_id)
 
     if not bot_token:
         print("❌ STAFF_TELEGRAM_BOT_TOKEN is empty")
@@ -26,7 +24,7 @@ def send_staff_telegram_message(text):
     data = {
         "chat_id": chat_id,
         "text": text,
-        "disable_web_page_preview": "false",
+        "disable_web_page_preview": "true",
     }
 
     try:

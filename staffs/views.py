@@ -268,6 +268,7 @@ def staff_qr_create(request):
 # STAFF SCAN
 # =========================================================
 
+@login_required
 def staff_scan_page(request, token):
     qr = get_object_or_404(
         BranchAttendanceQR.objects.select_related("branch"),
@@ -275,20 +276,25 @@ def staff_scan_page(request, token):
         is_active=True,
     )
 
-    staffs = (
-        StaffProfile.objects
-        .select_related("user", "branch")
-        .filter(branch=qr.branch, user__is_active=True)
-        .order_by("user__first_name", "user__username")
-    )
+    staff = _get_staff_profile_from_user(request.user)
+    if not staff or staff.branch_id != qr.branch_id:
+        messages.error(request, "Your account is not assigned to this branch. Contact admin.")
+        return redirect("staff_my_dashboard") if staff else redirect("dashboard")
 
+    existing = StaffAttendance.objects.filter(staff=staff, date=timezone.localdate()).first()
+    shift = _get_active_shift(staff)
+    arrival_status = _check_arrival_status(timezone.localdate(), timezone.localtime(), shift)[0]
     return render(request, "staffs/staff_scan_page.html", {
         "qr": qr,
-        "staffs": staffs,
+        "staff": staff,
+        "already_checked_in": bool(existing and existing.check_in_time),
+        "already_checked_out": bool(existing and existing.check_out_time),
+        "is_late_now": arrival_status == "late",
         "today": timezone.localdate(),
     })
 
 
+@login_required
 def staff_scan_submit(request, token):
     qr = get_object_or_404(
         BranchAttendanceQR.objects.select_related("branch"),
@@ -299,28 +305,19 @@ def staff_scan_submit(request, token):
     if request.method != "POST":
         return redirect("staff_scan_page", token=qr.token)
 
-    staff_id = request.POST.get("staff_id", "").strip()
-
-    if not staff_id:
-        messages.error(request, "Please select your staff name first.")
+    staff = _get_staff_profile_from_user(request.user)
+    if not staff or staff.branch_id != qr.branch_id or not staff.user.is_active:
+        messages.error(request, "Your account is not authorized for this branch.")
         return redirect("staff_scan_page", token=qr.token)
 
-    pin = request.POST.get("pin", "").strip()
     action = request.POST.get("action", "check_in")
-    late_reason = request.POST.get("late_reason", "").strip()
-
+    if action not in ("check_in", "check_out"):
+        messages.error(request, "Invalid attendance action.")
+        return redirect("staff_scan_page", token=qr.token)
+    late_reason = request.POST.get("late_reason", "").strip()[:1000]
     latitude = request.POST.get("latitude") or None
     longitude = request.POST.get("longitude") or None
     accuracy = request.POST.get("location_accuracy") or None
-
-    staff = get_object_or_404(
-        StaffProfile.objects.select_related("user", "branch"),
-        pk=staff_id,
-    )
-
-    if staff.branch_id != qr.branch_id:
-        messages.error(request, "This staff does not belong to this branch.")
-        return redirect("staff_scan_page", token=qr.token)
 
     setting = StaffPayrollSetting.objects.filter(
         staff=staff,
@@ -329,10 +326,6 @@ def staff_scan_submit(request, token):
 
     if not setting:
         messages.error(request, "Payroll setting not found. Please contact admin.")
-        return redirect("staff_scan_page", token=qr.token)
-
-    if setting.attendance_pin and pin != setting.attendance_pin:
-        messages.error(request, "Wrong PIN.")
         return redirect("staff_scan_page", token=qr.token)
 
     now = timezone.localtime()
@@ -345,6 +338,14 @@ def staff_scan_submit(request, token):
         longitude=longitude,
     )
 
+    # Validate BEFORE creating an attendance record or changing stored GPS data.
+    status, minutes_value, status_text, status_icon = _check_arrival_status(
+        today=today, now=now, shift=shift,
+    )
+    if action == "check_in" and status == "late" and not late_reason:
+        messages.error(request, "You are late. Please enter a reason before checking in.")
+        return redirect("staff_scan_page", token=qr.token)
+
     attendance, created = StaffAttendance.objects.get_or_create(
         staff=staff,
         date=today,
@@ -354,6 +355,16 @@ def staff_scan_submit(request, token):
             "scan_method": "branch_qr",
         },
     )
+
+    if action == "check_in" and attendance.check_in_time:
+        messages.warning(request, "Already checked in today. Duplicate scan ignored.")
+        return redirect("staff_scan_page", token=qr.token)
+    if action == "check_out" and not attendance.check_in_time:
+        messages.error(request, "Please check in before checking out.")
+        return redirect("staff_scan_page", token=qr.token)
+    if action == "check_out" and attendance.check_out_time:
+        messages.warning(request, "Already checked out today. Duplicate scan ignored.")
+        return redirect("staff_scan_page", token=qr.token)
 
     attendance.branch = qr.branch
     attendance.shift = shift
@@ -387,19 +398,11 @@ def staff_scan_submit(request, token):
             else:
                 telegram_text += f"\n⚠️ GPS issue: {location_status}"
 
-        send_staff_telegram_message(telegram_text)
+        bot_ok = send_staff_telegram_message(telegram_text)
+        if not bot_ok:
+            messages.warning(request, "Attendance saved, but Telegram notification failed. Check bot settings.")
 
         messages.success(request, "Check out recorded.")
-        return redirect("staff_scan_page", token=qr.token)
-
-    status, minutes_value, status_text, status_icon = _check_arrival_status(
-        today=today,
-        now=now,
-        shift=shift,
-    )
-
-    if status == "late" and not late_reason:
-        messages.error(request, "You are late. Please write the late reason before check in.")
         return redirect("staff_scan_page", token=qr.token)
 
     attendance.check_in_time = now
@@ -430,7 +433,9 @@ def staff_scan_submit(request, token):
         else:
             telegram_text += f"\n⚠️ GPS issue: {location_status}"
 
-    send_staff_telegram_message(telegram_text)
+    bot_ok = send_staff_telegram_message(telegram_text)
+    if not bot_ok:
+        messages.warning(request, "Attendance saved, but Telegram notification failed. Check bot settings.")
 
     messages.success(request, "Check in recorded.")
     return redirect("staff_scan_page", token=qr.token)

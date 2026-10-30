@@ -224,7 +224,7 @@ PAYWAY_CHECK_URL = os.environ.get(
 # Used for BUBU pet sale / preorder notification
 # ============================================================
 
-TELEGRAM_BOT_TOKEN = "7979251304:AAFKygOLuJHd0J8Z9GE-Qtq6oKfOrCJN8uo"
+TELEGRAM_BOT_TOKEN = "8972975243:AAEajWOYWKtIGzUUNDpfjpEeq2mZsPQXOm8"
 
 TELEGRAM_CHAT_ID = "-1003776345220"
 
@@ -234,3 +234,7 @@ TELEGRAM_PET_COMPLETE_TOPIC_ID = "17"
 
 STAFF_TELEGRAM_BOT_TOKEN = "8972975243:AAE1kxnmGbgUBdhNiUJ9b-CSmpeXDKrNZRU"
 STAFF_TELEGRAM_CHAT_ID = "-5069294554"
+# Keep approved employee devices signed in for up to one year (renewed on activity).
+SESSION_COOKIE_AGE = 365 * 24 * 60 * 60
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
