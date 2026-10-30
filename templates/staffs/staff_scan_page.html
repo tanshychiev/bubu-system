@@ -43,7 +43,7 @@
             </div>
 
             <div class="scan-actions">
-                <button type="button" onclick="openLatePopup()" class="checkin-btn">
+                <button type="button" onclick="startCheckIn(this)" class="checkin-btn">
                     ✅ Check In
                 </button>
 
@@ -54,7 +54,7 @@
         </form>
 
         <p class="small-note">
-            Attendance uses your signed-in account. GPS may be unavailable on insecure HTTP; the scan is still recorded and flagged for review.
+            Tap Check In or Check Out to request location permission. GPS requires HTTPS on iPhone. If GPS is unavailable, you must explicitly choose to continue without GPS; that attendance will be flagged for review.
         </p>
 
         <!-- POPUP BACKDROP INSIDE CARD -->
@@ -723,59 +723,144 @@ function submitCheckInWithoutReason(){
     submitWithLocation("check_in", btn);
 }
 
-/* GPS + SUBMIT */
-function submitWithLocation(action, button){
-    const form = document.getElementById("scanForm");
-    if(button.disabled) return;
-    document.getElementById("actionInput").value = action;
-    button.disabled = true;
-    const previousText = button.innerText;
-    button.innerText = "Submitting...";
-    let completed = false;
-    function submitOnce(){
-        if(completed) return;
-        completed = true;
-        // Native form submission keeps Django CSRF token and works in iOS Safari.
-        HTMLFormElement.prototype.submit.call(form);
-    }
-    // Geolocation is not exposed by Safari on insecure HTTP origins.
-    // Do not block attendance indefinitely because location is unavailable.
-    if(!navigator.geolocation || !window.isSecureContext){
-        setGpsBox("bad", "GPS unavailable", "Attendance will be recorded without GPS and flagged for review. Use HTTPS to enable location.");
-        submitOnce();
-        return;
-    }
-    navigator.geolocation.getCurrentPosition(
-        function(position){
-            document.getElementById("latitudeInput").value = position.coords.latitude;
-            document.getElementById("longitudeInput").value = position.coords.longitude;
-            document.getElementById("accuracyInput").value = position.coords.accuracy;
-            submitOnce();
-        },
-        function(){
-            setGpsBox("bad", "GPS unavailable", "Attendance saved without GPS; admin can review location warning.");
-            submitOnce();
-        },
-        {enableHighAccuracy:true, timeout:7000, maximumAge:0}
-    );
-    // Failsafe for buggy mobile browser GPS callbacks.
-    setTimeout(submitOnce, 9000);
+/* GPS + SUBMIT — request permission only after a genuine button tap. */
+let gpsInProgress = false;
+let gpsAction = null;
+let gpsSourceButton = null;
+let gpsOriginalLabel = null;
+let gpsFallbackReady = false;
+const isLateNow = {{ is_late_now|yesno:"true,false" }};
+
+function startCheckIn(button){
+    if(isLateNow){ openLatePopup(); return; }
+    document.getElementById("lateReasonInput").value = "";
+    submitWithLocation("check_in", button);
 }
 
-// Scanning the wall QR opens this page. Identify the authenticated staff
-// automatically, and start the correct action without account selection.
+function setGpsControls(title, description){
+    setGpsBox("bad", title, description);
+    const box = document.getElementById("gpsBox");
+    const controls = document.createElement("div");
+    controls.style.cssText = "display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;";
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.textContent = "Retry GPS";
+    retry.style.cssText = "border:1px solid #a78bfa;background:white;border-radius:12px;padding:10px 14px;";
+    retry.onclick = function(){
+        if(gpsSourceButton && gpsAction) submitWithLocation(gpsAction, gpsSourceButton);
+    };
+    const continueBtn = document.createElement("button");
+    continueBtn.type = "button";
+    continueBtn.textContent = "Continue without GPS";
+    continueBtn.style.cssText = "border:0;background:#f59e0b;color:#111827;font-weight:700;border-radius:12px;padding:10px 14px;";
+    continueBtn.onclick = function(){
+        if(!gpsFallbackReady) return;
+        // Explicit user choice; the server records missing GPS as suspicious.
+        submitAttendance();
+    };
+    controls.append(retry, continueBtn);
+    box.appendChild(controls);
+}
+
+function submitAttendance(){
+    if(gpsInProgress) return;
+    gpsFallbackReady = false;
+    const form = document.getElementById("scanForm");
+    const buttons = form.querySelectorAll("button");
+    buttons.forEach(function(btn){btn.disabled = true;});
+    setGpsBox("ok", "Recording attendance", "Saving your attendance record...");
+    // Keep the actual CSRF token and ordinary form POST.
+    HTMLFormElement.prototype.submit.call(form);
+}
+
+function finishGpsFailure(reason){
+    gpsInProgress = false;
+    gpsFallbackReady = true;
+    if(gpsSourceButton){
+        gpsSourceButton.disabled = false;
+        gpsSourceButton.innerText = gpsOriginalLabel;
+    }
+    setGpsControls("GPS unavailable", reason + " Attendance will be flagged for manager review if you continue.");
+}
+
+function submitWithLocation(action, button){
+    if(gpsInProgress || !button || button.disabled) return;
+    closeLatePopup();
+    gpsAction = action;
+    gpsSourceButton = button;
+    gpsOriginalLabel = button.innerText;
+    gpsFallbackReady = false;
+    gpsInProgress = true;
+    document.getElementById("actionInput").value = action;
+    document.getElementById("latitudeInput").value = "";
+    document.getElementById("longitudeInput").value = "";
+    document.getElementById("accuracyInput").value = "";
+    button.disabled = true;
+    button.innerText = "Getting GPS...";
+    setGpsBox("", "Locating you...", "Please allow location when your browser asks. Keep this page open.");
+
+    if(!window.isSecureContext || !navigator.geolocation){
+        finishGpsFailure("Your browser cannot access location over HTTP. BUBU needs an HTTPS address for iPhone GPS.");
+        return;
+    }
+    let finished = false;
+    const safeguard = setTimeout(function(){
+        if(finished) return;
+        finished = true;
+        finishGpsFailure("The location request took too long. Check iPhone location permissions.");
+    }, 8500);
+    try {
+        navigator.geolocation.getCurrentPosition(
+            function(position){
+                if(finished) return;
+                finished = true;
+                clearTimeout(safeguard);
+                gpsInProgress = false;
+                const c = position && position.coords;
+                if(!c || !Number.isFinite(c.latitude) || !Number.isFinite(c.longitude) || !Number.isFinite(c.accuracy)){
+                    finishGpsFailure("The device returned invalid GPS coordinates.");
+                    return;
+                }
+                document.getElementById("latitudeInput").value = String(c.latitude);
+                document.getElementById("longitudeInput").value = String(c.longitude);
+                document.getElementById("accuracyInput").value = String(c.accuracy);
+                setGpsBox("ok", "GPS received", "Location accuracy approximately " + Math.round(c.accuracy) + " meters. Saving...");
+                submitAttendance();
+            },
+            function(error){
+                if(finished) return;
+                finished = true;
+                clearTimeout(safeguard);
+                const reason = error && error.code === 1
+                    ? "Location permission was denied. Enable Location Services and Safari Websites location access."
+                    : error && error.code === 2
+                    ? "Your phone could not determine its location. Try enabling Wi-Fi and Location Services."
+                    : "GPS timed out. Try moving near a window or checking Location Services.";
+                finishGpsFailure(reason);
+            },
+            {enableHighAccuracy:true, timeout:7000, maximumAge:0}
+        );
+    } catch(e){
+        if(!finished){
+            finished = true;
+            clearTimeout(safeguard);
+            finishGpsFailure("Browser GPS access failed. Please check your site permissions.");
+        }
+    }
+}
+
+// Do not auto-submit attendance when opening a scanned QR URL. On iPhones
+// geolocation permission requires a user-initiated action, such as a tap.
 document.addEventListener("DOMContentLoaded", function(){
     const alreadyIn = {{ already_checked_in|yesno:"true,false" }};
     const alreadyOut = {{ already_checked_out|yesno:"true,false" }};
-    const lateNow = {{ is_late_now|yesno:"true,false" }};
-    if(alreadyOut) return;
-    if(alreadyIn){
-        // Avoid accidental checkout on opening/reloading the page.
-        return;
+    if(alreadyOut){
+        setGpsBox("ok", "Attendance complete", "Your check-in and check-out have already been recorded today.");
+    } else if(alreadyIn){
+        setGpsBox("", "Checked in", "Tap Check Out when leaving the branch. Location will be requested then.");
+    } else {
+        setGpsBox("", "Location check", "Tap Check In to request GPS permission and record attendance.");
     }
-    if(lateNow){ openLatePopup(); return; }
-    const checkIn = document.querySelector(".checkin-btn");
-    if(checkIn) submitWithLocation("check_in", checkIn);
 });
 
 document.addEventListener("keydown", function(e){
