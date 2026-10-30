@@ -26,16 +26,20 @@
 <div class="bubu-attend-body">
  <div class="bubu-attend-person"><small>Signed in as</small>{{ request.user.get_full_name|default:request.user.username }}{% if staff_profile and staff_profile.branch %}<small style="margin-top:7px">{{ staff_profile.branch.name }}</small>{% endif %}</div>
  <div id="bubu-reader"></div>
- <button id="bubu-start" class="bubu-attend-btn" type="button">📷 Open Camera & Scan QR</button>
+ <div id="bubu-insecure" class="bubu-attend-note" hidden>
+<strong>Camera scanning inside BUBU requires HTTPS.</strong> This site is currently opened over HTTP, so iPhone Safari cannot grant it camera access. You can still open your iPhone Camera app, scan the <strong>wall attendance QR</strong>, then open its link in Safari. Your logged-in BUBU account identifies you automatically.
+</div>
+<button id="bubu-start" class="bubu-attend-btn" type="button">📷 Open Camera & Scan QR</button>
+<div id="bubu-camera-fallback" hidden><div class="bubu-attend-note"><strong>Use your phone's Camera app:</strong> Leave BUBU open, launch Camera from the Home Screen or Control Center, point it at your branch's wall QR and tap the link to open BUBU. Do not scan your personal login QR.</div></div>
  <div id="bubu-scan-message" class="bubu-attend-error" role="status" aria-live="polite"></div>
- <div class="bubu-attend-note">Use the attendance QR displayed at your workplace, not your personal account login QR. Your signed-in account identifies you automatically. Camera access requires HTTPS on mobile browsers.</div>
+ <div class="bubu-attend-note">Your attendance will be recorded using your signed-in staff account. Scan the wall attendance QR, not your personal login QR. The QR page handles check-in or check-out.</div>
  <details style="margin-top:17px"><summary style="color:#7454aa;cursor:pointer;font-size:13px;font-weight:800">Camera not available? Paste attendance QR link</summary>
  <div class="bubu-attend-fallback"><input id="bubu-manual" type="url" placeholder="Paste the attendance QR link" aria-label="Attendance QR URL"><button id="bubu-manual-go" type="button">Continue</button></div></details>
 </div></div></div>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
 <script>
 (()=>{
- const button=document.getElementById('bubu-start'); const message=document.getElementById('bubu-scan-message'); let reader=null; let navigating=false;
+ const button=document.getElementById('bubu-start'); const insecure=document.getElementById('bubu-insecure'); const fallback=document.getElementById('bubu-camera-fallback'); const message=document.getElementById('bubu-scan-message'); let reader=null; let navigating=false;
  function attendancePath(raw){
    try{const url=new URL(raw,window.location.href);
      if(url.hostname!==window.location.hostname) return null;
@@ -44,8 +48,9 @@
    }catch(e){return null;}
  }
  function go(raw){const path=attendancePath(raw);if(!path){message.textContent='This is not a BUBU wall attendance QR. Please scan the correct QR.';return;}if(navigating)return;navigating=true;message.textContent='QR found. Opening attendance...';window.location.assign(path);}
+ if(!window.isSecureContext){insecure.hidden=false;fallback.hidden=false;button.textContent='Camera requires HTTPS — see instructions';}
  button.addEventListener('click', async ()=>{
-  if(!window.isSecureContext){message.textContent='Camera requires HTTPS. Please open BUBU using its secure HTTPS address.';return;}
+  if(!window.isSecureContext){insecure.hidden=false;fallback.hidden=false;message.textContent='For now, use your iPhone Camera app to scan the wall QR, or ask your admin to enable HTTPS for in-app scanning.';return;}
   if(!window.Html5Qrcode){message.textContent='QR camera library is not available. Check your connection and try again.';return;}
   button.disabled=true;message.textContent='Opening camera...';
   try{reader=new Html5Qrcode('bubu-reader');await reader.start({facingMode:'environment'},{fps:10,qrbox:{width:230,height:230}},go,()=>{});button.textContent='Scanning — point camera at wall QR';message.textContent='';}
