@@ -20,7 +20,7 @@ from inventory.models import Branch
 from pets.models import PetSale
 from users.models import StaffProfile
 
-from staffs.telegram import send_staff_telegram_message
+from staffs.telegram import send_staff_telegram_message, send_staff_telegram_async
 
 from .models import (
     BranchAttendanceQR,
@@ -398,9 +398,7 @@ def staff_scan_submit(request, token):
             else:
                 telegram_text += f"\n⚠️ GPS issue: {location_status}"
 
-        bot_ok = send_staff_telegram_message(telegram_text)
-        if not bot_ok:
-            messages.warning(request, "Attendance saved, but Telegram notification failed. Check bot settings.")
+        send_staff_telegram_async(telegram_text)
 
         messages.success(request, "Check out recorded.")
         return redirect("staff_scan_page", token=qr.token)
@@ -433,9 +431,7 @@ def staff_scan_submit(request, token):
         else:
             telegram_text += f"\n⚠️ GPS issue: {location_status}"
 
-    bot_ok = send_staff_telegram_message(telegram_text)
-    if not bot_ok:
-        messages.warning(request, "Attendance saved, but Telegram notification failed. Check bot settings.")
+    send_staff_telegram_async(telegram_text)
 
     messages.success(request, "Check in recorded.")
     return redirect("staff_scan_page", token=qr.token)
@@ -1670,11 +1666,3 @@ def payroll_mark_paid(request, pk):
 
     messages.success(request, "Salary marked as paid.")
     return redirect("payroll_record_detail", pk=payroll.pk)
-
-@login_required
-def staff_attendance_scanner(request):
-    """Staff camera launcher. Attendance is submitted by the wall QR route."""
-    staff = StaffProfile.objects.filter(user=request.user).select_related("branch").first()
-    return render(request, "staffs/staff_attendance_scanner.html", {
-        "staff_profile": staff,
-    })
