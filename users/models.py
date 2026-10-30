@@ -30,3 +30,16 @@ class StaffProfile(models.Model):
         if self.branch:
             return f"{self.user.username} - {self.branch.name}"
         return f"{self.user.username} - No Branch"
+
+class LoginQRToken(models.Model):
+    """One-time device enrollment. Never save the raw token."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="login_qr_tokens")
+    token_hash = models.CharField(max_length=64, unique=True, db_index=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="issued_login_qrs")
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]

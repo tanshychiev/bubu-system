@@ -4,6 +4,8 @@ from . import views
 urlpatterns = [
     path("", views.user_list, name="user_list"),
     path("add/", views.user_create, name="user_create"),
+    path("<int:pk>/generate-login-qr/", views.generate_user_login_qr, name="generate_user_login_qr"),
+    path("qr-login/<str:token>/", views.redeem_login_qr, name="redeem_login_qr"),
     path("<int:pk>/edit/", views.user_edit, name="user_edit"),
     path("<int:pk>/toggle-active/", views.user_toggle_active, name="user_toggle_active"),
 

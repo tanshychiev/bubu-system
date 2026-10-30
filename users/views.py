@@ -4,9 +4,20 @@ from django.contrib import messages
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Q
+from django.db import transaction
+from django.http import HttpResponseForbidden, HttpResponseNotAllowed
+from django.urls import reverse
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+from datetime import timedelta
+from io import BytesIO
+from hashlib import sha256
+import secrets
+import base64
+import qrcode
 
 from .forms import UserForm, RoleForm
-from .models import StaffProfile
+from .models import StaffProfile, LoginQRToken
 
 
 def user_login(request):
@@ -222,3 +233,61 @@ def permission_list(request):
         "permissions": permissions,
         "q": q,
     })
+
+@login_required
+@permission_required("auth.change_user", raise_exception=True)
+@require_POST
+def generate_user_login_qr(request, pk):
+    if not request.user.is_superuser:
+        return HttpResponseForbidden("Only administrators may issue QR logins.")
+    target = get_object_or_404(User, pk=pk, is_active=True)
+    if target.is_superuser:
+        return HttpResponseForbidden("QR enrollment is not allowed for superuser accounts.")
+    raw = secrets.token_urlsafe(32)
+    hashed = sha256(raw.encode("utf-8")).hexdigest()
+    with transaction.atomic():
+        LoginQRToken.objects.filter(user=target, used_at__isnull=True, revoked_at__isnull=True).update(revoked_at=timezone.now())
+        LoginQRToken.objects.create(
+            user=target, token_hash=hashed, created_by=request.user,
+            expires_at=timezone.now() + timedelta(hours=24),
+        )
+    url = request.build_absolute_uri(reverse("redeem_login_qr", args=[raw]))
+    img = qrcode.make(url)
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    qr_image = base64.b64encode(buffer.getvalue()).decode("ascii")
+    response = render(request, "users/login_qr_issued.html", {
+        "target": target, "qr_image": qr_image, "login_url": url,
+        "staff_options": User.objects.filter(is_active=True, is_superuser=False).order_by("username"),
+    })
+    response["Cache-Control"] = "no-store"
+    # A same-origin policy preserves Django CSRF Origin checks on the admin POST.
+    # The QR login credential is encoded inside the image, not in this page URL.
+    response["Referrer-Policy"] = "same-origin"
+    return response
+
+
+def redeem_login_qr(request, token):
+    # Token is not consumed by GET (link previews/camera previews are safe).
+    token_hash = sha256(token.encode("utf-8")).hexdigest()
+    if request.method == "GET":
+        response = render(request, "users/login_qr_redeem.html", {"token": token})
+        response["Cache-Control"] = "no-store"
+        response["Referrer-Policy"] = "no-referrer"
+        return response
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["GET", "POST"])
+    with transaction.atomic():
+        record = (LoginQRToken.objects.select_for_update()
+                  .select_related("user").filter(token_hash=token_hash).first())
+        if (record is None or record.used_at is not None or record.revoked_at is not None
+                or record.expires_at <= timezone.now() or not record.user.is_active):
+            return render(request, "users/login_qr_invalid.html", status=400)
+        if record.user.is_superuser:
+            return render(request, "users/login_qr_invalid.html", status=403)
+        record.used_at = timezone.now()
+        record.save(update_fields=["used_at"])
+        user = record.user
+    login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+    request.session.set_expiry(365 * 24 * 60 * 60)
+    return redirect("dashboard")

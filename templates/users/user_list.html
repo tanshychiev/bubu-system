@@ -117,6 +117,7 @@ a{text-decoration:none!important}
 @media(max-width:360px){
     .user-grid{grid-template-columns:1fr}
 }
+.bubu-qr-generate{display:flex;justify-content:center;align-items:center;gap:8px;width:100%;padding:11px 12px;border:0;border-radius:14px;background:linear-gradient(110deg,#9b71ee,#ff9b8a);box-shadow:0 8px 16px rgba(169,115,179,.18);color:#fff;font-weight:900;font-size:12px;cursor:pointer;flex-wrap:wrap}.bubu-qr-generate span{font-size:10px;background:#ffffff37;padding:4px 7px;border-radius:99px}.bubu-qr-generate:focus-visible{outline:3px solid #7451c0;outline-offset:3px}
 </style>
 
 <div class="user-hero">
@@ -204,6 +205,12 @@ a{text-decoration:none!important}
         </div>
 
         <a href="{% url 'user_edit' u.id %}" class="edit-btn">✎ Edit</a>
+        {% if request.user.is_superuser and not u.is_superuser and u.is_active %}
+        <form method="post" action="{% url 'generate_user_login_qr' u.id %}" style="margin-top:8px">
+            {% csrf_token %}
+            <button type="submit" class="bubu-qr-generate">🐾 Generate Staff Login QR <span>24h · One use</span></button>
+        </form>
+        {% endif %}
     </div>
     {% empty %}
     <div class="empty-box">

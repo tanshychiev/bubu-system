@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="same-origin"><title>Staff Login QR | BUBU Pet Store POS</title><style>
+:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(circle at 8% 5%,#ffe5d6,transparent 43%),radial-gradient(circle at 95% 5%,#eadbff,transparent 45%),linear-gradient(165deg,#fff9f6,#f9f1ff 80%);font-family:ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;color:#29213c}.shell{width:min(100%,470px);background:#fff;border-radius:30px;overflow:hidden;box-shadow:0 22px 65px #5e456021;border:1px solid #f4e6ee}.hero{padding:25px 26px 34px;text-align:center;background:linear-gradient(125deg,#fff0e9,#f4e8ff)}.brand{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:900;font-size:24px;letter-spacing:.02em}.brand-mark{display:grid;place-items:center;width:47px;height:47px;border-radius:17px;background:#fff8fa;box-shadow:0 5px 14px #9464771e;font-size:26px}.sub{color:#877789;font-size:12px;margin:4px 0 0;font-weight:700}.inner{padding:24px 27px 28px;text-align:center}.bubble{width:65px;height:65px;margin:-55px auto 12px;position:relative;background:linear-gradient(135deg,#f2dfff,#ffe6e0);border:5px solid white;border-radius:23px;display:grid;place-items:center;font-size:28px;box-shadow:0 8px 22px #886a9b25}h1{margin:6px 0 7px;font-size:25px;font-weight:900}p{line-height:1.55;color:#7d7185;font-size:14px;margin:6px 0 18px}.staff{background:#fcf8ff;border:1px solid #eee2fa;padding:12px;border-radius:16px;margin-bottom:16px;font-size:13px;color:#83758d}.staff strong{display:block;font-size:18px;color:#3c2f56;margin-top:3px}.qr-box{display:inline-block;padding:14px;border-radius:21px;background:#fff;border:2px solid #eedfff;box-shadow:0 8px 25px #b899d522}.qr-box img{display:block;width:min(255px,70vw);height:auto;aspect-ratio:1;object-fit:contain}.pill{display:inline-flex;align-items:center;gap:7px;background:#f8ecff;color:#7851bb;border-radius:999px;padding:9px 15px;font-size:12px;font-weight:800;margin:15px auto 7px}.note{background:#fff8f3;border:1px solid #fbe3d7;color:#826f71;text-align:left;padding:13px 15px;font-size:12px;line-height:1.55;border-radius:16px;margin:16px 0}.button{display:block;width:100%;appearance:none;text-decoration:none;cursor:pointer;padding:14px 18px;border:0;color:white;font-weight:900;font-size:14px;border-radius:15px;background:linear-gradient(105deg,#9762ee,#f58b87);box-shadow:0 9px 18px #e38fa93b}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:15px 0 10px}.action-button{display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid #ebdcfa;padding:13px 10px;border-radius:15px;background:#faf6ff;color:#6949a4;font-size:13px;font-weight:800;cursor:pointer;text-decoration:none}.action-button:hover{background:#f5ebff}.share-button{background:linear-gradient(105deg,#9762ee,#f58b87);color:#fff;border:0}.fallback-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin:11px 0 6px}.fallback-actions a,.fallback-actions button{font-size:12px;color:#7651a6;background:#fff;border:1px solid #e5d8f1;border-radius:999px;padding:9px 12px;text-decoration:none;font-weight:800;cursor:pointer}#staff-switch-form{text-align:left;background:#fcf8ff;border:1px solid #eee2fa;padding:14px;border-radius:17px;margin-bottom:16px}.staff-label{display:block;text-align:left;color:#81738d;font-size:12px;font-weight:800;margin-bottom:8px}.staff-row{display:flex;gap:8px;align-items:center}.staff-row select{flex:1;min-width:0;background:#fff;border:1px solid #e7d7f8;border-radius:12px;padding:12px;color:#37284e;font-size:15px;font-weight:800}.regen{border:0;border-radius:12px;padding:12px 13px;background:linear-gradient(105deg,#9762ee,#f58b87);color:white;font-size:12px;font-weight:850;cursor:pointer}.switch-info{font-size:11px;margin:9px 0 0;text-align:left}.feedback{min-height:16px;color:#746385;font-size:12px;margin:7px 0}.button:focus-visible,.action-button:focus-visible{outline:3px solid #7441cf;outline-offset:3px}.secondary{display:inline-block;color:#9167c7;font-size:13px;text-decoration:none;font-weight:800;margin-top:17px}.foot{font-size:11px;color:#ac9cac;margin:16px 0 0}.small{font-size:12px}.warn{background:#fff3f5;border-color:#ffdee6;color:#a04d68}@media(max-width:440px){body{padding:14px}.inner{padding:22px 19px 24px}.hero{padding:22px 20px 33px}h1{font-size:23px}}
+/* BUBU staff picker */
+.staff-row{align-items:stretch}.staff-picker-trigger{flex:1;min-width:0;display:flex;align-items:center;gap:10px;text-align:left;background:#fff;border:1.5px solid #ead8fa;border-radius:13px;padding:9px 11px;cursor:pointer;color:#37284e;box-shadow:0 3px 10px #d2bee52b}.staff-picker-trigger:hover{border-color:#b99bff;background:#fffcff}.staff-picker-avatar{width:33px;height:33px;display:grid;place-items:center;flex:none;border-radius:11px;background:linear-gradient(135deg,#eee1ff,#ffe6e1);color:#744abc;font-weight:900;font-size:15px}.staff-picker-name{flex:1;font-weight:850;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.staff-picker-chevron{color:#9a74c7;font-size:15px}.staff-picker-trigger:focus-visible,.staff-option:focus-visible,.picker-close:focus-visible{outline:3px solid #9b67e7;outline-offset:2px}.staff-overlay[hidden]{display:none}.staff-overlay{position:fixed;inset:0;z-index:9999;background:#2619389c;display:flex;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(7px)}.staff-dialog{width:min(100%,430px);max-height:min(80vh,620px);display:flex;flex-direction:column;background:#fff;border:1px solid #f4e9fa;box-shadow:0 30px 90px #2d1c465c;border-radius:26px;overflow:hidden;text-align:left;animation:picker-in .18s ease-out}@keyframes picker-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}.picker-top{padding:19px 21px 15px;background:linear-gradient(115deg,#fff0e9,#f1e5ff);display:flex;align-items:center;gap:12px}.picker-icon{font-size:24px;width:46px;height:46px;border-radius:16px;background:#ffffffb8;display:grid;place-items:center}.picker-heading{flex:1}.picker-heading h2{font-size:19px;margin:0;color:#302341;font-weight:900}.picker-heading span{display:block;font-size:12px;color:#866f92;margin-top:2px}.picker-close{border:0;background:#ffffffae;color:#805e94;width:35px;height:35px;border-radius:12px;font-size:24px;cursor:pointer}.picker-search-wrap{padding:15px 18px 9px}.picker-search{width:100%;border:1.5px solid #e9ddf6;background:#fcf9ff;border-radius:14px;padding:13px 14px;font-size:14px;outline:none}.picker-search:focus{border-color:#ac7fe9;box-shadow:0 0 0 3px #eedeff}.picker-list{padding:4px 14px 18px;overflow-y:auto;min-height:100px}.staff-option{display:flex;width:100%;align-items:center;gap:11px;border:1px solid transparent;border-radius:15px;background:#fff;padding:10px 12px;text-align:left;cursor:pointer;color:#2d2440;margin-top:5px}.staff-option:hover{background:#faf4ff;border-color:#ebdafa}.staff-option.selected{background:#f8efff;border-color:#dfc6fc}.option-avatar{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,#eddcff,#ffe5df);color:#8256c0;font-weight:900;font-size:17px}.option-details{flex:1;min-width:0}.option-name{font-size:14px;font-weight:850;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.option-sub{font-size:11px;color:#9c8da5}.option-check{color:#9a61df;font-size:20px}.picker-empty{padding:30px 10px;text-align:center;color:#897b95;font-size:13px}.picker-foot{border-top:1px solid #f0e6f5;padding:11px 19px;color:#8f7d97;text-align:center;font-size:11px;background:#fefbff}@media(max-width:440px){.staff-row{flex-wrap:wrap}.regen{min-height:44px}.staff-picker-trigger{min-height:47px}}
+</style></head><body><main class="shell"><header class="hero"><div class="brand"><span class="brand-mark">🐾</span><span>BUBU</span></div><div class="sub">Pet Store POS · Secure Staff Access</div></header><section class="inner"><div class="bubble" aria-hidden="true">📱</div><h1>Staff Login QR</h1><p>Scan this QR code using the staff member’s phone camera.</p><form id="staff-switch-form" method="post" action="{% url 'generate_user_login_qr' target.pk %}" data-url-pattern="{% url 'generate_user_login_qr' 999999999 %}">
+{% csrf_token %}
+<label class="staff-label" for="staff-choice">Generate login QR for</label>
+<div class="staff-row"><input type="hidden" id="staff-choice" value="{{ target.pk }}"><button type="button" id="staff-picker-open" class="staff-picker-trigger" aria-haspopup="dialog" aria-controls="staff-picker-dialog"><span class="staff-picker-avatar" id="selected-avatar">{{ target.username|slice:":1"|upper }}</span><span class="staff-picker-name" id="selected-name">{{ target.username }}</span><span class="staff-picker-chevron">⌄</span></button><button id="regenerate-qr" class="regen" type="submit">↻ Regenerate QR</button></div>
+<p class="switch-info">Choosing another staff member creates a fresh QR automatically. Regenerating invalidates the previous unused QR for that account.</p>
+</form><div class="qr-box"><img id="login-qr-image" src="data:image/png;base64,{{ qr_image }}" alt="One-time staff login QR code"></div><div><span class="pill">⏳ Valid 24 hours · One successful use</span></div><div class="actions"><button type="button" class="action-button" id="save-qr">⬇ Save QR Image</button><button type="button" class="action-button share-button" id="share-qr">↗ Share QR</button></div><div class="feedback" id="qr-feedback" role="status" aria-live="polite"></div><div class="note">🔒 Keep this QR private. A new QR will invalidate any previous unused code. After successful sign-in, the QR cannot be reused.</div><a class="button" href="{% url 'user_list' %}">← Back to All Users</a><div class="foot">© 2026 BUBU Pet Store POS</div></section></main><div class="staff-overlay" id="staff-picker-dialog" role="presentation" hidden><section class="staff-dialog" role="dialog" aria-modal="true" aria-labelledby="picker-title" tabindex="-1"><div class="picker-top"><span class="picker-icon" aria-hidden="true">🐾</span><div class="picker-heading"><h2 id="picker-title">Choose staff</h2><span>Select an account to generate its login QR</span></div><button type="button" class="picker-close" id="staff-picker-close" aria-label="Close">×</button></div><div class="picker-search-wrap"><input type="search" class="picker-search" id="staff-picker-search" placeholder="🔎  Search staff name..." autocomplete="off" aria-label="Search staff"></div><div class="picker-list" id="staff-picker-list">{% for member in staff_options %}<button class="staff-option{% if member.pk == target.pk %} selected{% endif %}" type="button" data-staff-id="{{ member.pk }}" data-staff-name="{{ member.username }}"><span class="option-avatar">{{ member.username|slice:":1"|upper }}</span><span class="option-details"><span class="option-name">{{ member.username }}</span><span class="option-sub">BUBU staff account</span></span><span class="option-check" aria-hidden="true">{% if member.pk == target.pk %}✓{% endif %}</span></button>{% endfor %}<div class="picker-empty" id="picker-empty" hidden>No staff found</div></div><div class="picker-foot">🔒 Login QR is private · One successful use</div></section></div><script>
+(function () {
+  "use strict";
+  const loginUrl = "{{ login_url|escapejs }}";
+  const staff = "{{ target.username|escapejs }}";
+  const message = "Here is your account login. Please scan to log in.\nAccount: " + staff + "\n" + loginUrl + "\nThis QR code expires in 24 hours and works only once. Please keep it private.";
+  const image = document.getElementById("login-qr-image");
+  const status = document.getElementById("qr-feedback");
+  const setStatus = text => { status.textContent = text; };
+  const filename = "BUBU-login-" + staff.replace(/[^a-zA-Z0-9_-]/g, "_") + ".png";
+  function qrBlob() {
+    const data = image.src.split(",")[1];
+    const binary = atob(data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], {type: "image/png"});
+  }
+  document.getElementById("save-qr").addEventListener("click", () => {
+    const a = document.createElement("a");
+    a.href = image.src;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setStatus("QR image download requested. On iPhone, you may need to use Share → Save Image.");
+  });
+  document.getElementById("share-qr").addEventListener("click", async () => {
+    try {
+      if (typeof navigator.share !== "function") {
+        setStatus("Native sharing is unavailable on this browser. Save the QR image and share it privately.");
+        return;
+      }
+      const file = new File([qrBlob()], filename, {type: "image/png"});
+      const canShareFile = typeof navigator.canShare === "function" && navigator.canShare({files: [file]});
+      if (canShareFile) {
+        await navigator.share({title: "BUBU staff login", text: message, files: [file]});
+      } else {
+        await navigator.share({title: "BUBU staff login", text: message, url: loginUrl});
+      }
+      setStatus("Share options opened.");
+    } catch (error) {
+      if (error.name !== "AbortError") setStatus("Sharing unavailable. Save the QR image and share it privately.");
+    }
+  });
+  const staffChoice = document.getElementById("staff-choice");
+  const switchForm = document.getElementById("staff-switch-form");
+  const pattern = switchForm.dataset.urlPattern;
+  function updateAction() {
+    const id = staffChoice.value;
+    switchForm.action = pattern.replace("999999999", encodeURIComponent(id));
+  }
+  const overlay = document.getElementById("staff-picker-dialog");
+  const openPicker = document.getElementById("staff-picker-open");
+  const closePickerButton = document.getElementById("staff-picker-close");
+  const pickerSearch = document.getElementById("staff-picker-search");
+  const options = Array.from(document.querySelectorAll(".staff-option"));
+  const empty = document.getElementById("picker-empty");
+  let focusBeforePicker = null;
+  function closePicker() {
+    overlay.hidden = true;
+    document.body.style.overflow = "";
+    (focusBeforePicker || openPicker).focus();
+  }
+  openPicker.addEventListener("click", () => {
+    focusBeforePicker = document.activeElement;
+    pickerSearch.value = "";
+    options.forEach(option => { option.hidden = false; });
+    empty.hidden = true;
+    overlay.hidden = false;
+    document.body.style.overflow = "hidden";
+    pickerSearch.focus();
+  });
+  closePickerButton.addEventListener("click", closePicker);
+  overlay.addEventListener("click", (event) => { if (event.target === overlay) closePicker(); });
+  overlay.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") { event.preventDefault(); closePicker(); }
+    if (event.key === "Tab") {
+      const focusable = [...overlay.querySelectorAll('button:not([hidden]), input:not([hidden])')].filter(el => el.offsetParent !== null);
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+  });
+  pickerSearch.addEventListener("input", () => {
+    const search = pickerSearch.value.trim().toLocaleLowerCase();
+    let visible = 0;
+    options.forEach(option => {
+      option.hidden = !option.dataset.staffName.toLocaleLowerCase().includes(search);
+      if (!option.hidden) visible++;
+    });
+    empty.hidden = visible !== 0;
+  });
+  options.forEach(option => option.addEventListener("click", () => {
+    const newId = option.dataset.staffId;
+    closePicker();
+    if (newId === staffChoice.value) return;
+    staffChoice.value = newId;
+    document.getElementById("selected-name").textContent = option.dataset.staffName;
+    document.getElementById("selected-avatar").textContent = option.dataset.staffName.slice(0,1).toUpperCase();
+    updateAction();
+    switchForm.requestSubmit();
+  }));
+  switchForm.addEventListener("submit", (event) => {
+    updateAction();
+    // Django's standard CSRF-protected POST issues a fresh, one-use token.
+    document.getElementById("regenerate-qr").disabled = true;
+  });
+}());
+</script></body></html>
