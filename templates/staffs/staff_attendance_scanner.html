@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.bubu-attend-wrap{max-width:640px;margin:18px auto 60px;padding:0 14px;font-family:inherit;color:#322443}
+.bubu-attend-card{background:#fff;border:1px solid #eee0f8;border-radius:26px;overflow:hidden;box-shadow:0 16px 45px rgba(96,65,124,.10)}
+.bubu-attend-head{padding:28px 18px 24px;text-align:center;background:linear-gradient(115deg,#fff0e9,#f0e4ff)}
+.bubu-attend-icon{width:65px;height:65px;background:#fff;border-radius:22px;margin:0 auto 12px;display:grid;place-items:center;font-size:32px;box-shadow:0 8px 20px rgba(145,102,174,.13)}
+.bubu-attend-head h1{font-weight:900;font-size:25px;margin:0 0 8px}
+.bubu-attend-head p{font-size:13px;color:#766882;margin:0;line-height:1.5}
+.bubu-attend-body{padding:22px}
+.bubu-attend-person{border:1px solid #eeddff;background:#faf5ff;padding:13px 16px;border-radius:15px;font-weight:800;margin-bottom:17px}
+.bubu-attend-person small{display:block;font-size:11px;color:#887690;margin-bottom:4px}
+#bubu-reader{width:100%;max-width:400px;margin:auto;overflow:hidden;border-radius:18px}
+#bubu-reader video{border-radius:18px}
+.bubu-attend-btn{display:block;width:100%;margin:10px 0;padding:14px 20px;border:0;border-radius:14px;background:linear-gradient(105deg,#a261ed,#f4868e);color:white;font-weight:850;font-size:14px;cursor:pointer}
+.bubu-attend-btn:disabled{opacity:.55;cursor:wait}
+.bubu-attend-note{border:1px solid #f6dbc9;background:#fff8f3;border-radius:15px;padding:12px 14px;font-size:12px;color:#866e72;line-height:1.65;margin-top:15px}
+.bubu-attend-error{color:#ae3e66;font-size:13px;margin:12px 0;min-height:20px;line-height:1.4}
+.bubu-attend-fallback{display:flex;gap:8px;margin-top:10px}
+.bubu-attend-fallback input{flex:1;min-width:0;padding:12px;border-radius:12px;border:1px solid #e7dcf3}
+.bubu-attend-fallback button{border-radius:12px;background:#eee2ff;color:#64419f;border:0;padding:10px 14px;font-weight:800}
+@media(max-width:480px){.bubu-attend-body{padding:15px}.bubu-attend-fallback{flex-direction:column}}
+</style>
+<div class="bubu-attend-wrap"><div class="bubu-attend-card">
+<header class="bubu-attend-head"><div class="bubu-attend-icon">🐾</div><h1>Scan Attendance</h1><p>Scan your branch's wall QR to check in or check out.</p></header>
+<div class="bubu-attend-body">
+ <div class="bubu-attend-person"><small>Signed in as</small>{{ request.user.get_full_name|default:request.user.username }}{% if staff_profile and staff_profile.branch %}<small style="margin-top:7px">{{ staff_profile.branch.name }}</small>{% endif %}</div>
+ <div id="bubu-reader"></div>
+ <button id="bubu-start" class="bubu-attend-btn" type="button">📷 Open Camera & Scan QR</button>
+ <div id="bubu-scan-message" class="bubu-attend-error" role="status" aria-live="polite"></div>
+ <div class="bubu-attend-note">Use the attendance QR displayed at your workplace, not your personal account login QR. Your signed-in account identifies you automatically. Camera access requires HTTPS on mobile browsers.</div>
+ <details style="margin-top:17px"><summary style="color:#7454aa;cursor:pointer;font-size:13px;font-weight:800">Camera not available? Paste attendance QR link</summary>
+ <div class="bubu-attend-fallback"><input id="bubu-manual" type="url" placeholder="Paste the attendance QR link" aria-label="Attendance QR URL"><button id="bubu-manual-go" type="button">Continue</button></div></details>
+</div></div></div>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
+<script>
+(()=>{
+ const button=document.getElementById('bubu-start'); const message=document.getElementById('bubu-scan-message'); let reader=null; let navigating=false;
+ function attendancePath(raw){
+   try{const url=new URL(raw,window.location.href);
+     if(url.hostname!==window.location.hostname) return null;
+     if(!/^\/staffs\/scan\/[^/]+\/?$/.test(url.pathname))return null;
+     return url.pathname; // use our own site's origin and session
+   }catch(e){return null;}
+ }
+ function go(raw){const path=attendancePath(raw);if(!path){message.textContent='This is not a BUBU wall attendance QR. Please scan the correct QR.';return;}if(navigating)return;navigating=true;message.textContent='QR found. Opening attendance...';window.location.assign(path);}
+ button.addEventListener('click', async ()=>{
+  if(!window.isSecureContext){message.textContent='Camera requires HTTPS. Please open BUBU using its secure HTTPS address.';return;}
+  if(!window.Html5Qrcode){message.textContent='QR camera library is not available. Check your connection and try again.';return;}
+  button.disabled=true;message.textContent='Opening camera...';
+  try{reader=new Html5Qrcode('bubu-reader');await reader.start({facingMode:'environment'},{fps:10,qrbox:{width:230,height:230}},go,()=>{});button.textContent='Scanning — point camera at wall QR';message.textContent='';}
+  catch(e){button.disabled=false;message.textContent='Could not open camera. Check browser camera permission and HTTPS. '+(e&&e.message?e.message:'');}
+ });
+ document.getElementById('bubu-manual-go').addEventListener('click',()=>go(document.getElementById('bubu-manual').value));
+ window.addEventListener('pagehide',()=>{if(reader){reader.stop().catch(()=>{});}});
+})();
+</script>
+{% endblock %}

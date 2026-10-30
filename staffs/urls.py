@@ -4,6 +4,7 @@ from . import views, work_views
 
 
 urlpatterns = [
+    path("attendance/scan/", views.staff_attendance_scanner, name="staff_attendance_scanner"),
     # ==================================================
     # STAFF DASHBOARD
     # ==================================================

@@ -2288,6 +2288,12 @@ html.bubu-loading body{
         </button>
 
         <div class="menu-sub" id="menu-staff">
+            <a href="{% url 'staff_attendance_scanner' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'staff_attendance_scanner' %}active{% endif %}">
+                <span class="bubu-nav-icon tone-violet"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/><rect x="8" y="8" width="3" height="3"/><path d="M14 8h2v2h-2zM8 14h2v2H8zM14 14h3v3h-3z"/></svg></span>
+                <span>Scan Attendance</span>
+            </a>
             <a href="{% url 'staff_my_dashboard' %}"
                onclick="saveMenuStateAndClose()"
                class="{% if request.resolver_match.url_name == 'staff_my_dashboard' %}active{% endif %}">

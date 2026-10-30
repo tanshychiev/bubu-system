@@ -1670,3 +1670,11 @@ def payroll_mark_paid(request, pk):
 
     messages.success(request, "Salary marked as paid.")
     return redirect("payroll_record_detail", pk=payroll.pk)
+
+@login_required
+def staff_attendance_scanner(request):
+    """Staff camera launcher. Attendance is submitted by the wall QR route."""
+    staff = StaffProfile.objects.filter(user=request.user).select_related("branch").first()
+    return render(request, "staffs/staff_attendance_scanner.html", {
+        "staff_profile": staff,
+    })
