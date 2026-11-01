@@ -70,7 +70,7 @@
                         Open Scan Page
                     </a>
 
-                    <button type="button" class="download-btn" onclick="downloadQR('{{ item.qr.id }}', '{{ item.qr.branch.name|escapejs }}')">
+                    <button type="button" class="download-btn" onclick="downloadQR('{{ item.qr.id }}', '{{ item.qr.branch.name|escapejs }}', '{{ item.qr.title|escapejs }}')">
                         Download QR
                     </button>
 
@@ -441,60 +441,121 @@ function safeFileName(text){
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "");
 }
-
-function downloadQR(id, branchName){
-    const img = document.getElementById("qrImage" + id);
-
-    if(!img){
-        alert("QR image not found.");
-        return;
-    }
-
+function roundedRect(ctx, x, y, width, height, radius){
+    const r = Math.min(radius, width / 2, height / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + width, y, x + width, y + height, r);
+    ctx.arcTo(x + width, y + height, x, y + height, r);
+    ctx.arcTo(x, y + height, x, y, r);
+    ctx.arcTo(x, y, x + width, y, r);
+    ctx.closePath();
+}
+function drawCreativeQrCard(options){
+    const canvas = document.createElement("canvas");
+    canvas.width = 1400;
+    canvas.height = 1900;
+    const ctx = canvas.getContext("2d");
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, "#fff7f2");
+    gradient.addColorStop(0.5, "#f7f1ff");
+    gradient.addColorStop(1, "#fffdfa");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = "#ff8c6b";
+    ctx.beginPath(); ctx.arc(170, 170, 120, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = "#7b5cff";
+    ctx.beginPath(); ctx.arc(1230, 210, 170, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(1180, 1640, 210, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#ffffff";
+    ctx.shadowColor = "rgba(80, 44, 108, 0.12)";
+    ctx.shadowBlur = 38;
+    roundedRect(ctx, 90, 90, 1220, 1720, 42);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    const header = ctx.createLinearGradient(90, 90, 1310, 280);
+    header.addColorStop(0, "#9463ff");
+    header.addColorStop(1, "#ff8c6b");
+    ctx.fillStyle = header;
+    roundedRect(ctx, 90, 90, 1220, 220, 42);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "900 56px Arial";
+    ctx.fillText("BUBU Pet Store", 150, 175);
+    ctx.font = "700 28px Arial";
+    ctx.fillText(options.kindTitle, 150, 225);
+    ctx.fillStyle = "#1c1235";
+    ctx.font = "900 52px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(options.mainTitle, 700, 405);
+    ctx.fillStyle = "#6c6382";
+    ctx.font = "700 28px Arial";
+    ctx.fillText(options.subTitle, 700, 448);
+    ctx.fillStyle = "#fff7f2";
+    roundedRect(ctx, 185, 500, 1030, 860, 38);
+    ctx.fill();
+    ctx.strokeStyle = "#f1ded2";
+    ctx.lineWidth = 4;
+    roundedRect(ctx, 185, 500, 1030, 860, 38);
+    ctx.stroke();
+    ctx.fillStyle = "#ffffff";
+    roundedRect(ctx, 290, 590, 820, 820, 34);
+    ctx.fill();
+    if (options.image && options.image.complete) ctx.drawImage(options.image, 340, 640, 720, 720);
+    ctx.fillStyle = "#7b5cff";
+    ctx.font = "900 42px Arial";
+    ctx.fillText(options.highlight, 700, 1470);
+    ctx.fillStyle = "#6e647f";
+    ctx.font = "700 26px Arial";
+    (options.notes || []).forEach((line, index) => ctx.fillText(line, 700, 1525 + (index * 40)));
+    ctx.fillStyle = "#f7f1ff";
+    roundedRect(ctx, 180, 1640, 1040, 105, 28);
+    ctx.fill();
+    ctx.fillStyle = "#493a63";
+    ctx.font = "800 26px Arial";
+    ctx.fillText(options.footer, 700, 1706);
+    ctx.textAlign = "left";
+    return canvas;
+}
+function triggerCanvasDownload(canvas, filename){
     const link = document.createElement("a");
-    link.href = img.src;
-    link.download = "bubu-attendance-qr-" + safeFileName(branchName) + ".png";
-
+    link.href = canvas.toDataURL("image/png");
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 }
-
+function downloadQR(id, branchName, qrTitle){
+    const img = document.getElementById("qrImage" + id);
+    if(!img){ alert("QR image not found."); return; }
+    const canvas = drawCreativeQrCard({
+        image: img,
+        kindTitle: "Attendance QR Download",
+        mainTitle: branchName || "BUBU Attendance",
+        subTitle: qrTitle || "Branch attendance QR",
+        highlight: "Scan to Check In / Check Out",
+        notes: [
+            "Staff can scan this QR to open the attendance page.",
+            "Allow GPS when prompted for attendance verification."
+        ],
+        footer: "BUBU Attendance • Secure Branch QR"
+    });
+    triggerCanvasDownload(canvas, "bubu-attendance-qr-" + safeFileName(branchName) + ".png");
+}
 function printQR(id){
     const area = document.getElementById("printArea" + id);
-
-    if(!area){
-        alert("Print area not found.");
-        return;
-    }
-
+    if(!area){ alert("Print area not found."); return; }
     area.classList.add("print-target");
     window.print();
-
-    setTimeout(function(){
-        area.classList.remove("print-target");
-    }, 500);
+    setTimeout(function(){ area.classList.remove("print-target"); }, 500);
 }
-
 function copyLink(id){
     const input = document.getElementById("scanLink" + id);
-
-    if(!input){
-        alert("Link not found.");
-        return;
-    }
-
-    input.select();
-    input.setSelectionRange(0, 99999);
-
-    navigator.clipboard.writeText(input.value).then(
-        function(){
-            alert("Scan link copied.");
-        },
-        function(){
-            document.execCommand("copy");
-            alert("Scan link copied.");
-        }
-    );
+    if(!input){ alert("Link not found."); return; }
+    input.select(); input.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(input.value).then(function(){ alert("Scan link copied."); }, function(){ document.execCommand("copy"); alert("Scan link copied."); });
 }
 </script>
 

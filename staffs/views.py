@@ -400,6 +400,13 @@ def staff_scan_submit(request, token):
             f"Branch: {branch_name}"
         )
 
+        if attendance.status == "late" and attendance.late_minutes:
+            telegram_text += f"\n⏰ Late: {attendance.late_minutes} minutes"
+            if attendance.note:
+                cleaned_note = str(attendance.note).replace("Late reason:", "").strip()
+                if cleaned_note:
+                    telegram_text += f"\nReason: {cleaned_note}"
+
         if attendance.is_suspicious:
             if distance is not None:
                 telegram_text += f"\n⚠️ Wrong GPS: {distance}m from branch"
@@ -431,6 +438,7 @@ def staff_scan_submit(request, token):
     )
 
     if status == "late":
+        telegram_text += f"\n⏰ Late: {minutes_value} minutes"
         telegram_text += f"\nReason: {late_reason}"
 
     if attendance.is_suspicious:

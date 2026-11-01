@@ -246,7 +246,8 @@ def generate_user_login_qr(request, pk):
         return HttpResponseForbidden("QR enrollment is not allowed for superuser accounts.")
 
     session_key = "bubu_last_issued_login_qr"
-    if request.method == "POST":
+    should_regenerate = request.method == "POST" or request.GET.get("regenerate") == "1"
+    if should_regenerate:
         raw = secrets.token_urlsafe(32)
         hashed = sha256(raw.encode("utf-8")).hexdigest()
         with transaction.atomic():

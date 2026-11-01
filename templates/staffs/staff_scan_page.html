@@ -41,7 +41,7 @@
             <div class="branch-box">
                 <small>Signed in as</small>
                 <h2>{{ staff.user.get_full_name|default:staff.user.username }}</h2>
-                <p>Your account is identified automatically</p>
+                <p class="cute-greeting">Hi {{ staff.user.get_full_name|default:staff.user.username }} 👋 Ready for a pawsome day at BUBU?</p>
             </div>
 
             <div class="gps-box" id="gpsBox">
@@ -163,6 +163,13 @@ body{
     margin:0;
     color:#7b5cff;
     font-weight:1000;
+}
+
+.cute-greeting{
+    margin-top:8px!important;
+    color:#6b5aa5!important;
+    font-size:15px;
+    line-height:1.55;
 }
 
 .message-box{
