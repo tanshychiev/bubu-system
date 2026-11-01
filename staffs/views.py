@@ -7,6 +7,7 @@ from math import atan2, cos, radians, sin, sqrt
 
 import qrcode
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.shortcuts import get_current_site
@@ -216,6 +217,9 @@ def staff_qr_list(request):
         .order_by("branch__name", "title")
     )
 
+    # Public HTTPS URL is configured after TLS is enabled on the server.
+    # Never print an HTTP QR when the production HTTPS URL is configured.
+    public_url = getattr(settings, "BUBU_PUBLIC_URL", "").rstrip("/")
     current_site = get_current_site(request)
     protocol = "https" if request.is_secure() else "http"
 
@@ -223,7 +227,7 @@ def staff_qr_list(request):
 
     for qr in qr_codes:
         scan_path = reverse("staff_scan_page", args=[qr.token])
-        scan_url = f"{protocol}://{current_site.domain}{scan_path}"
+        scan_url = f"{public_url}{scan_path}" if public_url else f"{protocol}://{current_site.domain}{scan_path}"
 
         qr_items.append({
             "qr": qr,
@@ -289,6 +293,7 @@ def staff_scan_page(request, token):
         "staff": staff,
         "already_checked_in": bool(existing and existing.check_in_time),
         "already_checked_out": bool(existing and existing.check_out_time),
+        "auto_action": ("complete" if existing and existing.check_out_time else "check_out" if existing and existing.check_in_time else "check_in"),
         "is_late_now": arrival_status == "late",
         "today": timezone.localdate(),
     })
@@ -362,6 +367,9 @@ def staff_scan_submit(request, token):
     if action == "check_out" and not attendance.check_in_time:
         messages.error(request, "Please check in before checking out.")
         return redirect("staff_scan_page", token=qr.token)
+    if action == "check_out" and attendance.check_in_time and (now - attendance.check_in_time).total_seconds() < 120:
+        messages.warning(request, "Just checked in. Wait at least 2 minutes before checking out.")
+        return redirect(reverse("staff_scan_page", args=[qr.token]) + "?recorded=1")
     if action == "check_out" and attendance.check_out_time:
         messages.warning(request, "Already checked out today. Duplicate scan ignored.")
         return redirect("staff_scan_page", token=qr.token)
@@ -401,7 +409,7 @@ def staff_scan_submit(request, token):
         send_staff_telegram_async(telegram_text)
 
         messages.success(request, "Check out recorded.")
-        return redirect("staff_scan_page", token=qr.token)
+        return redirect(reverse("staff_scan_page", args=[qr.token]) + "?recorded=1")
 
     attendance.check_in_time = now
     attendance.status = status
@@ -434,7 +442,7 @@ def staff_scan_submit(request, token):
     send_staff_telegram_async(telegram_text)
 
     messages.success(request, "Check in recorded.")
-    return redirect("staff_scan_page", token=qr.token)
+    return redirect(reverse("staff_scan_page", args=[qr.token]) + "?recorded=1")
 
 
 # =========================================================

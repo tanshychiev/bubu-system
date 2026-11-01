@@ -2,6 +2,13 @@
 {% load static %}
 
 {% block content %}
+<style id="bubu-scan-simple-flow">
+.scan-actions button[hidden]{display:none!important}
+.scan-actions:has(button[hidden]){grid-template-columns:1fr!important}
+.scan-actions button{width:100%;min-height:58px}
+@media(max-width:767px){.scan-card{max-width:480px!important}.scan-page{align-items:flex-start!important}}
+</style>
+
 
 <div class="scan-page">
     <div class="scan-card">
@@ -43,19 +50,17 @@
             </div>
 
             <div class="scan-actions">
-                <button type="button" onclick="startCheckIn(this)" class="checkin-btn">
+                <button type="button" id="checkinButton" onclick="startCheckIn(this)" class="checkin-btn">
                     ✅ Check In
                 </button>
 
-                <button type="button" onclick="submitWithLocation('check_out', this)" class="checkout-btn">
+                <button type="button" id="checkoutButton" onclick="submitWithLocation('check_out', this)" class="checkout-btn">
                     👋 Check Out
                 </button>
             </div>
         </form>
 
-        <p class="small-note">
-            Tap Check In or Check Out to request location permission. GPS requires HTTPS on iPhone. If GPS is unavailable, you must explicitly choose to continue without GPS; that attendance will be flagged for review.
-        </p>
+        <p class="small-note" id="scanHelp">Scanning your branch QR starts attendance automatically. Allow location when asked. If permission is blocked, tap the button once. GPS requires HTTPS on iPhone.</p>
 
         <!-- POPUP BACKDROP INSIDE CARD -->
         <div class="popup-bg" id="latePopupBg" onclick="closeLatePopup()"></div>
@@ -72,9 +77,7 @@
             <textarea id="lateReasonText" rows="4" placeholder="Example: ស្ទះផ្លូវ"></textarea>
 
             <div class="late-actions">
-                <button type="button" class="skip-btn" onclick="submitCheckInWithoutReason()">
-                    Submit Check In
-                </button>
+
 
                 <button type="button" class="submit-late-btn" onclick="submitLateReason()">
                     Submit Reason
@@ -849,17 +852,42 @@ function submitWithLocation(action, button){
     }
 }
 
-// Do not auto-submit attendance when opening a scanned QR URL. On iPhones
-// geolocation permission requires a user-initiated action, such as a tap.
+// QR-based attendance starts automatically on HTTPS. Browser permission policies
+// vary: if a gesture is required, the visible button remains a one-tap fallback.
+// ?recorded=1 prevents an immediate check-out after a successful check-in redirect.
 document.addEventListener("DOMContentLoaded", function(){
     const alreadyIn = {{ already_checked_in|yesno:"true,false" }};
     const alreadyOut = {{ already_checked_out|yesno:"true,false" }};
+    const checkInButton = document.getElementById("checkinButton");
+    const checkOutButton = document.getElementById("checkoutButton");
+    const recorded = new URLSearchParams(location.search).has("recorded");
+    const reloaded = performance.getEntriesByType("navigation").some(n => n.type === "reload");
     if(alreadyOut){
-        setGpsBox("ok", "Attendance complete", "Your check-in and check-out have already been recorded today.");
-    } else if(alreadyIn){
-        setGpsBox("", "Checked in", "Tap Check Out when leaving the branch. Location will be requested then.");
+        checkInButton.hidden = true;
+        checkOutButton.hidden = true;
+        setGpsBox("ok", "Attendance complete", "Your check-in and check-out have been recorded today.");
+        return;
+    }
+    if(alreadyIn){
+        checkInButton.hidden = true;
+        setGpsBox("ok", "Checked in", "Scan the branch QR when leaving to check out.");
     } else {
-        setGpsBox("", "Location check", "Tap Check In to request GPS permission and record attendance.");
+        checkOutButton.hidden = true;
+        setGpsBox("", "Checking location", "Please allow location to record your check-in.");
+    }
+    if(recorded || reloaded) return;
+    // Start without extra steps on secured origins. Never auto-submit missing GPS.
+    // Late employees must supply a reason first.
+    if(!window.isSecureContext){
+        setGpsBox("bad", "HTTPS required for GPS", "This HTTP address cannot read iPhone GPS. Ask your manager to use BUBU's HTTPS address.");
+        return;
+    }
+    if(alreadyIn){
+        submitWithLocation("check_out", checkOutButton);
+    } else if(isLateNow){
+        openLatePopup();
+    } else {
+        submitWithLocation("check_in", checkInButton);
     }
 });
 

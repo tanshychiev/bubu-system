@@ -25,6 +25,21 @@ CSRF_TRUSTED_ORIGINS = [
     "http://5.223.90.183:8010",
 ]
 
+# Set BUBU_PUBLIC_URL=https://your-domain.example after adding an HTTPS
+# reverse proxy and a valid certificate. An HTTP IP address cannot provide
+# iPhone Safari geolocation/camera access.
+BUBU_PUBLIC_URL = os.environ.get("BUBU_PUBLIC_URL", "").rstrip("/")
+# Enable only when an HTTPS reverse proxy strips client-supplied X-Forwarded-Proto
+# and sets the header itself.
+if os.environ.get("BUBU_TRUST_HTTPS_PROXY") == "1":
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+if BUBU_PUBLIC_URL.startswith("https://"):
+    CSRF_TRUSTED_ORIGINS.append(BUBU_PUBLIC_URL)
+    from urllib.parse import urlsplit
+    public_host = urlsplit(BUBU_PUBLIC_URL).hostname
+    if public_host and public_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(public_host)
+
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 SESSION_COOKIE_HTTPONLY = True
@@ -232,8 +247,8 @@ TELEGRAM_PET_INSTOCK_TOPIC_ID = "12"
 TELEGRAM_PET_PREORDER_TOPIC_ID = "5"
 TELEGRAM_PET_COMPLETE_TOPIC_ID = "17"
 
-STAFF_TELEGRAM_BOT_TOKEN = "8972975243:AAE1kxnmGbgUBdhNiUJ9b-CSmpeXDKrNZRU"
-STAFF_TELEGRAM_CHAT_ID = "-5069294554"
+STAFF_TELEGRAM_BOT_TOKEN = os.environ.get("STAFF_TELEGRAM_BOT_TOKEN", "")
+STAFF_TELEGRAM_CHAT_ID = os.environ.get("STAFF_TELEGRAM_CHAT_ID", "")
 # Keep approved employee devices signed in for up to one year (renewed on activity).
 SESSION_COOKIE_AGE = 365 * 24 * 60 * 60
 SESSION_SAVE_EVERY_REQUEST = True
