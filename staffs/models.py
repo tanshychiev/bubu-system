@@ -156,6 +156,11 @@ class BranchAttendanceQR(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["branch"], name="one_attendance_qr_per_branch"),
+        ]
+
     def save(self, *args, **kwargs):
         if not self.token:
             self.token = secrets.token_urlsafe(40)

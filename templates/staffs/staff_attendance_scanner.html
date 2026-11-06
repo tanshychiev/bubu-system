@@ -40,22 +40,46 @@
 <script>
 (()=>{
  const button=document.getElementById('bubu-start'); const insecure=document.getElementById('bubu-insecure'); const fallback=document.getElementById('bubu-camera-fallback'); const message=document.getElementById('bubu-scan-message'); let reader=null; let navigating=false;
+ // Accept QR codes generated before the free HTTPS hostname was enabled.
+ // Never navigate to the QR's original HTTP origin; keep the current HTTPS session.
+ const knownBubuHosts = new Set([window.location.hostname.toLowerCase(), '5.223.90.183', '5-223-90-183.sslip.io']);
  function attendancePath(raw){
-   try{const url=new URL(raw,window.location.href);
-     if(url.hostname!==window.location.hostname) return null;
-     if(!/^\/staffs\/scan\/[^/]+\/?$/.test(url.pathname))return null;
-     return url.pathname; // use our own site's origin and session
+   try{
+     const value=String(raw||'').trim();
+     if(!value) return null;
+     const url=new URL(value,window.location.href);
+     if(!['http:','https:'].includes(url.protocol)) return null;
+     if(!knownBubuHosts.has(url.hostname.toLowerCase())) return null;
+     // Only the existing attendance route is accepted. Never trust arbitrary links.
+     if(!/^\/staffs\/scan\/[A-Za-z0-9_-]+\/?$/.test(url.pathname)) return null;
+     return url.pathname; // Open on the *current* HTTPS origin.
    }catch(e){return null;}
  }
- function go(raw){const path=attendancePath(raw);if(!path){message.textContent='This is not a BUBU wall attendance QR. Please scan the correct QR.';return;}if(navigating)return;navigating=true;message.textContent='QR found. Opening attendance...';window.location.assign(path);}
+ function go(raw){
+   const path=attendancePath(raw);
+   if(!path){
+     message.textContent='QR recognized, but the link is not a BUBU branch attendance link. Download the current branch QR from Attendance QR.';
+     return;
+   }
+   if(navigating) return;
+   navigating=true;
+   message.textContent='Branch attendance QR found. Opening securely...';
+   window.location.assign(path);
+ }
  if(!window.isSecureContext){insecure.hidden=false;fallback.hidden=false;button.textContent='Camera requires HTTPS — see instructions';}
- button.addEventListener('click', async ()=>{
+ async function startCamera(){
   if(!window.isSecureContext){insecure.hidden=false;fallback.hidden=false;message.textContent='For now, use your iPhone Camera app to scan the wall QR, or ask your admin to enable HTTPS for in-app scanning.';return;}
   if(!window.Html5Qrcode){message.textContent='QR camera library is not available. Check your connection and try again.';return;}
   button.disabled=true;message.textContent='Opening camera...';
   try{reader=new Html5Qrcode('bubu-reader');await reader.start({facingMode:'environment'},{fps:10,qrbox:{width:230,height:230}},go,()=>{});button.textContent='Scanning — point camera at wall QR';message.textContent='';}
   catch(e){button.disabled=false;message.textContent='Could not open camera. Check browser camera permission and HTTPS. '+(e&&e.message?e.message:'');}
- });
+ }
+ button.addEventListener('click', startCamera);
+ // Try launching the in-app scanner immediately on supported HTTPS browsers.
+ // If the browser requires a tap, the Open Camera button stays available.
+ if(window.isSecureContext){
+   window.addEventListener('load', ()=>startCamera(), {once:true});
+ }
  document.getElementById('bubu-manual-go').addEventListener('click',()=>go(document.getElementById('bubu-manual').value));
  window.addEventListener('pagehide',()=>{if(reader){reader.stop().catch(()=>{});}});
 })();

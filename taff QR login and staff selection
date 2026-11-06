@@ -1,0 +1,9 @@
+ templates/users/login_qr_invalid.html |   3 [32m+[m
+ templates/users/login_qr_issued.html  | 119 [32m++++++++++++++++++++++++++++++++++[m
+ templates/users/login_qr_redeem.html  |   3 [32m+[m
+ templates/users/user_list.html        |   7 [32m++[m
+ users/migrations/0003_loginqrtoken.py |  16 [32m+++++[m
+ users/models.py                       |  15 [32m++++[m[31m-[m
+ users/urls.py                         |   2 [32m+[m
+ users/views.py                        |  73 [32m++++++++++++++++++++[m[31m-[m
+ 8 files changed, 235 insertions(+), 3 deletions(-)

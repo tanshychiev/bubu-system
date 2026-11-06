@@ -210,6 +210,9 @@ def _check_location(branch, latitude, longitude):
 
 @login_required
 def staff_qr_list(request):
+    if not request.user.has_perm("auth.view_user"):
+        messages.error(request, "Only administrators can view branch attendance QR codes.")
+        return redirect("staff_my_dashboard")
     qr_codes = (
         BranchAttendanceQR.objects
         .select_related("branch")
@@ -254,13 +257,20 @@ def staff_qr_create(request):
 
         branch = get_object_or_404(Branch, id=branch_id, is_active=True)
 
-        BranchAttendanceQR.objects.create(
-            branch=branch,
-            title=title,
-            is_active=True,
-        )
-
-        messages.success(request, f"Attendance QR created for {branch.name}.")
+        # One permanent, shared attendance QR per branch; never create a second.
+        existing = BranchAttendanceQR.objects.filter(branch=branch).order_by("pk").first()
+        if existing:
+            if not existing.is_active:
+                existing.is_active = True
+                existing.save(update_fields=["is_active"])
+            messages.info(request, f"{branch.name} already has a QR. Reusing the existing code.")
+        else:
+            BranchAttendanceQR.objects.create(
+                branch=branch,
+                title=title,
+                is_active=True,
+            )
+            messages.success(request, f"Attendance QR created for {branch.name}.")
         return redirect("staff_qr_list")
 
     return render(request, "staffs/staff_qr_form.html", {
@@ -342,6 +352,13 @@ def staff_scan_submit(request, token):
         latitude=latitude,
         longitude=longitude,
     )
+
+    # Do not record attendance unless the server verifies staff GPS against
+    # the registered branch coordinates. A submitted GPS value is not trusted
+    # without this distance check (browser GPS is still subject to spoofing).
+    if is_suspicious:
+        messages.error(request, f"Attendance not recorded: {suspicious_reason}")
+        return redirect("staff_scan_page", token=qr.token)
 
     # Validate BEFORE creating an attendance record or changing stored GPS data.
     status, minutes_value, status_text, status_icon = _check_arrival_status(
