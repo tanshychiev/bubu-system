@@ -452,97 +452,141 @@ function roundedRect(ctx, x, y, width, height, radius){
     ctx.closePath();
 }
 function drawCreativeQrCard(options){
-    const canvas = document.createElement("canvas");
-    canvas.width = 1400;
-    canvas.height = 1900;
-    const ctx = canvas.getContext("2d");
-    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    gradient.addColorStop(0, "#fff7f2");
-    gradient.addColorStop(0.5, "#f7f1ff");
-    gradient.addColorStop(1, "#fffdfa");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.globalAlpha = 0.12;
-    ctx.fillStyle = "#ff8c6b";
-    ctx.beginPath(); ctx.arc(170, 170, 120, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = "#7b5cff";
-    ctx.beginPath(); ctx.arc(1230, 210, 170, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(1180, 1640, 210, 0, Math.PI*2); ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = "#ffffff";
-    ctx.shadowColor = "rgba(80, 44, 108, 0.12)";
-    ctx.shadowBlur = 38;
-    roundedRect(ctx, 90, 90, 1220, 1720, 42);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    const header = ctx.createLinearGradient(90, 90, 1310, 280);
-    header.addColorStop(0, "#9463ff");
-    header.addColorStop(1, "#ff8c6b");
-    ctx.fillStyle = header;
-    roundedRect(ctx, 90, 90, 1220, 220, 42);
-    ctx.fill();
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "900 56px Arial";
-    ctx.fillText("BUBU Pet Store", 150, 175);
-    ctx.font = "700 28px Arial";
-    ctx.fillText(options.kindTitle, 150, 225);
-    ctx.fillStyle = "#1c1235";
-    ctx.font = "900 52px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(options.mainTitle, 700, 405);
-    ctx.fillStyle = "#6c6382";
-    ctx.font = "700 28px Arial";
-    ctx.fillText(options.subTitle, 700, 448);
-    ctx.fillStyle = "#fff7f2";
-    roundedRect(ctx, 185, 500, 1030, 860, 38);
-    ctx.fill();
-    ctx.strokeStyle = "#f1ded2";
-    ctx.lineWidth = 4;
-    roundedRect(ctx, 185, 500, 1030, 860, 38);
-    ctx.stroke();
-    ctx.fillStyle = "#ffffff";
-    roundedRect(ctx, 290, 590, 820, 820, 34);
-    ctx.fill();
-    if (options.image && options.image.complete) ctx.drawImage(options.image, 340, 640, 720, 720);
-    ctx.fillStyle = "#7b5cff";
-    ctx.font = "900 42px Arial";
-    ctx.fillText(options.highlight, 700, 1470);
-    ctx.fillStyle = "#6e647f";
-    ctx.font = "700 26px Arial";
-    (options.notes || []).forEach((line, index) => ctx.fillText(line, 700, 1525 + (index * 40)));
-    ctx.fillStyle = "#f7f1ff";
-    roundedRect(ctx, 180, 1640, 1040, 105, 28);
-    ctx.fill();
-    ctx.fillStyle = "#493a63";
-    ctx.font = "800 26px Arial";
-    ctx.fillText(options.footer, 700, 1706);
-    ctx.textAlign = "left";
+    // BUBU illustrated attendance poster. Always embeds the ORIGINAL branch QR PNG.
+    const W = 1200, H = 1780;
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    function round(x,y,w,h,r,color,stroke){
+        ctx.beginPath(); roundedRect(ctx,x,y,w,h,r);
+        if(color){ctx.fillStyle=color;ctx.fill();}
+        if(stroke){ctx.lineWidth=2;ctx.strokeStyle=stroke;ctx.stroke();}
+    }
+    function circle(x,y,r,color){ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();}
+    function txt(text,x,y,size,color,weight='700',align='center'){
+        ctx.font=weight+' '+size+'px Arial, sans-serif';ctx.textAlign=align;
+        ctx.fillStyle=color;ctx.fillText(text,x,y);
+    }
+    function fit(text,size,maxWidth,minimum=30){
+        let s=size;while(s>minimum){ctx.font='900 '+s+'px Arial, sans-serif';if(ctx.measureText(text).width<=maxWidth)break;s-=2;}return s;
+    }
+    function paw(cx,cy,s,color,opacity=1){
+        ctx.save();ctx.globalAlpha=opacity;circle(cx,cy+s*.22,s*.27,color);
+        circle(cx-s*.36,cy-s*.14,s*.13,color);circle(cx-s*.12,cy-s*.38,s*.14,color);
+        circle(cx+s*.18,cy-s*.38,s*.14,color);circle(cx+s*.42,cy-s*.12,s*.13,color);ctx.restore();
+    }
+    function sparkle(x,y,s,color){
+        ctx.save();ctx.translate(x,y);ctx.fillStyle=color;ctx.beginPath();
+        ctx.moveTo(0,-s);ctx.quadraticCurveTo(s*.15,-s*.15,s,0);
+        ctx.quadraticCurveTo(s*.15,s*.15,0,s);ctx.quadraticCurveTo(-s*.15,s*.15,-s,0);
+        ctx.quadraticCurveTo(-s*.15,-s*.15,0,-s);ctx.fill();ctx.restore();
+    }
+    function pet(x,y,type){
+        ctx.save();ctx.translate(x,y);
+        // Little paws rest on the top edge of the large card.
+        const isCat=type==='cat';
+        const main=isCat?'#f8f5fb':'#fff9f2',edge=isCat?'#92829f':'#a76d58';
+        ctx.lineWidth=5;ctx.lineJoin='round';ctx.strokeStyle=edge;
+        // Ears
+        if(isCat){
+          ctx.fillStyle=main;ctx.beginPath();ctx.moveTo(-82,-18);ctx.lineTo(-85,-110);ctx.lineTo(-25,-76);ctx.closePath();ctx.fill();ctx.stroke();
+          ctx.beginPath();ctx.moveTo(28,-77);ctx.lineTo(88,-110);ctx.lineTo(83,-19);ctx.closePath();ctx.fill();ctx.stroke();
+          ctx.fillStyle='#f5c6d7';ctx.beginPath();ctx.moveTo(-71,-45);ctx.lineTo(-70,-91);ctx.lineTo(-37,-66);ctx.closePath();ctx.fill();
+          ctx.beginPath();ctx.moveTo(40,-66);ctx.lineTo(70,-91);ctx.lineTo(70,-45);ctx.closePath();ctx.fill();
+        }else{
+          ctx.fillStyle='#ba856b';ctx.beginPath();ctx.ellipse(-85,-38,33,60,.4,0,Math.PI*2);ctx.fill();
+          ctx.beginPath();ctx.ellipse(85,-38,33,60,-.4,0,Math.PI*2);ctx.fill();
+        }
+        circle(0,-32,82,main);
+        ctx.beginPath();ctx.arc(0,-32,82,0,Math.PI*2);ctx.stroke();
+        // Puppy patch
+        if(!isCat){ctx.fillStyle='#cf9a7e';ctx.beginPath();ctx.ellipse(43,-64,28,38,-.3,0,Math.PI*2);ctx.fill();}
+        // Eyes
+        ctx.strokeStyle='#493452';ctx.lineWidth=5;ctx.lineCap='round';
+        if(isCat){ctx.beginPath();ctx.arc(-27,-33,11,.18,Math.PI-.18);ctx.stroke();ctx.beginPath();ctx.arc(27,-33,11,.18,Math.PI-.18);ctx.stroke();}
+        else{circle(-28,-38,6,'#493452');circle(28,-38,6,'#493452');}
+        circle(-46,-2,11,'#ffc0ce');circle(46,-2,11,'#ffc0ce');
+        circle(0,-17,6,'#70495d');
+        ctx.beginPath();ctx.arc(-9,-7,10,.05,Math.PI-.05);ctx.stroke();ctx.beginPath();ctx.arc(9,-7,10,.05,Math.PI-.05);ctx.stroke();
+        if(isCat){
+            ctx.beginPath();ctx.moveTo(-60,-11);ctx.lineTo(-91,-19);ctx.moveTo(-60,1);ctx.lineTo(-91,4);
+            ctx.moveTo(60,-11);ctx.lineTo(91,-19);ctx.moveTo(60,1);ctx.lineTo(91,4);ctx.stroke();
+        }else{round(-11,2,22,16,10,'#f27ba2');}
+        // Peeking paws
+        round(-75,28,50,34,17,main,edge);round(25,28,50,34,17,main,edge);
+        ctx.restore();
+    }
+    // A soft pastel background, with decorative shapes kept away from the QR.
+    const bg=ctx.createLinearGradient(0,0,W,H);
+    bg.addColorStop(0,'#eedaff');bg.addColorStop(.52,'#ffe5ef');bg.addColorStop(1,'#f5e4ff');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+    circle(-45,60,220,'rgba(255,255,255,.32)');
+    circle(1160,70,185,'rgba(255,255,255,.26)');
+    circle(45,1390,205,'rgba(255,255,255,.24)');
+    circle(1130,1480,170,'rgba(255,255,255,.30)');
+    paw(1035,270,42,'#fff',.5);paw(110,1220,43,'#fff',.5);
+    paw(1080,1250,26,'#fff',.38);
+    sparkle(1030,115,24,'#ffc64f');sparkle(177,265,20,'#ffaed0');
+    sparkle(1120,1080,17,'#fff');
+    // Top headline pill
+    ctx.save();ctx.shadowColor='rgba(143,79,168,.22)';ctx.shadowBlur=24;ctx.shadowOffsetY=12;
+    const head=ctx.createLinearGradient(210,70,1010,220);head.addColorStop(0,'#9967ed');head.addColorStop(.53,'#d978c7');head.addColorStop(1,'#ff8b9d');
+    round(168,54,864,160,75,head);ctx.restore();
+    paw(256,129,39,'#fff');
+    txt('BUBU Pet Store',675,155,72,'#fff','900');
+    round(350,195,500,82,41,'#fff8ff');
+    sparkle(400,238,15,'#ec95bf');sparkle(800,238,15,'#ffad7e');
+    txt('ATTENDANCE QR',600,252,36,'#8d55af','900');
+    // The main cream panel and peeking pet mascots
+    ctx.save();ctx.shadowColor='rgba(124,67,141,.16)';ctx.shadowBlur=34;ctx.shadowOffsetY=13;
+    round(85,362,1030,1338,85,'#fffafc');ctx.restore();
+    round(103,379,994,1303,69,null,'#f7dcee');
+    pet(312,344,'cat');pet(888,344,'dog');
+    circle(600,319,44,'#fff');txt('♥',600,338,48,'#f078af','900');
+    const main=String(options.mainTitle||'BUBU Attendance');
+    txt(main.toUpperCase(),600,492,fit(main.toUpperCase(),71,890,37),'#291349','900');
+    txt(String(options.subTitle||'Main Attendance QR'),600,547,30,'#806997','700');
+    paw(170,479,24,'#cfa0ed',.85);paw(1030,479,24,'#cfa0ed',.85);
+    // QR card: plain white with a generous quiet margin; no overlays or recoloring.
+    ctx.save();ctx.shadowColor='rgba(165,81,149,.15)';ctx.shadowBlur=22;ctx.shadowOffsetY=12;
+    round(194,600,812,812,60,'#fff');ctx.restore();
+    round(208,614,784,784,48,null,'#fbe4f1');
+    const image=options.image;
+    if(!image || !image.complete || !image.naturalWidth){throw new Error('Branch QR has not finished loading');}
+    // The original generated QR is drawn pixel-for-pixel, not AI generated.
+    ctx.imageSmoothingEnabled=false;
+    ctx.drawImage(image,282,688,636,636);
+    ctx.imageSmoothingEnabled=true;
+    // Friendly invitation
+    round(398,1428,404,70,35,'#f1e2ff');
+    txt('Hello Team!',600,1474,40,'#7c48ad','900');
+    // Footer remains outside the QR to protect scan reliability.
+    txt('Please scan to Check In / Check Out',600,1534,34,'#301750','900');
+    txt('Allow GPS when prompted for attendance verification.',600,1583,23,'#836d96','700');
+    round(260,1610,680,64,32,'#f5e8ff');
+    txt('BUBU Attendance  •  Secure Branch QR',600,1652,25,'#62417e','800');
     return canvas;
 }
 function triggerCanvasDownload(canvas, filename){
-    const link = document.createElement("a");
-    link.href = canvas.toDataURL("image/png");
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const link=document.createElement('a');
+    link.href=canvas.toDataURL('image/png');link.download=filename;
+    document.body.appendChild(link);link.click();link.remove();
 }
-function downloadQR(id, branchName, qrTitle){
-    const img = document.getElementById("qrImage" + id);
-    if(!img){ alert("QR image not found."); return; }
-    const canvas = drawCreativeQrCard({
-        image: img,
-        kindTitle: "Attendance QR Download",
-        mainTitle: branchName || "BUBU Attendance",
-        subTitle: qrTitle || "Branch attendance QR",
-        highlight: "Scan to Check In / Check Out",
-        notes: [
-            "Staff can scan this QR to open the attendance page.",
-            "Allow GPS when prompted for attendance verification."
-        ],
-        footer: "BUBU Attendance • Secure Branch QR"
-    });
-    triggerCanvasDownload(canvas, "bubu-attendance-qr-" + safeFileName(branchName) + ".png");
+async function downloadQR(id, branchName, qrTitle){
+    const img=document.getElementById('qrImage'+id);
+    if(!img){alert('QR image not found.');return;}
+    try{
+        if(!img.complete || !img.naturalWidth){
+            await new Promise((resolve,reject)=>{
+                if(img.complete && img.naturalWidth){resolve();return;}
+                img.addEventListener('load',resolve,{once:true});
+                img.addEventListener('error',reject,{once:true});
+            });
+        }
+        if(img.decode){try{await img.decode();}catch(e){/* Some old browsers lack decode support. */}}
+        const canvas=drawCreativeQrCard({image:img,mainTitle:branchName,subTitle:qrTitle});
+        triggerCanvasDownload(canvas,'bubu-attendance-qr-'+safeFileName(branchName)+'.png');
+    }catch(err){console.error(err);alert('Could not download QR. Please refresh and try again.');}
 }
 function printQR(id){
     const area = document.getElementById("printArea" + id);

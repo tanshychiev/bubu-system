@@ -35,14 +35,39 @@ def schedules_and_holidays(request):
             if not (start and end and from_date and (not until_str or until) and (not until or until >= from_date) and 0 <= grace <= 240):
                 messages.error(request, 'Check the shift times, dates and late grace period.')
             else:
-                # One schedule row per staff, branch and effective start; edit by re-saving.
-                StaffBranchSchedule.objects.update_or_create(
-                    staff=staff, branch=branch, valid_from=from_date,
-                    defaults=dict(start_time=start, end_time=end, valid_until=until,
-                                  late_grace_minutes=grace, active=True,
-                                  updated_by=request.user),
-                )
-                messages.success(request, 'Branch work schedule saved. Staff can use this branch QR.')
+                # Explicit record ID enables editing any existing row, including its dates.
+                # Check uniqueness before updating to give a clear error on conflicts.
+                record_id = request.POST.get('schedule_id', '').strip()
+                with transaction.atomic():
+                    conflict = StaffBranchSchedule.objects.select_for_update().filter(
+                        staff=staff, branch=branch, valid_from=from_date
+                    )
+                    if record_id:
+                        schedule = get_object_or_404(
+                            StaffBranchSchedule.objects.select_for_update(), pk=record_id
+                        )
+                        if conflict.exclude(pk=schedule.pk).exists():
+                            messages.error(request, 'A schedule already exists for this staff, branch and start date.')
+                        else:
+                            schedule.staff = staff
+                            schedule.branch = branch
+                            schedule.start_time = start
+                            schedule.end_time = end
+                            schedule.valid_from = from_date
+                            schedule.valid_until = until
+                            schedule.late_grace_minutes = grace
+                            schedule.active = True
+                            schedule.updated_by = request.user
+                            schedule.save()
+                            messages.success(request, 'Branch schedule updated.')
+                    else:
+                        StaffBranchSchedule.objects.update_or_create(
+                            staff=staff, branch=branch, valid_from=from_date,
+                            defaults=dict(start_time=start, end_time=end, valid_until=until,
+                                          late_grace_minutes=grace, active=True,
+                                          updated_by=request.user),
+                        )
+                        messages.success(request, 'Branch work schedule saved. Staff can use this branch QR.')
         elif kind == 'holiday':
             title = request.POST.get('title', '').strip()[:150]
             start = parse_date(request.POST.get('date_from', ''))
