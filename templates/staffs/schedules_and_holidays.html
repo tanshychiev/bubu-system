@@ -51,6 +51,50 @@ body.bubu-modal-open{overflow:hidden}
 @media(max-width:780px){.bubu-mgr .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.bubu-mgr .metrics .metric:last-child{grid-column:span 2}}
 @media(max-width:540px){.bubu-mgr{padding:13px}.bubu-mgr .header{margin-bottom:18px}.bubu-mgr .metrics{gap:9px}.bubu-mgr .metric{padding:12px;gap:9px}.bubu-mgr .metric-icon{width:38px;height:38px;font-size:19px}.bubu-mgr .metric-value{font-size:21px}.bubu-mgr .section{padding:15px;border-radius:18px}.bubu-mgr .section-head{align-items:flex-start}.bubu-mgr .open-btn{width:100%}.bubu-mgr .modal{padding:0;align-items:flex-end}.bubu-mgr .modal-panel{border-radius:24px 24px 0 0;max-height:94dvh}.bubu-mgr .modal-body{padding:17px}.bubu-mgr .modal-top{padding:17px}.bubu-mgr .cols{grid-template-columns:1fr;gap:0}}
 @media(prefers-reduced-motion:reduce){.bubu-mgr .modal,.bubu-mgr .modal-panel,.bubu-mgr .open-btn{transition:none}}
+
+/* BUBU interactive field pickers */
+.bubu-mgr .picker-native{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important;min-height:0!important;padding:0!important;border:0!important}
+.bubu-mgr .picker-trigger{width:100%;min-height:49px;border:1px solid #e3d8ef;background:linear-gradient(110deg,#fff,#fcfaff);border-radius:14px;padding:11px 13px;display:flex;align-items:center;gap:10px;text-align:left;cursor:pointer;color:#38284e;transition:.15s}
+.bubu-mgr .picker-trigger:hover,.bubu-mgr .picker-trigger:focus-visible{border-color:#ad8be9;box-shadow:0 0 0 3px #9267d21a;outline:none}
+.bubu-mgr .picker-trigger .picker-symbol{height:31px;width:31px;flex:none;background:#f0e9fc;color:#8453dc;border-radius:10px;display:grid;place-items:center;font-size:17px}
+.bubu-mgr .picker-trigger .picker-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:800}
+.bubu-mgr .picker-trigger .picker-label.is-placeholder{color:#a295ae;font-weight:600}
+.bubu-mgr .picker-trigger .picker-chevron{color:#927caa;font-size:16px}
+.bubu-mgr .picker-trigger:disabled{opacity:.6;cursor:not-allowed}
+.bubu-mgr .picker-layer{position:fixed;inset:0;z-index:12000;display:flex;justify-content:center;align-items:center;padding:15px;background:rgba(27,17,45,.49);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.bubu-mgr .picker-layer[hidden]{display:none!important}
+.bubu-mgr .picker-card{width:min(100%,430px);max-height:min(80dvh,670px);display:flex;flex-direction:column;background:#fff;border-radius:23px;border:1px solid #ede3fa;box-shadow:0 30px 85px #1c0e3e55;overflow:hidden;animation:bubuPickIn .2s ease both}
+@keyframes bubuPickIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.bubu-mgr .picker-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid #f0e9f6;background:linear-gradient(115deg,#f9f5ff,#fff6fb)}
+.bubu-mgr .picker-head strong{font-size:17px;font-weight:900;letter-spacing:-.02em}
+.bubu-mgr .picker-head p{font-size:12px;color:#8f819c;margin-top:3px}
+.bubu-mgr .picker-dismiss{border:1px solid #e8dff0;background:#fff;border-radius:11px;font-size:23px;color:#665477;cursor:pointer;width:35px;height:35px}
+.bubu-mgr .picker-content{overflow-y:auto;min-height:0;padding:17px 20px 20px}
+.bubu-mgr .picker-search{margin-bottom:13px!important;background:#faf8fe!important}
+.bubu-mgr .picker-options{display:grid;gap:7px;max-height:345px;overflow-y:auto}
+.bubu-mgr .picker-option{display:flex;gap:12px;align-items:center;text-align:left;background:#fff;border:1px solid #eee8f6;border-radius:14px;padding:11px 12px;cursor:pointer;width:100%;color:#433254}
+.bubu-mgr .picker-option:hover{background:#f8f3ff;border-color:#c7b0ed}
+.bubu-mgr .picker-option.selected{background:#f0e8ff;border-color:#a77ce8;color:#6d3dbc}
+.bubu-mgr .picker-avatar{width:35px;height:35px;border-radius:12px;background:linear-gradient(135deg,#dac6ff,#ffe0ed);color:#6e42af;display:grid;place-items:center;font-weight:900;font-size:14px;flex:none}
+.bubu-mgr .picker-option-text{flex:1;font-size:13px;font-weight:800}
+.bubu-mgr .picker-tick{color:#8354d5;font-size:19px;font-weight:900}
+.bubu-mgr .picker-no-match{text-align:center;font-size:13px;color:#9888a7;padding:25px}
+.bubu-mgr .picker-calendar-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.bubu-mgr .picker-cal-title{font-weight:900;font-size:15px}
+.bubu-mgr .picker-cal-navbtn{border:1px solid #e9e0f2;background:#fff;border-radius:11px;width:36px;height:36px;cursor:pointer;color:#7b54c7;font-size:22px}
+.bubu-mgr .picker-weekdays,.bubu-mgr .picker-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;text-align:center}
+.bubu-mgr .picker-weekdays span{font-size:11px;color:#a297ae;font-weight:900;padding:9px 0}
+.bubu-mgr .picker-day{border:0;background:transparent;border-radius:12px;height:42px;cursor:pointer;font-size:13px;color:#463353}
+.bubu-mgr .picker-day:hover{background:#f2ebff}.bubu-mgr .picker-day.selected{color:#fff;background:linear-gradient(120deg,#8459e7,#c97fba);font-weight:900}
+.bubu-mgr .picker-day.today:not(.selected){outline:1px solid #bb9be7;outline-offset:-3px}
+.bubu-mgr .picker-day.outside{color:#c1b7cc}
+.bubu-mgr .picker-calendar-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;border-top:1px solid #f2ebf7;padding-top:15px}
+.bubu-mgr .picker-minor{border:1px solid #e5d8ef;border-radius:11px;background:#faf7ff;color:#7952c1;min-height:39px;padding:8px 12px;cursor:pointer;font-weight:850;font-size:12px}
+.bubu-mgr .picker-time-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:13px 0 20px}
+.bubu-mgr .picker-time-fields label{font-size:11px;color:#8b7d9a}
+.bubu-mgr .picker-time-fields select{font-weight:850;font-size:17px;min-height:55px;text-align:center;background:#faf7ff}
+.bubu-mgr .picker-primary{width:100%;border:0;background:linear-gradient(105deg,#7959ed,#d479b2);border-radius:13px;min-height:46px;color:#fff;font-weight:900;cursor:pointer}
+@media(max-width:540px){.bubu-mgr .picker-layer{align-items:flex-end;padding:0}.bubu-mgr .picker-card{width:100%;border-radius:24px 24px 0 0;max-height:86dvh}.bubu-mgr .picker-day{height:40px}}
 </style>
 <main class="bubu-mgr" id="bubuScheduleManager">
  <header class="header"><div><div class="eyebrow">BUBU • Staff Management</div><h1>Schedules &amp; Holidays</h1><p class="subtitle">One staff login, flexible hours for every branch. Add holidays anytime, including dates from previous months.</p></div><a class="back" href="{% url 'staff_setting_list' %}">← Staff Settings</a></header>
@@ -184,6 +228,89 @@ body.bubu-modal-open{overflow:hidden}
       if(submit){submit.disabled=true;submit.textContent='Saving…';}
     });
   });
+})();
+
+/* Unified custom pickers. Original HTML inputs/selects remain the POST source of truth. */
+(function(){
+  'use strict';
+  var host=document.getElementById('bubuScheduleManager');if(!host)return;
+  var ids=['bubu-staff','bubu-branch','bubu-start','bubu-end','bubu-from','bubu-until','bubu-holiday-from','bubu-holiday-to','holidayScope','bubu-holiday-branch','bubu-holiday-staff'];
+  var names={'bubu-staff':'Choose staff member','bubu-branch':'Choose working branch','bubu-start':'Work starts','bubu-end':'Work ends','bubu-from':'Effective from','bubu-until':'Effective until','bubu-holiday-from':'Holiday starts','bubu-holiday-to':'Holiday ends','holidayScope':'Holiday applies to','bubu-holiday-branch':'Choose holiday branch','bubu-holiday-staff':'Choose holiday staff'};
+  var layer=document.createElement('div');layer.className='picker-layer';layer.hidden=true;layer.setAttribute('role','presentation');
+  layer.innerHTML='<section class="picker-card" role="dialog" aria-modal="true" aria-label="Choose value"><header class="picker-head"><div><strong class="picker-heading"></strong><p>Select an option below</p></div><button type="button" class="picker-dismiss" aria-label="Close picker">×</button></header><div class="picker-content"></div></section>';
+  host.appendChild(layer);
+  var title=layer.querySelector('.picker-heading'),content=layer.querySelector('.picker-content'),panel=layer.querySelector('.picker-card');
+  var current=null,trigger=null,returnFocus=null;
+  function text(s){return String(s||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function isStaff(el){return el.id==='bubu-staff'||el.id==='bubu-holiday-staff';}
+  function label(el){
+    if(el.tagName==='SELECT')return el.selectedOptions.length?el.selectedOptions[0].textContent.trim():'Select option';
+    if(el.type==='time'){
+      if(!el.value)return 'Select time';var a=el.value.split(':');var h=Number(a[0]),m=a[1];return String(h%12||12).padStart(2,'0')+':'+m+' '+(h>=12?'PM':'AM');
+    }
+    if(el.value&&/^\d{4}-\d{2}-\d{2}$/.test(el.value)){var z=el.value.split('-');return new Date(Number(z[0]),Number(z[1])-1,Number(z[2])).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'});}
+    return 'Select date';
+  }
+  function refresh(el){if(!el)return;var btn=el._pickerButton;if(!btn)return;var lab=btn.querySelector('.picker-label');lab.textContent=label(el);lab.classList.toggle('is-placeholder',!el.value);btn.disabled=el.disabled;}
+  function change(el,value){el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));refresh(el);ids.forEach(function(id){refresh(document.getElementById(id));});close();}
+  function close(){if(layer.hidden)return;layer.hidden=true;current=null;var b=returnFocus;returnFocus=null;if(b&&b.focus)b.focus();}
+  function open(el){if(el.disabled)return;current=el;trigger=el._pickerButton;returnFocus=trigger;title.textContent=names[el.id]||'Choose value';layer.hidden=false;content.innerHTML='';
+    if(el.tagName==='SELECT')showOptions(el);else if(el.type==='date')showCalendar(el);else if(el.type==='time')showTime(el);
+    layer.querySelector('.picker-dismiss').focus();
+  }
+  function showOptions(el){
+    var searchable=isStaff(el);var options=Array.from(el.options).filter(function(o){return !o.disabled&&o.value!=='';});
+    if(searchable){var field=document.createElement('input');field.type='search';field.className='picker-search';field.placeholder='Search staff by name...';field.setAttribute('aria-label','Search staff');content.appendChild(field);}
+    var list=document.createElement('div');list.className='picker-options';content.appendChild(list);
+    function render(q){list.innerHTML='';var matches=options.filter(function(o){return o.textContent.toLocaleLowerCase().includes(q.toLocaleLowerCase());});
+      if(!matches.length){list.innerHTML='<p class="picker-no-match">No matching options found</p>';return;}
+      matches.forEach(function(o){var b=document.createElement('button');b.type='button';b.className='picker-option'+(el.value===o.value?' selected':'');b.setAttribute('aria-pressed',el.value===o.value?'true':'false');
+        var initials=o.textContent.trim().split(/\s+/).slice(0,2).map(function(a){return a[0]||'';}).join('').toUpperCase();
+        b.innerHTML='<span class="picker-avatar">'+text(searchable?initials:(el.id==='holidayScope'?'✦':'⌂'))+'</span><span class="picker-option-text">'+text(o.textContent)+'</span>'+(el.value===o.value?'<span class="picker-tick">✓</span>':'');
+        b.addEventListener('click',function(){change(el,o.value);});list.appendChild(b);
+      });
+    }
+    render('');if(searchable){field.addEventListener('input',function(){render(field.value);});field.focus();}
+  }
+  function parseDate(s){if(!s||!/^\d{4}-\d{2}-\d{2}$/.test(s))return new Date();var a=s.split('-');return new Date(+a[0],+a[1]-1,+a[2]);}
+  function dateValue(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function showCalendar(el){var viewed=parseDate(el.value),year=viewed.getFullYear(),month=viewed.getMonth(),today=dateValue(new Date());
+    var nav=document.createElement('div');nav.className='picker-calendar-nav';content.appendChild(nav);
+    var week=document.createElement('div');week.className='picker-weekdays';'Sun Mon Tue Wed Thu Fri Sat'.split(' ').forEach(function(w){var cell=document.createElement('span');cell.textContent=w;week.appendChild(cell);});content.appendChild(week);
+    var days=document.createElement('div');days.className='picker-days';content.appendChild(days);
+    var foot=document.createElement('div');foot.className='picker-calendar-foot';
+    foot.innerHTML='<button type="button" class="picker-minor" data-today>Today</button>'+(el.required?'':'<button type="button" class="picker-minor" data-clear>Clear date</button>');content.appendChild(foot);
+    foot.querySelector('[data-today]').addEventListener('click',function(){change(el,today);});
+    if(!el.required)foot.querySelector('[data-clear]').addEventListener('click',function(){change(el,'');});
+    function render(){nav.innerHTML='';var prev=document.createElement('button');prev.type='button';prev.className='picker-cal-navbtn';prev.textContent='‹';prev.setAttribute('aria-label','Previous month');
+      var heading=document.createElement('strong');heading.className='picker-cal-title';heading.textContent=new Date(year,month,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+      var next=document.createElement('button');next.type='button';next.className='picker-cal-navbtn';next.textContent='›';next.setAttribute('aria-label','Next month');nav.append(prev,heading,next);
+      prev.addEventListener('click',function(){month--;if(month<0){month=11;year--;}render();});next.addEventListener('click',function(){month++;if(month>11){month=0;year++;}render();});
+      days.innerHTML='';var first=new Date(year,month,1).getDay();for(var i=0;i<42;i++){var d=new Date(year,month,i-first+1),v=dateValue(d);var b=document.createElement('button');b.type='button';b.textContent=d.getDate();b.className='picker-day'+(d.getMonth()!==month?' outside':'')+(v===el.value?' selected':'')+(v===today?' today':'');b.setAttribute('aria-label',d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}));b.setAttribute('aria-pressed',v===el.value?'true':'false');b.addEventListener('click',function(val){return function(){change(el,val);};}(v));days.appendChild(b);}
+    }render();
+  }
+  function showTime(el){var hour=8,minute=0,ampm='AM';if(el.value){var a=el.value.split(':');hour=Number(a[0])%12||12;minute=Number(a[1]);ampm=Number(a[0])>=12?'PM':'AM';}
+    var group=document.createElement('div');group.className='picker-time-fields';content.appendChild(group);
+    function field(title,values,selected){var wrap=document.createElement('div'),lab=document.createElement('label'),select=document.createElement('select');lab.textContent=title;values.forEach(function(v){var op=document.createElement('option');op.value=String(v);op.textContent=String(v).padStart(title==='AM / PM'?0:2,'0');select.appendChild(op);});select.value=String(selected);wrap.append(lab,select);group.appendChild(wrap);return select;}
+    var hs=field('Hour',Array.from({length:12},function(_,i){return i+1;}),hour);
+    var ms=field('Minute',Array.from({length:60},function(_,i){return i;}),minute);
+    var ps=field('AM / PM',['AM','PM'],ampm);
+    var submit=document.createElement('button');submit.className='picker-primary';submit.type='button';submit.textContent='Apply time';content.appendChild(submit);
+    submit.addEventListener('click',function(){var h=Number(hs.value)%12+(ps.value==='PM'?12:0);change(el,String(h).padStart(2,'0')+':'+String(ms.value).padStart(2,'0'));});
+  }
+  ids.forEach(function(id){var el=host.querySelector('#'+id);if(!el)return;el.classList.add('picker-native');var btn=document.createElement('button');btn.type='button';btn.className='picker-trigger';btn.setAttribute('aria-label',names[id]);btn.setAttribute('aria-haspopup','dialog');btn.innerHTML='<span class="picker-symbol" aria-hidden="true">'+(el.tagName==='SELECT'?'⌄':el.type==='date'?'▦':'◷')+'</span><span class="picker-label"></span><span class="picker-chevron" aria-hidden="true">⌄</span>';
+    el.insertAdjacentElement('afterend',btn);el._pickerButton=btn;btn.addEventListener('click',function(){open(el);});el.addEventListener('change',function(){refresh(el);});refresh(el);
+  });
+  layer.querySelector('.picker-dismiss').addEventListener('click',close);
+  layer.addEventListener('mousedown',function(e){if(e.target===layer)close();});
+  document.addEventListener('keydown',function(e){if(layer.hidden)return;
+    if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();close();return;}
+    if(e.key==='Tab'){var focusables=Array.from(panel.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled])')).filter(function(x){return x.getClientRects().length;});if(!focusables.length)return;var first=focusables[0],last=focusables[focusables.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
+  },true);
+  // Keep the custom trigger disabled/visible in sync with the original controls.
+  var scope=host.querySelector('#holidayScope');if(scope)scope.addEventListener('change',function(){setTimeout(function(){ids.forEach(function(id){refresh(host.querySelector('#'+id));});},0);});
+  // Date range auto-correction made by the existing form script is reflected in custom buttons.
+  var start=host.querySelector('#bubu-holiday-from');if(start)start.addEventListener('change',function(){setTimeout(function(){refresh(host.querySelector('#bubu-holiday-to'));},0);});
 })();
 </script>
 {% endblock %}
