@@ -11,7 +11,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.shortcuts import get_current_site
-from django.db import transaction
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -311,7 +310,6 @@ def staff_scan_page(request, token):
 
 
 @login_required
-@transaction.atomic
 def staff_scan_submit(request, token):
     qr = get_object_or_404(
         BranchAttendanceQR.objects.select_related("branch"),
@@ -327,11 +325,32 @@ def staff_scan_submit(request, token):
         messages.error(request, "Your account is not authorized for this branch.")
         return redirect("staff_scan_page", token=qr.token)
 
-    # Check-in or check-out is determined by today’s record, not POST data.
+    # Never trust a client-supplied action. The first scan is check-in,
+    # the next eligible scan is check-out; a completed day cannot be reopened.
+    # The staff identity comes exclusively from the authenticated session.
+    existing = StaffAttendance.objects.filter(
+        staff=staff, date=timezone.localdate()
+    ).first()
+    if existing and existing.check_out_time:
+        messages.info(request, "Today's attendance is already complete.")
+        return redirect("staff_scan_page", token=qr.token)
+    action = "check_out" if existing and existing.check_in_time else "check_in"
     late_reason = request.POST.get("late_reason", "").strip()[:1000]
     latitude = request.POST.get("latitude") or None
     longitude = request.POST.get("longitude") or None
     accuracy = request.POST.get("location_accuracy") or None
+    try:
+        lat_value = Decimal(str(latitude))
+        lon_value = Decimal(str(longitude))
+        if not (lat_value.is_finite() and lon_value.is_finite() and
+                Decimal("-90") <= lat_value <= Decimal("90") and
+                Decimal("-180") <= lon_value <= Decimal("180")):
+            raise ValueError("Invalid coordinate range")
+        latitude = str(lat_value)
+        longitude = str(lon_value)
+    except (TypeError, ValueError, ArithmeticError):
+        messages.error(request, "Attendance not recorded: valid phone GPS is required.")
+        return redirect("staff_scan_page", token=qr.token)
 
     setting = StaffPayrollSetting.objects.filter(
         staff=staff,
@@ -352,23 +371,24 @@ def staff_scan_submit(request, token):
         longitude=longitude,
     )
 
-    # Do not record attendance unless the server verifies staff GPS against
-    # the registered branch coordinates. A submitted GPS value is not trusted
-    # without this distance check (browser GPS is still subject to spoofing).
-    if is_suspicious:
+    # A valid phone location is required, but an OUTSIDE-BRANCH location is
+    # allowed and explicitly flagged for managers. This is not proof that
+    # the staff member is on site; browser GPS can be spoofed.
+    if location_status != "Outside branch" and is_suspicious:
         messages.error(request, f"Attendance not recorded: {suspicious_reason}")
+        return redirect("staff_scan_page", token=qr.token)
+    if location_status == "Outside branch" and not (latitude and longitude):
+        messages.error(request, "Attendance not recorded: valid GPS coordinates required.")
         return redirect("staff_scan_page", token=qr.token)
 
     # Validate BEFORE creating an attendance record or changing stored GPS data.
     status, minutes_value, status_text, status_icon = _check_arrival_status(
         today=today, now=now, shift=shift,
     )
-    # Serialize scans for this staff member, avoiding duplicate concurrent scans.
-    StaffProfile.objects.select_for_update().get(pk=staff.pk)
-    current_record = StaffAttendance.objects.filter(staff=staff, date=today).first()
-    if (not current_record or not current_record.check_in_time) and status == "late" and not late_reason:
-        messages.error(request, "Late check-in: a reason is required before attendance is recorded.")
+    if action == "check_in" and status == "late" and not late_reason:
+        messages.error(request, "You are late. Please enter a reason before checking in.")
         return redirect("staff_scan_page", token=qr.token)
+
     attendance, created = StaffAttendance.objects.get_or_create(
         staff=staff,
         date=today,
@@ -379,12 +399,11 @@ def staff_scan_submit(request, token):
         },
     )
 
-    if attendance.check_out_time:
-        messages.info(request, "Today's attendance is already complete.")
+    if action == "check_in" and attendance.check_in_time:
+        messages.warning(request, "Already checked in today. Duplicate scan ignored.")
         return redirect("staff_scan_page", token=qr.token)
-    action = "check_out" if attendance.check_in_time else "check_in"
-    if action == "check_in" and status == "late" and not late_reason:
-        messages.error(request, "Late check-in: a reason is required before attendance is recorded.")
+    if action == "check_out" and not attendance.check_in_time:
+        messages.error(request, "Please check in before checking out.")
         return redirect("staff_scan_page", token=qr.token)
     if action == "check_out" and attendance.check_in_time and (now - attendance.check_in_time).total_seconds() < 120:
         messages.warning(request, "Just checked in. Wait at least 2 minutes before checking out.")
@@ -428,13 +447,18 @@ def staff_scan_submit(request, token):
 
         if attendance.is_suspicious:
             if distance is not None:
-                telegram_text += f"\n⚠️ Wrong GPS: {distance}m from branch"
+                telegram_text += f"\n⚠️ Wrong location: {distance}m from branch"
             else:
-                telegram_text += f"\n⚠️ GPS issue: {location_status}"
+                telegram_text += f"\n⚠️ Wrong location: {location_status}"
 
+        if attendance.is_suspicious and latitude and longitude:
+            telegram_text += f"\n📍 Scanned from (Google Maps): https://www.google.com/maps?q={latitude},{longitude}"
         send_staff_telegram_async(telegram_text)
 
-        messages.success(request, "Check out recorded.")
+        if attendance.is_suspicious:
+            messages.warning(request, "Check out recorded — outside branch GPS radius. Manager notified with location link.")
+        else:
+            messages.success(request, "Check out recorded.")
         return redirect(reverse("staff_scan_page", args=[qr.token]) + "?recorded=1")
 
     attendance.check_in_time = now
@@ -462,13 +486,18 @@ def staff_scan_submit(request, token):
 
     if attendance.is_suspicious:
         if distance is not None:
-            telegram_text += f"\n⚠️ Wrong GPS: {distance}m from branch"
+            telegram_text += f"\n⚠️ Wrong location: {distance}m from branch"
         else:
-            telegram_text += f"\n⚠️ GPS issue: {location_status}"
+            telegram_text += f"\n⚠️ Wrong location: {location_status}"
 
+    if attendance.is_suspicious and latitude and longitude:
+        telegram_text += f"\n📍 Scanned from (Google Maps): https://www.google.com/maps?q={latitude},{longitude}"
     send_staff_telegram_async(telegram_text)
 
-    messages.success(request, "Check in recorded.")
+    if attendance.is_suspicious:
+        messages.warning(request, "Check in recorded — outside branch GPS radius. Manager notified with location link.")
+    else:
+        messages.success(request, "Check in recorded.")
     return redirect(reverse("staff_scan_page", args=[qr.token]) + "?recorded=1")
 
 

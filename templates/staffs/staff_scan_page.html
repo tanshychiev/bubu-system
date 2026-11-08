@@ -46,16 +46,21 @@
 
             <div class="gps-box" id="gpsBox">
                 <strong>📍 Location Required</strong>
-                <p>Please allow location. System will check if you are near branch.</p>
+                <p>Allow location. Outside-branch scans are recorded with a GPS warning sent to the manager.</p>
             </div>
 
             <div class="scan-actions">
-                <button type="button" id="checkinButton" onclick="startCheckIn(this)" class="checkin-btn">Confirm Attendance</button>
-                <button type="button" id="checkoutButton" onclick="submitWithLocation('check_out', this)" class="checkout-btn">Confirm Attendance</button>
+                <button type="button" id="checkinButton" onclick="startCheckIn(this)" class="checkin-btn">
+                    Confirm Check In
+                </button>
+
+                <button type="button" id="checkoutButton" onclick="submitWithLocation('check_out', this)" class="checkout-btn">
+                    Confirm Check Out
+                </button>
             </div>
         </form>
 
-        <p class="small-note" id="scanHelp">Scanning your branch QR starts attendance automatically. Allow location when asked. If permission is blocked, tap the button once. GPS requires HTTPS on iPhone.</p>
+        <p class="small-note" id="scanHelp">One branch QR handles both check-in and check-out. Your account is identified automatically. Allow GPS to finish recording; if outside the branch radius, the manager receives your map location link. HTTPS is required on phones.</p>
 
         <!-- POPUP BACKDROP INSIDE CARD -->
         <div class="popup-bg" id="latePopupBg" onclick="closeLatePopup()"></div>
@@ -67,9 +72,10 @@
             <div class="late-icon">⏰</div>
 
             <h2>Late check-in — reason required</h2>
-            <p>Please explain why you are late. Your check-in will not be saved without a reason.</p>
+            <p>You are past your scheduled start time (including the allowed grace period). Explain why you are late to record check-in.</p>
 
-            <textarea id="lateReasonText" rows="4" placeholder="Example: ស្ទះផ្លូវ"></textarea>
+            <textarea id="lateReasonText" rows="4" maxlength="1000" required placeholder="Reason for being late (required)"></textarea>
+            <p id="lateReasonError" role="alert" style="color:#b42348;display:none;font-weight:750">Please enter your late reason.</p>
 
             <div class="late-actions">
 
@@ -711,10 +717,12 @@ function submitLateReason(){
     const reason = document.getElementById("lateReasonText").value.trim();
 
     if(!reason){
-        alert("Please write why you are late.");
+        document.getElementById("lateReasonError").style.display = "block";
+        document.getElementById("lateReasonText").focus();
         return;
     }
 
+    document.getElementById("lateReasonError").style.display = "none";
     document.getElementById("lateReasonInput").value = reason;
 
     const btn = document.querySelector(".submit-late-btn");
@@ -754,7 +762,7 @@ function setGpsControls(title, description){
     retry.onclick = function(){
         if(gpsSourceButton && gpsAction) submitWithLocation(gpsAction, gpsSourceButton);
     };
-    controls.appendChild(retry);
+    controls.append(retry);
     box.appendChild(controls);
 }
 
@@ -776,7 +784,7 @@ function finishGpsFailure(reason){
         gpsSourceButton.disabled = false;
         gpsSourceButton.innerText = gpsOriginalLabel;
     }
-    setGpsControls("GPS required", reason + " Attendance was not recorded. Retry GPS to continue.");
+    setGpsControls("GPS required", reason + " Attendance has not been recorded. Please retry.");
 }
 
 function submitWithLocation(action, button){
@@ -863,7 +871,7 @@ document.addEventListener("DOMContentLoaded", function(){
     }
     if(alreadyIn){
         checkInButton.hidden = true;
-        setGpsBox("ok", "Checked in", "Scan the branch QR when leaving to check out.");
+        setGpsBox("ok", "Ready to check out", "Your first scan was check-in. This next scan records check-out.");
     } else {
         checkOutButton.hidden = true;
         setGpsBox("", "Checking location", "Please allow location to record your check-in.");
@@ -879,6 +887,7 @@ document.addEventListener("DOMContentLoaded", function(){
         submitWithLocation("check_out", checkOutButton);
     } else if(isLateNow){
         openLatePopup();
+        document.getElementById("lateReasonText").focus();
     } else {
         submitWithLocation("check_in", checkInButton);
     }
