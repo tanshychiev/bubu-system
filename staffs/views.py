@@ -11,6 +11,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.shortcuts import get_current_site
+from django.db import transaction
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -310,6 +311,7 @@ def staff_scan_page(request, token):
 
 
 @login_required
+@transaction.atomic
 def staff_scan_submit(request, token):
     qr = get_object_or_404(
         BranchAttendanceQR.objects.select_related("branch"),
@@ -325,10 +327,7 @@ def staff_scan_submit(request, token):
         messages.error(request, "Your account is not authorized for this branch.")
         return redirect("staff_scan_page", token=qr.token)
 
-    action = request.POST.get("action", "check_in")
-    if action not in ("check_in", "check_out"):
-        messages.error(request, "Invalid attendance action.")
-        return redirect("staff_scan_page", token=qr.token)
+    # Check-in or check-out is determined by today’s record, not POST data.
     late_reason = request.POST.get("late_reason", "").strip()[:1000]
     latitude = request.POST.get("latitude") or None
     longitude = request.POST.get("longitude") or None
@@ -364,10 +363,12 @@ def staff_scan_submit(request, token):
     status, minutes_value, status_text, status_icon = _check_arrival_status(
         today=today, now=now, shift=shift,
     )
-    if action == "check_in" and status == "late" and not late_reason:
-        messages.error(request, "You are late. Please enter a reason before checking in.")
+    # Serialize scans for this staff member, avoiding duplicate concurrent scans.
+    StaffProfile.objects.select_for_update().get(pk=staff.pk)
+    current_record = StaffAttendance.objects.filter(staff=staff, date=today).first()
+    if (not current_record or not current_record.check_in_time) and status == "late" and not late_reason:
+        messages.error(request, "Late check-in: a reason is required before attendance is recorded.")
         return redirect("staff_scan_page", token=qr.token)
-
     attendance, created = StaffAttendance.objects.get_or_create(
         staff=staff,
         date=today,
@@ -378,11 +379,12 @@ def staff_scan_submit(request, token):
         },
     )
 
-    if action == "check_in" and attendance.check_in_time:
-        messages.warning(request, "Already checked in today. Duplicate scan ignored.")
+    if attendance.check_out_time:
+        messages.info(request, "Today's attendance is already complete.")
         return redirect("staff_scan_page", token=qr.token)
-    if action == "check_out" and not attendance.check_in_time:
-        messages.error(request, "Please check in before checking out.")
+    action = "check_out" if attendance.check_in_time else "check_in"
+    if action == "check_in" and status == "late" and not late_reason:
+        messages.error(request, "Late check-in: a reason is required before attendance is recorded.")
         return redirect("staff_scan_page", token=qr.token)
     if action == "check_out" and attendance.check_in_time and (now - attendance.check_in_time).total_seconds() < 120:
         messages.warning(request, "Just checked in. Wait at least 2 minutes before checking out.")

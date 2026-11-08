@@ -36,7 +36,7 @@
             <input type="hidden" name="latitude" id="latitudeInput">
             <input type="hidden" name="longitude" id="longitudeInput">
             <input type="hidden" name="location_accuracy" id="accuracyInput">
-            <input type="hidden" name="action" id="actionInput" value="check_in">
+            <input type="hidden" name="action" id="actionInput" value="auto">
             <input type="hidden" name="late_reason" id="lateReasonInput" value="">
             <div class="branch-box">
                 <small>Signed in as</small>
@@ -50,13 +50,8 @@
             </div>
 
             <div class="scan-actions">
-                <button type="button" id="checkinButton" onclick="startCheckIn(this)" class="checkin-btn">
-                    ✅ Check In
-                </button>
-
-                <button type="button" id="checkoutButton" onclick="submitWithLocation('check_out', this)" class="checkout-btn">
-                    👋 Check Out
-                </button>
+                <button type="button" id="checkinButton" onclick="startCheckIn(this)" class="checkin-btn">Confirm Attendance</button>
+                <button type="button" id="checkoutButton" onclick="submitWithLocation('check_out', this)" class="checkout-btn">Confirm Attendance</button>
             </div>
         </form>
 
@@ -71,8 +66,8 @@
 
             <div class="late-icon">⏰</div>
 
-            <h2>Why are you late?</h2>
-            <p>If you are late, write the reason before check in.</p>
+            <h2>Late check-in — reason required</h2>
+            <p>Please explain why you are late. Your check-in will not be saved without a reason.</p>
 
             <textarea id="lateReasonText" rows="4" placeholder="Example: ស្ទះផ្លូវ"></textarea>
 
@@ -759,16 +754,7 @@ function setGpsControls(title, description){
     retry.onclick = function(){
         if(gpsSourceButton && gpsAction) submitWithLocation(gpsAction, gpsSourceButton);
     };
-    const continueBtn = document.createElement("button");
-    continueBtn.type = "button";
-    continueBtn.textContent = "Continue without GPS";
-    continueBtn.style.cssText = "border:0;background:#f59e0b;color:#111827;font-weight:700;border-radius:12px;padding:10px 14px;";
-    continueBtn.onclick = function(){
-        if(!gpsFallbackReady) return;
-        // Explicit user choice; the server records missing GPS as suspicious.
-        submitAttendance();
-    };
-    controls.append(retry, continueBtn);
+    controls.appendChild(retry);
     box.appendChild(controls);
 }
 
@@ -790,7 +776,7 @@ function finishGpsFailure(reason){
         gpsSourceButton.disabled = false;
         gpsSourceButton.innerText = gpsOriginalLabel;
     }
-    setGpsControls("GPS unavailable", reason + " Attendance will be flagged for manager review if you continue.");
+    setGpsControls("GPS required", reason + " Attendance was not recorded. Retry GPS to continue.");
 }
 
 function submitWithLocation(action, button){
