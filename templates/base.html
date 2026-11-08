@@ -2337,6 +2337,19 @@ html.bubu-loading body{
                 <span class="bubu-nav-icon tone-violet"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5.8" fill="currentColor" opacity=".10" stroke="none"/><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4"/><circle cx="12" cy="12" r="7"/></svg></span><span>Staff Settings</span>
             </a>
 
+            <!-- BUBU Staff Schedules & Holidays navigation -->
+            <a href="{% url 'staff_schedules_holidays' %}"
+               onclick="saveMenuStateAndClose()"
+               class="{% if request.resolver_match.url_name == 'staff_schedules_holidays' %}active{% endif %}">
+                <span class="bubu-nav-icon tone-violet" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3.5" y="5" width="17" height="16" rx="3"/>
+                        <path d="M7.5 3v4M16.5 3v4M3.5 10h17M8 14h3M8 17h8"/>
+                    </svg>
+                </span>
+                <span>Schedules &amp; Holidays</span>
+            </a>
+
             <a href="{% url 'staff_attendance_report' %}"
                onclick="saveMenuStateAndClose()"
                class="{% if request.resolver_match.url_name == 'staff_attendance_report' or request.resolver_match.url_name == 'staff_attendance_adjust' %}active{% endif %}">

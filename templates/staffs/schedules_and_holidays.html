@@ -1,50 +1,189 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-.bubu-schedule { max-width:1100px;margin:20px auto;padding:14px;color:#1b2440; }
-.bubu-schedule h1 {font-size:clamp(24px,4vw,34px);font-weight:800;margin-bottom:8px}
-.bubu-schedule .intro{color:#65708a;margin-bottom:20px}
-.bubu-schedule .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:16px}
-.bubu-schedule .panel {background:white;border-radius:20px;padding:22px;border:1px solid #e9e7f2;box-shadow:0 10px 30px #2222}
-.bubu-schedule label{display:block;font-weight:650;margin-top:12px;margin-bottom:5px}
-.bubu-schedule input,.bubu-schedule select{width:100%;border:1px solid #ccd1df;border-radius:10px;padding:11px;background:#fff;color:#17213d;font:inherit}
-.bubu-schedule button{margin-top:20px;border:0;border-radius:12px;padding:13px 20px;background:linear-gradient(100deg,#7762e9,#e881af);color:white;font-weight:bold;width:100%}
-.bubu-schedule table{width:100%;border-collapse:collapse;font-size:14px}
-.bubu-schedule th,.bubu-schedule td{padding:11px 9px;border-bottom:1px solid #ececf3;text-align:left}
-.bubu-schedule .scroll{overflow-x:auto}
-.bubu-schedule .help{font-size:13px;color:#6b7891}
+.bubu-mgr{--ink:#241b3e;--muted:#8a7d98;--purple:#8857e3;--line:#ece4f4;max-width:1340px;margin:auto;padding:clamp(16px,2.5vw,34px);color:var(--ink);font-family:inherit}
+.bubu-mgr *{box-sizing:border-box}.bubu-mgr button,.bubu-mgr input,.bubu-mgr select{font:inherit}
+.bubu-mgr .header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:15px;margin:6px 0 25px}
+.bubu-mgr .eyebrow{text-transform:uppercase;letter-spacing:.12em;color:#8a5ae2;font-weight:900;font-size:11px;margin-bottom:7px}
+.bubu-mgr h1{font-size:clamp(26px,3vw,36px);letter-spacing:-.035em;line-height:1.15;font-weight:900;margin:0 0 9px}
+.bubu-mgr h2{font-size:19px;font-weight:900;letter-spacing:-.025em;margin:0}.bubu-mgr h3{font-size:16px;font-weight:900;margin:0}
+.bubu-mgr p{margin:0}.bubu-mgr .subtitle,.bubu-mgr .help{color:var(--muted);font-size:13px;line-height:1.6}.bubu-mgr .subtitle{max-width:690px}
+.bubu-mgr .back{border:1px solid #e7dff1;background:#fff;padding:11px 15px;border-radius:13px;text-decoration:none;color:#7052ad;font-size:13px;font-weight:800}
+.bubu-mgr .metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.bubu-mgr .metric{display:flex;align-items:center;gap:14px;border-radius:19px;padding:18px;background:#fff;border:1px solid var(--line);box-shadow:0 8px 27px rgba(56,36,95,.04)}
+.bubu-mgr .metric-icon{width:47px;height:47px;border-radius:15px;display:grid;place-items:center;font-size:23px;color:#7652d5;background:#f1eafe;flex:none}
+.bubu-mgr .metric-icon.pink{background:#fff0f6;color:#d96e9e}.bubu-mgr .metric-icon.green{background:#e9f8f2;color:#26a979}
+.bubu-mgr .metric-label{color:#877b95;font-size:12px;font-weight:750}.bubu-mgr .metric-value{font-size:25px;font-weight:950;line-height:1.25;font-variant-numeric:tabular-nums}
+.bubu-mgr .section{background:#fff;border:1px solid var(--line);border-radius:23px;padding:clamp(16px,2vw,25px);margin-bottom:19px;box-shadow:0 12px 37px rgba(55,32,92,.045)}
+.bubu-mgr .section-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:15px;margin-bottom:18px}
+.bubu-mgr .section-title{display:flex;align-items:center;gap:12px}.bubu-mgr .section-icon{width:43px;height:43px;border-radius:14px;background:#f2ebff;color:#8555de;display:grid;place-items:center;font-size:22px}
+.bubu-mgr .section-icon.pink{background:#fff0f6;color:#e37bb3}
+.bubu-mgr .open-btn{border:0;border-radius:13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;color:#fff;padding:12px 17px;cursor:pointer;font-weight:850;font-size:13px;background:linear-gradient(105deg,#7960f4,#d675b0);box-shadow:0 8px 17px rgba(127,84,213,.17);transition:transform .17s,box-shadow .17s}
+.bubu-mgr .open-btn:hover{transform:translateY(-2px);box-shadow:0 11px 24px rgba(127,84,213,.26)}
+.bubu-mgr .open-btn:focus-visible,.bubu-mgr .icon-close:focus-visible{outline:3px solid #b9a0ef;outline-offset:3px}
+.bubu-mgr .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:13px}
+.bubu-mgr .search-wrap{position:relative;flex:1;min-width:205px;max-width:340px}
+.bubu-mgr .search-wrap:before{content:'⌕';position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:23px;color:#9076b8;pointer-events:none}
+.bubu-mgr .search-wrap input{width:100%;height:41px;min-height:41px;padding:8px 12px 8px 39px!important;background:#faf8fd!important;border:1px solid #e9e1f3!important;border-radius:12px;font-size:13px!important}
+.bubu-mgr .results-count{color:#8b7c9b;font-size:12px;font-weight:700}
+.bubu-mgr .filter-empty{padding:22px;text-align:center;color:#8a7b9b;font-size:13px}
+.bubu-mgr .field-error{color:#bb356c;font-size:12px;font-weight:750;margin:0 0 12px;display:none}
+.bubu-mgr .field-error.is-visible{display:block}
+.bubu-mgr .modal-footnote{margin-top:11px;color:#988aa6;font-size:11px;text-align:center}
+.bubu-mgr .table-scroll{overflow-x:auto}.bubu-mgr table{width:100%;border-collapse:collapse;min-width:610px;text-align:left;font-size:13px}.bubu-mgr th{background:#fbf9fe;color:#88799b;font-weight:850;font-size:12px;white-space:nowrap;padding:13px 14px}.bubu-mgr td{border-bottom:1px solid #f1ebf7;padding:14px;vertical-align:middle}.bubu-mgr tbody tr:last-child td{border-bottom:0}
+.bubu-mgr .pill{display:inline-flex;align-items:center;border-radius:100px;padding:7px 10px;background:#f0eaff;color:#774bbd;font-weight:800;font-size:12px;white-space:nowrap}.bubu-mgr .pill.holiday{background:#fff0f6;color:#c95190}
+.bubu-mgr .empty{padding:24px;text-align:center;color:#968ba4;font-size:13px}.bubu-mgr .empty-art{font-size:30px;margin-bottom:8px}
+.bubu-mgr .modal{position:fixed;inset:0;z-index:11000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(24,17,45,.55);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s,visibility .2s}
+.bubu-mgr .modal.is-open{opacity:1;visibility:visible;pointer-events:auto}
+.bubu-mgr .modal-panel{width:min(100%,610px);max-height:min(90dvh,840px);background:#fff;border:1px solid #eee5f4;border-radius:24px;box-shadow:0 28px 85px rgba(31,19,57,.28);display:flex;flex-direction:column;overflow:hidden;transform:translateY(15px) scale(.975);transition:transform .23s cubic-bezier(.2,.8,.2,1)}
+.bubu-mgr .modal.is-open .modal-panel{transform:translateY(0) scale(1)}
+.bubu-mgr .modal-top{padding:21px 24px;display:flex;align-items:center;gap:13px;border-bottom:1px solid #f0e9f7;background:linear-gradient(120deg,#fbf8ff,#fff6fa)}
+.bubu-mgr .modal-top .modal-icon{width:46px;height:46px;border-radius:16px;background:linear-gradient(125deg,#8060ea,#d17cb8);color:white;display:grid;place-items:center;font-size:23px;flex:none}
+.bubu-mgr .modal-top .modal-title{flex:1;min-width:0}.bubu-mgr .modal-top .modal-title p{font-size:12px;color:#857991;margin-top:4px}
+.bubu-mgr .icon-close{border:1px solid #ebdff5;background:white;border-radius:12px;width:36px;height:36px;display:grid;place-items:center;cursor:pointer;color:#6e5b84;font-size:23px;flex:none}
+.bubu-mgr .modal-body{overflow:auto;overscroll-behavior:contain;padding:24px}.bubu-mgr label{display:block;font-size:12px;font-weight:900;color:#4a395f;margin:0 0 7px}.bubu-mgr .field{margin:0 0 16px}
+.bubu-mgr .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.bubu-mgr input:not([type=checkbox]),.bubu-mgr select{border:1px solid #e0d6ea;border-radius:13px;min-height:47px;width:100%;padding:10px 13px;background:#fff;color:#241b3e;outline:0;font-size:14px;transition:box-shadow .15s,border-color .15s}
+.bubu-mgr input:not([type=checkbox]):focus,.bubu-mgr select:focus{border-color:#9a76dd;box-shadow:0 0 0 3px #9475db20}.bubu-mgr .check-row{display:flex;align-items:center;gap:10px;margin:7px 0 17px;padding:13px 14px;border:1px solid #e9e0f4;background:#faf7fe;border-radius:13px}.bubu-mgr .check-row input{width:17px;height:17px;accent-color:#8459e2}.bubu-mgr .check-row label{margin:0}
+.bubu-mgr .tip{background:#f8f4ff;border-radius:12px;padding:12px 14px;color:#716385;font-size:12px;line-height:1.6;margin:2px 0 17px}
+.bubu-mgr button[type=submit]{width:100%;border:none;border-radius:13px;min-height:49px;background:linear-gradient(105deg,#7959ed,#d479b2);color:white;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 8px 17px rgba(127,84,213,.13)}
+.bubu-mgr button[type=submit]:disabled{opacity:.6;cursor:wait}.bubu-mgr .notice{font-size:12px;color:#8d819b;margin-top:8px}
+body.bubu-modal-open{overflow:hidden}
+@media(max-width:780px){.bubu-mgr .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.bubu-mgr .metrics .metric:last-child{grid-column:span 2}}
+@media(max-width:540px){.bubu-mgr{padding:13px}.bubu-mgr .header{margin-bottom:18px}.bubu-mgr .metrics{gap:9px}.bubu-mgr .metric{padding:12px;gap:9px}.bubu-mgr .metric-icon{width:38px;height:38px;font-size:19px}.bubu-mgr .metric-value{font-size:21px}.bubu-mgr .section{padding:15px;border-radius:18px}.bubu-mgr .section-head{align-items:flex-start}.bubu-mgr .open-btn{width:100%}.bubu-mgr .modal{padding:0;align-items:flex-end}.bubu-mgr .modal-panel{border-radius:24px 24px 0 0;max-height:94dvh}.bubu-mgr .modal-body{padding:17px}.bubu-mgr .modal-top{padding:17px}.bubu-mgr .cols{grid-template-columns:1fr;gap:0}}
+@media(prefers-reduced-motion:reduce){.bubu-mgr .modal,.bubu-mgr .modal-panel,.bubu-mgr .open-btn{transition:none}}
 </style>
-<div class="bubu-schedule">
-<h1>Staff Schedules &amp; Holidays</h1>
-<p class="intro">One staff login · different working hours per branch · holidays can be entered after the date.</p>
-<div class="grid">
-<section class="panel"><h2>Assign branch schedule</h2>
-<p class="help">Choose staff and branch. Saving the schedule allows that staff member to scan the branch QR.</p>
-<form method="post">{% csrf_token %}<input type="hidden" name="kind" value="schedule">
-<label>Staff</label><select name="staff" required>{% for s in staffs %}<option value="{{ s.pk }}">{{ s.user.get_full_name|default:s.user.username }}</option>{% endfor %}</select>
-<label>Branch</label><select name="branch" required>{% for b in branches %}<option value="{{ b.pk }}">{{ b.name }}</option>{% endfor %}</select>
-<label>Work starts</label><input name="start_time" type="time" value="08:00" required>
-<label>Work ends</label><input name="end_time" type="time" value="17:00" required>
-<label>Late grace minutes</label><input name="late_grace_minutes" type="number" min="0" max="240" value="10" required>
-<label>Effective from</label><input name="valid_from" type="date" value="{{ today|date:'Y-m-d' }}" required>
-<label>Effective until (optional)</label><input name="valid_until" type="date">
-<button type="submit">Save staff schedule</button></form></section>
-<section class="panel"><h2>Add holiday — even for last month</h2>
-<p class="help">For example, enter November 20–21 on December 2. Past absences are excluded from recalculated reports.</p>
-<form method="post">{% csrf_token %}<input type="hidden" name="kind" value="holiday">
-<label>Holiday name</label><input name="title" maxlength="150" placeholder="Holiday / day off" required>
-<label>From</label><input name="date_from" type="date" required>
-<label>To</label><input name="date_to" type="date" required>
-<label>Who does this apply to?</label><select name="scope" id="holidayScope"><option value="all">All branches</option><option value="branch">One branch</option><option value="staff">One staff member</option></select>
-<div id="holidayBranch" hidden><label>Branch</label><select name="branch">{% for b in branches %}<option value="{{ b.pk }}">{{ b.name }}</option>{% endfor %}</select></div>
-<div id="holidayStaff" hidden><label>Staff</label><select name="staff">{% for s in staffs %}<option value="{{ s.pk }}">{{ s.user.get_full_name|default:s.user.username }}</option>{% endfor %}</select></div>
-<label><input style="width:auto" type="checkbox" name="paid" checked> Paid holiday</label>
-<button type="submit">Save holiday</button></form></section>
-</div>
-<div class="grid" style="margin-top:18px">
-<section class="panel"><h2>Saved branch schedules</h2><div class="scroll"><table><thead><tr><th>Staff</th><th>Branch</th><th>Hours</th><th>Effective</th></tr></thead><tbody>{% for s in schedules %}<tr><td>{{ s.staff.user.get_full_name|default:s.staff.user.username }}</td><td>{{ s.branch.name }}</td><td>{{ s.start_time|time:'H:i' }}–{{ s.end_time|time:'H:i' }}</td><td>{{ s.valid_from }}{% if s.valid_until %}–{{ s.valid_until }}{% endif %}</td></tr>{% empty %}<tr><td colspan="4">No schedules yet</td></tr>{% endfor %}</tbody></table></div></section>
-<section class="panel"><h2>Saved holidays</h2><div class="scroll"><table><thead><tr><th>Name</th><th>Dates</th><th>Scope</th></tr></thead><tbody>{% for h in holidays %}<tr><td>{{ h.title }}</td><td>{{ h.date_from }}–{{ h.date_to }}</td><td>{{ h.get_scope_display }}{% if h.branch %}: {{ h.branch.name }}{% elif h.staff %}: {{ h.staff.user.username }}{% endif %}</td></tr>{% empty %}<tr><td colspan="3">No holidays yet</td></tr>{% endfor %}</tbody></table></div><p class="help">Edit or disable entries in Django Admin. Paid payroll remains locked.</p></section>
-</div>
-</div>
-<script>document.addEventListener('DOMContentLoaded',function(){var s=document.getElementById('holidayScope'),b=document.getElementById('holidayBranch'),p=document.getElementById('holidayStaff');function f(){b.hidden=s.value!=='branch';p.hidden=s.value!=='staff'}s.addEventListener('change',f);f()});</script>
+<main class="bubu-mgr" id="bubuScheduleManager">
+ <header class="header"><div><div class="eyebrow">BUBU • Staff Management</div><h1>Schedules &amp; Holidays</h1><p class="subtitle">One staff login, flexible hours for every branch. Add holidays anytime, including dates from previous months.</p></div><a class="back" href="{% url 'staff_setting_list' %}">← Staff Settings</a></header>
+ <div class="metrics">
+  <div class="metric"><span class="metric-icon">◷</span><div><div class="metric-label">Branch schedules</div><div class="metric-value">{{ schedules|length }}</div></div></div>
+  <div class="metric"><span class="metric-icon pink">✳</span><div><div class="metric-label">Saved holidays</div><div class="metric-value">{{ holidays|length }}</div></div></div>
+  <div class="metric"><span class="metric-icon green">✓</span><div><div class="metric-label">Attendance method</div><div class="metric-value" style="font-size:16px">Branch QR</div></div></div>
+ </div>
+ <section class="section" aria-labelledby="scheduleListTitle">
+  <div class="section-head"><div class="section-title"><span class="section-icon">◷</span><div><h2 id="scheduleListTitle">Branch schedules</h2><p class="help">Working hours automatically follow the scanned branch QR.</p></div></div><button type="button" class="open-btn" data-open="scheduleModal"><span aria-hidden="true">＋</span> Assign Schedule</button></div>
+  <div class="toolbar"><div class="search-wrap"><input type="search" aria-label="Search branch schedules" placeholder="Search staff or branch…" data-filter="scheduleTable"></div><span class="results-count" id="scheduleCount">{{ schedules|length }} schedules</span></div>
+  <div class="table-scroll"><table id="scheduleTable"><thead><tr><th>Staff</th><th>Branch</th><th>Work hours</th><th>Effective dates</th></tr></thead><tbody>
+  {% for s in schedules %}<tr><td><strong>{{ s.staff.user.get_full_name|default:s.staff.user.username }}</strong></td><td>{{ s.branch.name }}</td><td><span class="pill">{{ s.start_time|time:'H:i' }} – {{ s.end_time|time:'H:i' }}</span></td><td>{{ s.valid_from }}{% if s.valid_until %} – {{ s.valid_until }}{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="4"><div class="empty"><div class="empty-art">◷</div>No schedules assigned yet. Select <strong>Assign Schedule</strong> to get started.</div></td></tr>{% endfor %}
+  </tbody></table><div class="filter-empty" hidden>No matching schedules found.</div></div>
+ </section>
+ <section class="section" aria-labelledby="holidayListTitle">
+  <div class="section-head"><div class="section-title"><span class="section-icon pink">✳</span><div><h2 id="holidayListTitle">Holidays &amp; days off</h2><p class="help">Create a holiday later and have historical attendance reports account for it.</p></div></div><button type="button" class="open-btn" data-open="holidayModal"><span aria-hidden="true">＋</span> Create Holiday</button></div>
+  <div class="toolbar"><div class="search-wrap"><input type="search" aria-label="Search holidays" placeholder="Search holidays or branches…" data-filter="holidayTable"></div><span class="results-count" id="holidayCount">{{ holidays|length }} holidays</span></div>
+  <div class="table-scroll"><table id="holidayTable"><thead><tr><th>Holiday</th><th>Dates</th><th>Applies to</th><th>Pay</th></tr></thead><tbody>
+  {% for h in holidays %}<tr><td><strong>{{ h.title }}</strong></td><td>{{ h.date_from }} – {{ h.date_to }}</td><td>{{ h.get_scope_display }}{% if h.branch %}: {{ h.branch.name }}{% elif h.staff %}: {{ h.staff.user.username }}{% endif %}</td><td><span class="pill holiday">{% if h.paid %}Paid{% else %}Unpaid{% endif %}</span></td></tr>
+  {% empty %}<tr><td colspan="4"><div class="empty"><div class="empty-art">✳</div>No holidays added yet. You can create holidays for past dates.</div></td></tr>{% endfor %}
+  </tbody></table><div class="filter-empty" hidden>No matching holidays found.</div></div><p class="notice">To modify existing records, use Django Admin. Already-finalized payroll should be reviewed separately.</p>
+ </section>
+ <div class="modal" id="scheduleModal" role="dialog" aria-modal="true" aria-labelledby="scheduleModalTitle" aria-hidden="true">
+  <div class="modal-panel"><div class="modal-top"><span class="modal-icon">◷</span><div class="modal-title"><h3 id="scheduleModalTitle">Assign Branch Schedule</h3><p>Set hours for one staff member at one branch</p></div><button type="button" class="icon-close" data-close aria-label="Close dialog">×</button></div><div class="modal-body"><form id="bubu-schedule-form" method="post">{% csrf_token %}<input type="hidden" name="kind" value="schedule">
+    <div class="field"><label for="bubu-staff">Staff member</label><select id="bubu-staff" name="staff" required>{% for s in staffs %}<option value="{{ s.pk }}">{{ s.user.get_full_name|default:s.user.username }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="bubu-branch">Working branch</label><select id="bubu-branch" name="branch" required>{% for b in branches %}<option value="{{ b.pk }}">{{ b.name }}</option>{% endfor %}</select></div>
+    <div class="cols"><div class="field"><label for="bubu-start">Work starts</label><input id="bubu-start" name="start_time" type="time" value="08:00" required></div><div class="field"><label for="bubu-end">Work ends</label><input id="bubu-end" name="end_time" type="time" value="17:00" required></div></div>
+    <div class="field"><label for="bubu-grace">Allowed late minutes</label><input id="bubu-grace" name="late_grace_minutes" type="number" min="0" max="240" value="10" required></div>
+    <div class="cols"><div class="field"><label for="bubu-from">Effective from</label><input id="bubu-from" name="valid_from" type="date" value="{{ today|date:'Y-m-d' }}" required></div><div class="field"><label for="bubu-until">Effective until (optional)</label><input id="bubu-until" name="valid_until" type="date"></div></div>
+    <div class="tip">ⓘ Temporary transfer? Set the starting and ending dates for that branch assignment. Other branches can have different hours.</div>
+    <div class="field-error" role="alert" aria-live="polite"></div><button type="submit">Save branch schedule</button><p class="modal-footnote">Changes take effect on the selected dates.</p>
+   </form></div></div>
+ </div>
+ <div class="modal" id="holidayModal" role="dialog" aria-modal="true" aria-labelledby="holidayModalTitle" aria-hidden="true">
+  <div class="modal-panel"><div class="modal-top"><span class="modal-icon">✳</span><div class="modal-title"><h3 id="holidayModalTitle">Create Holiday</h3><p>For all branches, one branch, or one staff member</p></div><button type="button" class="icon-close" data-close aria-label="Close dialog">×</button></div><div class="modal-body"><form id="bubu-holiday-form" method="post">{% csrf_token %}<input type="hidden" name="kind" value="holiday">
+    <div class="field"><label for="bubu-holiday-name">Holiday name</label><input id="bubu-holiday-name" name="title" maxlength="150" placeholder="e.g. Special holiday" required></div>
+    <div class="cols"><div class="field"><label for="bubu-holiday-from">From</label><input id="bubu-holiday-from" name="date_from" type="date" required></div><div class="field"><label for="bubu-holiday-to">To</label><input id="bubu-holiday-to" name="date_to" type="date" required></div></div>
+    <div class="field"><label for="holidayScope">Who does it apply to?</label><select name="scope" id="holidayScope"><option value="all">All branches</option><option value="branch">One branch</option><option value="staff">One staff member</option></select></div>
+    <div id="holidayBranch" class="field" hidden><label for="bubu-holiday-branch">Branch</label><select id="bubu-holiday-branch" name="branch" disabled>{% for b in branches %}<option value="{{ b.pk }}">{{ b.name }}</option>{% endfor %}</select></div>
+    <div id="holidayStaff" class="field" hidden><label for="bubu-holiday-staff">Staff member</label><select id="bubu-holiday-staff" name="staff" disabled>{% for s in staffs %}<option value="{{ s.pk }}">{{ s.user.get_full_name|default:s.user.username }}</option>{% endfor %}</select></div>
+    <div class="check-row"><input id="bubu-holiday-paid" type="checkbox" name="paid" checked><label for="bubu-holiday-paid">Paid holiday</label></div>
+    <div class="tip">ⓘ Example: Create November 20–21 on December 2. Previously paid payroll should be reviewed separately; this form does not unlock payments.</div>
+    <div class="field-error" role="alert" aria-live="polite"></div><button type="submit">Save holiday</button><p class="modal-footnote">Previously recorded attendance is retained.</p>
+   </form></div></div>
+ </div>
+</main>
+<script>
+(function () {
+  'use strict';
+  var host = document.getElementById('bubuScheduleManager');
+  if (!host) return;
+  var openModal = null, previousFocus = null;
+  function closeDialog() {
+    if (!openModal) return;
+    openModal.classList.remove('is-open');
+    openModal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('bubu-modal-open');
+    var old = previousFocus; openModal = null; previousFocus = null;
+    if (old && old.focus) old.focus();
+  }
+  function showDialog(id) {
+    var target = host.querySelector('#' + id);
+    if (!target) return;
+    if (openModal) closeDialog();
+    previousFocus = document.activeElement;
+    openModal = target;
+    target.classList.add('is-open');
+    target.setAttribute('aria-hidden','false');
+    document.body.classList.add('bubu-modal-open');
+    var first = target.querySelector('input:not([type=hidden]):not([type=checkbox]), select, button');
+    if (first) setTimeout(function(){first.focus();}, 30);
+  }
+  host.querySelectorAll('[data-open]').forEach(function(button) {
+    button.addEventListener('click',function(){showDialog(button.getAttribute('data-open'));});
+  });
+  host.querySelectorAll('[data-close]').forEach(function(button) {button.addEventListener('click', closeDialog);});
+  host.querySelectorAll('.modal').forEach(function(modal){modal.addEventListener('mousedown',function(e){if(e.target===modal)closeDialog();});});
+  document.addEventListener('keydown',function(e){
+    if (!openModal) return;
+    if(e.key==='Escape'){ e.preventDefault();closeDialog();return;}
+    if(e.key==='Tab'){
+      var nodes=Array.from(openModal.querySelectorAll('button:not([disabled]),input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled]),a[href]')).filter(function(el){return el.getClientRects().length;});
+      if(!nodes.length)return;
+      var first=nodes[0],last=nodes[nodes.length-1];
+      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+    }
+  });
+  host.querySelectorAll('[data-filter]').forEach(function(input){
+    var table=host.querySelector('#'+input.getAttribute('data-filter'));
+    if(!table)return;
+    var count=host.querySelector('#'+(table.id==='scheduleTable'?'scheduleCount':'holidayCount'));
+    var rows=Array.from(table.querySelectorAll('tbody tr')).filter(function(row){return !row.querySelector('.empty');});
+    var fallback=table.nextElementSibling;
+    input.addEventListener('input',function(){
+      var query=input.value.trim().toLocaleLowerCase(),shown=0;
+      rows.forEach(function(row){var match=row.textContent.toLocaleLowerCase().includes(query);row.hidden=!match;if(match)shown++;});
+      if(fallback)fallback.hidden=shown>0||!query||!rows.length;
+      if(count)count.textContent=shown+' '+(table.id==='scheduleTable'?'schedules':'holidays');
+    });
+  });
+  var scope = host.querySelector('#holidayScope'), branch=host.querySelector('#holidayBranch'), staff=host.querySelector('#holidayStaff');
+  function syncScope(){
+    if(!scope)return;
+    var isBranch=scope.value==='branch', isStaff=scope.value==='staff';
+    branch.hidden=!isBranch;staff.hidden=!isStaff;
+    branch.querySelector('select').disabled=!isBranch;
+    staff.querySelector('select').disabled=!isStaff;
+  }
+  if(scope){scope.addEventListener('change',syncScope);syncScope();}
+  var holidayFrom=host.querySelector('#bubu-holiday-from'),holidayTo=host.querySelector('#bubu-holiday-to');
+  if(holidayFrom&&holidayTo){holidayFrom.addEventListener('change',function(){if(!holidayTo.value||holidayTo.value<holidayFrom.value)holidayTo.value=holidayFrom.value;});}
+  [host.querySelector('#bubu-schedule-form'),host.querySelector('#bubu-holiday-form')].forEach(function(form){
+    if (!form) return;
+    form.addEventListener('submit',function(e){
+      var kind=form.querySelector('[name="kind"]').value;
+      var a,b;
+      if(kind==='holiday'){a=form.querySelector('[name="date_from"]').value;b=form.querySelector('[name="date_to"]').value;}
+      else{a=form.querySelector('[name="valid_from"]').value;b=form.querySelector('[name="valid_until"]').value;}
+      var error=form.querySelector('.field-error');
+      function fail(message){e.preventDefault();if(error){error.textContent=message;error.classList.add('is-visible');}return false;}
+      if(error){error.textContent='';error.classList.remove('is-visible');}
+      if(a&&b&&b<a){fail('End date must be on or after the start date.');return;}
+      if(kind==='schedule'){
+        var start=form.querySelector('[name="start_time"]').value,end=form.querySelector('[name="end_time"]').value;
+        if(start&&end&&start===end){fail('Work start and end cannot be the same.');return;}
+      }
+      var submit=form.querySelector('button[type="submit"]');
+      if(submit){submit.disabled=true;submit.textContent='Saving…';}
+    });
+  });
+})();
+</script>
 {% endblock %}
