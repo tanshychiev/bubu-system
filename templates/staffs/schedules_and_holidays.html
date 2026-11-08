@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.bubu-schedule { max-width:1100px;margin:20px auto;padding:14px;color:#1b2440; }
+.bubu-schedule h1 {font-size:clamp(24px,4vw,34px);font-weight:800;margin-bottom:8px}
+.bubu-schedule .intro{color:#65708a;margin-bottom:20px}
+.bubu-schedule .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:16px}
+.bubu-schedule .panel {background:white;border-radius:20px;padding:22px;border:1px solid #e9e7f2;box-shadow:0 10px 30px #2222}
+.bubu-schedule label{display:block;font-weight:650;margin-top:12px;margin-bottom:5px}
+.bubu-schedule input,.bubu-schedule select{width:100%;border:1px solid #ccd1df;border-radius:10px;padding:11px;background:#fff;color:#17213d;font:inherit}
+.bubu-schedule button{margin-top:20px;border:0;border-radius:12px;padding:13px 20px;background:linear-gradient(100deg,#7762e9,#e881af);color:white;font-weight:bold;width:100%}
+.bubu-schedule table{width:100%;border-collapse:collapse;font-size:14px}
+.bubu-schedule th,.bubu-schedule td{padding:11px 9px;border-bottom:1px solid #ececf3;text-align:left}
+.bubu-schedule .scroll{overflow-x:auto}
+.bubu-schedule .help{font-size:13px;color:#6b7891}
+</style>
+<div class="bubu-schedule">
+<h1>Staff Schedules &amp; Holidays</h1>
+<p class="intro">One staff login · different working hours per branch · holidays can be entered after the date.</p>
+<div class="grid">
+<section class="panel"><h2>Assign branch schedule</h2>
+<p class="help">Choose staff and branch. Saving the schedule allows that staff member to scan the branch QR.</p>
+<form method="post">{% csrf_token %}<input type="hidden" name="kind" value="schedule">
+<label>Staff</label><select name="staff" required>{% for s in staffs %}<option value="{{ s.pk }}">{{ s.user.get_full_name|default:s.user.username }}</option>{% endfor %}</select>
+<label>Branch</label><select name="branch" required>{% for b in branches %}<option value="{{ b.pk }}">{{ b.name }}</option>{% endfor %}</select>
+<label>Work starts</label><input name="start_time" type="time" value="08:00" required>
+<label>Work ends</label><input name="end_time" type="time" value="17:00" required>
+<label>Late grace minutes</label><input name="late_grace_minutes" type="number" min="0" max="240" value="10" required>
+<label>Effective from</label><input name="valid_from" type="date" value="{{ today|date:'Y-m-d' }}" required>
+<label>Effective until (optional)</label><input name="valid_until" type="date">
+<button type="submit">Save staff schedule</button></form></section>
+<section class="panel"><h2>Add holiday — even for last month</h2>
+<p class="help">For example, enter November 20–21 on December 2. Past absences are excluded from recalculated reports.</p>
+<form method="post">{% csrf_token %}<input type="hidden" name="kind" value="holiday">
+<label>Holiday name</label><input name="title" maxlength="150" placeholder="Holiday / day off" required>
+<label>From</label><input name="date_from" type="date" required>
+<label>To</label><input name="date_to" type="date" required>
+<label>Who does this apply to?</label><select name="scope" id="holidayScope"><option value="all">All branches</option><option value="branch">One branch</option><option value="staff">One staff member</option></select>
+<div id="holidayBranch" hidden><label>Branch</label><select name="branch">{% for b in branches %}<option value="{{ b.pk }}">{{ b.name }}</option>{% endfor %}</select></div>
+<div id="holidayStaff" hidden><label>Staff</label><select name="staff">{% for s in staffs %}<option value="{{ s.pk }}">{{ s.user.get_full_name|default:s.user.username }}</option>{% endfor %}</select></div>
+<label><input style="width:auto" type="checkbox" name="paid" checked> Paid holiday</label>
+<button type="submit">Save holiday</button></form></section>
+</div>
+<div class="grid" style="margin-top:18px">
+<section class="panel"><h2>Saved branch schedules</h2><div class="scroll"><table><thead><tr><th>Staff</th><th>Branch</th><th>Hours</th><th>Effective</th></tr></thead><tbody>{% for s in schedules %}<tr><td>{{ s.staff.user.get_full_name|default:s.staff.user.username }}</td><td>{{ s.branch.name }}</td><td>{{ s.start_time|time:'H:i' }}–{{ s.end_time|time:'H:i' }}</td><td>{{ s.valid_from }}{% if s.valid_until %}–{{ s.valid_until }}{% endif %}</td></tr>{% empty %}<tr><td colspan="4">No schedules yet</td></tr>{% endfor %}</tbody></table></div></section>
+<section class="panel"><h2>Saved holidays</h2><div class="scroll"><table><thead><tr><th>Name</th><th>Dates</th><th>Scope</th></tr></thead><tbody>{% for h in holidays %}<tr><td>{{ h.title }}</td><td>{{ h.date_from }}–{{ h.date_to }}</td><td>{{ h.get_scope_display }}{% if h.branch %}: {{ h.branch.name }}{% elif h.staff %}: {{ h.staff.user.username }}{% endif %}</td></tr>{% empty %}<tr><td colspan="3">No holidays yet</td></tr>{% endfor %}</tbody></table></div><p class="help">Edit or disable entries in Django Admin. Paid payroll remains locked.</p></section>
+</div>
+</div>
+<script>document.addEventListener('DOMContentLoaded',function(){var s=document.getElementById('holidayScope'),b=document.getElementById('holidayBranch'),p=document.getElementById('holidayStaff');function f(){b.hidden=s.value!=='branch';p.hidden=s.value!=='staff'}s.addEventListener('change',f);f()});</script>
+{% endblock %}
