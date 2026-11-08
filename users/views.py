@@ -280,7 +280,14 @@ def generate_user_login_qr(request, pk):
         messages.warning(request, "This QR is no longer valid. Generate a new QR.")
         return redirect("user_list")
 
-    url = request.build_absolute_uri(reverse("redeem_login_qr", args=[raw]))
+    # Generate a trusted HTTPS link, regardless of the admin page's HTTP URL.
+    # Use BUBU_PUBLIC_URL when it is HTTPS; otherwise use this deployment's
+    # established HTTPS hostname (camera and GPS require a secure origin).
+    from django.conf import settings
+    public_base = getattr(settings, "BUBU_PUBLIC_URL", "") or ""
+    if not public_base.startswith("https://"):
+        public_base = "https://5-223-90-183.sslip.io"
+    url = public_base.rstrip("/") + reverse("redeem_login_qr", args=[raw])
     img = qrcode.make(url)
     buffer = BytesIO()
     img.save(buffer, format="PNG")
