@@ -3,9 +3,19 @@
 
 {% block content %}
 <style id="bubu-scan-simple-flow">
-.scan-actions button[hidden]{display:none!important}
+.scan-actions button[hidden],.scan-confirmation[hidden],.gps-box[hidden]{display:none!important}
 .scan-actions:has(button[hidden]){grid-template-columns:1fr!important}
 .scan-actions button{width:100%;min-height:58px}
+.staff-identity{text-align:center!important;display:flex;flex-direction:column;align-items:center}
+.staff-identity h2,.staff-identity small,.staff-identity p{text-align:center!important;width:100%}
+.scan-confirmation{margin:18px 0 8px;padding:22px 18px;border-radius:24px;background:linear-gradient(145deg,#f0fff5,#f7f4ff);border:1px solid #c7efd7;text-align:center}
+.scan-confirmation .confirmation-icon{font-size:36px;line-height:1.3}
+.scan-confirmation h3{margin:8px 0;color:#176b47;font-weight:900;font-size:22px}
+.scan-confirmation .scan-timestamp{margin:12px auto 5px;color:#13123c;font-weight:850;font-size:16px}
+.scan-confirmation .confirmation-message{color:#4f6571;font-weight:650;line-height:1.6;margin:9px 0}
+.scan-confirmation.late{background:linear-gradient(145deg,#fff8e9,#fff5f4);border-color:#f3d3ae}
+.scan-confirmation.late h3{color:#99520e}
+.scan-confirmation.checkout h3{color:#6342ab}
 @media(max-width:767px){.scan-card{max-width:480px!important}.scan-page{align-items:flex-start!important}}
 </style>
 
@@ -38,11 +48,34 @@
             <input type="hidden" name="location_accuracy" id="accuracyInput">
             <input type="hidden" name="action" id="actionInput" value="auto">
             <input type="hidden" name="late_reason" id="lateReasonInput" value="">
-            <div class="branch-box">
+            <div class="branch-box staff-identity">
                 <small>Signed in as</small>
                 <h2>{{ staff.user.get_full_name|default:staff.user.username }}</h2>
                 <p class="cute-greeting">Hi {{ staff.user.get_full_name|default:staff.user.username }} 👋 Ready for a pawsome day at BUBU?</p>
             </div>
+
+            {% if already_checked_in %}
+            <div id="attendanceConfirmation" class="scan-confirmation {% if already_checked_out %}checkout{% elif attendance_status == 'late' %}late{% endif %}" role="status" aria-live="polite">
+                {% if already_checked_out %}
+                    <div class="confirmation-icon">🌷</div>
+                    <h3>You've checked out!</h3>
+                    <p class="scan-timestamp">{{ checked_out_at|date:"h:i A" }} · {{ checked_out_at|date:"d M Y" }}</p>
+                    <p class="confirmation-message">Thank you for your hard work today. Have a lovely rest of your day!</p>
+                {% else %}
+                    <div class="confirmation-icon">{% if attendance_status == 'late' %}⏰{% else %}😊🐾{% endif %}</div>
+                    <h3>You've checked in!</h3>
+                    <p class="scan-timestamp">{{ checked_in_at|date:"h:i A" }} · {{ checked_in_at|date:"d M Y" }}</p>
+                    {% if attendance_status == 'late' %}
+                        <p class="confirmation-message">Your check-in was recorded {{ late_minutes }} minute{{ late_minutes|pluralize }} late. Have a productive day!</p>
+                    {% elif attendance_status == 'present' %}
+                        <p class="confirmation-message">Great job arriving on time! 😊 Have a pawsome day at BUBU!</p>
+                    {% else %}
+                        <p class="confirmation-message">Attendance successfully recorded. Have a wonderful day!</p>
+                    {% endif %}
+                    <p class="confirmation-message">Scan your branch QR again when it's time to check out.</p>
+                {% endif %}
+            </div>
+            {% endif %}
 
             <div class="gps-box" id="gpsBox">
                 <strong>📍 Location Required</strong>
@@ -861,31 +894,44 @@ document.addEventListener("DOMContentLoaded", function(){
     const alreadyOut = {{ already_checked_out|yesno:"true,false" }};
     const checkInButton = document.getElementById("checkinButton");
     const checkOutButton = document.getElementById("checkoutButton");
+    const gpsBox = document.getElementById("gpsBox");
+    // Successful submissions redirect to ?recorded=1. That URL is a receipt,
+    // NOT a second scan: never offer check-out or submit another action there.
     const recorded = new URLSearchParams(location.search).has("recorded");
     const reloaded = performance.getEntriesByType("navigation").some(n => n.type === "reload");
+
     if(alreadyOut){
         checkInButton.hidden = true;
         checkOutButton.hidden = true;
-        setGpsBox("ok", "Attendance complete", "Your check-in and check-out have been recorded today.");
+        gpsBox.hidden = true;
         return;
     }
     if(alreadyIn){
         checkInButton.hidden = true;
-        setGpsBox("ok", "Ready to check out", "Your first scan was check-in. This next scan records check-out.");
-    } else {
-        checkOutButton.hidden = true;
-        setGpsBox("", "Checking location", "Please allow location to record your check-in.");
+        if(recorded){
+            // This is the check-in success screen. Check-out stays hidden until
+            // the user returns through a fresh branch QR scan (without recorded).
+            checkOutButton.hidden = true;
+            gpsBox.hidden = true;
+            return;
+        }
+        // Staff scanned the branch QR again. Show a clear, explicit confirmation
+        // instead of auto-checking out when the page loads.
+        const checkInConfirmation = document.getElementById("attendanceConfirmation");
+        if(checkInConfirmation) checkInConfirmation.hidden = true;
+        checkOutButton.hidden = false;
+        setGpsBox("ok", "Ready for check-out?", "You already checked in today. Tap Confirm Check Out when you are ready to finish your shift.");
+        return;
     }
+
+    checkOutButton.hidden = true;
+    setGpsBox("", "Checking location", "Please allow location to record your check-in.");
     if(recorded || reloaded) return;
-    // Start without extra steps on secured origins. Never auto-submit missing GPS.
-    // Late employees must supply a reason first.
     if(!window.isSecureContext){
         setGpsBox("bad", "HTTPS required for GPS", "This HTTP address cannot read iPhone GPS. Ask your manager to use BUBU's HTTPS address.");
         return;
     }
-    if(alreadyIn){
-        submitWithLocation("check_out", checkOutButton);
-    } else if(isLateNow){
+    if(isLateNow){
         openLatePopup();
         document.getElementById("lateReasonText").focus();
     } else {

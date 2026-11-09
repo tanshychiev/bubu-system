@@ -852,3 +852,73 @@ class PayrollAdjustment(models.Model):
 
     def __str__(self):
         return f"{self.staff} - {self.get_adjustment_type_display()} ${self.amount}"
+
+# Branch scheduling and holiday models (introduced in migration staffs.0006).
+# Keep these definitions aligned with migration 0006 to preserve existing tables and data.
+class StaffBranchSchedule(models.Model):
+    staff = models.ForeignKey(
+        StaffProfile, on_delete=models.CASCADE, related_name="branch_schedules"
+    )
+    branch = models.ForeignKey(
+        Branch, on_delete=models.CASCADE, related_name="staff_schedules"
+    )
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    late_grace_minutes = models.PositiveIntegerField(default=10)
+    valid_from = models.DateField(default=timezone.localdate)
+    valid_until = models.DateField(null=True, blank=True)
+    active = models.BooleanField(default=True)
+    updated_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["staff__user__username", "branch__name", "-valid_from"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["staff", "branch", "valid_from"],
+                name="bubu_schedule_staff_branch_start",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.staff} — {self.branch}: {self.start_time}–{self.end_time}"
+
+
+class StaffHoliday(models.Model):
+    title = models.CharField(max_length=150)
+    date_from = models.DateField()
+    date_to = models.DateField()
+    scope = models.CharField(
+        max_length=10,
+        choices=[
+            ("all", "All branches"),
+            ("branch", "One branch"),
+            ("staff", "One staff"),
+        ],
+        default="all",
+    )
+    paid = models.BooleanField(default=True)
+    active = models.BooleanField(default=True)
+    branch = models.ForeignKey(
+        Branch, on_delete=models.CASCADE, related_name="staff_holidays",
+        null=True, blank=True,
+    )
+    staff = models.ForeignKey(
+        StaffProfile, on_delete=models.CASCADE, related_name="holidays",
+        null=True, blank=True,
+    )
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, related_name="+",
+        null=True, blank=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-date_from", "-id"]
+
+    def __str__(self):
+        return f"{self.title}: {self.date_from} to {self.date_to}"
+
