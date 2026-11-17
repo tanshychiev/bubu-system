@@ -58,35 +58,16 @@
     </form>
 
     <div class="summary-grid">
-        <div class="summary-card">
-            <span>Total Records</span>
-            <strong>{{ total_records }}</strong>
-        </div>
-
-        <div class="summary-card ok">
-            <span>Present</span>
-            <strong>{{ present_days }}</strong>
-        </div>
-
-        <div class="summary-card warning">
-            <span>Late Days</span>
-            <strong>{{ late_days }}</strong>
-        </div>
-
-        <div class="summary-card warning">
-            <span>Late Minutes</span>
-            <strong>{{ total_late_minutes }}</strong>
-        </div>
-
-        <div class="summary-card danger">
-            <span>Absent</span>
-            <strong>{{ absent_days }}</strong>
-        </div>
-
-        <div class="summary-card purple">
-            <span>Permission</span>
-            <strong>{{ permission_days }}</strong>
-        </div>
+        <div class="summary-card"><span>Scheduled Days</span><strong>{{ scheduled_days }}</strong></div>
+        <div class="summary-card ok"><span>Present</span><strong>{{ present_days }}</strong></div>
+        <div class="summary-card warning"><span>Late Days</span><strong>{{ late_days }}</strong></div>
+        <div class="summary-card warning"><span>Total Late</span><strong>{{ total_late_display }}</strong></div>
+        <div class="summary-card danger"><span>Absent</span><strong>{{ absent_days }}</strong></div>
+        <div class="summary-card purple"><span>Permission / Leave</span><strong>{{ permission_days|add:leave_days }}</strong></div>
+        <div class="summary-card ok"><span>Overtime</span><strong>{{ total_overtime_display }}</strong></div>
+        <div class="summary-card ok"><span>Early Check-in</span><strong>{{ total_early_in_display }}</strong></div>
+        <div class="summary-card warning"><span>Early Checkout</span><strong>{{ total_early_out_display }}</strong></div>
+        <div class="summary-card"><span>Worked Hours</span><strong>{{ total_worked_display }}</strong></div>
     </div>
 
     <div class="table-card-custom">
@@ -108,102 +89,30 @@
 
         <div class="table-wrap">
             <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Staff</th>
-                        <th>Branch</th>
-                        <th>Check In</th>
-                        <th>Check Out</th>
-                        <th>Status</th>
-                        <th>Late</th>
-                        <th>Pet Total Sold</th>
-                        <th>Method</th>
-                        <th>Location</th>
-                        <th>Note</th>
-                    </tr>
-                </thead>
-
+                <thead><tr>
+                    <th>Date</th><th>Staff</th><th>Branch</th><th>Check In</th><th>Check Out</th>
+                    <th>Status</th><th>Late</th><th>Early In</th><th>Early Out</th><th>Overtime</th><th>Worked</th>
+                    <th>Pet Total Sold</th><th>Method</th><th>Location</th><th>Note / Reasons</th>
+                </tr></thead>
                 <tbody>
-                    {% for item in attendance_rows %}
-                        {% with row=item.attendance %}
-                            <tr>
-                                <td>{{ row.date|date:"d M Y" }}</td>
-
-                                <td>
-                                    <b>{{ row.staff.user.get_full_name|default:row.staff.user.username }}</b>
-                                </td>
-
-                                <td>
-                                    {% if row.branch %}
-                                        {{ row.branch.name }}
-                                    {% else %}
-                                        -
-                                    {% endif %}
-                                </td>
-
-                                <td>
-                                    {% if row.check_in_time %}
-                                        {{ row.check_in_time|date:"h:i A" }}
-                                    {% else %}
-                                        -
-                                    {% endif %}
-                                </td>
-
-                                <td>
-                                    {% if row.check_out_time %}
-                                        {{ row.check_out_time|date:"h:i A" }}
-                                    {% else %}
-                                        -
-                                    {% endif %}
-                                </td>
-
-                                <td>
-                                    <span class="badge badge-{{ row.status }}">
-                                        {{ row.get_status_display }}
-                                    </span>
-                                </td>
-
-                                <td>{{ row.late_minutes }} min</td>
-
-                                <td>
-                                    {% if item.pet_total_sold_count > 0 %}
-                                        <span class="pet-sold-pill">
-                                            🐾 {{ item.pet_total_sold_count }} pcs / ${{ item.pet_total_sold_amount|floatformat:2 }}
-                                        </span>
-                                    {% else %}
-                                        <span class="pet-sold-empty">0</span>
-                                    {% endif %}
-                                </td>
-
-                                <td>
-                                    {% if row.scan_method == "manual" %}
-                                        <span class="badge badge-manual">Manual</span>
-                                    {% else %}
-                                        <span class="badge badge-qr">QR</span>
-                                    {% endif %}
-                                </td>
-
-                                <td>
-                                    {% if row.is_suspicious %}
-                                        <span class="badge badge-bad">Suspicious</span>
-                                    {% elif row.latitude and row.longitude %}
-                                        <span class="badge badge-ok">GPS OK</span>
-                                    {% else %}
-                                        <span class="badge badge-muted">No GPS</span>
-                                    {% endif %}
-                                </td>
-
-                                <td>{{ row.note|default:"-"|truncatechars:50 }}</td>
-                            </tr>
-                        {% endwith %}
-                    {% empty %}
-                        <tr>
-                            <td colspan="11" class="empty-cell">
-                                No attendance records found.
-                            </td>
-                        </tr>
-                    {% endfor %}
+                {% for item in attendance_rows %}
+                    {% with row=item.attendance %}
+                    <tr>
+                        <td>{{ item.day|date:"d M Y" }}</td>
+                        <td><b>{{ item.staff.user.get_full_name|default:item.staff.user.username }}</b></td>
+                        <td>{{ item.branch.name|default:"-" }}</td>
+                        <td>{% if row and row.check_in_time %}{{ row.check_in_time|date:"h:i A" }}{% else %}-{% endif %}</td>
+                        <td>{% if row and row.check_out_time %}{{ row.check_out_time|date:"h:i A" }}{% else %}-{% endif %}</td>
+                        <td><span class="badge">{{ item.status_label }}</span></td>
+                        <td>{{ item.late_display }}</td><td>{{ item.early_in_display }}</td>
+                        <td>{{ item.early_out_display }}</td><td>{{ item.overtime_display }}</td><td>{{ item.worked_display }}</td>
+                        <td>{% if item.pet_total_sold_count %}🐾 {{ item.pet_total_sold_count }} pcs / ${{ item.pet_total_sold_amount|floatformat:2 }}{% else %}0{% endif %}</td>
+                        <td>{% if row %}{{ row.get_scan_method_display }}{% else %}-{% endif %}</td>
+                        <td>{% if row %}{% if row.is_suspicious %}Suspicious{% elif row.latitude and row.longitude %}GPS OK{% else %}No GPS{% endif %}{% else %}-{% endif %}</td>
+                        <td>{% if row %}{{ row.note|default:"" }}{% if row.checkout_reason %}<div>Early checkout reason: {{ row.checkout_reason }}</div>{% endif %}{% else %}-{% endif %}</td>
+                    </tr>
+                    {% endwith %}
+                {% empty %}<tr><td colspan="15" class="empty-cell">No scheduled dates or attendance records found.</td></tr>{% endfor %}
                 </tbody>
             </table>
         </div>

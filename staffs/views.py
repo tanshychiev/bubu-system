@@ -36,7 +36,10 @@ from .models import (
     StaffPermissionRequest,
     StaffWorkCommissionRule,
     StaffShift,
+    StaffWorkDay,
+    StaffPermissionRequest,
 )
+from .branch_scheduling import branch_allowed, shift_for, holiday_for, schedule_for
 
 
 # =========================================================
@@ -73,12 +76,65 @@ def _format_minutes(minutes):
     mins = minutes % 60
 
     if hours and mins:
-        return f"{hours}h{mins}m"
+        return f"{hours}h {mins}m"
 
     if hours:
         return f"{hours}h"
 
     return f"{mins}m"
+
+
+def _scheduled_end(day, shift):
+    if not shift:
+        return None
+    end = timezone.make_aware(datetime.combine(day, shift.end_time), timezone.get_current_timezone())
+    if shift.end_time <= shift.start_time:
+        end += timedelta(days=1)
+    return end
+
+
+def _attendance_timing(attendance, shift=None):
+    """Calculate durations without treating an early arrival as overtime."""
+    shift = shift or attendance.shift
+    output = {"early_in": 0, "late": attendance.late_minutes or 0,
+              "early_out": 0, "overtime": 0, "worked": 0}
+    if not shift:
+        if attendance.check_in_time and attendance.check_out_time:
+            output["worked"] = max(0, int((attendance.check_out_time - attendance.check_in_time).total_seconds() // 60))
+        return output
+    start = timezone.make_aware(datetime.combine(attendance.date, shift.start_time), timezone.get_current_timezone())
+    end = _scheduled_end(attendance.date, shift)
+    if attendance.check_in_time:
+        output["early_in"] = max(0, int((start - timezone.localtime(attendance.check_in_time)).total_seconds() // 60))
+    if attendance.check_out_time:
+        actual_end = timezone.localtime(attendance.check_out_time)
+        output["early_out"] = max(0, int((end - actual_end).total_seconds() // 60))
+        output["overtime"] = max(0, int((actual_end - end).total_seconds() // 60))
+    if attendance.check_in_time and attendance.check_out_time:
+        output["worked"] = max(0, int((attendance.check_out_time - attendance.check_in_time).total_seconds() // 60))
+    return output
+
+
+def _checkin_summary(attendance, shift):
+    timing = _attendance_timing(attendance, shift)
+    if attendance.status == "late" and attendance.late_minutes:
+        return f"🔴 Late {_format_minutes(attendance.late_minutes)}"
+    if timing["early_in"]:
+        return f"🟢 Early {_format_minutes(timing['early_in'])}"
+    return "🟢 On Time"
+
+
+def _checkout_summary(timing):
+    if timing["early_out"]:
+        return f"🔴 Early {_format_minutes(timing['early_out'])}"
+    if timing["overtime"]:
+        return f"🟢 Overtime {_format_minutes(timing['overtime'])}"
+    return "🟢 On Time"
+
+
+def _late_reason(attendance):
+    note = attendance.note or ""
+    return note.split("Late reason:", 1)[1].splitlines()[0].strip() if "Late reason:" in note else ""
 
 
 def _get_ip_address(request):
@@ -291,13 +347,16 @@ def staff_scan_page(request, token):
     )
 
     staff = _get_staff_profile_from_user(request.user)
-    if not staff or staff.branch_id != qr.branch_id:
+    if not staff or not branch_allowed(staff, qr.branch):
         messages.error(request, "Your account is not assigned to this branch. Contact admin.")
         return redirect("staff_my_dashboard") if staff else redirect("dashboard")
 
     existing = StaffAttendance.objects.filter(staff=staff, date=timezone.localdate()).first()
     shift = _get_active_shift(staff)
+    shift = shift_for(staff, qr.branch, timezone.localdate(), shift)
     arrival_status = _check_arrival_status(timezone.localdate(), timezone.localtime(), shift)[0]
+    scheduled_end = _scheduled_end(timezone.localdate(), shift)
+    early_checkout_minutes = max(0, int((scheduled_end - timezone.localtime()).total_seconds() // 60)) if scheduled_end else 0
     return render(request, "staffs/staff_scan_page.html", {
         "qr": qr,
         "staff": staff,
@@ -309,6 +368,8 @@ def staff_scan_page(request, token):
         "late_minutes": existing.late_minutes if existing else 0,
         "auto_action": ("complete" if existing and existing.check_out_time else "check_out" if existing and existing.check_in_time else "check_in"),
         "is_late_now": arrival_status == "late",
+        "early_checkout_requires_reason": early_checkout_minutes > 10,
+        "early_checkout_minutes": early_checkout_minutes,
         "today": timezone.localdate(),
     })
 
@@ -325,7 +386,7 @@ def staff_scan_submit(request, token):
         return redirect("staff_scan_page", token=qr.token)
 
     staff = _get_staff_profile_from_user(request.user)
-    if not staff or staff.branch_id != qr.branch_id or not staff.user.is_active:
+    if not staff or not branch_allowed(staff, qr.branch) or not staff.user.is_active:
         messages.error(request, "Your account is not authorized for this branch.")
         return redirect("staff_scan_page", token=qr.token)
 
@@ -340,6 +401,7 @@ def staff_scan_submit(request, token):
         return redirect("staff_scan_page", token=qr.token)
     action = "check_out" if existing and existing.check_in_time else "check_in"
     late_reason = request.POST.get("late_reason", "").strip()[:1000]
+    checkout_reason = request.POST.get("checkout_reason", "").strip()[:1000]
     latitude = request.POST.get("latitude") or None
     longitude = request.POST.get("longitude") or None
     accuracy = request.POST.get("location_accuracy") or None
@@ -367,7 +429,7 @@ def staff_scan_submit(request, token):
 
     now = timezone.localtime()
     today = timezone.localdate()
-    shift = _get_active_shift(staff)
+    shift = shift_for(staff, qr.branch, today, _get_active_shift(staff))
 
     distance, location_status, is_suspicious, suspicious_reason = _check_location(
         branch=qr.branch,
@@ -393,12 +455,19 @@ def staff_scan_submit(request, token):
         messages.error(request, "You are late. Please enter a reason before checking in.")
         return redirect("staff_scan_page", token=qr.token)
 
+    if action == "check_out":
+        scheduled_end = _scheduled_end(today, shift)
+        early_checkout = max(0, int((scheduled_end - now).total_seconds() // 60)) if scheduled_end else 0
+        if early_checkout > 10 and not checkout_reason:
+            messages.error(request, "Checking out more than 10 minutes early requires a reason.")
+            return redirect("staff_scan_page", token=qr.token)
+
     attendance, created = StaffAttendance.objects.get_or_create(
         staff=staff,
         date=today,
         defaults={
             "branch": qr.branch,
-            "shift": shift,
+            "shift": _get_active_shift(staff),
             "scan_method": "branch_qr",
         },
     )
@@ -417,7 +486,7 @@ def staff_scan_submit(request, token):
         return redirect("staff_scan_page", token=qr.token)
 
     attendance.branch = qr.branch
-    attendance.shift = shift
+    attendance.shift = _get_active_shift(staff)
     attendance.scan_method = "branch_qr"
     attendance.latitude = latitude
     attendance.longitude = longitude
@@ -434,31 +503,27 @@ def staff_scan_submit(request, token):
 
     if action == "check_out":
         attendance.check_out_time = now
+        attendance.checkout_reason = checkout_reason if early_checkout > 10 else ""
         attendance.save()
-
+        timing = _attendance_timing(attendance, shift)
+        checkout_text = _checkout_summary(timing)
         telegram_text = (
-            f"{staff_name} checked out 👋\n"
-            f"Position: {position}\n"
-            f"Branch: {branch_name}"
+            f"BUBU Attendance\n{staff_name} checked out 👋 {checkout_text}\n"
+            f"Position: {position}\nBranch: {branch_name}\n\n"
+            f"Today's Summary — {staff_name}\n"
+            f"Check-in: {_checkin_summary(attendance, shift)}"
         )
-
-        if attendance.status == "late" and attendance.late_minutes:
-            telegram_text += f"\n⏰ Late: {attendance.late_minutes} minutes"
-            if attendance.note:
-                cleaned_note = str(attendance.note).replace("Late reason:", "").strip()
-                if cleaned_note:
-                    telegram_text += f"\nReason: {cleaned_note}"
-
+        in_reason = _late_reason(attendance)
+        if in_reason and attendance.status == "late":
+            telegram_text += f"\nReason: {in_reason}"
+        telegram_text += f"\nCheck-out: {checkout_text}"
+        if attendance.checkout_reason:
+            telegram_text += f"\nReason: {attendance.checkout_reason}"
         if attendance.is_suspicious:
-            if distance is not None:
-                telegram_text += f"\n⚠️ Wrong location: {distance}m from branch"
-            else:
-                telegram_text += f"\n⚠️ Wrong location: {location_status}"
-
-        if attendance.is_suspicious and latitude and longitude:
-            telegram_text += f"\n📍 Scanned from (Google Maps): https://www.google.com/maps?q={latitude},{longitude}"
+            telegram_text += f"\n⚠️ Wrong location: {distance}m from branch" if distance is not None else f"\n⚠️ Wrong location: {location_status}"
+            if latitude and longitude:
+                telegram_text += f"\n📍 Scanned from (Google Maps): https://www.google.com/maps?q={latitude},{longitude}"
         send_staff_telegram_async(telegram_text)
-
         if attendance.is_suspicious:
             messages.warning(request, "Check out recorded — outside branch GPS radius. Manager notified with location link.")
         else:
@@ -479,13 +544,12 @@ def staff_scan_submit(request, token):
     attendance.save()
 
     telegram_text = (
-        f"{staff_name} checked in {status_icon} {status_text}\n"
+        f"BUBU Attendance\n{staff_name} checked in {status_icon} {status_text}\n"
         f"Position: {position}\n"
         f"Branch: {branch_name}"
     )
 
     if status == "late":
-        telegram_text += f"\n⏰ Late: {minutes_value} minutes"
         telegram_text += f"\nReason: {late_reason}"
 
     if attendance.is_suspicious:
@@ -857,58 +921,84 @@ def staff_attendance_report(request):
     if parsed_to:
         attendances = attendances.filter(date__lte=parsed_to)
 
-    total_records = attendances.count()
-    present_days = attendances.filter(status="present").count()
-    late_days = attendances.filter(status="late").count()
-    absent_days = attendances.filter(status="absent").count()
-    permission_days = attendances.filter(status="permission").count()
-    leave_days = attendances.filter(status="leave").count()
-
-    total_late_minutes = (
-        attendances.aggregate(total=Sum("late_minutes")).get("total")
-        or 0
-    )
-
+    # A calendar row is derived per staff/day, including days with no scan at any branch.
+    # Never persist computed absences: historical holiday/leave changes remain reversible.
+    from types import SimpleNamespace
+    from .models import StaffBranchSchedule
+    from .branch_scheduling import effective_attendance_status
+    first_day, last_day = parsed_from or month_start, parsed_to or month_end
+    report_staff = [selected_staff] if selected_staff else list(staffs)
+    saved = {(a.staff_id, a.date): a for a in attendances}
+    workdays = {(w.staff_id, w.weekday): w.is_work_day for w in StaffWorkDay.objects.filter(staff__in=report_staff)}
+    start_dates = dict(StaffPayrollSetting.objects.filter(staff__in=report_staff).values_list("staff_id", "start_work_date"))
+    approved = list(StaffPermissionRequest.objects.filter(staff__in=report_staff, status="approved", date_from__lte=last_day, date_to__gte=first_day))
+    schedules = list(StaffBranchSchedule.objects.filter(staff__in=report_staff, active=True, valid_from__lte=last_day).filter(Q(valid_until__isnull=True) | Q(valid_until__gte=first_day)).select_related("branch"))
+    shifts = {st.id: _get_active_shift(st) for st in report_staff}
     attendance_rows = []
-
-    for row in attendances:
-        day_sales = PetSale.objects.filter(
-            seller=row.staff.user,
-            created_at__date=row.date,
-        )
-
-        pet_total_sold_count = day_sales.count()
-
-        pet_total_sold_amount = (
-            day_sales.aggregate(total=Sum("sale_price")).get("total")
-            or Decimal("0.00")
-        )
-
-        attendance_rows.append({
-            "attendance": row,
-            "pet_total_sold_count": pet_total_sold_count,
-            "pet_total_sold_amount": pet_total_sold_amount,
-        })
-
+    totals = dict(present_days=0, late_days=0, absent_days=0, permission_days=0, leave_days=0,
+                  total_late_minutes=0, total_overtime_minutes=0, total_early_in_minutes=0,
+                  total_early_out_minutes=0, total_worked_minutes=0, scheduled_days=0)
+    if last_day >= first_day:
+        day = first_day
+        while day <= last_day:
+            for staff_member in report_staff:
+                if start_dates.get(staff_member.id) and day < start_dates[staff_member.id]:
+                    continue
+                row = saved.get((staff_member.id, day))
+                day_schedules = [sc for sc in schedules if sc.staff_id == staff_member.id and sc.valid_from <= day and (sc.valid_until is None or day <= sc.valid_until)]
+                assignment = sorted(day_schedules, key=lambda a: (a.valid_from, a.pk), reverse=True)[0] if day_schedules else None
+                branch = row.branch if row and row.branch_id else (assignment.branch if assignment else staff_member.branch)
+                shift = shift_for(staff_member, branch, day, row.shift if row and row.shift else shifts[staff_member.id])
+                is_work_day = workdays.get((staff_member.id, day.weekday()), True)
+                exemption = next((p for p in approved if p.staff_id == staff_member.id and p.date_from <= day <= p.date_to and p.request_type in ("day_leave", "sick_leave")), None)
+                holiday = holiday_for(staff_member, branch, day)
+                if not row and not is_work_day:
+                    continue
+                if row:
+                    status_label = effective_attendance_status(row).replace("_", " ").title()
+                    if row.check_in_time and not row.check_out_time:
+                        status_label = "Missing Checkout" if day < today else "Checked In"
+                elif day > today or day == today:
+                    status_label = "Upcoming" if not exemption and not holiday else ("Leave" if exemption else "Holiday")
+                elif holiday:
+                    status_label = "Holiday"
+                elif exemption:
+                    status_label = "Leave"
+                else:
+                    status_label = "Absent"
+                timing = _attendance_timing(row, shift) if row else dict(early_in=0, late=0, early_out=0, overtime=0, worked=0)
+                if status_label == "Absent": totals["absent_days"] += 1
+                elif status_label == "Leave": totals["leave_days"] += 1
+                elif status_label == "Permission": totals["permission_days"] += 1
+                elif row and row.check_in_time:
+                    totals["late_days" if row.status == "late" else "present_days"] += 1
+                if status_label not in ("Upcoming", "Holiday"):
+                    totals["scheduled_days"] += 1
+                for key, source in (("total_late_minutes", "late"), ("total_overtime_minutes", "overtime"),
+                                    ("total_early_in_minutes", "early_in"), ("total_early_out_minutes", "early_out"),
+                                    ("total_worked_minutes", "worked")):
+                    totals[key] += timing[source]
+                attendance_rows.append({"attendance": row, "day": day, "staff": staff_member, "branch": branch,
+                    "status_label": status_label, "late_display": _format_minutes(timing["late"]),
+                    "early_in_display": _format_minutes(timing["early_in"]) if timing["early_in"] else "-",
+                    "early_out_display": _format_minutes(timing["early_out"]) if timing["early_out"] else "-",
+                    "overtime_display": _format_minutes(timing["overtime"]) if timing["overtime"] else "-",
+                    "worked_display": _format_minutes(timing["worked"]) if row and row.check_out_time and row.check_in_time else "-",
+                    "pet_total_sold_count": 0, "pet_total_sold_amount": Decimal("0.00")})
+            day += timedelta(days=1)
+    sales = PetSale.objects.filter(seller_id__in=[st.user_id for st in report_staff], created_at__date__gte=first_day, created_at__date__lte=last_day).values("seller_id", "created_at__date").annotate(count=__import__('django.db.models', fromlist=['Count']).Count("pk"), amount=Sum("sale_price")) if last_day >= first_day else []
+    sale_lookup = {(item["seller_id"], item["created_at__date"]): item for item in sales}
+    for item in attendance_rows:
+        sale = sale_lookup.get((item["staff"].user_id, item["day"]))
+        if sale:
+            item["pet_total_sold_count"] = sale["count"]
+            item["pet_total_sold_amount"] = sale["amount"] or Decimal("0.00")
+    for key in ("total_late_minutes", "total_overtime_minutes", "total_early_in_minutes", "total_early_out_minutes", "total_worked_minutes"):
+        totals[key.replace("_minutes", "_display")] = _format_minutes(totals[key])
     return render(request, "staffs/staff_attendance_report.html", {
-        "staffs": staffs,
-        "selected_staff": selected_staff,
-        "selected_staff_id": staff_id,
-        "selected_staff_label": selected_staff_label,
-
-        "date_from": date_from,
-        "date_to": date_to,
-
-        "attendances": attendances,
-        "attendance_rows": attendance_rows,
-
-        "total_records": total_records,
-        "present_days": present_days,
-        "late_days": late_days,
-        "absent_days": absent_days,
-        "permission_days": permission_days,
-        "leave_days": leave_days,
-        "total_late_minutes": total_late_minutes,
+        "staffs": staffs, "selected_staff": selected_staff, "selected_staff_id": staff_id,
+        "selected_staff_label": selected_staff_label, "date_from": date_from, "date_to": date_to,
+        "attendance_rows": attendance_rows, "total_records": len(attendance_rows), **totals,
     })
 
 

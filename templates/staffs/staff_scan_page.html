@@ -48,6 +48,7 @@
             <input type="hidden" name="location_accuracy" id="accuracyInput">
             <input type="hidden" name="action" id="actionInput" value="auto">
             <input type="hidden" name="late_reason" id="lateReasonInput" value="">
+            <input type="hidden" name="checkout_reason" id="checkoutReasonInput" value="">
             <div class="branch-box staff-identity">
                 <small>Signed in as</small>
                 <h2>{{ staff.user.get_full_name|default:staff.user.username }}</h2>
@@ -87,7 +88,7 @@
                     Confirm Check In
                 </button>
 
-                <button type="button" id="checkoutButton" onclick="submitWithLocation('check_out', this)" class="checkout-btn">
+                <button type="button" id="checkoutButton" onclick="startCheckOut(this)" class="checkout-btn">
                     Confirm Check Out
                 </button>
             </div>
@@ -96,8 +97,17 @@
         <p class="small-note" id="scanHelp">One branch QR handles both check-in and check-out. Your account is identified automatically. Allow GPS to finish recording; if outside the branch radius, the manager receives your map location link. HTTPS is required on phones.</p>
 
         <!-- POPUP BACKDROP INSIDE CARD -->
-        <div class="popup-bg" id="latePopupBg" onclick="closeLatePopup()"></div>
+        <div class="popup-bg" id="latePopupBg" onclick="closeLatePopup();closeEarlyCheckoutPopup()"></div>
 
+        <div class="late-popup" id="earlyCheckoutPopup" role="dialog" aria-modal="true" aria-labelledby="earlyCheckoutTitle">
+            <button type="button" class="late-close" onclick="closeEarlyCheckoutPopup()">×</button>
+            <div class="late-icon">⏰</div>
+            <h2 id="earlyCheckoutTitle">Early checkout — reason required</h2>
+            <p>You are checking out more than 10 minutes before your scheduled end. Please explain why.</p>
+            <textarea id="checkoutReasonText" rows="4" maxlength="1000" placeholder="Reason for leaving early (required)"></textarea>
+            <p id="checkoutReasonError" role="alert" style="color:#b42348;display:none;font-weight:750">Please enter your early checkout reason.</p>
+            <div class="late-actions"><button type="button" class="submit-late-btn" onclick="submitCheckoutReason()">Submit Reason</button></div>
+        </div>
         <!-- LATE REASON POPUP INSIDE CARD -->
         <div class="late-popup" id="latePopup">
             <button type="button" class="late-close" onclick="closeLatePopup()">×</button>
@@ -769,6 +779,27 @@ function submitCheckInWithoutReason(){
     submitWithLocation("check_in", btn);
 }
 
+const earlyCheckoutRequiresReason = {{ early_checkout_requires_reason|yesno:"true,false" }};
+function startCheckOut(button){
+    if(earlyCheckoutRequiresReason){
+        document.getElementById("latePopupBg").classList.add("active");
+        document.getElementById("earlyCheckoutPopup").classList.add("active");
+        return;
+    }
+    document.getElementById("checkoutReasonInput").value = "";
+    submitWithLocation("check_out", button);
+}
+function closeEarlyCheckoutPopup(){
+    document.getElementById("latePopupBg").classList.remove("active");
+    document.getElementById("earlyCheckoutPopup").classList.remove("active");
+}
+function submitCheckoutReason(){
+    const reason = document.getElementById("checkoutReasonText").value.trim();
+    if(!reason){document.getElementById("checkoutReasonError").style.display="block";return;}
+    document.getElementById("checkoutReasonInput").value=reason;
+    closeEarlyCheckoutPopup();
+    submitWithLocation("check_out",document.getElementById("checkoutButton"));
+}
 /* GPS + SUBMIT — request permission only after a genuine button tap. */
 let gpsInProgress = false;
 let gpsAction = null;

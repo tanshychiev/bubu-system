@@ -233,6 +233,7 @@ class StaffAttendance(models.Model):
     suspicious_reason = models.TextField(blank=True)
 
     note = models.TextField(blank=True)
+    checkout_reason = models.TextField(blank=True)
 
     created_by = models.ForeignKey(
         User,
