@@ -807,6 +807,13 @@ let gpsSourceButton = null;
 let gpsOriginalLabel = null;
 let gpsFallbackReady = false;
 const isLateNow = {{ is_late_now|yesno:"true,false" }};
+// Android Chrome requires a clear user gesture for reliable first-time GPS permission.
+const isAndroidDevice = /Android/i.test(navigator.userAgent);
+function locationPermissionAdvice(){
+    return isAndroidDevice
+        ? "On Android: enable phone Location, then Chrome > Site settings > Location > Allow for this website. Open the link directly in Chrome, not inside Telegram or Facebook."
+        : "On iPhone: enable Location Services and Safari Websites location access, then allow Location for this site.";
+}
 
 function startCheckIn(button){
     if(isLateNow){ openLatePopup(); return; }
@@ -868,15 +875,15 @@ function submitWithLocation(action, button){
     setGpsBox("", "Locating you...", "Please allow location when your browser asks. Keep this page open.");
 
     if(!window.isSecureContext || !navigator.geolocation){
-        finishGpsFailure("Your browser cannot access location over HTTP. BUBU needs an HTTPS address for iPhone GPS.");
+        finishGpsFailure("Your browser cannot access GPS here. Open the BUBU HTTPS website directly in Chrome or Safari.");
         return;
     }
     let finished = false;
     const safeguard = setTimeout(function(){
         if(finished) return;
         finished = true;
-        finishGpsFailure("The location request took too long. Check iPhone location permissions.");
-    }, 8500);
+        finishGpsFailure("GPS took too long. Enable precise location and try again near a window. " + locationPermissionAdvice() + "");
+    }, 26000);
     try {
         navigator.geolocation.getCurrentPosition(
             function(position){
@@ -900,13 +907,13 @@ function submitWithLocation(action, button){
                 finished = true;
                 clearTimeout(safeguard);
                 const reason = error && error.code === 1
-                    ? "Location permission was denied. Enable Location Services and Safari Websites location access."
+                    ? "Location permission was denied. " + locationPermissionAdvice() + ""
                     : error && error.code === 2
                     ? "Your phone could not determine its location. Try enabling Wi-Fi and Location Services."
                     : "GPS timed out. Try moving near a window or checking Location Services.";
                 finishGpsFailure(reason);
             },
-            {enableHighAccuracy:true, timeout:7000, maximumAge:0}
+            {enableHighAccuracy:true, timeout:22000, maximumAge:0}
         );
     } catch(e){
         if(!finished){
@@ -959,7 +966,13 @@ document.addEventListener("DOMContentLoaded", function(){
     setGpsBox("", "Checking location", "Please allow location to record your check-in.");
     if(recorded || reloaded) return;
     if(!window.isSecureContext){
-        setGpsBox("bad", "HTTPS required for GPS", "This HTTP address cannot read iPhone GPS. Ask your manager to use BUBU's HTTPS address.");
+        setGpsBox("bad", "HTTPS required for GPS", "This HTTP address cannot access GPS. Ask your manager to use BUBU's HTTPS address.");
+        return;
+    }
+    if(isAndroidDevice){
+        // Android: keep the GPS prompt attached to an explicit staff tap.
+        // This avoids permission prompts being rejected during page-load auto check-in.
+        setGpsBox("", "Ready to check in", "Tap Confirm Check In to grant Android location access and record attendance.");
         return;
     }
     if(isLateNow){
